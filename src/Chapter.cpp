@@ -2,6 +2,8 @@
 
 #include <yorehold/framework/assets/FileSystem.h>
 #include <yorehold/framework/animation/Cutscene.h>
+#include <yorehold/framework/rpg/Dialogue.h>
+#include <yorehold/framework/rpg/QuestJournal.h>
 
 #include <nlohmann/json.hpp>
 
@@ -42,6 +44,15 @@ bool validId(std::string_view id)
     return !id.empty() && id.size() <= 64 && std::all_of(id.begin(), id.end(), [](char c) {
         return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_';
     });
+}
+
+// An optional list of story flag names.
+std::vector<std::string> flagsFrom(const nlohmann::json& j, const char* key)
+{
+    const auto flags = j.value(key, std::vector<std::string>{});
+    if (std::any_of(flags.begin(), flags.end(), [](const std::string& f) { return f.empty() || f.size() > 64; }))
+        throw std::invalid_argument(std::string(key) + ": story flags are 1 to 64 characters");
+    return flags;
 }
 
 std::string readOrThrow(const yh::FileSystem& files, const std::string& path)
@@ -142,7 +153,6 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             if (!yh::Cutscene::fromJson(endingText, &problem)) throw std::invalid_argument(problem);
             include(nlohmann::json::parse(endingText).dump());
         }
-        c.signature = std::to_string(signature);
         where = folder + "/chapter.json";
 
         std::set<std::pair<int, int>> taken;
@@ -178,8 +188,38 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                 encounter.creatures.push_back(std::move(placement));
             }
             if (encounter.creatures.empty()) throw std::invalid_argument(encounter.id + " has no creatures");
+            encounter.set = flagsFrom(e, "set");
             c.encounters.push_back(std::move(encounter));
         }
+
+        std::set<std::string> npcIds;
+        const auto npcs = j.value("npcs", nlohmann::json::array());
+        if (!npcs.is_array()) throw std::invalid_argument("npcs must be an array");
+        for (const auto& n : npcs)
+        {
+            Npc npc{n.at("id").get<std::string>(), n.at("name").get<std::string>(),
+                n.contains("color") ? colorFrom(n.at("color")) : yh::Color{200, 180, 140, 255}, cellFrom(n.at("at")),
+                resolve(files, folder, n.at("dialogue").get<std::string>())};
+            if (!validId(npc.id) || !npcIds.insert(npc.id).second) throw std::invalid_argument("npc ids must be unique and use a-z, 0-9, - and _");
+            place(npc.at, npc.name);
+            where = npc.dialogue;
+            const std::string text = readOrThrow(files, where);
+            if (!yh::Dialogue::fromJson(text, &problem)) throw std::invalid_argument(problem);
+            include(nlohmann::json::parse(text).dump());
+            where = folder + "/chapter.json";
+            c.npcs.push_back(std::move(npc));
+        }
+
+        if (const std::string quests = j.value("quests", ""); !quests.empty())
+        {
+            where = c.quests = resolve(files, folder, quests);
+            const std::string text = readOrThrow(files, where);
+            if (!yh::QuestJournal::fromJson(text, &problem)) throw std::invalid_argument(problem);
+            include(nlohmann::json::parse(text).dump());
+            where = folder + "/chapter.json";
+        }
+        c.completeWhen = flagsFrom(j, "completeWhen");
+        c.signature = std::to_string(signature);
         return c;
     }
     catch (const std::exception& e)

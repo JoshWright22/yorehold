@@ -62,9 +62,27 @@
       ]
     }
   ],
+  "npcs": [
+    {
+      "id": "wren",
+      "name": "Wren",
+      "color": [120, 170, 110],
+      "at": [7, 12],
+      "dialogue": "dialogue/wren.json"
+    },
+    {
+      "id": "tobb",
+      "name": "Tobb",
+      "color": [200, 170, 120],
+      "at": [29, 3],
+      "dialogue": "dialogue/tobb.json"
+    }
+  ],
+  "quests": "quests.json",
   "encounters": [
     {
       "id": "entry-hall",
+      "set": ["entry_hall_clear"],
       "text": "Goblins! Roll for initiative.",
       "creatures": [
         {
@@ -87,6 +105,7 @@
     },
     {
       "id": "storeroom",
+      "set": ["storeroom_clear"],
       "text": "Goblins! Roll for initiative.",
       "creatures": [
         {
@@ -109,6 +128,7 @@
     },
     {
       "id": "chiefs-hall",
+      "set": ["grak_defeated"],
       "text": "Chief Grak bellows. The goblins charge!",
       "creatures": [
         {

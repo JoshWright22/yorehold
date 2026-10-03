@@ -1,0 +1,40 @@
+{
+  "quests": [
+    {
+      "id": "goblin-keep",
+      "title": "The Goblin Keep",
+      "description": "Goblins have taken the old keep. Clear them out.",
+      "require": ["keep_quest"],
+      "objectives": [
+        {
+          "id": "entry",
+          "text": "Clear the entry hall",
+          "require": ["entry_hall_clear"]
+        },
+        {
+          "id": "storeroom",
+          "text": "Clear the storeroom",
+          "require": ["storeroom_clear"]
+        },
+        {
+          "id": "chief",
+          "text": "Defeat Chief Grak",
+          "require": ["grak_defeated"]
+        }
+      ]
+    },
+    {
+      "id": "miller",
+      "title": "The Miller",
+      "description": "Tobb the miller was dragged into the keep.",
+      "require": ["keep_quest"],
+      "objectives": [
+        {
+          "id": "free",
+          "text": "Free Tobb",
+          "require": ["tobb_freed"]
+        }
+      ]
+    }
+  ]
+}

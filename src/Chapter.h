@@ -41,6 +41,17 @@ struct Chapter
         std::string id;
         std::string text; // shown when the fight starts
         std::vector<Placement> creatures;
+        std::vector<std::string> set; // story flags set when the party wins this fight
+    };
+
+    // Someone on the map the party can talk to. They don't fight.
+    struct Npc
+    {
+        std::string id;
+        std::string name;
+        yh::Color color;
+        yh::Cell at;
+        std::string dialogue; // virtual path to a yh::Dialogue file
     };
 
     std::string id;
@@ -57,6 +68,10 @@ struct Chapter
 
     std::vector<PartyMember> party;
     std::vector<Encounter> encounters;
+    std::vector<Npc> npcs;
+    std::string quests; // virtual path to a yh::QuestJournal file; empty = no journal
+    // The chapter is complete once all of these story flags are set. Empty = once every encounter is won.
+    std::vector<std::string> completeWhen;
 
     yh::Ruleset rules;
     yh::Compendium compendium;

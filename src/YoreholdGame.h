@@ -14,12 +14,15 @@
 #include <yorehold/framework/map/FogOfWar.h>
 #include <yorehold/framework/map/Tokens.h>
 #include <yorehold/framework/rpg/Combat.h>
+#include <yorehold/framework/rpg/Dialogue.h>
+#include <yorehold/framework/rpg/QuestJournal.h>
 #include <yorehold/framework/rpg/Random.h>
 #include <yorehold/framework/ui/Ui.h>
 
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -84,6 +87,21 @@ private:
     bool partyDown() const;
     bool chapterCleared() const;
     void autoExplore();
+
+    // Talking to the chapter's NPCs. Their tokens come after creatures_ in tokens_.
+    size_t npcToken(size_t npc) const { return creatures_.size() + npc; }
+    std::optional<size_t> hoveredNpc() const;
+    size_t leaderIndex() const; // the selected hero, else the first one standing
+    std::optional<size_t> npcAt(yh::Cell cell) const;
+    void walkToTalk(size_t npc);
+    void startTalk(size_t npc);
+    void chooseReply(size_t index);
+    void drawDialogue(yh::Renderer& renderer);
+
+    // Story flags: set by dialogue and won fights; the quest journal and chapter completion read them.
+    void setFlags(const std::vector<std::string>& flags);
+    void flagsChanged(const std::set<std::string>& before);
+    void drawJournal(yh::Renderer& renderer);
 
     // Rests come from the ruleset (short, long...), each with its own healing and limit.
     void rest(const yh::RestDefinition& rest);
@@ -200,6 +218,13 @@ private:
     double time_ = 0;
     bool cameraPlaced_ = false;
     std::map<std::string, int> restsUsed_; // by rest id
+    std::set<std::string> flags_;
+    std::optional<yh::QuestJournal> journal_; // the chapter's, if it has one
+    bool journalOpen_ = false;
+    std::unique_ptr<yh::DialogueSession> talk_; // the conversation on screen, if any
+    size_t talkNpc_ = 0;
+    std::optional<size_t> pendingTalk_; // walking over to this NPC
+    yh::Random talkRandom_{1};
     yh::Random restRandom_{1};
     yh::Cutscene cutscene_;
     bool cutsceneDone_ = false; // set by the cutscene's "finished" event, handled after its update

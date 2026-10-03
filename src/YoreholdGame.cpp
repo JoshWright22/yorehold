@@ -68,7 +68,7 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     files_.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
     files_.mountFolder(YH_GAME_ASSETS, "game");
     applyScheme(yh::ControlPreset::BG3);
-    tokens_.contextActions = {"Attack", "Inspect"};
+    tokens_.contextActions = {"Attack", "Talk", "Inspect"};
 
     // The UI-blocking input never sees a click, and its mouse sits far off the map.
     SDL_Event away{};
@@ -304,10 +304,19 @@ void YoreholdGame::newAdventure(uint64_t seed)
     cutscene_ = {};
     cutsceneDone_ = false;
     autoExploreStuck_ = 0;
+    flags_.clear();
+    journal_.reset();
+    journalOpen_ = false;
+    talk_.reset();
+    pendingTalk_.reset();
+    talkRandom_ = yh::Random(seed ^ 0x7a1cull);
 
     heroCount_ = 0;
     if (!chapter_)
         return;
+    if (!chapter_->quests.empty())
+        if (const std::optional<std::string> text = files_.readText(chapter_->quests))
+            journal_ = yh::QuestJournal::fromJson(*text); // Chapter::load already checked it
     fog_ = yh::FogOfWar(map().width(), map().height(), GameMap::cellSize);
     lightLevels_ = yh::LightLevels(map().width(), map().height(), GameMap::cellSize);
     lightLevels_.ambient = map().lighting().ambient;
@@ -350,6 +359,17 @@ void YoreholdGame::newAdventure(uint64_t seed)
             token.floor = hidden;
             tokens_.tokens.push_back(token);
         }
+    }
+    for (const Chapter::Npc& npc : chapter_->npcs)
+    {
+        yh::Token token;
+        token.name = npc.name;
+        token.owner = 2;
+        token.color = npc.color;
+        token.radius = cell * 0.4f;
+        token.position = grid_.center(npc.at);
+        token.floor = hidden;
+        tokens_.tokens.push_back(token);
     }
     for (size_t i = 1; i < heroCount_; i++)
         tokens_.link(i, i - 1);
@@ -447,9 +467,28 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
         input_.handle(event); // the menus' buttons read the mouse
         return true;
     }
+    if (talk_)
+    {
+        // 1-9 pick a reply, Esc walks away; the mouse still reaches the reply buttons.
+        if (keyDown && event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
+            chooseReply(event.key.key - SDLK_1);
+        else if (keyDown && event.key.key == SDLK_ESCAPE)
+            talk_.reset();
+        else
+            input_.handle(event);
+        return true;
+    }
+    if (keyDown && event.key.key == SDLK_J && journal_)
+    {
+        journalOpen_ = !journalOpen_;
+        return true;
+    }
     if (keyDown && event.key.key == SDLK_ESCAPE)
     {
-        openMenu(Menu::Pause);
+        if (journalOpen_)
+            journalOpen_ = false;
+        else
+            openMenu(Menu::Pause);
         return true;
     }
     if (keyDown && event.key.key == SDLK_R && !rules_.rests.empty())
@@ -471,6 +510,8 @@ std::string YoreholdGame::describe() const
         return "screen: game over";
     if (encounter_ && !encounter_->finished())
         return "screen: combat round " + std::to_string(encounter_->round());
+    if (talk_ && talk_->current())
+        return "screen: talking " + chapter_->npcs[talkNpc_].id + " at " + talk_->current()->id;
     return "screen: exploring";
 }
 
@@ -501,12 +542,35 @@ void YoreholdGame::update(double deltaSeconds)
     yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
     if (fighting && heroTurn)
         passable = [this](yh::Cell c) { return c == standing_ || reach_.contains(c); };
-    const yh::Input& tokenInput = mouseOnUi || partyDown() || (fighting && !heroTurn) ? noInput_ : input_;
+    const yh::Input& tokenInput = mouseOnUi || partyDown() || talk_ || (fighting && !heroTurn) ? noInput_ : input_;
     tokens_.update(tokenInput, camera_, grid_, passable, deltaSeconds);
     if (&tokenInput == &input_ && input_.clicked(yh::actions::moveTo))
         controls_.resumeFollowing();
 
-    if (tokens_.contextChoice)
+    // Clicking someone to talk to walks the leader over; the conversation opens on arrival.
+    if (!fighting && &tokenInput == &input_ && (input_.clicked(yh::actions::moveTo) || input_.clicked(yh::actions::select)))
+        if (const std::optional<size_t> npc = hoveredNpc())
+            walkToTalk(*npc);
+    if (pendingTalk_ && !fighting)
+    {
+        const size_t leader = leaderIndex();
+        if (tokens_.tokens[leader].path.empty())
+        {
+            const size_t npc = *pendingTalk_;
+            pendingTalk_.reset();
+            if (grid_.distance(cellOf(leader), chapter_->npcs[npc].at) <= 1.5f)
+                startTalk(npc);
+            else
+                say("Can't reach " + chapter_->npcs[npc].name + " from here.");
+        }
+    }
+
+    if (tokens_.contextChoice && tokens_.contextChoice->first >= creatures_.size())
+    {
+        if (!fighting)
+            walkToTalk(tokens_.contextChoice->first - creatures_.size());
+    }
+    else if (tokens_.contextChoice)
     {
         const auto [index, action] = *tokens_.contextChoice;
         if (action == "Attack" && fighting && heroTurn && creatures_[index].team == 1)
@@ -617,6 +681,9 @@ void YoreholdGame::updateVisibility()
     }
     const int view = viewTeam();
 
+    for (size_t i = 0; i < chapter_->npcs.size(); i++)
+        tokens_.tokens[npcToken(i)].floor = fog_.state(view, 0, chapter_->npcs[i].at) == yh::FogState::Visible ? 0 : hidden;
+
     const bool fighting = encounter_ && !encounter_->finished();
     for (size_t i = heroCount_; i < creatures_.size(); i++)
     {
@@ -725,6 +792,17 @@ void YoreholdGame::endCombat()
     tokens_.tokens[0].selected = true;
     say(fillXp(chapter_->victoryText, chapter_->xpPerVictory));
 
+    // Every encounter with nobody left standing sets its story flags.
+    std::vector<std::string> won;
+    for (size_t group = 0; group < chapter_->encounters.size(); group++)
+    {
+        const bool beaten = std::none_of(creatures_.begin() + heroCount_, creatures_.end(),
+            [&](const Creature& c) { return c.group == static_cast<int>(group) && !c.sheet.down(); });
+        if (beaten)
+            won.insert(won.end(), chapter_->encounters[group].set.begin(), chapter_->encounters[group].set.end());
+    }
+    setFlags(won);
+
     if (chapterCleared())
     {
         playEnding();
@@ -780,8 +858,181 @@ void YoreholdGame::finishAdventure()
 
 bool YoreholdGame::chapterCleared() const
 {
-    return chapter_ && !chapter_->encounters.empty()
+    if (!chapter_)
+        return false;
+    if (!chapter_->completeWhen.empty())
+        return std::all_of(chapter_->completeWhen.begin(), chapter_->completeWhen.end(), [this](const std::string& f) { return flags_.contains(f); });
+    return !chapter_->encounters.empty()
         && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return !c.sheet.down(); });
+}
+
+// ---------------------------------------------------------------- story, NPCs and quests
+
+void YoreholdGame::setFlags(const std::vector<std::string>& flags)
+{
+    const std::set<std::string> before = flags_;
+    flags_.insert(flags.begin(), flags.end());
+    if (flags_ != before)
+        flagsChanged(before);
+}
+
+// Tells the party what changed in the journal.
+void YoreholdGame::flagsChanged(const std::set<std::string>& before)
+{
+    if (!journal_)
+        return;
+    for (const yh::Quest& quest : journal_->quests)
+    {
+        const yh::QuestProgress was = quest.progress(before);
+        const yh::QuestProgress now = quest.progress(flags_);
+        if (now.status == yh::QuestStatus::Hidden)
+            continue;
+        if (was.status == yh::QuestStatus::Hidden)
+            say("New quest: " + quest.title + " (J: journal)");
+        for (size_t i = 0; i < quest.objectives.size(); i++)
+            if (now.objectiveComplete[i] && !was.objectiveComplete[i] && now.status != yh::QuestStatus::Failed)
+                say("Done: " + quest.objectives[i].text);
+        if (now.status != was.status && now.status == yh::QuestStatus::Completed)
+        {
+            say("Quest complete: " + quest.title);
+            banner_ = quest.title;
+            bannerTime_ = 2.5;
+        }
+        else if (now.status != was.status && now.status == yh::QuestStatus::Failed)
+            say("Quest failed: " + quest.title);
+    }
+}
+
+size_t YoreholdGame::leaderIndex() const
+{
+    for (size_t i = 0; i < heroCount_; i++)
+        if (tokens_.tokens[i].selected && !creatures_[i].sheet.down())
+            return i;
+    for (size_t i = 0; i < heroCount_; i++)
+        if (!creatures_[i].sheet.down())
+            return i;
+    return 0;
+}
+
+std::optional<size_t> YoreholdGame::npcAt(yh::Cell c) const
+{
+    if (!chapter_)
+        return std::nullopt;
+    for (size_t i = 0; i < chapter_->npcs.size(); i++)
+        if (chapter_->npcs[i].at == c)
+            return i;
+    return std::nullopt;
+}
+
+std::optional<size_t> YoreholdGame::hoveredNpc() const
+{
+    if (!chapter_)
+        return std::nullopt;
+    const yh::Vec2 world = camera_.screenToWorld(input_.mouse());
+    for (size_t i = 0; i < chapter_->npcs.size(); i++)
+    {
+        const yh::Token& token = tokens_.tokens[npcToken(i)];
+        if (token.floor == 0 && distance(world, token.position) <= token.radius)
+            return i;
+    }
+    return std::nullopt;
+}
+
+void YoreholdGame::walkToTalk(size_t npc)
+{
+    const size_t leader = leaderIndex();
+    if (creatures_[leader].sheet.down())
+        return;
+    yh::Token& token = tokens_.tokens[leader];
+    const yh::Cell from = cellOf(leader);
+    const yh::Cell goal = chapter_->npcs[npc].at;
+    token.path.clear();
+    if (grid_.distance(from, goal) > 1.5f)
+    {
+        // The nearest open square next to them.
+        std::vector<yh::Cell> best;
+        for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                const yh::Cell next{goal.x + dx, goal.y + dy};
+                if ((dx || dy) && walkable(next))
+                {
+                    std::vector<yh::Cell> path = findPath(grid_, from, next, [this](yh::Cell c) { return walkable(c); });
+                    if (!path.empty() && (best.empty() || path.size() < best.size()))
+                        best = std::move(path);
+                }
+            }
+        for (size_t i = 1; i < best.size(); i++)
+            token.path.push_back(grid_.center(best[i]));
+    }
+    pendingTalk_ = npc;
+}
+
+void YoreholdGame::startTalk(size_t npc)
+{
+    const Chapter::Npc& who = chapter_->npcs[npc];
+    std::string error = "not found";
+    const std::optional<std::string> text = files_.readText(who.dialogue);
+    std::optional<yh::Dialogue> dialogue = text ? yh::Dialogue::fromJson(*text, &error) : std::nullopt;
+    if (!dialogue)
+    {
+        say(who.name + "'s dialogue " + who.dialogue + ": " + error);
+        return;
+    }
+    for (yh::Token& token : tokens_.tokens)
+        token.path.clear();
+    talkNpc_ = npc;
+    talk_ = std::make_unique<yh::DialogueSession>(std::move(*dialogue), flags_);
+    journalOpen_ = false;
+    // Node entry effects of the first line count too.
+    if (talk_->flags() != flags_)
+    {
+        const std::set<std::string> before = flags_;
+        flags_ = talk_->flags();
+        flagsChanged(before);
+    }
+}
+
+void YoreholdGame::chooseReply(size_t index)
+{
+    if (!talk_)
+        return;
+    const std::vector<const yh::DialogueChoice*> choices = talk_->choices();
+    if (talk_->finished() || choices.empty())
+    {
+        // The last line: any key or click ends it.
+        talk_.reset();
+        if (chapterCleared())
+            playEnding();
+        else
+            saveAdventure();
+        return;
+    }
+    if (index >= choices.size())
+        return;
+    const yh::DialogueChoice choice = *choices[index];
+    const yh::Character& speaker = creatures_[leaderIndex()].sheet;
+    const std::optional<yh::DialogueResult> result = talk_->choose(choice.id, [&](std::string_view skill) {
+        return speaker.rollCheck(rules_, skill, yh::Advantage::None, talkRandom_);
+    });
+    if (!result)
+        return;
+    say(speaker.name + ": " + choice.text);
+    if (result->roll && choice.check)
+        say(speaker.name + " rolls " + choice.check->skill + ": " + result->roll->describe() + " vs " +
+            std::to_string(choice.check->difficulty) + (result->passed ? ", success" : ", failure"));
+    const std::set<std::string> before = flags_;
+    flags_ = talk_->flags();
+    if (flags_ != before)
+        flagsChanged(before);
+    if (talk_->finished() && !talk_->current())
+    {
+        talk_.reset();
+        if (chapterCleared())
+            playEnding();
+        else
+            saveAdventure();
+    }
 }
 
 int YoreholdGame::restsLeft(const yh::RestDefinition& rest) const
@@ -1203,6 +1454,7 @@ void YoreholdGame::saveAdventure()
     data["seed"] = seed_;
     data["fights"] = fights_;
     data["restsUsed"] = restsUsed_;
+    data["flags"] = flags_;
     data["fog"] = nlohmann::json::parse(fog_.toJson());
     for (size_t i = 0; i < creatures_.size(); i++)
     {
@@ -1250,6 +1502,7 @@ bool YoreholdGame::loadAdventure()
         auto rests = data.at("restsUsed").get<std::map<std::string, int>>();
         if (fights < 0 || std::any_of(rests.begin(), rests.end(), [](const auto& entry) { return entry.second < 0; }))
             throw std::runtime_error("invalid adventure counters");
+        auto flags = data.value("flags", std::set<std::string>{});
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
         std::vector<bool> awake;
@@ -1270,6 +1523,7 @@ bool YoreholdGame::loadAdventure()
         fog_ = std::move(*fog);
         fights_ = fights;
         restsUsed_ = std::move(rests);
+        flags_ = std::move(flags);
         for (size_t i = 0; i < creatures_.size(); i++)
         {
             creatures_[i].sheet = std::move(sheets[i]);
@@ -1352,7 +1606,7 @@ bool YoreholdGame::occupied(yh::Cell c, size_t except) const
 
 bool YoreholdGame::walkable(yh::Cell c) const
 {
-    return map().walkable(c);
+    return map().walkable(c) && !npcAt(c);
 }
 
 std::optional<size_t> YoreholdGame::orderIndex(size_t creature) const
@@ -1615,11 +1869,20 @@ void YoreholdGame::drawHud(yh::Renderer& renderer)
     ui_.log(logArea, log_);
     uiRects_.push_back(logArea);
 
+    if (journal_)
+        drawJournal(renderer);
+    if (talk_)
+    {
+        drawDialogue(renderer);
+        return;
+    }
     if (!encounter_ || encounter_->finished())
     {
-        const char* hint = scheme_.preset == yh::ControlPreset::BG3
-            ? "Left-click: walk / select   Drag: box-select   WASD / edges: pan   Wheel: zoom   F6: Foundry controls"
-            : "Right-click: walk   Left: select / drag   Right-drag: pan   Wheel: zoom   F6: BG3 controls";
+        std::string hint = scheme_.preset == yh::ControlPreset::BG3
+            ? "Left-click: walk / select / talk   Drag: box-select   WASD / edges: pan   Wheel: zoom   F6: Foundry controls"
+            : "Right-click: walk / talk   Left: select / drag   Right-drag: pan   Wheel: zoom   F6: BG3 controls";
+        if (journal_)
+            hint += "   J: journal";
         ui_.label({12, screen.h - 30}, hint, ui_.theme.textDim);
     }
 
@@ -1979,4 +2242,118 @@ void YoreholdGame::drawCombatBar(yh::Renderer& renderer)
     }
     if (ui_.button({bar.x + bar.w - 140, bar.y + 13, 128, 40}, "End turn", !walking))
         endTurn();
+}
+
+void YoreholdGame::drawDialogue(yh::Renderer& renderer)
+{
+    const yh::DialogueNode* node = talk_->current();
+    if (!node)
+        return;
+    const yh::Rect screen = renderer.bounds();
+    const std::vector<const yh::DialogueChoice*> choices = talk_->choices();
+    // Between the party cards and the log.
+    const float width = std::clamp(screen.w - 300 - 460, 360.0f, 720.0f);
+    const float line = ui_.lineHeight();
+    std::vector<std::string> lines{node->text};
+    if (ui_.theme.font)
+        lines = ui_.theme.font->wrap(node->text, width - 32);
+    const size_t buttons = std::max<size_t>(1, choices.size());
+    const float height = 16 + line + lines.size() * line + 10 + buttons * 44 + 8;
+    const yh::Rect area{300, screen.h - height - 10, width, height};
+    ui_.panel(area);
+    uiRects_.push_back(area);
+
+    float y = area.y + 12;
+    const std::string speaker = node->speaker.empty() ? chapter_->npcs[talkNpc_].name : node->speaker;
+    ui_.label({area.x + 16, y}, speaker, ui_.theme.accent);
+    y += line;
+    for (const std::string& text : lines)
+    {
+        ui_.label({area.x + 16, y}, text);
+        y += line;
+    }
+    y += 10;
+    if (choices.empty())
+    {
+        if (ui_.button({area.x + 16, y, area.w - 32, 38}, "1. (Leave)"))
+            chooseReply(0);
+        return;
+    }
+    for (size_t i = 0; i < choices.size(); i++, y += 44)
+    {
+        std::string text = std::to_string(i + 1) + ". " + choices[i]->text;
+        if (choices[i]->check)
+            text += "  [" + choices[i]->check->skill + " " + std::to_string(choices[i]->check->difficulty) + "]";
+        if (ui_.button({area.x + 16, y, area.w - 32, 38}, text))
+        {
+            chooseReply(i);
+            return; // the conversation may be gone now
+        }
+    }
+}
+
+// A small tracker of the active quests (top right); J opens the whole journal.
+void YoreholdGame::drawJournal(yh::Renderer& renderer)
+{
+    const yh::Rect screen = renderer.bounds();
+    const std::vector<yh::QuestEntry> entries = journal_->entries(flags_);
+    const float line = ui_.lineHeight();
+    if (!journalOpen_)
+    {
+        std::vector<const yh::QuestEntry*> active;
+        for (const yh::QuestEntry& e : entries)
+            if (e.progress.status == yh::QuestStatus::Active)
+                active.push_back(&e);
+        if (active.empty() || (encounter_ && !encounter_->finished()))
+            return;
+        float rows = 0;
+        for (const yh::QuestEntry* e : active)
+            rows += 1 + e->quest->objectives.size();
+        const yh::Rect area{screen.w - 350, 10, 340, 14 + rows * line};
+        ui_.panel(area);
+        uiRects_.push_back(area);
+        float y = area.y + 7;
+        for (const yh::QuestEntry* e : active)
+        {
+            ui_.label({area.x + 12, y}, e->quest->title, ui_.theme.accent);
+            y += line;
+            for (size_t i = 0; i < e->quest->objectives.size(); i++, y += line)
+                ui_.label({area.x + 22, y}, (e->progress.objectiveComplete[i] ? "[x] " : "[ ] ") + e->quest->objectives[i].text,
+                    e->progress.objectiveComplete[i] ? ui_.theme.textDim : ui_.theme.text);
+        }
+        return;
+    }
+
+    const yh::Rect area{screen.w / 2 - 300, screen.h * 0.12f, 600, screen.h * 0.7f};
+    ui_.panel(area);
+    uiRects_.push_back(area);
+    if (title_)
+        title_->drawCentered(renderer, {area.x, area.y + 10, area.w, 60}, "Journal", {255, 214, 140, 255});
+    float y = area.y + 84;
+    if (entries.empty())
+        ui_.label({area.x + 24, y}, "Nothing yet.", ui_.theme.textDim);
+    for (const yh::QuestEntry& e : entries)
+    {
+        const char* status = e.progress.status == yh::QuestStatus::Completed ? "  (complete)"
+            : e.progress.status == yh::QuestStatus::Failed                 ? "  (failed)"
+                                                                           : "";
+        ui_.label({area.x + 24, y}, e.quest->title + status,
+            e.progress.status == yh::QuestStatus::Active ? ui_.theme.accent : ui_.theme.textDim);
+        y += line;
+        if (!e.quest->description.empty())
+        {
+            std::vector<std::string> lines{e.quest->description};
+            if (ui_.theme.font)
+                lines = ui_.theme.font->wrap(e.quest->description, area.w - 60);
+            for (const std::string& text : lines)
+            {
+                ui_.label({area.x + 36, y}, text, ui_.theme.textDim);
+                y += line;
+            }
+        }
+        for (size_t i = 0; i < e.quest->objectives.size(); i++, y += line)
+            ui_.label({area.x + 36, y}, (e.progress.objectiveComplete[i] ? "[x] " : "[ ] ") + e.quest->objectives[i].text);
+        y += 12;
+    }
+    ui_.label({area.x + 24, area.y + area.h - 34}, "J or Esc: close", ui_.theme.textDim);
 }

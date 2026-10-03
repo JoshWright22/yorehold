@@ -104,6 +104,14 @@ Party members have `name`, `class`, `color` and integer `at` cells. Encounter gr
 
 Writer-owned text includes `intro` lines, encounter `text`, `victoryText` (supports `{xp}`), `defeatText`, `resumeText` and `clearedText`. `xpPerVictory` supplies the reward. The code only provides generic defaults for omitted text.
 
+## NPCs, dialogue, quests and story flags
+
+`npcs` lists people the party can talk to: unique `id`, `name`, optional `color`, an integer `at` cell (walkable, not shared with anyone) and a `dialogue` file in the framework's dialogue format (see the framework's DIALOGUE.md). Clicking an NPC walks the selected hero over and opens the conversation; replies are buttons or keys 1-9, Esc walks away. Skill checks roll for the selected hero. The keep's `dialogue/wren.json` and `dialogue/tobb.json` are working examples.
+
+Story flags are the chapter's memory. Dialogue sets and clears them, and an encounter's optional `set` list is applied when that group is beaten. `quests` names a journal file in the framework's quest format (QUESTS.md); quests and objectives follow the flags, and the party is told when one appears, progresses, completes or fails. J opens the journal. Flags are saved with the adventure.
+
+`completeWhen` lists flags that finish the chapter once all are set (checked after fights and after a conversation ends). Without it, the chapter is complete when every encounter is won.
+
 `endings.cleared` names a cutscene file. It is checked before play. Omit it or use an empty string to finish with the authored `clearedText` banner. Cutscene steps support `camera` in world units, `zoom`, `caption`, `title`, `pause`, `fade`, `bars`, and `event`, with `seconds`, `ease` and `wait`. The shipped `ending.json` is the working example; its captions remain the chapter writer's text.
 
 Saves record chapter id, folder and a signature of chapter/map/rules/definitions/ending data. Edited content or another chapter cannot silently accept old sheets and placements. Earlier keep saves migrate from versions 1/2, with count and fog-size checks retained.
