@@ -1,0 +1,308 @@
+#include "Chapter.h"
+#include "ContentPackage.h"
+#include "YoreholdGame.h"
+
+#include <yorehold/framework/assets/FileSystem.h>
+#include <yorehold/framework/map/Pathfinding.h>
+
+#include <nlohmann/json.hpp>
+#include <SDL3/SDL.h>
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <set>
+
+namespace
+{
+
+namespace fs = std::filesystem;
+using nlohmann::json;
+int checks = 0;
+int failures = 0;
+
+void check(bool passed, const char* description)
+{
+    ++checks;
+    if (passed) return;
+    ++failures;
+    std::fprintf(stderr, "FAIL: %s\n", description);
+}
+
+void write(const fs::path& path, const json& data)
+{
+    fs::create_directories(path.parent_path());
+    std::ofstream file(path, std::ios::binary);
+    file << data.dump(2);
+    if (!file) throw std::runtime_error("couldn't write fixture " + path.string());
+}
+
+struct Scratch
+{
+    fs::path path = fs::temp_directory_path() / ("yorehold-content-tests-"
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    Scratch() { fs::create_directories(path); }
+    ~Scratch() { std::error_code error; fs::remove_all(path, error); }
+};
+
+void contentTests(const fs::path& scratch)
+{
+    yh::FileSystem files;
+    check(files.mountFolder(YH_GAME_ASSETS, "game"), "Mount authored game files");
+    std::string error;
+    auto content = ContentPackage::load(files, &error);
+    check(content && content->validate(files, &error), "The whole shipped content package validates");
+    if (!content) return;
+    auto chapter = Chapter::load(files, content->defaultChapter, &error);
+    check(chapter.has_value(), "Load the keep from chapter files");
+    if (!chapter) { std::fprintf(stderr, "%s\n", error.c_str()); return; }
+    check(chapter->party.size() == 4 && chapter->encounters.size() == 3, "The authored keep preserves its party and encounters");
+    check(chapter->map.width() == 48 && chapter->map.height() == 30, "Map size comes from the rows");
+    check(!chapter->clearedCutscene.empty() && files.exists(chapter->clearedCutscene), "The chapter resolves its own ending file");
+    check(chapter->clearedText == "The goblins are gone. The keep is yours!", "The writer owns the completion text");
+
+    const yh::Grid grid(yh::GridType::Square, GameMap::cellSize);
+    const auto start = chapter->party.front().at;
+    std::set<std::pair<int, int>> taken;
+    for (const auto& member : chapter->party)
+        check(chapter->map.walkable(member.at) && taken.insert({member.at.x, member.at.y}).second, "Party placements are open and distinct");
+    for (const auto& encounter : chapter->encounters)
+        for (const auto& enemy : encounter.creatures)
+        {
+            check(chapter->map.walkable(enemy.at) && taken.insert({enemy.at.x, enemy.at.y}).second, "Enemy placements are open and distinct");
+            const auto path = yh::findPath(grid, start, enemy.at, [&](yh::Cell cell) { return chapter->map.walkable(cell); });
+            check(!path.empty() && path.front() == start && path.back() == enemy.at, "Every encounter is reachable");
+        }
+    const auto bounds = chapter->map.map().worldBounds();
+    check(!chapter->map.walls().empty() && std::all_of(chapter->map.walls().begin(), chapter->map.walls().end(), [&](const yh::Wall& wall) {
+        auto inside = [&](yh::Vec2 point) { return point.x >= 0 && point.y >= 0 && point.x <= bounds.w && point.y <= bounds.h; };
+        return inside(wall.a) && inside(wall.b) && wall.a != wall.b && (wall.a.x == wall.b.x || wall.a.y == wall.b.y);
+    }), "Loaded maps provide valid walls for vision and lighting");
+    check(std::all_of(chapter->map.lights().begin(), chapter->map.lights().end(), [&](const GameMap::Light& light) {
+        return std::isfinite(light.radius) && light.radius > 0 && chapter->map.inside(grid.cellAt(light.position));
+    }), "Loaded lights have valid locations and radii");
+
+    yh::Random random(1);
+    const auto hero = chapter->compendium.makeCharacter(chapter->rules, "fighter", "Hero", random);
+    const auto goblin = chapter->compendium.makeCreature(chapter->rules, "goblin", "Custom name", random);
+    check(hero && hero->inventory.size() == 3 && hero->weapon() && hero->weapon()->id == "longsword", "Classes supply starting gear");
+    check(goblin && goblin->name == "Custom name" && goblin->hp == 7 && goblin->armorClass(chapter->rules) == 13, "Creature files supply names, HP and final AC");
+    const auto& originalClass = *chapter->compendium.characterClass("fighter");
+    const auto classCopy = yh::Compendium::classFromJson(yh::Compendium::classToJson(originalClass));
+    check(classCopy && classCopy->items == originalClass.items && classCopy->proficiencies == originalClass.proficiencies, "Class files round-trip gear and proficiencies");
+    const auto& originalItem = *chapter->compendium.item("chain-shirt");
+    const auto itemCopy = yh::Compendium::itemFromJson(yh::Compendium::itemToJson(originalItem));
+    check(itemCopy && itemCopy->modifiers.size() == 1 && itemCopy->modifiers.front().value == originalItem.modifiers.front().value, "Item files round-trip their modifiers");
+    const auto& originalCreature = *chapter->compendium.creature("goblin-boss");
+    const auto creatureCopy = yh::Compendium::creatureFromJson(yh::Compendium::creatureToJson(originalCreature));
+    check(creatureCopy && creatureCopy->hp == 20 && creatureCopy->token.size == originalCreature.token.size, "Creature files round-trip stats and appearance");
+
+    const auto archive = scratch / "keep.yore";
+    check(yh::FileSystem::packFolder(YH_GAME_ASSETS, archive.string()), "Export all content into a .yore archive");
+    yh::FileSystem portable;
+    check(ContentPackage::mount(portable, archive.string(), "portable"), "Import the archive by itself");
+    auto manifest = ContentPackage::load(portable, &error);
+    check(manifest && manifest->validate(portable, &error), "Imported content has all its dependencies");
+    auto imported = manifest ? Chapter::load(portable, manifest->defaultChapter, &error) : std::nullopt;
+    check(imported && imported->signature == chapter->signature, "Transfer preserves content identity");
+
+    const auto overrideRoot = scratch / "overrides";
+    fs::create_directories(overrideRoot);
+    check(files.mountFolder(overrideRoot.string(), "overrides"), "Mount author overrides");
+    const auto original = json::parse(*files.readText("chapters/goblin-keep/chapter.json"));
+    const auto chapterFile = overrideRoot / "chapters/goblin-keep/chapter.json";
+    auto data = original;
+    data["party"] = json::array({original["party"][0]});
+    data["encounters"] = json::array();
+    data["endings"] = json::object();
+    data["intro"] = json::array({"The author's introduction."});
+    data["clearedText"] = "The author's ending.";
+    write(chapterFile, data);
+    auto small = Chapter::load(files, content->defaultChapter, &error);
+    check(small && small->party.size() == 1 && small->encounters.empty() && small->intro.front() == "The author's introduction."
+        && small->clearedText == "The author's ending.", "Chapter writers can change party size, encounters and story");
+    check(small && small->signature != chapter->signature, "Content edits invalidate old save identity");
+    data["party"][0]["class"] = "unknown";
+    write(chapterFile, data);
+    check(!Chapter::load(files, content->defaultChapter, &error) && error.find("unknown class") != std::string::npos, "Unknown class ids report the chapter file");
+    data = original;
+    data["encounters"][0]["creatures"][0]["at"] = original["party"][0]["at"];
+    write(chapterFile, data);
+    check(!Chapter::load(files, content->defaultChapter, &error) && error.find("occupied") != std::string::npos, "Overlapping placements are rejected");
+    data = original;
+    data["encounters"][1]["id"] = data["encounters"][0]["id"];
+    write(chapterFile, data);
+    check(!Chapter::load(files, content->defaultChapter, &error) && error.find("duplicate encounter") != std::string::npos, "Encounter ids are unique");
+    data = original;
+    data["endings"]["cleared"] = "missing.json";
+    write(chapterFile, data);
+    check(!Chapter::load(files, content->defaultChapter, &error) && error.find("missing.json") != std::string::npos, "Missing endings are caught before play");
+    data["endings"]["cleared"] = "../outside.json";
+    write(chapterFile, data);
+    check(!Chapter::load(files, content->defaultChapter, &error), "Chapter paths stay within the content tree");
+    write(chapterFile, original);
+    check(!Chapter::load(files, "../outside", &error), "Invalid chapter folders are rejected");
+
+    auto boss = json::parse(yh::Compendium::creatureToJson(originalCreature));
+    boss["hp"] = 33;
+    write(overrideRoot / "chapters/goblin-keep/creatures/goblin-boss.json", boss);
+    auto custom = Chapter::load(files, content->defaultChapter, &error);
+    check(custom && custom->compendium.creature("goblin-boss")->hp == 33 && custom->signature != chapter->signature,
+        "Chapter definitions override shared definitions and update save identity");
+    yh::Compendium compendium;
+    check(compendium.load(portable, "", &error), "Load shared classes, items and creatures independently");
+    write(overrideRoot / "bad/classes/fighter.json", {{"id", "fighter"}, {"items", {"missing-item"}}});
+    check(!compendium.load(files, "bad", &error) && compendium.characterClass("fighter")->items == originalClass.items,
+        "A broken content import leaves the existing compendium intact");
+
+    auto badManifest = json::parse(*portable.readText("content.json"));
+    badManifest["version"] = 999;
+    write(overrideRoot / "content.json", badManifest);
+    check(!ContentPackage::load(files, &error), "Future package versions fail clearly");
+    badManifest["version"] = 1;
+    badManifest["defaultChapter"] = "unlisted";
+    write(overrideRoot / "content.json", badManifest);
+    check(!ContentPackage::load(files, &error), "Manifest defaults must name a declared chapter");
+}
+
+void mapTests()
+{
+    const auto original = json::parse(R"({
+        "tiles": {
+            "floor": {"color": [90, 100, 110]},
+            "glass": {"walkable": false, "blocksSight": false},
+            "wall": {"walkable": false, "blocksSight": true}
+        },
+        "legend": {".": "floor", "#": "wall", "g": "glass"},
+        "layers": [
+            {"name": "ground", "rows": ["....", "...."]},
+            {"name": "walls", "rows": [" #g ", "    "]}
+        ],
+        "ambient": [10, 20, 30],
+        "lights": [{"at": [0.5, 1.5], "radius": 2, "flame": false}]
+    })");
+    auto map = GameMap::fromJson(original.dump());
+    check(map && map->width() == 4 && map->height() == 2 && map->walkable({0, 0}) && !map->walkable({1, 0}), "Map layers combine ground and obstacles");
+    check(map && map->blocksSight({1, 0}) && !map->blocksSight({2, 0}) && !map->walkable({2, 0}), "Sight and movement blocking are independent");
+    check(map && map->ambient().r == 10 && !map->lights().front().flame && map->lights().front().radius == 2 * GameMap::cellSize, "Ambient and steady lights come from files");
+    check(map && !map->walkable({-1, 0}) && !map->walkable({4, 0}), "Loaded maps stop movement at their bounds");
+    auto data = original;
+    data["layers"][0]["rows"][0] = " ...";
+    map = GameMap::fromJson(data.dump());
+    check(map && !map->walkable({0, 0}), "Empty ground is not walkable");
+    data = original;
+    data["layers"][1]["rows"][0] = "short";
+    check(!GameMap::fromJson(data.dump()), "Rows must have matching widths");
+    data = original;
+    data["layers"][1]["rows"][0] = " ?  ";
+    check(!GameMap::fromJson(data.dump()), "Unknown tile symbols fail validation");
+    data = original;
+    data["ambient"] = {300, 0, 0};
+    check(!GameMap::fromJson(data.dump()), "Invalid ambient colors fail validation");
+    data = original;
+    data["lights"][0]["at"] = {9, 1};
+    check(!GameMap::fromJson(data.dump()), "Lights stay inside the map");
+}
+
+void gameErrorTests()
+{
+    SDL_setenv_unsafe("YOREHOLD_SEED", "1", 1);
+    SDL_setenv_unsafe("YOREHOLD_CHAPTER", "missing", 1);
+    YoreholdGame game;
+    SDL_Event key{};
+    key.type = SDL_EVENT_KEY_DOWN;
+    key.key.key = SDLK_F9;
+    game.handleEvent(key);
+    game.update(1);
+    check(game.describe().starts_with("screen: content error"), "Auto-play cannot enter an unloaded chapter");
+    key.key.key = SDLK_RETURN;
+    game.handleEvent(key);
+    game.handleEvent(key);
+    game.update(1);
+    check(game.describe().starts_with("screen: content error"), "Enter cannot start an unloaded chapter");
+    SDL_unsetenv_unsafe("YOREHOLD_CHAPTER");
+    SDL_unsetenv_unsafe("YOREHOLD_SEED");
+}
+
+void saveTests(const fs::path& scratch)
+{
+    const auto saveDir = scratch / "saves";
+    SDL_setenv_unsafe("YOREHOLD_SAVE_DIR", saveDir.string().c_str(), 1);
+    SDL_setenv_unsafe("YOREHOLD_CONTENT", YH_GAME_ASSETS, 1);
+    SDL_Event enter{};
+    enter.type = SDL_EVENT_KEY_DOWN;
+    enter.key.key = SDLK_RETURN;
+    auto playAndSave = [&] {
+        YoreholdGame game;
+        game.handleEvent(enter); // Main -> Play
+        game.handleEvent(enter); // New or Continue
+        game.unload();
+    };
+    auto readSave = [&] {
+        std::ifstream file(saveDir / "adventure.json", std::ios::binary);
+        return json::parse(file);
+    };
+    playAndSave();
+    auto saved = readSave();
+    check(saved["version"] == 3 && saved["data"]["chapterId"] == "goblin-keep" && saved["data"].contains("chapterSignature"),
+        "New saves record chapter identity and content signature");
+    saved["data"]["creatures"][0]["sheet"]["xp"] = 17;
+    write(saveDir / "adventure.json", saved);
+    playAndSave();
+    check(readSave()["data"]["creatures"][0]["sheet"]["xp"] == 17, "Continue restores a save from the same content");
+    saved["version"] = 2;
+    saved["data"].erase("chapterId");
+    saved["data"].erase("chapterFolder");
+    saved["data"].erase("chapterSignature");
+    write(saveDir / "adventure.json", saved);
+    playAndSave();
+    check(readSave()["version"] == 3 && readSave()["data"]["creatures"][0]["sheet"]["xp"] == 17, "Version 2 keep saves still resume");
+    saved["version"] = 1;
+    saved["data"].erase("restsUsed");
+    saved["data"]["restsLeft"] = 1;
+    write(saveDir / "adventure.json", saved);
+    playAndSave();
+    check(readSave()["data"]["restsUsed"]["short"] == 1 && readSave()["data"]["creatures"][0]["sheet"]["xp"] == 17,
+        "Version 1 keep saves migrate rests and chapter identity");
+    saved = readSave();
+    saved["data"]["chapterId"] = "other-chapter";
+    write(saveDir / "adventure.json", saved);
+    playAndSave();
+    check(readSave()["data"]["creatures"][0]["sheet"]["xp"] == 0, "Saves cannot load sheets from another chapter");
+    saved["data"]["chapterId"] = "goblin-keep";
+    saved["data"]["chapterSignature"] = "old-content";
+    write(saveDir / "adventure.json", saved);
+    playAndSave();
+    check(readSave()["data"]["creatures"][0]["sheet"]["xp"] == 0, "Edited content rejects old saves");
+    saved = readSave();
+    saved["data"]["creatures"][0]["sheet"]["xp"] = 17;
+    saved["data"]["fog"]["width"] = 1;
+    write(saveDir / "adventure.json", saved);
+    playAndSave();
+    check(readSave()["data"]["creatures"][0]["sheet"]["xp"] == 0, "Mismatched fog dimensions are rejected");
+    SDL_unsetenv_unsafe("YOREHOLD_SAVE_DIR");
+    SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
+}
+
+}
+
+int main()
+{
+    try
+    {
+        Scratch scratch;
+        contentTests(scratch.path);
+        mapTests();
+        gameErrorTests();
+        saveTests(scratch.path);
+    }
+    catch (const std::exception& e)
+    {
+        check(false, e.what());
+    }
+    std::printf("%d content checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+}

@@ -1,0 +1,19 @@
+{
+  "id": "fighter",
+  "name": "Fighter",
+  "description": "A trained warrior in heavy armour.",
+  "hitDie": 10,
+  "bonusHp": 4,
+  "speed": 30,
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "longsword",
+    "chain-shirt",
+    "shield"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "rogue",
+  "name": "Rogue",
+  "description": "Quick, quiet and hard to pin down.",
+  "hitDie": 8,
+  "bonusHp": 2,
+  "speed": 30,
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "shortsword",
+    "leather"
+  ]
+}

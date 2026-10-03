@@ -1,0 +1,8 @@
+{
+  "id": "greataxe",
+  "name": "Greataxe",
+  "slot": "mainHand",
+  "damage": "1d12",
+  "attackAbility": "str",
+  "weight": 3
+}

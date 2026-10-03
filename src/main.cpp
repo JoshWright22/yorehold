@@ -1,20 +1,13 @@
-#include <yorehold/framework/Host.h>
+#include "YoreholdGame.h"
 
-#include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-class YoreholdGame : public yh::Game
+int main(int argc, char** argv)
 {
-public:
-    void draw(SDL_Renderer* renderer) override
-    {
-        SDL_SetRenderDrawColor(renderer, 14, 18, 32, 255);
-        SDL_RenderClear(renderer);
-    }
-};
+    yh::HostSettings settings;
+    settings.feedbackDir = YH_FEEDBACK_DIR;
+    settings.stateDir = YH_DEV_STATE_DIR;
 
-int main(int, char**)
-{
     YoreholdGame game;
-    return yh::run(game);
+    return yh::run(game, yh::parseHostArgs(argc, argv, settings));
 }

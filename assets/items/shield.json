@@ -1,0 +1,13 @@
+{
+  "id": "shield",
+  "name": "Shield",
+  "slot": "offHand",
+  "weight": 6,
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 2
+    }
+  ]
+}

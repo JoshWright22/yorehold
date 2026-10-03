@@ -1,0 +1,13 @@
+{
+  "id": "chain-shirt",
+  "name": "Chain shirt",
+  "slot": "armor",
+  "weight": 15,
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "override",
+      "value": 13
+    }
+  ]
+}

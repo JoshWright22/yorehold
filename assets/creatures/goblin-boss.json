@@ -1,0 +1,22 @@
+{
+  "id": "goblin-boss",
+  "name": "Goblin boss",
+  "description": "Bigger, meaner, and in charge.",
+  "hp": 20,
+  "armorClass": 15,
+  "speed": 30,
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "battleaxe"
+  ],
+  "token": {
+    "color": [
+      180,
+      60,
+      50
+    ],
+    "size": 0.46
+  }
+}

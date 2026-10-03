@@ -1,0 +1,156 @@
+{
+  "id": "goblin-keep",
+  "title": "The Goblin Keep",
+  "ruleset": "modern",
+  "map": "map.json",
+  "intro": [
+    "Night falls on the old keep. Goblins have taken it.",
+    "Click the ground to walk. The party follows the leader."
+  ],
+  "xpPerVictory": 50,
+  "party": [
+    {
+      "name": "Astra",
+      "class": "fighter",
+      "color": [
+        220,
+        90,
+        80
+      ],
+      "at": [
+        4,
+        14
+      ]
+    },
+    {
+      "name": "Brom",
+      "class": "cleric",
+      "color": [
+        90,
+        160,
+        230
+      ],
+      "at": [
+        3,
+        14
+      ]
+    },
+    {
+      "name": "Cel",
+      "class": "rogue",
+      "color": [
+        150,
+        110,
+        220
+      ],
+      "at": [
+        3,
+        15
+      ]
+    },
+    {
+      "name": "Dax",
+      "class": "barbarian",
+      "color": [
+        230,
+        190,
+        80
+      ],
+      "at": [
+        2,
+        15
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "entry-hall",
+      "text": "Goblins! Roll for initiative.",
+      "creatures": [
+        {
+          "creature": "goblin",
+          "name": "Gob",
+          "at": [
+            28,
+            12
+          ]
+        },
+        {
+          "creature": "goblin",
+          "name": "Snik",
+          "at": [
+            28,
+            17
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storeroom",
+      "text": "Goblins! Roll for initiative.",
+      "creatures": [
+        {
+          "creature": "goblin",
+          "name": "Rattle",
+          "at": [
+            21,
+            4
+          ]
+        },
+        {
+          "creature": "goblin",
+          "name": "Mog",
+          "at": [
+            27,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chiefs-hall",
+      "text": "Chief Grak bellows. The goblins charge!",
+      "creatures": [
+        {
+          "creature": "goblin",
+          "name": "Nib",
+          "at": [
+            38,
+            11
+          ]
+        },
+        {
+          "creature": "goblin",
+          "name": "Grub",
+          "at": [
+            41,
+            18
+          ]
+        },
+        {
+          "creature": "goblin",
+          "name": "Skab",
+          "at": [
+            36,
+            15
+          ]
+        },
+        {
+          "creature": "goblin-boss",
+          "name": "Chief Grak",
+          "at": [
+            44,
+            14
+          ]
+        }
+      ]
+    }
+  ],
+  "victoryText": "Victory! Everyone gains {xp} XP.",
+  "defeatText": "The party has fallen.",
+  "resumeText": "Welcome back. The keep awaits.",
+  "clearedText": "The goblins are gone. The keep is yours!",
+  "endings": {
+    "cleared": "ending.json"
+  }
+}

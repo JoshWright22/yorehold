@@ -1,0 +1,7 @@
+{
+  "format": "yorehold.content",
+  "version": 1,
+  "defaultChapter": "chapters/goblin-keep",
+  "chapters": ["chapters/goblin-keep"],
+  "theme": "ui/theme.json"
+}

@@ -6,7 +6,13 @@ This is the game client: desktop, mobile and browser. It's built on [yorehold-fr
 
 ## Status
 
-Very early. Right now the client opens a window and draws an empty scene. Nothing is playable yet.
+Very early. The first playable slice is in: a party of four explores a goblin-held keep at night (fog of war, torches and lanterns with shadows), and spotting enemies starts a turn-based fight on the grid. There's a title screen (Play, Create, Settings, Exit), an Esc pause menu, rests from the ruleset between fights, a chapter-authored end cutscene, and an autosave you can Continue from. Settings and the save live in SDL's per-user folder (`%APPDATA%/Yorehold/Yorehold` on Windows). Classes, items, creatures, maps, party and enemy placements, chapter text, endings and UI theme now come from JSON files under `assets/`.
+
+Create will cover game design, UI design, maps, tokens and encounters, cutscenes and dialogue. Game and UI design come before building those editing tools. The visual editor is still planned; the file foundation and transfer tools work now. Decisions and scope: [Create design](docs/CREATE_DESIGN.md). Formats, validation and `.yore` export/import: [content files](docs/CONTENT.md).
+
+Testing whole runs: F9 turns on auto-play (the party explores and fights by itself and prints its log to stdout). `YOREHOLD_SEED=<n>` replays the same adventure, skips the title and never touches your save; `YOREHOLD_SAVE_DIR=<dir>` moves the save somewhere else. `YOREHOLD_CONTENT=<folder-or.yore>` loads transferred content, and `YOREHOLD_CHAPTER=<virtual-folder>` selects a chapter in it. Broken content stays on the title screen with an error. Saves record the chapter and its content identity so they cannot silently resume a different or edited adventure.
+
+`yorehold-tests` opens the client's visual test browser. In any build, F3 shows frame times and F12 saves a screenshot with a note to `../feedback/`. Layout and test commands: [yorehold-framework/docs/STRUCTURE.md](https://github.com/JoshWright22/yorehold-framework/blob/main/docs/STRUCTURE.md).
 
 What it's going to be:
 
@@ -29,8 +35,8 @@ What it's going to be:
 ### Prerequisites
 
 - Windows 10+ for now (Linux, macOS, Android and web builds come later)
-- [CMake](https://cmake.org/download/) 3.24+
-- A C++20 compiler. Visual Studio 2022 with "Desktop development with C++" is the easiest on Windows.
+- Visual Studio 2026 (or its Build Tools) with "Desktop development with C++". The prebuilt Dawn (WebGPU) library needs its compiler; VS 2022 won't link.
+- CMake 4.2+ (the copy bundled with VS 2026 works)
 - Git
 
 ### Getting the code
@@ -49,11 +55,13 @@ If your framework lives somewhere else, pass `-DYOREHOLD_FRAMEWORK_DIR=<path>` t
 ### Building
 
 ```shell
-cmake -S . -B build
-cmake --build build
+cmake -S . -B out -G "Visual Studio 18 2026" -A x64
+cmake --build out --config RelWithDebInfo
 ```
 
-The first configure downloads SDL3, so it takes a minute. On Windows, open `build/Yorehold.sln` in Visual Studio; `yorehold` is already set as the startup project.
+The first configure downloads SDL3 and a ~120 MB prebuilt Dawn into `../.deps` (shared by all build folders). Executables land in `out/bin/RelWithDebInfo`. You can also open `out/Yorehold.slnx` in Visual Studio; `yorehold` is the startup project.
+
+Easiest: run `dev.ps1` from the folder above the repos. It builds, opens the app, and rebuilds + reopens it whenever a source file is saved.
 
 ## Contributing
 

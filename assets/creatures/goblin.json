@@ -1,0 +1,22 @@
+{
+  "id": "goblin",
+  "name": "Goblin",
+  "description": "Small, mean and never alone.",
+  "hp": 7,
+  "armorClass": 13,
+  "speed": 30,
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "scimitar"
+  ],
+  "token": {
+    "color": [
+      120,
+      150,
+      60
+    ],
+    "size": 0.36
+  }
+}

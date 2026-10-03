@@ -1,0 +1,8 @@
+{
+  "id": "shortsword",
+  "name": "Shortsword",
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "dex",
+  "weight": 3
+}

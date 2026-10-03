@@ -1,0 +1,18 @@
+{
+  "id": "barbarian",
+  "name": "Barbarian",
+  "description": "A furious fighter who shrugs off wounds.",
+  "hitDie": 12,
+  "bonusHp": 4,
+  "speed": 30,
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "greataxe",
+    "hide"
+  ]
+}

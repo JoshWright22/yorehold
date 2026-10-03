@@ -1,0 +1,19 @@
+{
+  "id": "cleric",
+  "name": "Cleric",
+  "description": "A priest who fights with faith and steel.",
+  "hitDie": 8,
+  "bonusHp": 4,
+  "speed": 30,
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "mace",
+    "chain-shirt",
+    "shield"
+  ]
+}
