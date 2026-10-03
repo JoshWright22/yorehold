@@ -125,6 +125,7 @@ void YoreholdGame::refreshLibrary()
     adventures_.clear();
     packages_.clear();
     chapterError_.clear();
+    compendium_ = {};
 
     // YOREHOLD_CONTENT plays a folder or .yore in place, without installing it (for testing content).
     if (const char* source = SDL_getenv("YOREHOLD_CONTENT"))
@@ -155,6 +156,7 @@ void YoreholdGame::refreshLibrary()
         adventures_.insert(adventures_.end(), package.adventures.begin(), package.adventures.end());
     for (const std::string& problem : problems)
         std::fprintf(stderr, "Library: %s\n", problem.c_str());
+    compendium_ = ContentLibrary::compendium(YH_GAME_ASSETS, packages_);
 }
 
 bool YoreholdGame::installedAdventure() const
@@ -1707,13 +1709,16 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     }
     case Menu::Create:
     {
-        const yh::Rect panel{screen.w / 2 - 300, y, 600, 170};
+        const yh::Rect panel{screen.w / 2 - 300, y, 600, 200};
         ui_.panel(panel);
         ui_.label({panel.x + 20, panel.y + 18}, "Create: design, build, playtest and share", ui_.theme.accent);
         ui_.label({panel.x + 20, panel.y + 50}, "Plan the game and UI before building its editing tools.");
         ui_.label({panel.x + 20, panel.y + 76}, "Maps, walls, lights, tokens, encounters and dialogue.");
         ui_.label({panel.x + 20, panel.y + 102}, "Chapter writers own placement, story and cutscenes.");
         ui_.label({panel.x + 20, panel.y + 134}, "The visual editor is planned; content files work now.", ui_.theme.textDim);
+        ui_.label({panel.x + 20, panel.y + 164}, "Compendium: " + std::to_string(compendium_.classes.size()) + " classes, "
+            + std::to_string(compendium_.items.size()) + " items, " + std::to_string(compendium_.creatures.size())
+            + " creatures (add more by opening .yore files)", ui_.theme.textDim);
         y += panel.h + gap;
         if (button("Back (Esc)"))
             openMenu(Menu::Main);

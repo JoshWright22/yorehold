@@ -12,7 +12,9 @@ A `.yore` file is how rulesets, classes, items, creatures, maps and whole advent
 
 The game checks the whole file first. If it is valid, it is copied into the library (`library/` beside the save, `%APPDATA%/Yorehold/Yorehold/library` on Windows) and its first adventure is selected on the Play menu. Play > Adventures lists every built-in and added adventure; the last one picked is remembered. Adding a file with the same name again replaces the old copy. A file that fails its checks is not copied, and the title screen says what was wrong. To remove one, delete it from the library folder.
 
-Each added adventure keeps its own autosave. A file may hold only definitions (classes, items, creatures, rulesets) and no chapter: leave `chapters` out of the manifest. It is checked, stored and listed, ready for chapters and the editor to draw on. Adventures still have to carry everything they use, so an added file never changes another adventure.
+Each added adventure keeps its own autosave. A file may hold only definitions (classes, items, creatures, rulesets) and no chapter: leave `chapters` out of the manifest. It is checked, stored and listed, and its definitions join the compendium: everything there is to build with when making characters or adventures. If two files define the same id, the later file name wins there.
+
+Added files never change an adventure. Adventures are prewritten: each plays with exactly what its own file carries, so it behaves the same for everyone whatever else is installed.
 
 ## Layout
 

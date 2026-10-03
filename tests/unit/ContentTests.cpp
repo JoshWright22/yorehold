@@ -197,6 +197,27 @@ void libraryTests(const fs::path& scratch)
     check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 4 && pack->items == 10 && pack->creatures == 0,
         "Classes and items can be shared without an adventure");
 
+    // A pack with one new class: it joins the compendium without touching the installed adventure.
+    const auto extra = scratch / "extra";
+    auto wizard = json::parse(std::ifstream(fs::path(YH_GAME_ASSETS) / "classes" / "fighter.json"));
+    wizard["id"] = "wizard";
+    wizard["name"] = "Wizard";
+    wizard["items"] = json::array();
+    write(extra / "classes" / "wizard.json", wizard);
+    write(extra / "content.json", {{"format", "yorehold.content"}, {"version", 1}, {"name", "Wizards"}});
+    check(yh::FileSystem::packFolder(extra.string(), (scratch / "wizards.yore").string())
+        && ContentLibrary::install((scratch / "wizards.yore").string(), library, &error), "Add a pack with one new class");
+    const auto packs = ContentLibrary::installed(library);
+    const yh::Compendium all = ContentLibrary::compendium(YH_GAME_ASSETS, packs);
+    check(all.classes.size() == 5 && all.characterClass("wizard") && all.characterClass("fighter") && all.items.size() == 10,
+        "Added packs extend the compendium used for making things");
+    const auto unchanged = ContentLibrary::inspect(added->path, &error);
+    yh::FileSystem keepFiles;
+    ContentPackage::mount(keepFiles, added->path, "keep");
+    const auto keepChapter = Chapter::load(keepFiles, "chapters/goblin-keep", &error);
+    check(unchanged && keepChapter && !keepChapter->compendium.characterClass("wizard"), "Adventures only use what their own file carries");
+    check(ContentLibrary::remove(packs.back()), "Remove the extra pack");
+
     {
         std::ofstream broken(scratch / "broken.yore", std::ios::binary);
         broken << "not a package";

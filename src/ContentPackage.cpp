@@ -214,3 +214,17 @@ bool ContentLibrary::remove(const Package& package)
     std::error_code problem;
     return fs::remove(package.path, problem) && !problem;
 }
+
+yh::Compendium ContentLibrary::compendium(const std::string& builtIn, const std::vector<Package>& packages)
+{
+    yh::Compendium all;
+    auto add = [&all](const std::string& source) {
+        yh::FileSystem files;
+        if (ContentPackage::mount(files, source, "package"))
+            all.load(files, "", nullptr); // all-or-nothing per source: a broken one adds nothing
+    };
+    add(builtIn);
+    for (const Package& package : packages)
+        add(package.path);
+    return all;
+}

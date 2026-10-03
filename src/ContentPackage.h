@@ -7,6 +7,7 @@
 namespace yh
 {
 class FileSystem;
+class Compendium;
 }
 
 // A complete, transferable content folder, optionally zipped as .yore. The manifest declares
@@ -54,4 +55,8 @@ struct ContentLibrary
     // Every valid package in `folder`, by file name. Broken files are skipped and listed in `problems`.
     static std::vector<Package> installed(const std::string& folder, std::vector<std::string>* problems = nullptr);
     static bool remove(const Package& package);
+    // Everything there is to build with when making characters and adventures: the definitions in
+    // `builtIn` plus those of every package, in order (a later id replaces an earlier one).
+    // Adventures never read this; they play with what their own file carries.
+    static yh::Compendium compendium(const std::string& builtIn, const std::vector<Package>& packages);
 };

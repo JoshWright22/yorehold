@@ -151,6 +151,7 @@ private:
     std::string themePath_;
     std::vector<ContentLibrary::Adventure> adventures_;
     std::vector<ContentLibrary::Package> packages_; // installed .yore files
+    yh::Compendium compendium_; // built-in plus installed definitions, for making characters and adventures
     size_t adventure_ = 0; // index into adventures_
     size_t adventurePage_ = 0;
     std::string notice_; // result of the last added file, shown on the title menus
