@@ -5,6 +5,7 @@
   "hp": 20,
   "armorClass": 15,
   "speed": 30,
+  "darkvision": 60,
   "proficiencies": [
     "weapons"
   ],

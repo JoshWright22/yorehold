@@ -104,6 +104,27 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
         GameMap m;
         m.name_ = j.value("name", "");
         if (j.contains("ambient")) m.ambient_ = colorFrom(j.at("ambient"));
+        if (j.contains("lighting"))
+        {
+            const auto& l = j.at("lighting");
+            const std::string mode = l.value("mode", "mood");
+            if (mode == "off") m.lighting_.mode = LightingMode::Off;
+            else if (mode == "mood") m.lighting_.mode = LightingMode::Mood;
+            else if (mode == "rules") m.lighting_.mode = LightingMode::Rules;
+            else throw std::invalid_argument("lighting mode is \"off\", \"mood\" or \"rules\"");
+            const std::string level = l.value("ambient", "dark");
+            if (level == "dark") m.lighting_.ambient = yh::LightLevel::Dark;
+            else if (level == "dim") m.lighting_.ambient = yh::LightLevel::Dim;
+            else if (level == "bright") m.lighting_.ambient = yh::LightLevel::Bright;
+            else throw std::invalid_argument("lighting ambient is \"dark\", \"dim\" or \"bright\"");
+            m.lighting_.brightFraction = l.value("brightFraction", m.lighting_.brightFraction);
+            m.lighting_.carried = l.value("carried", m.lighting_.carried);
+            m.lighting_.sight = l.value("sight", m.lighting_.sight);
+            const Lighting& k = m.lighting_;
+            if (!std::isfinite(k.brightFraction) || k.brightFraction < 0 || k.brightFraction > 1 || !std::isfinite(k.carried)
+                || k.carried < 0 || k.carried > 100 || !std::isfinite(k.sight) || k.sight <= 0 || k.sight > 200)
+                throw std::invalid_argument("lighting numbers are out of range");
+        }
 
         std::map<std::string, yh::TileId> ids;
         for (const auto& [name, t] : j.at("tiles").items())

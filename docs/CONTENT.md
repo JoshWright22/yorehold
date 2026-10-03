@@ -92,6 +92,8 @@ Modifiers use `stat`, `op` (`add`, `multiply`, `override`) and `value`. `token` 
 
 Tiles declare `walkable` and `blocksSight` independently. Sight-blocking tile edges create the vision/lighting walls. `art` selects a built-in placeholder painter (grass, dirt, stone, wood, wall, water, tree); other names use the tile's `color`.
 
+Optional `lighting` picks how light works on the map. `mode` is `off` (everything lit, no darkness drawn), `mood` (lights and darkness are only for looks; the default) or `rules` (heroes only see cells that are lit or within their darkvision). `ambient` is the light level where no lamp reaches (`dark`, `dim` or `bright`), `brightFraction` the part of each light's radius that is bright, `carried` the radius in cells of the light each hero carries (0 = none) and `sight` how far heroes see, in cells. Players can override the mode in Settings. Classes and creatures take `darkvision` in feet.
+
 Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in cells, `color`, and `flame` (false gives a steady light). Light positions are fractional cell coordinates, so `[4.5, 3.5]` centers a light on cell `[4, 3]`. `markers` map names to integer cells. One cell is 64 world units.
 
 ## Chapters and writer-owned text

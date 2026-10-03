@@ -1,5 +1,12 @@
 {
   "name": "The Goblin Keep",
+  "lighting": {
+    "mode": "mood",
+    "ambient": "dark",
+    "brightFraction": 0.5,
+    "carried": 3.5,
+    "sight": 8.5
+  },
   "tiles": {
     "grass": {
       "art": "grass"

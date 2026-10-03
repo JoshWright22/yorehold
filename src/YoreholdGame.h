@@ -70,6 +70,9 @@ private:
 
     // Exploration and combat.
     void updateVisibility();
+    GameMap::LightingMode lightingMode() const;
+    int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
+    void revealWalls(int team);
     void startCombat(int group);
     void endCombat();
     void beginTurn();
@@ -101,6 +104,8 @@ private:
         bool cameraFollows = true;
         float panSpeed = 900;
         bool fullscreen = false;
+        int lighting = 0; // 0 = as the map says, else 1 + GameMap::LightingMode
+        bool sharedFog = true; // the whole party's view; off = only what the selected hero sees
         std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)
         std::string lastFolder;
     };
@@ -167,6 +172,7 @@ private:
     yh::TokenController tokens_;
     yh::FogOfWar fog_{1, 1, GameMap::cellSize}; // resized to the map in newAdventure()
     yh::Lighting lighting_;
+    yh::LightLevels lightLevels_{1, 1, GameMap::cellSize}; // rebuilt in newAdventure()
     yh::Ui ui_;
     yh::FileSystem files_;
     std::unique_ptr<yh::Assets> assets_;

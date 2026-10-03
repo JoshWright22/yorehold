@@ -15,6 +15,7 @@
 #include <SDL3/SDL_timer.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -25,8 +26,6 @@ namespace
 {
 
 constexpr float cell = GameMap::cellSize;
-constexpr float visionRadius = 8.5f * cell;
-constexpr float lanternRadius = 3.5f * cell;
 
 const yh::SaveFormat& saveFormat()
 {
@@ -310,6 +309,15 @@ void YoreholdGame::newAdventure(uint64_t seed)
     if (!chapter_)
         return;
     fog_ = yh::FogOfWar(map().width(), map().height(), GameMap::cellSize);
+    lightLevels_ = yh::LightLevels(map().width(), map().height(), GameMap::cellSize);
+    lightLevels_.ambient = map().lighting().ambient;
+    lightLevels_.brightFraction = map().lighting().brightFraction;
+    {
+        std::vector<yh::Light> fixed;
+        for (const GameMap::Light& l : map().lights())
+            fixed.push_back({l.position, l.radius, l.color});
+        lightLevels_.setFixed(fixed, map().walls());
+    }
 
     // Everything below comes from the chapter's files; Chapter::load already checked the ids.
     yh::Random random(seed);
@@ -532,30 +540,82 @@ void YoreholdGame::update(double deltaSeconds)
     std::erase_if(floaters_, [](const Floater& f) { return f.age > 1.4f; });
 }
 
-void YoreholdGame::updateVisibility()
+// Wall cells are never in line of sight (their centre is behind the wall edge), so show the ones
+// bordering what a view sees.
+void YoreholdGame::revealWalls(int team)
 {
-    std::vector<yh::Vision> eyes;
-    for (size_t i = 0; i < heroCount_; i++)
-    {
-        if (tokens_.tokens[i].floor != dead)
-            eyes.push_back({tokens_.tokens[i].position, visionRadius});
-    }
-    fog_.update(0, 0, eyes, map().walls());
-
-    // Wall cells are never in line of sight (their centre is behind the wall edge), so show the
-    // ones bordering what the party sees.
     for (int y = 0; y < map().height(); y++)
     {
         for (int x = 0; x < map().width(); x++)
         {
-            if (map().blocksSight({x, y}) || fog_.state(0, 0, {x, y}) != yh::FogState::Visible)
+            if (map().blocksSight({x, y}) || fog_.state(team, 0, {x, y}) != yh::FogState::Visible)
                 continue;
             for (int dy = -1; dy <= 1; dy++)
                 for (int dx = -1; dx <= 1; dx++)
                     if (map().inside({x + dx, y + dy}) && map().blocksSight({x + dx, y + dy}))
-                        fog_.reveal(0, 0, {x + dx, y + dy});
+                        fog_.reveal(team, 0, {x + dx, y + dy});
         }
     }
+}
+
+GameMap::LightingMode YoreholdGame::lightingMode() const
+{
+    if (settings_.lighting >= 1 && settings_.lighting <= 3)
+        return static_cast<GameMap::LightingMode>(settings_.lighting - 1);
+    return map().lighting().mode;
+}
+
+int YoreholdGame::viewTeam() const
+{
+    if (settings_.sharedFog)
+        return 0;
+    // Whoever's turn it is in a fight, otherwise the selected (leading) hero.
+    if (const std::optional<size_t> current = currentCreature(); current && *current < heroCount_)
+        return static_cast<int>(*current) + 1;
+    for (size_t i = 0; i < heroCount_; i++)
+        if (tokens_.tokens[i].selected)
+            return static_cast<int>(i) + 1;
+    return 1;
+}
+
+void YoreholdGame::updateVisibility()
+{
+    const GameMap::Lighting& lighting = map().lighting();
+    const bool rules = lightingMode() == GameMap::LightingMode::Rules;
+    std::vector<yh::Vision> eyes(heroCount_);
+    std::vector<yh::Light> carried;
+    for (size_t i = 0; i < heroCount_; i++)
+    {
+        if (tokens_.tokens[i].floor == dead)
+            continue;
+        const float darkvision = creatures_[i].sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
+        eyes[i] = {tokens_.tokens[i].position, lighting.sight * cell, darkvision};
+        if (lighting.carried > 0)
+            carried.push_back({tokens_.tokens[i].position, lighting.carried * cell});
+    }
+    // In rules mode a cell is only seen if some light reaches it (or it's within darkvision).
+    std::function<bool(yh::Cell)> lit;
+    if (rules)
+        lit = [&](yh::Cell c) { return lightLevels_.lit(c, carried, map().walls()); };
+
+    // Team 0 is everyone's view together; it decides when enemies are spotted. With shared fog
+    // off, each hero also keeps a view of their own (team 1 + index) for the screen.
+    std::vector<yh::Vision> all;
+    for (size_t i = 0; i < heroCount_; i++)
+        if (tokens_.tokens[i].floor != dead)
+            all.push_back(eyes[i]);
+    fog_.update(0, 0, all, map().walls(), lit);
+    revealWalls(0);
+    if (!settings_.sharedFog)
+    {
+        for (size_t i = 0; i < heroCount_; i++)
+        {
+            const std::span<const yh::Vision> mine = tokens_.tokens[i].floor == dead ? std::span<const yh::Vision>() : std::span(&eyes[i], 1);
+            fog_.update(static_cast<int>(i) + 1, 0, mine, map().walls(), lit);
+            revealWalls(static_cast<int>(i) + 1);
+        }
+    }
+    const int view = viewTeam();
 
     const bool fighting = encounter_ && !encounter_->finished();
     for (size_t i = heroCount_; i < creatures_.size(); i++)
@@ -564,7 +624,7 @@ void YoreholdGame::updateVisibility()
         if (token.floor == dead)
             continue;
         const bool seen = fog_.state(0, 0, cellOf(i)) == yh::FogState::Visible;
-        token.floor = seen ? 0 : hidden;
+        token.floor = fog_.state(view, 0, cellOf(i)) == yh::FogState::Visible ? 0 : hidden;
         if (seen && !fighting && !partyDown() && !creatures_[i].awake)
         {
             startCombat(creatures_[i].group);
@@ -1091,6 +1151,8 @@ void YoreholdGame::saveSettings() const
         {"cameraFollows", settings_.cameraFollows},
         {"panSpeed", settings_.panSpeed},
         {"fullscreen", settings_.fullscreen},
+        {"lighting", std::array<const char*, 4>{"map", "off", "mood", "rules"}[std::clamp(settings_.lighting, 0, 3)]},
+        {"sharedFog", settings_.sharedFog},
         {"lastPackage", settings_.lastPackage},
         {"lastFolder", settings_.lastFolder},
     };
@@ -1116,6 +1178,9 @@ void YoreholdGame::loadSettings()
         s.panSpeed = j.value("panSpeed", s.panSpeed);
         s.panSpeed = std::isfinite(s.panSpeed) ? std::clamp(s.panSpeed, 200.0f, 3000.0f) : Settings{}.panSpeed;
         s.fullscreen = j.value("fullscreen", s.fullscreen);
+        const std::string lighting = j.value("lighting", std::string("map"));
+        s.lighting = lighting == "off" ? 1 : lighting == "mood" ? 2 : lighting == "rules" ? 3 : 0;
+        s.sharedFog = j.value("sharedFog", s.sharedFog);
         s.lastPackage = j.value("lastPackage", s.lastPackage);
         s.lastFolder = j.value("lastFolder", s.lastFolder);
         settings_ = s;
@@ -1399,7 +1464,7 @@ void YoreholdGame::draw(yh::Renderer& renderer)
     yh::debug::value("camera y", camera_.position().y);
     yh::debug::value("camera follows", controls_.following() ? 1 : 0);
     yh::debug::value("camera zoom", camera_.zoom());
-    yh::debug::value("party visibility", static_cast<int>(fog_.state(0, 0, cellOf(0))));
+    yh::debug::value("party visibility", static_cast<int>(fog_.state(viewTeam(), 0, cellOf(0))));
     yh::debug::value("leader floor", tokens_.tokens[0].floor);
     yh::debug::value("party x", tokens_.tokens[0].position.x);
     yh::debug::value("party y", tokens_.tokens[0].position.y);
@@ -1432,7 +1497,7 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
-        if (token.floor != dead || fog_.state(0, 0, grid_.cellAt(token.position)) == yh::FogState::Unexplored)
+        if (token.floor != dead || fog_.state(viewTeam(), 0, grid_.cellAt(token.position)) == yh::FogState::Unexplored)
             continue;
         const float r = token.radius * 0.7f;
         renderer.fillCircle(token.position, token.radius, creatures_[i].team == 0 ? yh::Color{90, 90, 100, 255} : yh::Color{70, 30, 25, 255});
@@ -1451,11 +1516,14 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
     }
     for (size_t i = 0; i < heroCount_; i++)
     {
-        if (tokens_.tokens[i].floor != dead)
-            lights.push_back({tokens_.tokens[i].position, lanternRadius, {255, 215, 160, 255}});
+        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0)
+            lights.push_back({tokens_.tokens[i].position, map().lighting().carried * cell, {255, 215, 160, 255}});
     }
-    lighting_.ambient = map().ambient();
-    lighting_.apply(renderer, camera_, lights, map().walls());
+    if (lightingMode() != GameMap::LightingMode::Off)
+    {
+        lighting_.ambient = map().ambient();
+        lighting_.apply(renderer, camera_, lights, map().walls());
+    }
 
     camera_.apply(renderer);
     const std::optional<size_t> current = currentCreature();
@@ -1485,7 +1553,7 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
             }
         }
     }
-    fog_.draw(renderer, view, 0, 0, {0, 0, 0, 255}, {4, 6, 14, 175});
+    fog_.draw(renderer, view, viewTeam(), 0, {0, 0, 0, 255}, {4, 6, 14, 175});
     renderer.pop();
     tokens_.drawOverlay(renderer, camera_, grid_);
 }
@@ -1725,8 +1793,9 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
         break;
     }
     case Menu::Settings:
-        drawSettings({screen.w / 2 - 260, y, 520, 330});
-        y += 330 + gap;
+        y = screen.h * 0.25f;
+        drawSettings({screen.w / 2 - 260, y, 520, 430});
+        y += 430 + gap;
         if (button("Back (Esc)"))
             openMenu(settingsBack_);
         break;
@@ -1779,6 +1848,15 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
     ui_.checkbox({x, y, w, h}, "Camera follows the moving character", settings_.cameraFollows);
     y += h + 8;
     ui_.checkbox({x, y, w, h}, "Fullscreen", settings_.fullscreen);
+    y += h + 8;
+    ui_.checkbox({x, y, w, h}, "Shared party view (off: only the selected hero's)", settings_.sharedFog);
+    y += h + 12;
+    ui_.label({x, y + 10}, "Lighting", ui_.theme.textDim);
+    const std::array<const char*, 4> modes{"Map", "Off", "Mood", "Rules"};
+    const float quarter = (w - 120 - 30) / 4;
+    for (int i = 0; i < 4; i++)
+        if (ui_.toggle({x + 120 + i * (quarter + 10), y, quarter, h}, modes[i], settings_.lighting == i))
+            settings_.lighting = i;
     y += h + 14;
     char text[48];
     std::snprintf(text, sizeof(text), "Pan speed  %.0f", settings_.panSpeed);
@@ -1787,7 +1865,8 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
 
     const bool changed = before.controls != settings_.controls || before.zoomToCursor != settings_.zoomToCursor
         || before.edgeScroll != settings_.edgeScroll || before.cameraFollows != settings_.cameraFollows
-        || before.fullscreen != settings_.fullscreen || before.panSpeed != settings_.panSpeed;
+        || before.fullscreen != settings_.fullscreen || before.panSpeed != settings_.panSpeed
+        || before.lighting != settings_.lighting || before.sharedFog != settings_.sharedFog;
     if (changed)
     {
         applySettings();

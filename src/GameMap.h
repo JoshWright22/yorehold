@@ -2,6 +2,7 @@
 
 #include <yorehold/framework/graphics/Lighting.h>
 #include <yorehold/framework/map/Grid.h>
+#include <yorehold/framework/map/LightLevels.h>
 #include <yorehold/framework/map/TileMap.h>
 
 #include <map>
@@ -17,6 +18,7 @@
 //   "layers"  rows of legend characters; the first layer is the ground, later ones sit on top
 //   "lights"  torches and braziers in cell coordinates
 //   "markers" named cells the chapter refers to ("partyStart")
+//   "lighting" how light works on this map: mode, ambient level, carried lights
 class GameMap
 {
 public:
@@ -27,6 +29,19 @@ public:
         yh::Color color{128, 128, 128, 255};
         bool walkable = true;
         bool blocksSight = false;
+    };
+
+    // Off: everything lit, no darkness drawn. Mood: lights and darkness are only for looks.
+    // Rules: what the party can see depends on light (bright/dim/dark) and darkvision.
+    enum class LightingMode { Off, Mood, Rules };
+
+    struct Lighting
+    {
+        LightingMode mode = LightingMode::Mood;
+        yh::LightLevel ambient = yh::LightLevel::Dark; // light level where no lamp reaches (rules mode)
+        float brightFraction = 0.5f; // part of each light's radius that is bright; the rest is dim
+        float carried = 3.5f;        // radius in cells of the light each hero carries; 0 = none
+        float sight = 8.5f;          // how far heroes see, in cells
     };
 
     struct Light
@@ -60,6 +75,7 @@ public:
     const std::vector<Light>& lights() const { return lights_; }
     // Light where no lamp reaches ("ambient" in the file): moonlight by default.
     yh::Color ambient() const { return ambient_; }
+    const Lighting& lighting() const { return lighting_; }
 
 private:
     void buildWalls();
@@ -73,6 +89,7 @@ private:
     std::vector<yh::Wall> walls_;
     std::vector<Light> lights_;
     yh::Color ambient_{46, 54, 86, 255};
+    Lighting lighting_;
     std::map<std::string, yh::Cell, std::less<>> markers_;
     bool tilesetBound_ = false;
 };
