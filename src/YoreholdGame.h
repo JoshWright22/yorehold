@@ -13,6 +13,7 @@
 #include <yorehold/framework/map/CameraControls.h>
 #include <yorehold/framework/map/FogOfWar.h>
 #include <yorehold/framework/map/Tokens.h>
+#include <yorehold/framework/net/Session.h>
 #include <yorehold/framework/rpg/Combat.h>
 #include <yorehold/framework/rpg/Dialogue.h>
 #include <yorehold/framework/rpg/QuestJournal.h>
@@ -95,7 +96,7 @@ private:
     std::optional<size_t> npcAt(yh::Cell cell) const;
     void walkToTalk(size_t npc);
     void startTalk(size_t npc);
-    void chooseReply(size_t index);
+    void chooseReply(size_t index, size_t hero);
     void drawDialogue(yh::Renderer& renderer);
 
     // Story flags: set by dialogue and won fights; the quest journal and chapter completion read them.
@@ -111,9 +112,34 @@ private:
     std::string savePath() const;
     void saveAdventure();
     bool loadAdventure();
+    // The adventure between fights as JSON: the save file, and what a joining player receives.
+    std::string stateJson() const;
+    bool restoreState(std::string_view text, std::string* error = nullptr);
+    yh::Random nextRandom(uint64_t salt); // fresh dice for the next roll, the same on every machine
+
+    // Co-op (Coop.cpp). Everything that changes the shared game goes through act(): alone it
+    // applies at once, hosting it goes through the session's rules, joined it goes to the host.
+    // Each player moves their own heroes while exploring and their positions are shared.
+    bool inSession() const { return host_ || client_; }
+    void act(std::string_view type, const std::string& data = "{}");
+    std::optional<std::string> validate(yh::PlayerId player, std::string_view type, std::string_view data, std::string& reason);
+    void apply(const yh::NetCommand& command);
+    bool mine(size_t creature) const; // this machine plays it
+    bool mayAct(yh::PlayerId player, size_t creature) const;
+    void selectOwnHero();
+    void hostSession();
+    void joinSession(const std::string& address);
+    void endSession(const std::string& reason);
+    void updateSession(double deltaSeconds);
+    void assignSeats();
+    void shareWalking(double deltaSeconds);
+    std::string snapshot() const;
+    uint64_t checksum() const;
+    std::string seatName(size_t hero) const;
+    static int coopPort();
 
     // Title menus and the in-game pause menu (Esc). Settings are shared by both.
-    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause };
+    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause, Join };
     struct Settings
     {
         yh::ControlPreset controls = yh::ControlPreset::BG3;
@@ -124,6 +150,8 @@ private:
         bool fullscreen = false;
         int lighting = 0; // 0 = as the map says, else 1 + GameMap::LightingMode
         bool sharedFog = true; // the whole party's view; off = only what the selected hero sees
+        std::string playerName = "Player";
+        std::string joinAddress = "127.0.0.1"; // the last co-op host joined
         std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)
         std::string lastFolder;
     };
@@ -224,7 +252,22 @@ private:
     std::unique_ptr<yh::DialogueSession> talk_; // the conversation on screen, if any
     size_t talkNpc_ = 0;
     std::optional<size_t> pendingTalk_; // walking over to this NPC
-    yh::Random talkRandom_{1};
+    uint64_t rolls_ = 0; // rests, recoveries and dialogue checks so far; seeds each one's dice
+
+    // Co-op. The host is player 0 and owns the enemies; seats_ says who plays each hero.
+    std::unique_ptr<yh::SessionHost> host_;
+    std::unique_ptr<yh::SessionClient> client_;
+    yh::PlayerId self_ = 0;
+    std::vector<int> seats_; // empty = every hero is player 0's
+    std::map<int, std::string> playerNames_;
+    std::string sessionEnded_; // set by the client's disconnect handler, handled after its update
+    bool reseat_ = false; // someone joined or left: deal the heroes out again after the host's update
+    std::string netStatus_;
+    double syncTimer_ = 0;
+    std::string lastSync_;
+    std::optional<yh::Cell> pendingStep_; // pendingAttack_ swings once the hero stands here
+    static constexpr int enemyOwner = 1000;
+    static constexpr int npcOwner = 1001;
     yh::Random restRandom_{1};
     yh::Cutscene cutscene_;
     bool cutsceneDone_ = false; // set by the cutscene's "finished" event, handled after its update

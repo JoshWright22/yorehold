@@ -107,6 +107,15 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     menu_ = testRun_ && chapter_ ? Menu::None : Menu::Main;
     if (seed)
         newAdventure(std::strtoull(seed, nullptr, 10));
+    // Scripted co-op tests: YOREHOLD_HOST hosts at once, YOREHOLD_JOIN=address joins.
+    if (SDL_getenv("YOREHOLD_HOST") && chapter_)
+        hostSession();
+    if (const char* address = SDL_getenv("YOREHOLD_JOIN"); address && chapter_)
+    {
+        if (const char* name = SDL_getenv("YOREHOLD_NAME"))
+            settings_.playerName = name;
+        joinSession(address);
+    }
     for (const std::string& file : openFiles)
         addContent(file);
 }
@@ -309,7 +318,8 @@ void YoreholdGame::newAdventure(uint64_t seed)
     journalOpen_ = false;
     talk_.reset();
     pendingTalk_.reset();
-    talkRandom_ = yh::Random(seed ^ 0x7a1cull);
+    rolls_ = 0;
+    pendingStep_.reset();
 
     heroCount_ = 0;
     if (!chapter_)
@@ -338,10 +348,11 @@ void YoreholdGame::newAdventure(uint64_t seed)
         token.color = member.color;
         token.radius = cell * 0.4f;
         token.position = grid_.center(member.at);
-        token.selected = tokens_.tokens.empty();
+        token.owner = tokens_.tokens.size() < seats_.size() ? seats_[tokens_.tokens.size()] : 0;
         tokens_.tokens.push_back(token);
     }
     heroCount_ = creatures_.size();
+    selectOwnHero();
     for (size_t group = 0; group < chapter_->encounters.size(); group++)
     {
         for (const Chapter::Placement& placement : chapter_->encounters[group].creatures)
@@ -351,7 +362,7 @@ void YoreholdGame::newAdventure(uint64_t seed)
                 static_cast<int>(group)});
             yh::Token token;
             token.name = creatures_.back().sheet.name;
-            token.owner = 1;
+            token.owner = enemyOwner;
             token.color = definition.token.color;
             token.image = definition.token.image;
             token.radius = cell * definition.token.size;
@@ -364,7 +375,7 @@ void YoreholdGame::newAdventure(uint64_t seed)
     {
         yh::Token token;
         token.name = npc.name;
-        token.owner = 2;
+        token.owner = npcOwner;
         token.color = npc.color;
         token.radius = cell * 0.4f;
         token.position = grid_.center(npc.at);
@@ -390,7 +401,8 @@ void YoreholdGame::applyScheme(yh::ControlPreset preset)
 
 void YoreholdGame::say(std::string line)
 {
-    if (autoPlay_) // headless runs read the story from stdout
+    static const bool printLog = SDL_getenv("YOREHOLD_PRINT_LOG") != nullptr;
+    if (autoPlay_ || printLog) // headless runs read the story from stdout
         std::printf("log: %s\n", line.c_str());
     log_.push_back(std::move(line));
     if (log_.size() > 200)
@@ -437,7 +449,7 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
     }
     if (keyDown && event.key.key == SDLK_F9)
     {
-        if (!chapter_)
+        if (!chapter_ || client_)
             return true;
         if (onTitle())
             startNew();
@@ -461,7 +473,8 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
         }
         if (keyDown && event.key.key == SDLK_ESCAPE)
         {
-            openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None : menu_ == Menu::Adventures ? Menu::Play : Menu::Main);
+            openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None
+                    : menu_ == Menu::Adventures || menu_ == Menu::Join ? Menu::Play : Menu::Main);
             return true;
         }
         input_.handle(event); // the menus' buttons read the mouse
@@ -471,9 +484,9 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
     {
         // 1-9 pick a reply, Esc walks away; the mouse still reaches the reply buttons.
         if (keyDown && event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
-            chooseReply(event.key.key - SDLK_1);
+            act("reply", nlohmann::json{{"choice", event.key.key - SDLK_1}, {"hero", leaderIndex()}}.dump());
         else if (keyDown && event.key.key == SDLK_ESCAPE)
-            talk_.reset();
+            act("leave");
         else
             input_.handle(event);
         return true;
@@ -493,7 +506,7 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
     }
     if (keyDown && event.key.key == SDLK_R && !rules_.rests.empty())
     {
-        rest(rules_.rests.front()); // R = the ruleset's first (usually shortest) rest
+        act("rest", R"({"rest": 0})"); // R = the ruleset's first (usually shortest) rest
         return true;
     }
     input_.handle(event);
@@ -520,8 +533,12 @@ std::string YoreholdGame::describe() const
 void YoreholdGame::update(double deltaSeconds)
 {
     time_ += deltaSeconds;
-    if (!chapter_ || menu_ != Menu::None)
-        return; // the title and pause menus freeze the world
+    updateSession(deltaSeconds);
+    // The title and pause menus freeze the world, except in co-op, where it carries on for everyone else.
+    const bool pauseMenu = menu_ == Menu::Pause || (menu_ == Menu::Settings && settingsBack_ == Menu::Pause);
+    if (!chapter_ || (menu_ != Menu::None && !(inSession() && pauseMenu)))
+        return;
+    const bool menuOpen = menu_ != Menu::None;
     if (cutscene_.running())
     {
         cutscene_.update(deltaSeconds, camera_, [this](std::string_view event) {
@@ -538,17 +555,17 @@ void YoreholdGame::update(double deltaSeconds)
     const bool heroTurn = current && creatures_[*current].team == 0;
     const bool mouseOnUi = overUi(input_.mouse());
 
-    // In combat the current hero may only step onto cells its movement reaches.
-    yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
-    if (fighting && heroTurn)
-        passable = [this](yh::Cell c) { return c == standing_ || reach_.contains(c); };
-    const yh::Input& tokenInput = mouseOnUi || partyDown() || talk_ || (fighting && !heroTurn) ? noInput_ : input_;
+    // Exploring, each player walks their own heroes. In a fight, steps are commands (updateHeroTurn).
+    const yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
+    const bool tokensListen = !menuOpen && !mouseOnUi && !partyDown() && !talk_ && !fighting;
+    const yh::Input& tokenInput = tokensListen ? input_ : noInput_;
     tokens_.update(tokenInput, camera_, grid_, passable, deltaSeconds);
     if (&tokenInput == &input_ && input_.clicked(yh::actions::moveTo))
         controls_.resumeFollowing();
+    shareWalking(deltaSeconds);
 
     // Clicking someone to talk to walks the leader over; the conversation opens on arrival.
-    if (!fighting && &tokenInput == &input_ && (input_.clicked(yh::actions::moveTo) || input_.clicked(yh::actions::select)))
+    if (tokensListen && (input_.clicked(yh::actions::moveTo) || input_.clicked(yh::actions::select)))
         if (const std::optional<size_t> npc = hoveredNpc())
             walkToTalk(*npc);
     if (pendingTalk_ && !fighting)
@@ -559,7 +576,7 @@ void YoreholdGame::update(double deltaSeconds)
             const size_t npc = *pendingTalk_;
             pendingTalk_.reset();
             if (grid_.distance(cellOf(leader), chapter_->npcs[npc].at) <= 1.5f)
-                startTalk(npc);
+                act("talk", nlohmann::json{{"npc", npc}}.dump());
             else
                 say("Can't reach " + chapter_->npcs[npc].name + " from here.");
         }
@@ -573,7 +590,7 @@ void YoreholdGame::update(double deltaSeconds)
     else if (tokens_.contextChoice)
     {
         const auto [index, action] = *tokens_.contextChoice;
-        if (action == "Attack" && fighting && heroTurn && creatures_[index].team == 1)
+        if (action == "Attack" && fighting && heroTurn && creatures_[index].team == 1 && mine(*current))
             tryAttack(index);
         else if (action == "Inspect" || action == "Attack")
         {
@@ -583,14 +600,18 @@ void YoreholdGame::update(double deltaSeconds)
         }
     }
 
+    // The host runs the enemies (and the heroes in auto-play); a hero's own player runs their turn.
     if (const std::optional<size_t> now = currentCreature())
     {
         if (creatures_[*now].team == 0 && !autoPlay_)
-            updateHeroTurn();
-        else
+        {
+            if (!menuOpen && mine(*now))
+                updateHeroTurn();
+        }
+        else if (!client_)
             updateEnemyTurn(deltaSeconds);
     }
-    else if (autoPlay_ && !partyDown())
+    else if (autoPlay_ && !partyDown() && !client_)
         autoExplore();
     updateVisibility();
 
@@ -692,9 +713,15 @@ void YoreholdGame::updateVisibility()
             continue;
         const bool seen = fog_.state(0, 0, cellOf(i)) == yh::FogState::Visible;
         token.floor = fog_.state(view, 0, cellOf(i)) == yh::FogState::Visible ? 0 : hidden;
-        if (seen && !fighting && !partyDown() && !creatures_[i].awake)
+        // The host decides when a fight starts and sends everyone's positions with it.
+        if (seen && !fighting && !partyDown() && !creatures_[i].awake && !client_ && !talk_)
         {
-            startCombat(creatures_[i].group);
+            nlohmann::json at = nlohmann::json::array();
+            for (size_t c = 0; c < creatures_.size(); c++)
+            {
+                at.push_back({tokens_.tokens[c].position.x, tokens_.tokens[c].position.y});
+            }
+            act("fight", nlohmann::json{{"group", creatures_[i].group}, {"at", at}}.dump());
             return;
         }
     }
@@ -765,6 +792,7 @@ void YoreholdGame::endCombat()
     pendingAttack_.reset();
     for (yh::Token& token : tokens_.tokens)
         token.selected = false;
+    pendingStep_.reset();
 
     if (encounter_->winningTeam() != 0)
     {
@@ -775,6 +803,7 @@ void YoreholdGame::endCombat()
     }
 
     // Healing after a win, as the ruleset says: revive the downed, then any victory recovery.
+    restRandom_ = nextRandom(0x5eedull);
     for (size_t i = 0; i < heroCount_; i++)
     {
         Creature& c = creatures_[i];
@@ -789,7 +818,7 @@ void YoreholdGame::endCombat()
             tokens_.tokens[i].floor = 0;
         c.sheet.addXp(rules_, chapter_->xpPerVictory);
     }
-    tokens_.tokens[0].selected = true;
+    selectOwnHero();
     say(fillXp(chapter_->victoryText, chapter_->xpPerVictory));
 
     // Every encounter with nobody left standing sets its story flags.
@@ -843,12 +872,26 @@ void YoreholdGame::playEnding()
 
 void YoreholdGame::finishAdventure()
 {
+    // In co-op the host starts the next run for everyone; joined players wait for it.
+    if (client_)
+    {
+        cutscene_ = {};
+        banner_ = "Waiting for the host";
+        bannerTime_ = 1e9;
+        return;
+    }
     // A finished adventure can't be continued. Test runs never touch the save.
     if (!testRun_)
     {
         std::remove(savePath().c_str());
         std::remove((savePath() + ".bak").c_str());
         hasSave_ = false;
+    }
+    if (host_)
+    {
+        cutscene_ = {};
+        act("restart", nlohmann::json{{"seed", seed_ + 1}}.dump());
+        return;
     }
     cutscene_ = {};
     autoPlay_ = false;
@@ -903,10 +946,18 @@ void YoreholdGame::flagsChanged(const std::set<std::string>& before)
     }
 }
 
+yh::Random YoreholdGame::nextRandom(uint64_t salt)
+{
+    return yh::Random(seed_ ^ salt ^ (++rolls_ * 0x9e3779b97f4a7c15ull));
+}
+
 size_t YoreholdGame::leaderIndex() const
 {
     for (size_t i = 0; i < heroCount_; i++)
-        if (tokens_.tokens[i].selected && !creatures_[i].sheet.down())
+        if (tokens_.tokens[i].selected && mine(i) && !creatures_[i].sheet.down())
+            return i;
+    for (size_t i = 0; i < heroCount_; i++)
+        if (mine(i) && !creatures_[i].sheet.down())
             return i;
     for (size_t i = 0; i < heroCount_; i++)
         if (!creatures_[i].sheet.down())
@@ -993,7 +1044,7 @@ void YoreholdGame::startTalk(size_t npc)
     }
 }
 
-void YoreholdGame::chooseReply(size_t index)
+void YoreholdGame::chooseReply(size_t index, size_t hero)
 {
     if (!talk_)
         return;
@@ -1011,9 +1062,10 @@ void YoreholdGame::chooseReply(size_t index)
     if (index >= choices.size())
         return;
     const yh::DialogueChoice choice = *choices[index];
-    const yh::Character& speaker = creatures_[leaderIndex()].sheet;
+    const yh::Character& speaker = creatures_[hero].sheet;
     const std::optional<yh::DialogueResult> result = talk_->choose(choice.id, [&](std::string_view skill) {
-        return speaker.rollCheck(rules_, skill, yh::Advantage::None, talkRandom_);
+        yh::Random dice = nextRandom(0x7a1cull);
+        return speaker.rollCheck(rules_, skill, yh::Advantage::None, dice);
     });
     if (!result)
         return;
@@ -1048,6 +1100,7 @@ void YoreholdGame::rest(const yh::RestDefinition& rest)
     if (restsLeft(rest) == 0 || (encounter_ && !encounter_->finished()) || partyDown())
         return;
     restsUsed_[rest.id]++;
+    restRandom_ = nextRandom(0x5eedull);
     say("The party takes a " + (rest.name.empty() ? rest.id : rest.name) + ".");
     for (size_t i = 0; i < heroCount_; i++)
     {
@@ -1110,35 +1163,33 @@ void YoreholdGame::updateHeroTurn()
     const size_t me = *currentCreature();
     const yh::Token& token = tokens_.tokens[me];
 
-    // The controller walked the hero somewhere new: pay for it and work out what's left.
-    const yh::Cell destination = cellOf(me);
-    if (destination != standing_)
-    {
-        const auto cost = reach_.find(destination);
-        const int squares = cost == reach_.end() ? 0 : static_cast<int>(std::ceil(cost->second - 0.01f));
-        encounter_->spendMovement(std::min(squares, encounter_->current().budget.movementLeft));
-        computeReach(me);
-    }
-
-    if (pendingAttack_ && token.path.empty())
+    // Walked up to swing at someone: swing once the step has landed.
+    if (pendingAttack_ && pendingStep_ && token.path.empty() && cellOf(me) == *pendingStep_)
     {
         const size_t target = *pendingAttack_;
         pendingAttack_.reset();
+        pendingStep_.reset();
         if (adjacent(me, target))
-            attack(target);
-        if (!encounter_ || encounter_->finished())
-            return;
+            act("attack", nlohmann::json{{"target", target}}.dump());
+        return;
     }
 
-    if (!overUi(input_.mouse()) && input_.clicked(yh::actions::select))
+    const bool walkClick = input_.clicked(yh::actions::moveTo), selectClick = input_.clicked(yh::actions::select);
+    if (!overUi(input_.mouse()) && (walkClick || selectClick))
     {
         if (const std::optional<size_t> target = hoveredCreature(); target && creatures_[*target].team == 1)
             tryAttack(*target);
-        if (encounter_->finished())
-            return;
+        else if (walkClick && token.path.empty())
+        {
+            // Only onto squares its movement reaches.
+            const yh::Cell to = grid_.cellAt(camera_.screenToWorld(input_.mouse()));
+            if (to != standing_ && reach_.contains(to))
+                act("step", nlohmann::json{{"at", {to.x, to.y}}}.dump());
+        }
+        return;
     }
     if (input_.keyPressed(SDLK_SPACE) && token.path.empty())
-        endTurn();
+        act("end");
 }
 
 void YoreholdGame::tryAttack(size_t target)
@@ -1151,7 +1202,7 @@ void YoreholdGame::tryAttack(size_t target)
     }
     if (adjacent(me, target))
     {
-        attack(target);
+        act("attack", nlohmann::json{{"target", target}}.dump());
         return;
     }
 
@@ -1172,12 +1223,9 @@ void YoreholdGame::tryAttack(size_t target)
         say(creatures_[target].sheet.name + " is out of reach this turn.");
         return;
     }
-    const std::vector<yh::Cell> path = findPath(grid_, standing_, *best, [this](yh::Cell c) { return c == standing_ || reach_.contains(c); });
-    yh::Token& token = tokens_.tokens[me];
-    token.path.clear();
-    for (size_t i = 1; i < path.size(); i++)
-        token.path.push_back(grid_.center(path[i]));
     pendingAttack_ = target;
+    pendingStep_ = *best;
+    act("step", nlohmann::json{{"at", {best->x, best->y}}}.dump());
 }
 
 void YoreholdGame::attack(size_t target)
@@ -1235,7 +1283,7 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         }
         if (!enemyTarget_)
         {
-            endTurn();
+            act("end");
             return;
         }
         enemyTimer_ = 0;
@@ -1263,20 +1311,13 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         computeReach(me);
         auto [best, bestDistance] = closest();
         // Can't reach anyone this turn: dash to close the gap instead of attacking.
-        if (bestDistance > 1.01f && encounter_->dash())
+        if (bestDistance > 1.01f && encounter_->current().budget.action)
         {
-            syncLog();
-            computeReach(me);
-            const auto dashed = closest();
-            best = dashed.first;
+            act("dash"); // recomputes reach_
+            best = closest().first;
         }
         if (best.first != standing_)
-        {
-            const std::vector<yh::Cell> path = findPath(grid_, standing_, best.first, [this](yh::Cell c) { return c == standing_ || reach_.contains(c); });
-            for (size_t i = 1; i < path.size(); i++)
-                token.path.push_back(grid_.center(path[i]));
-            encounter_->spendMovement(static_cast<int>(std::ceil(best.second - 0.01f)));
-        }
+            act("step", nlohmann::json{{"at", {best.first.x, best.first.y}}}.dump());
         enemyStep_ = EnemyStep::Walk;
         return;
     }
@@ -1289,15 +1330,13 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
     case EnemyStep::Strike:
         if (enemyTimer_ < 0.25)
             return;
-        attack(*enemyTarget_);
-        if (encounter_->finished())
-            return;
         enemyTimer_ = 0;
         enemyStep_ = EnemyStep::Wait;
+        act("attack", nlohmann::json{{"target", *enemyTarget_}}.dump());
         return;
     case EnemyStep::Wait:
         if (enemyTimer_ >= 0.6)
-            endTurn();
+            act("end");
         return;
     }
 }
@@ -1309,11 +1348,11 @@ void YoreholdGame::autoExplore()
     const bool hurt = std::any_of(creatures_.begin(), creatures_.begin() + heroCount_,
         [](const Creature& c) { return !c.sheet.down() && c.sheet.hp * 2 < c.sheet.maxHp(); });
     // Use the first rest that still has uses (short before long).
-    for (const yh::RestDefinition& r : rules_.rests)
+    for (size_t i = 0; i < rules_.rests.size(); i++)
     {
-        if (hurt && restsLeft(r) != 0)
+        if (hurt && restsLeft(rules_.rests[i]) != 0)
         {
-            rest(r);
+            act("rest", nlohmann::json{{"rest", i}}.dump());
             break;
         }
     }
@@ -1404,6 +1443,8 @@ void YoreholdGame::saveSettings() const
         {"fullscreen", settings_.fullscreen},
         {"lighting", std::array<const char*, 4>{"map", "off", "mood", "rules"}[std::clamp(settings_.lighting, 0, 3)]},
         {"sharedFog", settings_.sharedFog},
+        {"playerName", settings_.playerName},
+        {"joinAddress", settings_.joinAddress},
         {"lastPackage", settings_.lastPackage},
         {"lastFolder", settings_.lastFolder},
     };
@@ -1432,6 +1473,8 @@ void YoreholdGame::loadSettings()
         const std::string lighting = j.value("lighting", std::string("map"));
         s.lighting = lighting == "off" ? 1 : lighting == "mood" ? 2 : lighting == "rules" ? 3 : 0;
         s.sharedFog = j.value("sharedFog", s.sharedFog);
+        s.playerName = j.value("playerName", s.playerName).substr(0, 32);
+        s.joinAddress = j.value("joinAddress", s.joinAddress).substr(0, 253);
         s.lastPackage = j.value("lastPackage", s.lastPackage);
         s.lastFolder = j.value("lastFolder", s.lastFolder);
         settings_ = s;
@@ -1444,9 +1487,19 @@ void YoreholdGame::loadSettings()
 
 void YoreholdGame::saveAdventure()
 {
-    // Only between fights: the encounter points into creatures_ and isn't saved.
-    if (!chapter_ || testRun_ || (encounter_ && !encounter_->finished()) || partyDown() || chapterCleared() || cutscene_.running())
+    // Only between fights: the encounter points into creatures_ and isn't saved. A joined player's
+    // game belongs to the host, who keeps the save.
+    if (!chapter_ || testRun_ || client_ || (encounter_ && !encounter_->finished()) || partyDown() || chapterCleared() || cutscene_.running())
         return;
+    std::string error;
+    if (saveFormat().writeFile(savePath(), stateJson(), &error))
+        hasSave_ = true;
+    else
+        say("Couldn't save: " + error);
+}
+
+std::string YoreholdGame::stateJson() const
+{
     nlohmann::json data;
     data["chapterId"] = chapter_->id;
     data["chapterFolder"] = chapter_->folder;
@@ -1455,6 +1508,7 @@ void YoreholdGame::saveAdventure()
     data["fights"] = fights_;
     data["restsUsed"] = restsUsed_;
     data["flags"] = flags_;
+    data["rolls"] = rolls_;
     data["fog"] = nlohmann::json::parse(fog_.toJson());
     for (size_t i = 0; i < creatures_.size(); i++)
     {
@@ -1466,11 +1520,7 @@ void YoreholdGame::saveAdventure()
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
         });
     }
-    std::string error;
-    if (saveFormat().writeFile(savePath(), data.dump(), &error))
-        hasSave_ = true;
-    else
-        say("Couldn't save: " + error);
+    return data.dump();
 }
 
 bool YoreholdGame::loadAdventure()
@@ -1481,9 +1531,24 @@ bool YoreholdGame::loadAdventure()
     const std::optional<std::string> text = saveFormat().readFile(savePath(), &error);
     if (!text)
         return false;
+    if (restoreState(*text, &error))
+    {
+        say(chapter_->resumeText);
+        return true;
+    }
+    newAdventure(SDL_GetTicks());
+    say("Couldn't load the save (" + error + "). Starting fresh.");
+    return false;
+}
+
+bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
+{
+    if (!chapter_)
+        return false;
+    std::string error;
     try
     {
-        const nlohmann::json data = nlohmann::json::parse(*text);
+        const nlohmann::json data = nlohmann::json::parse(text);
         if (data.at("chapterId") != chapter_->id || data.at("chapterFolder") != chapter_->folder)
             throw std::runtime_error("this save belongs to another chapter");
         if (data.contains("chapterSignature") && data.at("chapterSignature") != chapter_->signature)
@@ -1503,6 +1568,11 @@ bool YoreholdGame::loadAdventure()
         if (fights < 0 || std::any_of(rests.begin(), rests.end(), [](const auto& entry) { return entry.second < 0; }))
             throw std::runtime_error("invalid adventure counters");
         auto flags = data.value("flags", std::set<std::string>{});
+        const auto rolls = data.value("rolls", uint64_t{0});
+        // Only in a co-op snapshot: who plays which hero.
+        auto seats = data.value("seats", seats_);
+        if (!seats.empty() && seats.size() != chapter_->party.size())
+            throw std::runtime_error("seats don't match the party");
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
         std::vector<bool> awake;
@@ -1519,11 +1589,13 @@ bool YoreholdGame::loadAdventure()
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
         }
+        seats_ = std::move(seats);
         newAdventure(seed);
         fog_ = std::move(*fog);
         fights_ = fights;
         restsUsed_ = std::move(rests);
         flags_ = std::move(flags);
+        rolls_ = rolls;
         for (size_t i = 0; i < creatures_.size(); i++)
         {
             creatures_[i].sheet = std::move(sheets[i]);
@@ -1536,13 +1608,12 @@ bool YoreholdGame::loadAdventure()
         }
         log_.clear();
         bannerTime_ = 0;
-        say(chapter_->resumeText);
         return true;
     }
     catch (const std::exception& e)
     {
-        newAdventure(SDL_GetTicks());
-        say(std::string("Couldn't load the save (") + e.what() + "). Starting fresh.");
+        if (problem)
+            *problem = e.what();
         return false;
     }
 }
@@ -1849,6 +1920,8 @@ void YoreholdGame::drawHud(yh::Renderer& renderer)
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
 
+    if (!netStatus_.empty())
+        ui_.label({screen.w / 2 - 160, screen.h - 58}, netStatus_, ui_.theme.textDim);
     if (bannerTime_ > 0 && title_)
     {
         const float alpha = static_cast<float>(std::clamp(bannerTime_, 0.0, 1.0));
@@ -1889,8 +1962,8 @@ void YoreholdGame::drawHud(yh::Renderer& renderer)
     if (partyDown() || chapterCleared())
     {
         const yh::Rect button{screen.w / 2 - 110, screen.h * 0.22f + 110, 220, 44};
-        if (ui_.button(button, partyDown() ? "Try again" : "Play again"))
-            newAdventure(SDL_GetTicks());
+        if (ui_.button(button, client_ ? "Waiting for the host" : partyDown() ? "Try again" : "Play again", !client_))
+            act("restart", nlohmann::json{{"seed", SDL_GetTicks()}}.dump());
         uiRects_.push_back(button);
     }
     else if (!encounter_ || encounter_->finished())
@@ -1910,7 +1983,7 @@ void YoreholdGame::drawHud(yh::Renderer& renderer)
                 text += "  " + std::to_string(left) + " left";
             const yh::Rect button{10, y, 280, 40};
             if (ui_.button(button, text, hurt && left != 0))
-                rest(r);
+                act("rest", nlohmann::json{{"rest", i}}.dump());
             uiRects_.push_back(button);
         }
     }
@@ -1992,11 +2065,44 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             continueSaved();
         else if (button(hasSave_ ? "New adventure" : "New adventure (Enter)", chapter_ != nullptr))
             startNew();
+        if (button("Join co-op", chapter_ != nullptr))
+            openMenu(Menu::Join);
         if (button("Adventures (" + std::to_string(adventures_.size()) + ")"))
             openMenu(Menu::Adventures);
         if (button("Back (Esc)"))
             openMenu(Menu::Main);
         break;
+    case Menu::Join:
+    {
+        // The host picks Host co-op in their pause menu; both need the same adventure selected.
+        const yh::Rect panel{x - 110, y, w + 220, 214};
+        ui_.panel(panel);
+        ui_.label({panel.x + 20, panel.y + 16}, "Join a friend's game: " + (chapter_ ? chapter_->title : std::string()), ui_.theme.accent);
+        ui_.label({panel.x + 20, panel.y + 58}, "Host address");
+        ui_.textBox("join-address", {panel.x + 180, panel.y + 50, panel.w - 200, 40}, settings_.joinAddress, 253);
+        ui_.label({panel.x + 20, panel.y + 112}, "Your name");
+        ui_.textBox("join-name", {panel.x + 180, panel.y + 104, panel.w - 200, 40}, settings_.playerName, 32);
+        ui_.label({panel.x + 20, panel.y + 164}, client_ ? "Connecting..." : "The host's port is " + std::to_string(coopPort()) + ". Same adventure on both sides.",
+            ui_.theme.textDim);
+        y += panel.h + gap;
+        if (button(client_ ? "Cancel" : "Join", chapter_ != nullptr))
+        {
+            if (client_)
+                endSession("Cancelled.");
+            else
+            {
+                saveSettings();
+                joinSession(settings_.joinAddress);
+            }
+        }
+        if (button("Back (Esc)"))
+        {
+            if (client_)
+                endSession("Cancelled.");
+            openMenu(Menu::Play);
+        }
+        break;
+    }
     case Menu::Adventures:
     {
         // Five to a page; the last button turns the page when there are more.
@@ -2067,10 +2173,16 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             openMenu(Menu::None);
         if (button("Settings"))
             openMenu(Menu::Settings);
-        if (button("Save and quit to title"))
+        if (!inSession() && button("Host co-op (port " + std::to_string(coopPort()) + ")", !testRun_ || SDL_getenv("YOREHOLD_HOST")))
+            hostSession();
+        else if (host_ && button("Stop hosting"))
+            endSession("The host stopped the game.");
+        if (button(client_ ? "Leave and quit to title" : "Save and quit to title"))
         {
             saveAdventure();
             autoPlay_ = false;
+            if (inSession())
+                endSession(client_ ? "You left." : "The host left.");
             openMenu(Menu::Main);
         }
         break;
@@ -2164,14 +2276,15 @@ void YoreholdGame::drawParty(yh::Renderer& renderer)
         renderer.fillRect({portrait.x + 3, portrait.y + 3, 34, 34}, c.down() ? yh::Color{80, 80, 90, 255} : tokens_.tokens[i].color);
 
         std::snprintf(text, sizeof(text), "%s  Lv %d %s", c.name.c_str(), c.level, c.characterClass.c_str());
-        ui_.label({area.x + 58, area.y + 6}, text, c.down() ? ui_.theme.textDim : ui_.theme.text);
+        ui_.label({area.x + 58, area.y + 6}, inSession() ? c.name + "  (" + seatName(i) + ")" : std::string(text),
+            c.down() ? ui_.theme.textDim : mine(i) ? ui_.theme.text : ui_.theme.textDim);
         const float fraction = std::clamp(static_cast<float>(c.hp) / std::max(1, c.maxHp()), 0.0f, 1.0f);
         ui_.bar({area.x + 58, area.y + 32, 110, 16}, fraction, fraction > 0.5f ? ui_.theme.good : ui_.theme.bad);
         std::snprintf(text, sizeof(text), c.down() ? "Down" : "%d/%d  AC %d", c.hp, c.maxHp(), c.armorClass(rules_));
         ui_.label({area.x + 176, area.y + 30}, text, ui_.theme.textDim);
 
         // Clicking a portrait while exploring makes that hero the leader.
-        if (!fighting && !c.down() && ui_.hovered(area) && input_.buttonClicked(yh::MouseButton::Left))
+        if (!fighting && !c.down() && mine(i) && ui_.hovered(area) && input_.buttonClicked(yh::MouseButton::Left))
         {
             for (size_t j = 0; j < tokens_.tokens.size(); j++)
                 tokens_.tokens[j].selected = j == i;
@@ -2230,18 +2343,19 @@ void YoreholdGame::drawCombatBar(yh::Renderer& renderer)
     std::snprintf(text, sizeof(text), "%s: move %d sq   action %s", c.character->name.c_str(), c.budget.movementLeft,
         c.budget.action ? "ready" : "used");
     ui_.label({bar.x + 16, bar.y + 8}, text, ui_.theme.accent);
+    if (!mine(*current))
+    {
+        ui_.label({bar.x + 16, bar.y + 36}, seatName(*current) + " is taking this turn.", ui_.theme.textDim);
+        return;
+    }
     ui_.label({bar.x + 16, bar.y + 36}, c.budget.action ? "Click an enemy to attack." : "Move on, or end your turn.",
         ui_.theme.textDim);
 
     const bool walking = !tokens_.tokens[*current].path.empty();
     if (ui_.button({bar.x + bar.w - 250, bar.y + 13, 100, 40}, "Dash", c.budget.action && !walking))
-    {
-        encounter_->dash();
-        syncLog();
-        computeReach(*current);
-    }
+        act("dash");
     if (ui_.button({bar.x + bar.w - 140, bar.y + 13, 128, 40}, "End turn", !walking))
-        endTurn();
+        act("end");
 }
 
 void YoreholdGame::drawDialogue(yh::Renderer& renderer)
@@ -2276,7 +2390,7 @@ void YoreholdGame::drawDialogue(yh::Renderer& renderer)
     if (choices.empty())
     {
         if (ui_.button({area.x + 16, y, area.w - 32, 38}, "1. (Leave)"))
-            chooseReply(0);
+            act("reply", nlohmann::json{{"choice", 0}, {"hero", leaderIndex()}}.dump());
         return;
     }
     for (size_t i = 0; i < choices.size(); i++, y += 44)
@@ -2286,7 +2400,7 @@ void YoreholdGame::drawDialogue(yh::Renderer& renderer)
             text += "  [" + choices[i]->check->skill + " " + std::to_string(choices[i]->check->difficulty) + "]";
         if (ui_.button({area.x + 16, y, area.w - 32, 38}, text))
         {
-            chooseReply(i);
+            act("reply", nlohmann::json{{"choice", i}, {"hero", leaderIndex()}}.dump());
             return; // the conversation may be gone now
         }
     }

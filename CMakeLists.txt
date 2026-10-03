@@ -17,6 +17,7 @@ add_subdirectory(${YOREHOLD_FRAMEWORK_DIR} yorehold-framework)
 # Everything except main.cpp, so the game and its tests share one copy.
 add_library(yorehold-game STATIC
     src/Chapter.cpp
+    src/Coop.cpp
     src/ContentPackage.cpp
     src/FileAssociation.cpp
     src/GameMap.cpp
