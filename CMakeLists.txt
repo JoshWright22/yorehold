@@ -18,6 +18,7 @@ add_subdirectory(${YOREHOLD_FRAMEWORK_DIR} yorehold-framework)
 add_library(yorehold-game STATIC
     src/Chapter.cpp
     src/ContentPackage.cpp
+    src/FileAssociation.cpp
     src/GameMap.cpp
     src/YoreholdGame.cpp
 )

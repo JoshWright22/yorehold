@@ -28,7 +28,8 @@
 class YoreholdGame : public yh::Game
 {
 public:
-    YoreholdGame();
+    // `openFiles`: .yore files the game was started with (double-clicked); they join the library.
+    explicit YoreholdGame(std::vector<std::string> openFiles = {});
     ~YoreholdGame() override;
 
     void unload() override;
@@ -91,7 +92,7 @@ private:
     bool loadAdventure();
 
     // Title menus and the in-game pause menu (Esc). Settings are shared by both.
-    enum class Menu { None, Main, Play, Create, Settings, Pause };
+    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause };
     struct Settings
     {
         yh::ControlPreset controls = yh::ControlPreset::BG3;
@@ -100,12 +101,23 @@ private:
         bool cameraFollows = true;
         float panSpeed = 900;
         bool fullscreen = false;
+        std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)
+        std::string lastFolder;
     };
     void drawMenu(yh::Renderer& renderer);
     void drawSettings(const yh::Rect& area);
     void openMenu(Menu menu);
     void startNew();
     void continueSaved();
+
+    // Adventures come from the built-in content plus every .yore in the library folder.
+    std::string libraryDir() const;
+    void refreshLibrary();
+    bool openAdventure(size_t index);
+    void selectAdventure(size_t index);
+    void addContent(const std::string& file);
+    bool installedAdventure() const;
+    void releaseAssets();
     void applySettings();
     void saveSettings() const;
     void loadSettings();
@@ -137,6 +149,12 @@ private:
     std::unique_ptr<Chapter> chapter_;
     std::string chapterError_;
     std::string themePath_;
+    std::vector<ContentLibrary::Adventure> adventures_;
+    std::vector<ContentLibrary::Package> packages_; // installed .yore files
+    size_t adventure_ = 0; // index into adventures_
+    size_t adventurePage_ = 0;
+    std::string notice_; // result of the last added file, shown on the title menus
+    bool noticeBad_ = false;
     GameMap& map() { return chapter_->map; }
     const GameMap& map() const { return chapter_->map; }
     yh::Grid grid_{yh::GridType::Square, GameMap::cellSize};

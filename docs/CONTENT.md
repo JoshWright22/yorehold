@@ -2,6 +2,18 @@
 
 Content is a folder of JSON files and assets. Copy individual definitions between projects, or zip a complete folder into a `.yore` package. `.yore` is a regular ZIP archive, mounted directly; the game does not extract it or execute code from it.
 
+## Adding content to the game
+
+A `.yore` file is how rulesets, classes, items, creatures, maps and whole adventures are shared. Any of these opens it:
+
+- Double-click it. Running the game once registers `.yore` files for the current user, so they open with that copy of the game.
+- Drag it onto the game window.
+- Pass it on the command line: `yorehold.exe my-adventure.yore`.
+
+The game checks the whole file first. If it is valid, it is copied into the library (`library/` beside the save, `%APPDATA%/Yorehold/Yorehold/library` on Windows) and its first adventure is selected on the Play menu. Play > Adventures lists every built-in and added adventure; the last one picked is remembered. Adding a file with the same name again replaces the old copy. A file that fails its checks is not copied, and the title screen says what was wrong. To remove one, delete it from the library folder.
+
+Each added adventure keeps its own autosave. A file may hold only definitions (classes, items, creatures, rulesets) and no chapter: leave `chapters` out of the manifest. It is checked, stored and listed, ready for chapters and the editor to draw on. Adventures still have to carry everything they use, so an added file never changes another adventure.
+
 ## Layout
 
 ```text
@@ -31,6 +43,7 @@ The manifest lists each playable chapter and its default:
 {
   "format": "yorehold.content",
   "version": 1,
+  "name": "The Goblin Keep",
   "defaultChapter": "chapters/goblin-keep",
   "chapters": ["chapters/goblin-keep"],
   "theme": "ui/theme.json",
@@ -39,7 +52,7 @@ The manifest lists each playable chapter and its default:
 }
 ```
 
-`theme`, `dialogues` and `cutscenes` are optional. Chapter endings are validated automatically, so they need not also appear in `cutscenes`. Declared dialogue files use the framework's `Dialogue` JSON format. They transfer and validate today; interactive chapter dialogue is still to be wired into gameplay.
+`name` (optional, up to 80 characters) is what the library shows; without it the file name is used. `chapters` and `defaultChapter` are left out of a definitions-only file. `theme`, `dialogues` and `cutscenes` are optional. Chapter endings are validated automatically, so they need not also appear in `cutscenes`. Declared dialogue files use the framework's `Dialogue` JSON format. They transfer and validate today; interactive chapter dialogue is still to be wired into gameplay.
 
 ## Validate, export and load
 

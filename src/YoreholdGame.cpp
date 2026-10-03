@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <queue>
 
 namespace
@@ -63,7 +64,7 @@ std::string fillXp(std::string text, int xp)
 
 }
 
-YoreholdGame::YoreholdGame()
+YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
 {
     files_.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
     files_.mountFolder(YH_GAME_ASSETS, "game");
@@ -77,37 +78,119 @@ YoreholdGame::YoreholdGame()
     away.motion.y = -100000;
     noInput_.handle(away);
 
-    std::string folderPath;
-    // Validate external content by itself before mounting it over the built-in files.
-    if (const char* source = SDL_getenv("YOREHOLD_CONTENT"))
+    // YOREHOLD_SEED replays the same adventure (for scripted tests).
+    // Test runs skip the title screen and never touch the player's save, settings or library.
+    const char* seed = SDL_getenv("YOREHOLD_SEED");
+    testRun_ = seed != nullptr;
+    if (!testRun_)
+        loadSettings();
+    applySettings();
+
+    refreshLibrary();
+    // Start on the adventure picked last time, if it's still installed.
+    size_t start = 0;
+    for (size_t i = 0; i < adventures_.size(); i++)
     {
-        yh::FileSystem imported;
-        if (!ContentPackage::mount(imported, source, "import"))
-            chapterError_ = "Couldn't open content: " + std::string(source);
-        else
-        {
-            const auto content = ContentPackage::load(imported, &chapterError_);
-            if (content && content->validate(imported, &chapterError_))
-            {
-                if (!ContentPackage::mount(files_, source, "import"))
-                    chapterError_ = "Couldn't mount content: " + std::string(source);
-            }
-        }
-    }
-    if (chapterError_.empty())
-    {
-        const auto content = ContentPackage::load(files_, &chapterError_);
-        if (content)
-        {
-            folderPath = content->defaultChapter;
-            themePath_ = content->theme;
-        }
+        const ContentLibrary::Adventure& a = adventures_[i];
+        const bool installed = a.package.starts_with(libraryDir());
+        const std::string file = installed ? std::filesystem::path(a.package).filename().string() : std::string();
+        if (!SDL_getenv("YOREHOLD_CONTENT") && file == settings_.lastPackage && a.folder == settings_.lastFolder)
+            start = i;
     }
     // YOREHOLD_CHAPTER picks another chapter folder (for testing content).
-    const char* folder = SDL_getenv("YOREHOLD_CHAPTER");
+    if (const char* folder = SDL_getenv("YOREHOLD_CHAPTER"); folder && !adventures_.empty())
+    {
+        start = 0;
+        adventures_.front().folder = folder;
+        adventures_.front().title = folder;
+    }
+    openAdventure(start);
+    menu_ = testRun_ && chapter_ ? Menu::None : Menu::Main;
+    if (seed)
+        newAdventure(std::strtoull(seed, nullptr, 10));
+    for (const std::string& file : openFiles)
+        addContent(file);
+}
+
+// ---------------------------------------------------------------- content library
+
+std::string YoreholdGame::libraryDir() const
+{
+    const std::string dir = stateDir();
+    return dir.empty() ? std::string() : dir + "library";
+}
+
+void YoreholdGame::refreshLibrary()
+{
+    adventures_.clear();
+    packages_.clear();
+    chapterError_.clear();
+
+    // YOREHOLD_CONTENT plays a folder or .yore in place, without installing it (for testing content).
+    if (const char* source = SDL_getenv("YOREHOLD_CONTENT"))
+    {
+        if (const auto package = ContentLibrary::inspect(source, &chapterError_))
+            adventures_ = package->adventures;
+        return; // broken content stays on the title with its error instead of quietly playing something else
+    }
+
+    std::string error;
+    if (auto builtIn = ContentLibrary::inspect(YH_GAME_ASSETS, &error))
+    {
+        for (ContentLibrary::Adventure& a : builtIn->adventures)
+        {
+            a.package.clear();
+            a.packageName.clear();
+            adventures_.push_back(std::move(a));
+        }
+    }
+    else
+        chapterError_ = error;
+
+    if (testRun_ || libraryDir().empty())
+        return;
+    std::vector<std::string> problems;
+    packages_ = ContentLibrary::installed(libraryDir(), &problems);
+    for (const ContentLibrary::Package& package : packages_)
+        adventures_.insert(adventures_.end(), package.adventures.begin(), package.adventures.end());
+    for (const std::string& problem : problems)
+        std::fprintf(stderr, "Library: %s\n", problem.c_str());
+}
+
+bool YoreholdGame::installedAdventure() const
+{
+    return adventure_ < adventures_.size() && !libraryDir().empty() && adventures_[adventure_].package.starts_with(libraryDir());
+}
+
+bool YoreholdGame::openAdventure(size_t index)
+{
+    // Art and fonts are cached by path, and two packages can use the same paths.
+    releaseAssets();
+    files_.unmount("import");
+    chapter_.reset();
+    themePath_.clear();
+    cameraPlaced_ = false;
+    if (index >= adventures_.size())
+    {
+        if (chapterError_.empty())
+            chapterError_ = "No adventures are installed.";
+        std::fprintf(stderr, "Chapter failed to load: %s\n", chapterError_.c_str());
+        hasSave_ = false;
+        newAdventure(0);
+        return false;
+    }
+    adventure_ = index;
+    adventurePage_ = index / 5;
+    const ContentLibrary::Adventure& adventure = adventures_[index];
+    chapterError_.clear();
+    if (!adventure.package.empty() && !ContentPackage::mount(files_, adventure.package, "import"))
+        chapterError_ = "Couldn't open content: " + adventure.package;
+    if (chapterError_.empty())
+        if (const auto content = ContentPackage::load(files_, &chapterError_))
+            themePath_ = content->theme;
     std::optional<Chapter> chapter;
     if (chapterError_.empty())
-        chapter = Chapter::load(files_, folder ? folder : folderPath, &chapterError_);
+        chapter = Chapter::load(files_, adventure.folder, &chapterError_);
     if (chapter)
     {
         chapter_ = std::make_unique<Chapter>(std::move(*chapter));
@@ -116,17 +199,69 @@ YoreholdGame::YoreholdGame()
     }
     else
         std::fprintf(stderr, "Chapter failed to load: %s\n", chapterError_.c_str());
+    hasSave_ = !testRun_ && chapter_ && saveFormat().readFile(savePath()).has_value();
+    newAdventure(SDL_GetTicks());
+    return chapter_ != nullptr;
+}
 
-    // YOREHOLD_SEED replays the same adventure (for scripted tests).
-    // Test runs skip the title screen and never touch the player's save.
-    const char* seed = SDL_getenv("YOREHOLD_SEED");
-    testRun_ = seed != nullptr;
-    menu_ = testRun_ && chapter_ ? Menu::None : Menu::Main;
-    hasSave_ = !testRun_ && saveFormat().readFile(savePath()).has_value();
-    if (!testRun_)
-        loadSettings();
-    applySettings();
-    newAdventure(seed ? std::strtoull(seed, nullptr, 10) : SDL_GetTicks());
+void YoreholdGame::selectAdventure(size_t index)
+{
+    if (!openAdventure(index))
+        return;
+    settings_.lastPackage = installedAdventure() ? std::filesystem::path(adventures_[index].package).filename().string() : std::string();
+    settings_.lastFolder = adventures_[index].folder;
+    saveSettings();
+}
+
+void YoreholdGame::addContent(const std::string& file)
+{
+    if (testRun_ || libraryDir().empty())
+        return;
+    if (encounter_ && !encounter_->finished() && !onTitle())
+    {
+        say("Finish the fight before adding content.");
+        return;
+    }
+    if (!onTitle())
+        saveAdventure();
+    autoPlay_ = false;
+
+    // What was selected, to come back to it if the file adds nothing playable.
+    const std::string oldPackage = adventure_ < adventures_.size() ? adventures_[adventure_].package : std::string();
+    const std::string oldFolder = adventure_ < adventures_.size() ? adventures_[adventure_].folder : std::string();
+    // An installed file being replaced must not be open while it is overwritten.
+    releaseAssets();
+    files_.unmount("import");
+
+    std::error_code problem;
+    const std::filesystem::path source = std::filesystem::absolute(file, problem);
+    std::string error;
+    const auto package = ContentLibrary::install(source.string(), libraryDir(), &error);
+    refreshLibrary();
+    std::string wantPackage = oldPackage, wantFolder = oldFolder;
+    noticeBad_ = !package;
+    if (!package)
+        notice_ = "Couldn't add " + source.filename().string() + ": " + error;
+    else
+    {
+        auto count = [](size_t n, const char* one) { return std::to_string(n) + " " + one + (n == 1 ? "" : (std::string_view(one) == "class" ? "es" : "s")); };
+        notice_ = "Added " + package->name + ": " + count(package->adventures.size(), "adventure") + ", " + count(package->classes, "class")
+            + ", " + count(package->items, "item") + ", " + count(package->creatures, "creature");
+        if (!package->adventures.empty())
+        {
+            wantPackage = package->path;
+            wantFolder = package->adventures.front().folder;
+        }
+    }
+    size_t index = 0;
+    for (size_t i = 0; i < adventures_.size(); i++)
+        if (adventures_[i].package == wantPackage && adventures_[i].folder == wantFolder)
+            index = i;
+    if (package && !package->adventures.empty())
+        selectAdventure(index);
+    else
+        openAdventure(index);
+    menu_ = package && !package->adventures.empty() ? Menu::Play : Menu::Adventures;
 }
 
 YoreholdGame::~YoreholdGame() = default;
@@ -135,6 +270,11 @@ void YoreholdGame::unload()
 {
     if (!onTitle())
         saveAdventure();
+    releaseAssets();
+}
+
+void YoreholdGame::releaseAssets()
+{
     ui_.theme.font = nullptr;
     title_ = nullptr;
     tokens_.initialFont = nullptr;
@@ -239,6 +379,11 @@ void YoreholdGame::syncLog()
 bool YoreholdGame::handleEvent(const SDL_Event& event)
 {
     const bool keyDown = event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat;
+    if (event.type == SDL_EVENT_DROP_FILE && event.drop.data)
+    {
+        addContent(event.drop.data); // a .yore dragged onto the window
+        return true;
+    }
     if (keyDown && event.key.key == SDLK_F6)
     {
         settings_.controls = scheme_.preset == yh::ControlPreset::Foundry ? yh::ControlPreset::BG3 : yh::ControlPreset::Foundry;
@@ -286,7 +431,7 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
         }
         if (keyDown && event.key.key == SDLK_ESCAPE)
         {
-            openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None : Menu::Main);
+            openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None : menu_ == Menu::Adventures ? Menu::Play : Menu::Main);
             return true;
         }
         input_.handle(event); // the menus' buttons read the mouse
@@ -906,7 +1051,12 @@ std::string YoreholdGame::stateDir() const
 std::string YoreholdGame::savePath() const
 {
     const std::string dir = stateDir();
-    return dir.empty() ? std::string() : dir + "adventure.json";
+    if (dir.empty())
+        return {};
+    // Each installed adventure keeps its own autosave; the built-in ones share the original file.
+    if (chapter_ && installedAdventure())
+        return dir + "adventure-" + std::filesystem::path(adventures_[adventure_].package).stem().string() + "-" + chapter_->id + ".json";
+    return dir + "adventure.json";
 }
 
 // ---------------------------------------------------------------- settings
@@ -939,6 +1089,8 @@ void YoreholdGame::saveSettings() const
         {"cameraFollows", settings_.cameraFollows},
         {"panSpeed", settings_.panSpeed},
         {"fullscreen", settings_.fullscreen},
+        {"lastPackage", settings_.lastPackage},
+        {"lastFolder", settings_.lastFolder},
     };
     yh::writeFileAtomically(stateDir() + "settings.json", j.dump(2), false);
 }
@@ -962,6 +1114,8 @@ void YoreholdGame::loadSettings()
         s.panSpeed = j.value("panSpeed", s.panSpeed);
         s.panSpeed = std::isfinite(s.panSpeed) ? std::clamp(s.panSpeed, 200.0f, 3000.0f) : Settings{}.panSpeed;
         s.fullscreen = j.value("fullscreen", s.fullscreen);
+        s.lastPackage = j.value("lastPackage", s.lastPackage);
+        s.lastFolder = j.value("lastFolder", s.lastFolder);
         settings_ = s;
     }
     catch (const nlohmann::json::exception&)
@@ -1195,6 +1349,7 @@ void YoreholdGame::draw(yh::Renderer& renderer)
     if (!assets_)
     {
         assets_ = std::make_unique<yh::Assets>(files_, renderer);
+        ui_.theme = {}; // an adventure without a theme file doesn't keep the last one's
         if (const auto text = files_.readText(themePath_))
         {
             std::string error;
@@ -1443,6 +1598,7 @@ void YoreholdGame::startNew()
         return;
     newAdventure(SDL_GetTicks());
     menu_ = Menu::None;
+    notice_.clear();
 }
 
 void YoreholdGame::continueSaved()
@@ -1450,6 +1606,7 @@ void YoreholdGame::continueSaved()
     if (!chapter_)
         return;
     menu_ = Menu::None;
+    notice_.clear();
     if (!loadAdventure())
         say("No save to continue. Starting a new adventure.");
 }
@@ -1470,7 +1627,7 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
         }
     }
 
-    const float w = 280, h = 48, gap = 14, x = screen.w / 2 - w / 2;
+    const float w = menu_ == Menu::Adventures ? 460.0f : 280.0f, h = 48, gap = 14, x = screen.w / 2 - w / 2;
     float y = screen.h * 0.36f;
     auto button = [&](std::string_view text, bool enabled = true) {
         const bool clicked = ui_.button({x, y, w, h}, text, enabled);
@@ -1502,9 +1659,52 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             continueSaved();
         else if (button(hasSave_ ? "New adventure" : "New adventure (Enter)", chapter_ != nullptr))
             startNew();
+        if (button("Adventures (" + std::to_string(adventures_.size()) + ")"))
+            openMenu(Menu::Adventures);
         if (button("Back (Esc)"))
             openMenu(Menu::Main);
         break;
+    case Menu::Adventures:
+    {
+        // Five to a page; the last button turns the page when there are more.
+        const size_t perPage = 5, pages = (adventures_.size() + perPage - 1) / perPage;
+        if (adventurePage_ >= pages)
+            adventurePage_ = 0;
+        std::optional<size_t> picked;
+        for (size_t i = adventurePage_ * perPage; i < adventures_.size() && i < (adventurePage_ + 1) * perPage; i++)
+        {
+            const ContentLibrary::Adventure& a = adventures_[i];
+            std::string text = a.title;
+            if (!a.packageName.empty() && a.packageName != a.title)
+                text += "  (" + a.packageName + ")";
+            if (ui_.toggle({x, y, w, h}, text, i == adventure_ && chapter_ != nullptr))
+                picked = i;
+            y += h + gap;
+        }
+        if (pages > 1 && button("More (" + std::to_string(adventurePage_ + 1) + "/" + std::to_string(pages) + ")"))
+            adventurePage_ = (adventurePage_ + 1) % pages;
+        // Installed files with nothing to play (classes, items, creatures only).
+        for (const ContentLibrary::Package& package : packages_)
+            if (package.adventures.empty())
+            {
+                ui_.label({x, y}, package.name + ": " + std::to_string(package.classes) + " classes, " + std::to_string(package.items)
+                    + " items, " + std::to_string(package.creatures) + " creatures", ui_.theme.textDim);
+                y += 26;
+            }
+        ui_.label({x, y}, "Open a .yore file, or drop it on this window, to add it.", ui_.theme.textDim);
+        y += 26 + gap;
+        if (button("Back (Esc)"))
+            openMenu(Menu::Play);
+        if (picked)
+        {
+            selectAdventure(*picked);
+            notice_.clear();
+            if (chapter_)
+                menu_ = Menu::Play;
+            return; // the fonts were reloaded; draw the menu again next frame
+        }
+        break;
+    }
     case Menu::Create:
     {
         const yh::Rect panel{screen.w / 2 - 300, y, 600, 170};
@@ -1537,6 +1737,12 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             openMenu(Menu::Main);
         }
         break;
+    }
+    if (!notice_.empty() && !paused)
+    {
+        const yh::Rect noticeArea{20, screen.h - (chapterError_.empty() ? 108.0f : 180.0f), screen.w - 40, 64};
+        ui_.panel(noticeArea);
+        ui_.label({noticeArea.x + 12, noticeArea.y + 12}, notice_, noticeBad_ ? ui_.theme.bad : ui_.theme.good);
     }
     if (!chapterError_.empty())
     {

@@ -168,6 +168,92 @@ void contentTests(const fs::path& scratch)
     check(!ContentPackage::load(files, &error), "Manifest defaults must name a declared chapter");
 }
 
+void libraryTests(const fs::path& scratch)
+{
+    const auto library = (scratch / "library").string();
+    const auto archive = scratch / "My Keep (2).yore";
+    check(yh::FileSystem::packFolder(YH_GAME_ASSETS, archive.string()), "Pack an adventure to share");
+    std::string error;
+    check(ContentLibrary::installed(library).empty(), "A missing library folder is just empty");
+    auto added = ContentLibrary::install(archive.string(), library, &error);
+    check(added && added->adventures.size() == 1 && added->adventures.front().title == "The Goblin Keep"
+        && added->adventures.front().folder == "chapters/goblin-keep", "Opening a .yore adds its adventures");
+    check(added && added->classes == 4 && added->items == 10 && added->creatures == 2, "Added files report what they hold");
+    check(added && fs::path(added->path).filename() == "my-keep-2.yore" && fs::exists(added->path) && fs::exists(archive),
+        "Files are copied into the library under plain names");
+    check(ContentLibrary::install(archive.string(), library, &error) && ContentLibrary::installed(library).size() == 1,
+        "Adding the same file again replaces the old copy");
+    check(added && ContentLibrary::install(added->path, library, &error).has_value(), "Opening a file that is already in the library is fine");
+
+    // Classes and items alone, with no chapter to play.
+    const auto defs = scratch / "defs";
+    fs::create_directories(defs);
+    fs::copy(fs::path(YH_GAME_ASSETS) / "items", defs / "items", fs::copy_options::recursive);
+    fs::copy(fs::path(YH_GAME_ASSETS) / "classes", defs / "classes", fs::copy_options::recursive);
+    write(defs / "content.json", {{"format", "yorehold.content"}, {"version", 1}, {"name", "Starter classes"}});
+    const auto defsArchive = scratch / "classes.yore";
+    check(yh::FileSystem::packFolder(defs.string(), defsArchive.string()), "Pack definitions without a chapter");
+    const auto pack = ContentLibrary::install(defsArchive.string(), library, &error);
+    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 4 && pack->items == 10 && pack->creatures == 0,
+        "Classes and items can be shared without an adventure");
+
+    {
+        std::ofstream broken(scratch / "broken.yore", std::ios::binary);
+        broken << "not a package";
+    }
+    check(!ContentLibrary::install((scratch / "broken.yore").string(), library, &error) && !error.empty()
+        && !fs::exists(fs::path(library) / "broken.yore"), "Broken files are refused and not copied");
+    fs::remove(defs / "items" / "longsword.json");
+    check(!ContentLibrary::inspect(defs.string(), &error) && error.find("longsword") != std::string::npos,
+        "Definitions that reference missing items are refused");
+
+    {
+        std::ofstream stray(fs::path(library) / "stray.yore", std::ios::binary);
+        stray << "junk";
+    }
+    std::vector<std::string> problems;
+    const auto installed = ContentLibrary::installed(library, &problems);
+    check(installed.size() == 2 && problems.size() == 1 && problems.front().starts_with("stray.yore"), "Damaged library files are skipped and reported");
+    check(pack && ContentLibrary::remove(*pack) && ContentLibrary::installed(library).size() == 1, "Installed files can be removed");
+}
+
+// Starting the game with a .yore (what double-clicking one does) installs and selects it.
+void openFileTests(const fs::path& scratch)
+{
+    const auto stateDir = scratch / "open-state";
+    SDL_setenv_unsafe("YOREHOLD_SAVE_DIR", stateDir.string().c_str(), 1);
+    const auto source = scratch / "crypt";
+    fs::copy(YH_GAME_ASSETS, source, fs::copy_options::recursive);
+    auto chapter = json::parse(std::ifstream(source / "chapters" / "goblin-keep" / "chapter.json"));
+    chapter["title"] = "The Sunken Crypt";
+    write(source / "chapters" / "goblin-keep" / "chapter.json", chapter);
+    const auto archive = scratch / "crypt.yore";
+    check(yh::FileSystem::packFolder(source.string(), archive.string()), "Pack an edited adventure");
+    SDL_Event enter{};
+    enter.type = SDL_EVENT_KEY_DOWN;
+    enter.key.key = SDLK_RETURN;
+    {
+        YoreholdGame game({archive.string()});
+        check(fs::exists(stateDir / "library" / "crypt.yore"), "Starting the game with a .yore adds it to the library");
+        game.handleEvent(enter); // the Play menu is already open: start it
+        game.unload();
+        check(fs::exists(stateDir / "adventure-crypt-goblin-keep.json") && !fs::exists(stateDir / "adventure.json"),
+            "Installed adventures keep their own save");
+    }
+    {
+        YoreholdGame game; // next launch: the same adventure is still selected
+        game.handleEvent(enter);
+        game.handleEvent(enter);
+        game.unload();
+        check(!fs::exists(stateDir / "adventure.json"), "The last adventure is remembered between launches");
+    }
+    {
+        YoreholdGame game({(scratch / "broken.yore").string()});
+        check(game.describe() == "screen: title" && !fs::exists(stateDir / "library" / "broken.yore"), "A broken file leaves the game usable");
+    }
+    SDL_unsetenv_unsafe("YOREHOLD_SAVE_DIR");
+}
+
 void mapTests()
 {
     const auto original = json::parse(R"({
@@ -295,9 +381,11 @@ int main()
     {
         Scratch scratch;
         contentTests(scratch.path);
+        libraryTests(scratch.path);
         mapTests();
         gameErrorTests();
         saveTests(scratch.path);
+        openFileTests(scratch.path);
     }
     catch (const std::exception& e)
     {
