@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <span>
 #include <cstdio>
 #include <cstdlib>
 
@@ -138,6 +139,17 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
                     return std::nullopt;
             return accepted;
         }
+        if (type == "provoke")
+        {
+            // Picking a fight with an NPC. The host adds where everyone stands, as for "fight".
+            const size_t npc = j.at("npc").get<size_t>();
+            if (!calm || talk_ || npc >= chapter_->npcs.size() || !peaceful(npc))
+                return std::nullopt;
+            nlohmann::json at = nlohmann::json::array();
+            for (const yh::Token& t : std::span(tokens_.tokens).first(creatures_.size()))
+                at.push_back({t.position.x, t.position.y});
+            return nlohmann::json{{"npc", npc}, {"at", at}}.dump();
+        }
         if (type == "step")
         {
             if (!acting)
@@ -173,7 +185,7 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
         if (type == "talk")
         {
             const size_t npc = j.at("npc").get<size_t>();
-            return calm && !talk_ && npc < chapter_->npcs.size() ? std::optional(accepted) : std::nullopt;
+            return calm && !talk_ && npc < chapter_->npcs.size() && peaceful(npc) ? std::optional(accepted) : std::nullopt;
         }
         if (type == "reply")
         {
@@ -219,7 +231,7 @@ void YoreholdGame::apply(const yh::NetCommand& command)
                 token.position = at;
         }
     }
-    else if (type == "fight")
+    else if (type == "fight" || type == "provoke")
     {
         const nlohmann::json& at = j.at("at");
         for (size_t i = 0; i < creatures_.size(); i++)
@@ -229,7 +241,19 @@ void YoreholdGame::apply(const yh::NetCommand& command)
         }
         talk_.reset();
         pendingTalk_.reset();
-        startCombat(j.at("group").get<int>());
+        if (type == "fight")
+        {
+            startCombat(j.at("group").get<int>());
+            return;
+        }
+        // The NPC turns on the party and fights alone.
+        const size_t npc = j.at("npc").get<size_t>();
+        Creature& them = creatures_[npcToken(npc)];
+        them.team = 1;
+        tokens_.tokens[npcToken(npc)].owner = enemyOwner;
+        say(them.sheet.name + " fights back!");
+        setFlags(chapter_->npcs[npc].attacked);
+        startCombat(them.group);
     }
     else if (type == "step" && current)
     {

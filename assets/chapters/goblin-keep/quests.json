@@ -28,6 +28,7 @@
       "title": "The Miller",
       "description": "Tobb the miller was dragged into the keep.",
       "require": ["keep_quest"],
+      "fail": ["tobb_dead"],
       "objectives": [
         {
           "id": "free",

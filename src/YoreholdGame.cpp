@@ -371,13 +371,20 @@ void YoreholdGame::newAdventure(uint64_t seed)
             tokens_.tokens.push_back(token);
         }
     }
-    for (const Chapter::Npc& npc : chapter_->npcs)
+    npcStart_ = creatures_.size();
+    for (size_t i = 0; i < chapter_->npcs.size(); i++)
     {
+        const Chapter::Npc& npc = chapter_->npcs[i];
+        const yh::CreatureDefinition& definition = *chapter_->compendium.creature(npc.creature);
+        Creature creature{*chapter_->compendium.makeCreature(rules_, npc.creature, npc.name, random), 2,
+            static_cast<int>(chapter_->encounters.size() + i)};
+        creature.npc = static_cast<int>(i);
+        creatures_.push_back(std::move(creature));
         yh::Token token;
         token.name = npc.name;
         token.owner = npcOwner;
         token.color = npc.color;
-        token.radius = cell * 0.4f;
+        token.radius = cell * definition.token.size;
         token.position = grid_.center(npc.at);
         token.floor = hidden;
         tokens_.tokens.push_back(token);
@@ -575,19 +582,27 @@ void YoreholdGame::update(double deltaSeconds)
         {
             const size_t npc = *pendingTalk_;
             pendingTalk_.reset();
-            if (grid_.distance(cellOf(leader), chapter_->npcs[npc].at) <= 1.5f)
+            if (peaceful(npc) && grid_.distance(cellOf(leader), cellOf(npcToken(npc))) <= 1.5f)
                 act("talk", nlohmann::json{{"npc", npc}}.dump());
             else
                 say("Can't reach " + chapter_->npcs[npc].name + " from here.");
         }
     }
 
-    if (tokens_.contextChoice && tokens_.contextChoice->first >= creatures_.size())
+    // Right-click menu. On a peaceful NPC: Talk walks over, Attack picks a fight with them.
+    const std::optional<size_t> menuNpc = tokens_.contextChoice && tokens_.contextChoice->first < creatures_.size()
+            && creatures_[tokens_.contextChoice->first].npc >= 0 && creatures_[tokens_.contextChoice->first].team == 2
+        ? std::optional<size_t>(creatures_[tokens_.contextChoice->first].npc) : std::nullopt;
+    if (menuNpc && tokens_.contextChoice->second != "Inspect")
     {
-        if (!fighting)
-            walkToTalk(tokens_.contextChoice->first - creatures_.size());
+        if (fighting)
+            say("Not in the middle of a fight.");
+        else if (tokens_.contextChoice->second == "Attack")
+            act("provoke", nlohmann::json{{"npc", *menuNpc}}.dump());
+        else
+            walkToTalk(*menuNpc);
     }
-    else if (tokens_.contextChoice)
+    else if (tokens_.contextChoice && tokens_.contextChoice->first < creatures_.size())
     {
         const auto [index, action] = *tokens_.contextChoice;
         if (action == "Attack" && fighting && heroTurn && creatures_[index].team == 1 && mine(*current))
@@ -702,9 +717,6 @@ void YoreholdGame::updateVisibility()
     }
     const int view = viewTeam();
 
-    for (size_t i = 0; i < chapter_->npcs.size(); i++)
-        tokens_.tokens[npcToken(i)].floor = fog_.state(view, 0, chapter_->npcs[i].at) == yh::FogState::Visible ? 0 : hidden;
-
     const bool fighting = encounter_ && !encounter_->finished();
     for (size_t i = heroCount_; i < creatures_.size(); i++)
     {
@@ -714,7 +726,7 @@ void YoreholdGame::updateVisibility()
         const bool seen = fog_.state(0, 0, cellOf(i)) == yh::FogState::Visible;
         token.floor = fog_.state(view, 0, cellOf(i)) == yh::FogState::Visible ? 0 : hidden;
         // The host decides when a fight starts and sends everyone's positions with it.
-        if (seen && !fighting && !partyDown() && !creatures_[i].awake && !client_ && !talk_)
+        if (seen && !fighting && !partyDown() && creatures_[i].team == 1 && !creatures_[i].awake && !client_ && !talk_)
         {
             nlohmann::json at = nlohmann::json::array();
             for (size_t c = 0; c < creatures_.size(); c++)
@@ -745,7 +757,7 @@ void YoreholdGame::startCombat(int group)
                 for (int dx = -radius; dx <= radius && !found; dx++)
                 {
                     const yh::Cell c{spot.x + dx, spot.y + dy};
-                    if (walkable(c) && std::find(taken.begin(), taken.end(), c) == taken.end())
+                    if (map().walkable(c) && std::find(taken.begin(), taken.end(), c) == taken.end())
                     {
                         spot = c;
                         found = true;
@@ -767,15 +779,15 @@ void YoreholdGame::startCombat(int group)
             continue;
         if (c.team == 0)
             encounter_->add(c.sheet, 0);
-        else if (c.group == group)
+        else if (c.group == group && c.team == 1)
         {
             c.awake = true;
             encounter_->add(c.sheet, 1);
         }
     }
 
-    if (const std::string& text = chapter_->encounters[group].text; !text.empty())
-        say(text);
+    if (group < static_cast<int>(chapter_->encounters.size()) && !chapter_->encounters[group].text.empty())
+        say(chapter_->encounters[group].text);
     tokens_.settings.inCombat = true;
     encounter_->start();
     syncLog();
@@ -905,8 +917,9 @@ bool YoreholdGame::chapterCleared() const
         return false;
     if (!chapter_->completeWhen.empty())
         return std::all_of(chapter_->completeWhen.begin(), chapter_->completeWhen.end(), [this](const std::string& f) { return flags_.contains(f); });
+    // Every authored enemy is down (NPCs the party picked a fight with don't count).
     return !chapter_->encounters.empty()
-        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return !c.sheet.down(); });
+        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return c.npc < 0 && !c.sheet.down(); });
 }
 
 // ---------------------------------------------------------------- story, NPCs and quests
@@ -970,9 +983,15 @@ std::optional<size_t> YoreholdGame::npcAt(yh::Cell c) const
     if (!chapter_)
         return std::nullopt;
     for (size_t i = 0; i < chapter_->npcs.size(); i++)
-        if (chapter_->npcs[i].at == c)
+        if (peaceful(i) && cellOf(npcToken(i)) == c)
             return i;
     return std::nullopt;
+}
+
+bool YoreholdGame::peaceful(size_t npc) const
+{
+    const size_t i = npcToken(npc);
+    return i < creatures_.size() && creatures_[i].team == 2 && !creatures_[i].sheet.down();
 }
 
 std::optional<size_t> YoreholdGame::hoveredNpc() const
@@ -983,7 +1002,7 @@ std::optional<size_t> YoreholdGame::hoveredNpc() const
     for (size_t i = 0; i < chapter_->npcs.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[npcToken(i)];
-        if (token.floor == 0 && distance(world, token.position) <= token.radius)
+        if (peaceful(i) && token.floor == 0 && distance(world, token.position) <= token.radius)
             return i;
     }
     return std::nullopt;
@@ -996,7 +1015,7 @@ void YoreholdGame::walkToTalk(size_t npc)
         return;
     yh::Token& token = tokens_.tokens[leader];
     const yh::Cell from = cellOf(leader);
-    const yh::Cell goal = chapter_->npcs[npc].at;
+    const yh::Cell goal = cellOf(npcToken(npc));
     token.path.clear();
     if (grid_.distance(from, goal) > 1.5f)
     {
@@ -1249,6 +1268,8 @@ void YoreholdGame::attack(size_t target)
         token.floor = dead;
         token.selected = false;
         token.path.clear();
+        if (creatures_[target].npc >= 0)
+            setFlags(chapter_->npcs[creatures_[target].npc].killed);
     }
     if (encounter_->finished())
         endCombat();
@@ -1363,7 +1384,7 @@ void YoreholdGame::autoExplore()
     float nearest = 0;
     for (size_t i = heroCount_; i < creatures_.size(); i++)
     {
-        if (creatures_[i].sheet.down())
+        if (creatures_[i].sheet.down() || creatures_[i].team != 1)
             continue;
         const float d = grid_.distance(cellOf(leader), cellOf(i));
         if (!goal || d < nearest)
@@ -1516,6 +1537,7 @@ std::string YoreholdGame::stateJson() const
         data["creatures"].push_back({
             {"sheet", nlohmann::json::parse(creatures_[i].sheet.toJson())},
             {"awake", creatures_[i].awake},
+            {"team", creatures_[i].team},
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
         });
@@ -1576,6 +1598,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
         std::vector<bool> awake;
+        std::vector<int> teams;
         for (const nlohmann::json& c : saved)
         {
             std::optional<yh::Character> sheet = yh::Character::fromJson(c.at("sheet").dump(), &error);
@@ -1588,6 +1611,11 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
                 throw std::runtime_error("saved token is outside the map");
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
+            // Only an NPC's side can change (a peaceful one the party attacked).
+            const int team = c.value("team", creatures_[teams.size()].team);
+            if (team != creatures_[teams.size()].team && !(creatures_[teams.size()].npc >= 0 && (team == 1 || team == 2)))
+                throw std::runtime_error("saved creature is on the wrong side");
+            teams.push_back(team);
         }
         seats_ = std::move(seats);
         newAdventure(seed);
@@ -1600,7 +1628,10 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
         {
             creatures_[i].sheet = std::move(sheets[i]);
             creatures_[i].awake = awake[i];
+            creatures_[i].team = teams[i];
             yh::Token& token = tokens_.tokens[i];
+            if (creatures_[i].npc >= 0)
+                token.owner = teams[i] == 1 ? enemyOwner : npcOwner;
             token.position = positions[i];
             token.path.clear();
             if (creatures_[i].sheet.down())

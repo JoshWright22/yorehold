@@ -1,0 +1,17 @@
+{
+  "id": "commoner",
+  "name": "Commoner",
+  "description": "Farmers, millers, scouts: ordinary folk who'd rather not fight.",
+  "hp": 4,
+  "armorClass": 10,
+  "speed": 30,
+  "items": [],
+  "token": {
+    "color": [
+      200,
+      180,
+      140
+    ],
+    "size": 0.4
+  }
+}

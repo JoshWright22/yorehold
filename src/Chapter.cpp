@@ -200,7 +200,12 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             Npc npc{n.at("id").get<std::string>(), n.at("name").get<std::string>(),
                 n.contains("color") ? colorFrom(n.at("color")) : yh::Color{200, 180, 140, 255}, cellFrom(n.at("at")),
                 resolve(files, folder, n.at("dialogue").get<std::string>())};
+            npc.creature = n.value("creature", npc.creature);
+            npc.attacked = flagsFrom(n, "attacked");
+            npc.killed = flagsFrom(n, "killed");
             if (!validId(npc.id) || !npcIds.insert(npc.id).second) throw std::invalid_argument("npc ids must be unique and use a-z, 0-9, - and _");
+            if (!c.compendium.creature(npc.creature))
+                throw std::invalid_argument("unknown creature \"" + npc.creature + "\" for " + npc.name);
             place(npc.at, npc.name);
             where = npc.dialogue;
             const std::string text = readOrThrow(files, where);

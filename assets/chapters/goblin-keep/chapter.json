@@ -68,14 +68,16 @@
       "name": "Wren",
       "color": [120, 170, 110],
       "at": [7, 12],
-      "dialogue": "dialogue/wren.json"
+      "dialogue": "dialogue/wren.json",
+      "killed": ["wren_dead"]
     },
     {
       "id": "tobb",
       "name": "Tobb",
       "color": [200, 170, 120],
       "at": [29, 3],
-      "dialogue": "dialogue/tobb.json"
+      "dialogue": "dialogue/tobb.json",
+      "killed": ["tobb_dead"]
     }
   ],
   "quests": "quests.json",

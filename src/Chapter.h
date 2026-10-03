@@ -44,7 +44,7 @@ struct Chapter
         std::vector<std::string> set; // story flags set when the party wins this fight
     };
 
-    // Someone on the map the party can talk to. They don't fight.
+    // Someone on the map the party can talk to. They only fight if the party attacks them.
     struct Npc
     {
         std::string id;
@@ -52,6 +52,9 @@ struct Chapter
         yh::Color color;
         yh::Cell at;
         std::string dialogue; // virtual path to a yh::Dialogue file
+        std::string creature = "commoner"; // their sheet, from the compendium
+        std::vector<std::string> attacked; // story flags set when the party attacks them
+        std::vector<std::string> killed;   // and when they die
     };
 
     std::string id;

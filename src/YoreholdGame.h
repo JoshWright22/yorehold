@@ -47,9 +47,10 @@ private:
     struct Creature
     {
         yh::Character sheet;
-        int team = 0;  // 0 = party, 1 = enemies
-        int group = -1; // index into the chapter's encounters (enemies that wake up together)
+        int team = 0;  // 0 = party, 1 = enemies, 2 = neutral NPCs (who turn into enemies if attacked)
+        int group = -1; // index into the chapter's encounters (enemies that wake up together); NPCs fight alone
         bool awake = false;
+        int npc = -1; // index into the chapter's NPCs
     };
 
     // Damage numbers and "Miss!" that float up from a token.
@@ -89,8 +90,10 @@ private:
     bool chapterCleared() const;
     void autoExplore();
 
-    // Talking to the chapter's NPCs. Their tokens come after creatures_ in tokens_.
-    size_t npcToken(size_t npc) const { return creatures_.size() + npc; }
+    // Talking to (or attacking) the chapter's NPCs. They come last in creatures_.
+    size_t npcStart_ = 0;
+    size_t npcToken(size_t npc) const { return npcStart_ + npc; }
+    bool peaceful(size_t npc) const; // standing and not fighting the party
     std::optional<size_t> hoveredNpc() const;
     size_t leaderIndex() const; // the selected hero, else the first one standing
     std::optional<size_t> npcAt(yh::Cell cell) const;

@@ -178,7 +178,7 @@ void libraryTests(const fs::path& scratch)
     auto added = ContentLibrary::install(archive.string(), library, &error);
     check(added && added->adventures.size() == 1 && added->adventures.front().title == "The Goblin Keep"
         && added->adventures.front().folder == "chapters/goblin-keep", "Opening a .yore adds its adventures");
-    check(added && added->classes == 4 && added->items == 10 && added->creatures == 2, "Added files report what they hold");
+    check(added && added->classes == 4 && added->items == 10 && added->creatures == 3, "Added files report what they hold");
     check(added && fs::path(added->path).filename() == "my-keep-2.yore" && fs::exists(added->path) && fs::exists(archive),
         "Files are copied into the library under plain names");
     check(ContentLibrary::install(archive.string(), library, &error) && ContentLibrary::installed(library).size() == 1,
