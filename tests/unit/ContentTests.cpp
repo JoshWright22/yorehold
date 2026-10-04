@@ -404,7 +404,7 @@ void libraryTests(const fs::path& scratch)
     auto added = ContentLibrary::install(archive.string(), library, &error);
     check(added && added->adventures.size() == 1 && added->adventures.front().title == "The Goblin Keep"
         && added->adventures.front().folder == "chapters/goblin-keep", "Opening a .yore adds its adventures");
-    check(added && added->classes == 5 && added->items == 11 && added->creatures == 3, "Added files report what they hold");
+    check(added && added->classes == 5 && added->items == 12 && added->creatures == 3, "Added files report what they hold");
     check(added && fs::path(added->path).filename() == "my-keep-2.yore" && fs::exists(added->path) && fs::exists(archive),
         "Files are copied into the library under plain names");
     check(ContentLibrary::install(archive.string(), library, &error) && ContentLibrary::installed(library).size() == 1,
@@ -420,7 +420,7 @@ void libraryTests(const fs::path& scratch)
     const auto defsArchive = scratch / "classes.yore";
     check(yh::FileSystem::packFolder(defs.string(), defsArchive.string()), "Pack definitions without a chapter");
     const auto pack = ContentLibrary::install(defsArchive.string(), library, &error);
-    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 5 && pack->items == 11 && pack->creatures == 0,
+    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 5 && pack->items == 12 && pack->creatures == 0,
         "Classes and items can be shared without an adventure");
 
     // A pack with one new class: it joins the compendium without touching the installed adventure.
@@ -435,7 +435,7 @@ void libraryTests(const fs::path& scratch)
         && ContentLibrary::install((scratch / "wardens.yore").string(), library, &error), "Add a pack with one new class");
     const auto packs = ContentLibrary::installed(library);
     const yh::Compendium all = ContentLibrary::compendium(YH_GAME_ASSETS, packs);
-    check(all.classes.size() == 6 && all.characterClass("warden") && all.characterClass("fighter") && all.items.size() == 11,
+    check(all.classes.size() == 6 && all.characterClass("warden") && all.characterClass("fighter") && all.items.size() == 12,
         "Added packs extend the compendium used for making things");
     const auto unchanged = ContentLibrary::inspect(added->path, &error);
     yh::FileSystem keepFiles;

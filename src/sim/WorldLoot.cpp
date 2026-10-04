@@ -36,6 +36,12 @@ void World::addTo(yh::Character& sheet, yh::Item item)
     sheet.inventory.push_back(std::move(item));
 }
 
+std::string World::magicLimitText(size_t hero) const
+{
+    return creatures_[hero].sheet.name + " already carries " + std::to_string(creatures_[hero].sheet.magicItems()) + " magic items of the "
+        + std::to_string(rules_.magicItemLimit) + " allowed. Give one up first.";
+}
+
 void World::fillContainers()
 {
     piles_.clear();

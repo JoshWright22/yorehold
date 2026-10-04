@@ -243,7 +243,14 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             if (j.value("coins", false))
                 return piles_[pile].coins > 0 ? std::optional(nlohmann::json{{"hero", hero}, {"pile", pile}, {"coins", true}}.dump()) : std::nullopt;
             const size_t item = j.at("item").get<size_t>();
-            return item < piles_[pile].items.size() ? std::optional(nlohmann::json{{"hero", hero}, {"pile", pile}, {"item", item}}.dump()) : std::nullopt;
+            if (item >= piles_[pile].items.size())
+                return std::nullopt;
+            if (piles_[pile].items[item].magic && !creatures_[hero].sheet.roomForMagic(rules_, piles_[pile].items[item].quantity))
+            {
+                reason = magicLimitText(hero);
+                return std::nullopt;
+            }
+            return nlohmann::json{{"hero", hero}, {"pile", pile}, {"item", item}}.dump();
         }
         if (type == "give")
         {
@@ -260,8 +267,15 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                     ? std::optional(nlohmann::json{{"from", from}, {"to", to}, {"coins", coins}}.dump()) : std::nullopt;
             }
             const size_t item = j.at("item").get<size_t>();
-            return item < creatures_[from].sheet.inventory.size()
-                ? std::optional(nlohmann::json{{"from", from}, {"to", to}, {"item", item}}.dump()) : std::nullopt;
+            if (item >= creatures_[from].sheet.inventory.size())
+                return std::nullopt;
+            const yh::Item& given = creatures_[from].sheet.inventory[item];
+            if (given.magic && !creatures_[to].sheet.roomForMagic(rules_, given.quantity))
+            {
+                reason = magicLimitText(to);
+                return std::nullopt;
+            }
+            return nlohmann::json{{"from", from}, {"to", to}, {"item", item}}.dump();
         }
         if (type == "rest")
         {
@@ -508,8 +522,16 @@ void World::apply(const yh::NetCommand& command)
             pile.coins = 0;
         }
         const size_t first = all ? 0 : j.value("item", pile.items.size());
+        std::string left;
         for (size_t i = first; i < pile.items.size() && (all || i == first);)
         {
+            // Taking everything leaves the magic items there is no room for.
+            if (pile.items[i].magic && !sheet.roomForMagic(rules_, pile.items[i].quantity))
+            {
+                left += (left.empty() ? "" : ", ") + pile.items[i].name;
+                i++;
+                continue;
+            }
             note(pile.items[i].name + (pile.items[i].quantity > 1 ? " x" + std::to_string(pile.items[i].quantity) : ""));
             addTo(sheet, pile.items[i]);
             pile.items.erase(pile.items.begin() + static_cast<std::ptrdiff_t>(i));
@@ -518,6 +540,8 @@ void World::apply(const yh::NetCommand& command)
         }
         if (!taken.empty())
             say(sheet.name + " takes " + taken + " (" + pile.name + ").");
+        if (!left.empty())
+            say(sheet.name + " leaves " + left + ": " + std::to_string(rules_.magicItemLimit) + " magic items is all anyone can carry.");
     }
     else if (type == "give")
     {

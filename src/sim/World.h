@@ -382,6 +382,7 @@ protected:
     nlohmann::json pilesJson() const;
     std::vector<Pile> pilesFrom(const nlohmann::json& saved) const; // throws for loot that doesn't fit the chapter
     static void addTo(yh::Character& sheet, yh::Item item); // into an inventory, stacking with the same unworn item
+    std::string magicLimitText(size_t hero) const; // why this hero can't take another magic item
     size_t npcStart_ = 0;
     std::unique_ptr<yh::Encounter> encounter_;
     size_t encounterLogShown_ = 0;

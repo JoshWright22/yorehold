@@ -20,8 +20,15 @@ void World::walk(double deltaSeconds)
     const bool fighting = encounter_ && !encounter_->finished();
     const yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
     // Each sneaking hero is slower, whoever plays them, so they walk the same on every machine.
+    // The same goes for anyone carrying too much: slower, or going nowhere at all. In a fight the
+    // squares they may move already say so.
     for (size_t i = 0; i < heroCount_; i++)
-        tokens_.tokens[i].pace = !fighting && creatures_[i].sneaking() ? chapter_->stealth.sneakSpeed : 1.0f;
+    {
+        float pace = !fighting && creatures_[i].sneaking() ? chapter_->stealth.sneakSpeed : 1.0f;
+        if (const int weighed = fighting ? 0 : creatures_[i].sheet.encumbrance(rules_))
+            pace = weighed == 2 ? 0.0f : pace * rules_.encumberedSpeed;
+        tokens_.tokens[i].pace = pace;
+    }
     tokens_.advance(grid_, passable, deltaSeconds);
 }
 

@@ -30,6 +30,8 @@ std::string itemLabel(const yh::Item& item)
     std::string text = item.name;
     if (item.quantity > 1)
         text += "  x" + std::to_string(item.quantity);
+    if (item.magic)
+        text += "  *magic*";
     if (!item.slot.empty())
         text += "   (" + slotName(item.slot) + (yh::Character::held(item) && item.hands > 1 ? ", " + std::to_string(item.hands) + " hands" : "") + ")";
     return text;
@@ -72,7 +74,11 @@ void hud::inventoryPanel(Hud& hud)
     y += line;
     char weight[64];
     std::snprintf(weight, sizeof(weight), "Carrying %.0f of %.0f lb", sheet.carriedWeight(), sheet.carryCapacity(world.rules()));
-    ui.label({x, y + 6}, std::string(weight) + "     Coins: " + World::coinText(sheet.coins), ui.theme.textDim);
+    const int weighed = sheet.encumbrance(world.rules());
+    std::string carrying = std::string(weight) + (weighed == 2 ? ": can't move" : weighed == 1 ? ": slowed" : "");
+    if (world.rules().magicItemLimit > 0 && sheet.magicItems() > 0)
+        carrying += "     Magic items " + std::to_string(sheet.magicItems()) + " of " + std::to_string(world.rules().magicItemLimit);
+    ui.label({x, y + 6}, carrying + "     Coins: " + World::coinText(sheet.coins), weighed ? ui.theme.bad : ui.theme.textDim);
     if (calm && sheet.coins > 0 && ui.button({x + w - giveWidth, y, giveWidth, 30}, "Give"))
         hud.giving = coinsPicked;
     y += line + 14;

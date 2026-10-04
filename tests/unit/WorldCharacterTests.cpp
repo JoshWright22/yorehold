@@ -76,6 +76,40 @@ void lootTests(const std::function<void(bool, const char*)>& check)
     for (auto& creature : older["creatures"]) creature.erase("dropped");
     check(world.restoreState(older.dump()) && world.piles().size() == 1 && world.piles()[0].coins == 30,
         "A save from before loot starts the containers full and leaves the dead as they were");
+
+    // The magic item limit (3 in the game's ruleset) and weight.
+    chapter["containers"] = {{{"id", "vault"}, {"name", "Vault"}, {"at", {2, 2}},
+        {"items", {"warding-ring", "warding-ring", "warding-ring", "warding-ring", "mace"}}}};
+    files["chapters/choice-yard/chapter.json"] = chapter.dump();
+    WorldFixture vault;
+    check(vault.loadJson("chapters/choice-yard", files, 5), "The yard loads with a vault");
+    if (!vault.chapter()) return;
+    check(vault.send("loot", {{"hero", 0}, {"pile", 0}, {"all", true}}) && vault.sheet(0).magicItems() == 3 && vault.piles()[0].items.size() == 1
+        && vault.piles()[0].items[0].id == "warding-ring" && vault.said("Ana leaves Warding ring: 3 magic items is all anyone can carry."),
+        "Taking everything leaves the magic item there is no room for");
+    check(!vault.send("loot", {{"hero", 0}, {"pile", 0}, {"item", 0}}) && vault.refusal.find("already carries 3 magic items") != std::string::npos,
+        "A fourth magic item can't be picked up");
+    const auto ringOf = [&](size_t hero) {
+        const auto& inventory = vault.sheet(hero).inventory;
+        return static_cast<size_t>(std::find_if(inventory.begin(), inventory.end(), [](const yh::Item& i) { return i.magic; }) - inventory.begin());
+    };
+    check(vault.send("give", {{"from", 0}, {"to", 1}, {"item", ringOf(0)}}) && vault.sheet(1).magicItems() == 1
+        && vault.send("loot", {{"hero", 0}, {"pile", 0}, {"item", 0}}) && vault.sheet(0).magicItems() == 3, "Giving one up makes room");
+    check(!vault.send("give", {{"from", 1}, {"to", 0}, {"item", ringOf(1)}}) && vault.refusal.find("Ana already carries") != std::string::npos,
+        "Nobody can be handed more magic items than the limit");
+
+    yh::Item anvil;
+    anvil.id = "anvil";
+    anvil.name = "Anvil";
+    anvil.weight = vault.sheet(0).carryCapacity(vault.rules()) * 1.5f;
+    vault.sheet(0).inventory.push_back(anvil);
+    vault.walk(0); // just the pace; a whole step would let the goblin see the party
+    check(vault.sheet(0).encumbrance(vault.rules()) == 1 && vault.tokens().tokens[0].pace == vault.rules().encumberedSpeed
+        && vault.tokens().tokens[1].pace == 1.0f, "Carrying more than the limit halves a hero's walking speed");
+    vault.sheet(0).inventory.back().quantity = 2;
+    vault.walk(0);
+    check(vault.sheet(0).encumbrance(vault.rules()) == 2 && vault.tokens().tokens[0].pace == 0.0f && vault.sheet(0).speedSquares(vault.rules()) == 0,
+        "Twice the limit and they can't move, in a fight or out of one");
 }
 
 }

@@ -86,7 +86,7 @@
       "at": [18, 2],
       "items": ["mace"],
       "coins": 250,
-      "loot": { "items": [{ "item": "shield", "chance": 0.5 }] }
+      "loot": { "items": [{ "item": "shield", "chance": 0.5 }, { "item": "warding-ring", "chance": 0.2 }] }
     }
   ],
   "quests": "quests.json",

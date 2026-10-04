@@ -87,11 +87,11 @@ One file per id. Filenames must match `id`, which uses lowercase letters, digits
 
 | Kind | Fields |
 |---|---|
-| Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `weight`, `value`, `quantity`, `modifiers` |
+| Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `weight` (lb), `value` (cp), `quantity`, `magic`, `modifiers` |
 | Class | `id`, `name`, `description`, `hitDie`, `bonusHp`, `speed`, `proficiencies`, starting `items` ids |
 | Creature | `id`, `name`, `description`, `hp`, `armorClass`, `speed`, fixed `abilities`, `proficiencies`, `items`, `loot`, `token` |
 
-An item's `slot` is where it is worn or held (`mainHand`, `offHand`, `armor`...; none = it can only be carried). Slots ending in `Hand` are held, and `hands` (default 1) is how many of a character's two hands the item takes: a `"hands": 2` weapon can't be held with a shield. Players change gear in the gear panel (I): free between fights, the Interact action's cost on the hero's turn in one.
+An item's `slot` is where it is worn or held (`mainHand`, `offHand`, `armor`...; none = it can only be carried). Slots ending in `Hand` are held, and `hands` (default 1) is how many of a character's two hands the item takes: a `"hands": 2` weapon can't be held with a shield. Players change gear in the gear panel (I): free between fights, the Interact action's cost on the hero's turn in one. `"magic": true` makes an item count toward the ruleset's `magicItemLimit` (3), carried or worn; weight counts toward the carrying capacity (STR x `carryPerStrength`), past which a hero is slowed and then stopped (`encumberedAt`, `immobileAt`, `encumberedSpeed` in `ruleset.json`).
 
 Modifiers use `stat`, `op` (`add`, `multiply`, `override`) and `value`. `token` supports `color`, radius `size` in cells and optional `image`. Token image paths resolve in the chapter folder first, then at the content root. Unknown item/class/creature ids, invalid values and missing token images are reported before play. The framework's `Compendium` also serializes these three definitions back to JSON.
 
