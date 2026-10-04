@@ -1,7 +1,7 @@
 {
   "id": "ready",
   "name": "Ready",
-  "description": "Spend both actions and end your turn with a Strike readied until your next turn.",
+  "description": "Spend both actions and end your turn. Strike the next enemy entering your reach before your next turn, spending your reaction.",
   "order": 100,
   "cost": 2,
   "endsTurn": true,

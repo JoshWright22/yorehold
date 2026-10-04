@@ -38,8 +38,8 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   Strike, Stride and End turn move onto it with no change in play. The action bar lists whatever
   the acting creature has.
 - [x] **B5. The other generic actions.** Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready.
-  Ready records a Strike; its trigger follows in B6. Interact stands up; equipment and objects follow in D1 and F1.
-- [ ] **B6. Reactions.** Triggers and a reaction budget; opportunity attacks when leaving reach
+  Interact stands up; equipment and objects follow in D1 and F1.
+- [x] **B6. Reactions.** Triggers and a reaction budget; opportunity attacks when leaving reach
   (free movement included); Ready. Players get a short prompt with a default of "take it"
   (**default:** opportunity attacks are automatic, a setting turns the prompt on).
 - [ ] **B7. Shared turns.** Neighbours in initiative on one side act as a block in any order.

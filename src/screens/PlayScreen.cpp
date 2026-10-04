@@ -63,6 +63,12 @@ bool PlayScreen::handleCutscene(const SDL_Event& event)
 bool PlayScreen::handle(const SDL_Event& event)
 {
     const bool keyDown = event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat;
+    if (const auto& prompt = world_.reactionPrompt(); prompt && keyDown && world_.mine(prompt->creature)
+        && (event.key.key == SDLK_RETURN || event.key.key == SDLK_X))
+    {
+        world_.react(event.key.key == SDLK_RETURN);
+        return true;
+    }
     if (world_.talk())
     {
         // 1-9 pick a reply, Esc walks away; the mouse still reaches the reply buttons.

@@ -386,6 +386,8 @@ void World::updateEnemyTurn(double deltaSeconds)
             use(strideAction); // recomputes reach_
         if (choice.cell != standing_)
             act("step", nlohmann::json{{"at", {choice.cell.x, choice.cell.y}}}.dump());
+        if (currentCreature() != me)
+            return;
         enemyStep_ = EnemyStep::Walk;
         return;
     }

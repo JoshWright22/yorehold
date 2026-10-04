@@ -107,7 +107,7 @@ void YoreholdGame::applySettings()
     controls.settings.followSelection = settings_.cameraFollows;
     controls.settings.keyPanSpeed = settings_.panSpeed;
     controls.settings.edgeScrollSpeed = settings_.panSpeed;
-    setOptions({settings_.lighting, settings_.timeOfDay, settings_.sharedFog});
+    setOptions({settings_.lighting, settings_.timeOfDay, settings_.sharedFog, settings_.reactionPrompts});
     int count = 0;
     if (SDL_Window** windows = SDL_GetWindows(&count))
     {
@@ -131,6 +131,7 @@ void YoreholdGame::saveSettings() const
         {"lighting", std::array<const char*, 4>{"map", "off", "mood", "rules"}[std::clamp(settings_.lighting, 0, 3)]},
         {"timeOfDay", std::array<const char*, 4>{"map", "day", "dusk", "night"}[std::clamp(settings_.timeOfDay, 0, 3)]},
         {"sharedFog", settings_.sharedFog},
+        {"reactionPrompts", settings_.reactionPrompts},
         {"playerName", settings_.playerName},
         {"joinAddress", settings_.joinAddress},
         {"lastPackage", settings_.lastPackage},
@@ -167,6 +168,7 @@ void YoreholdGame::loadSettings()
         const std::string time = j.value("timeOfDay", std::string("map"));
         s.timeOfDay = time == "day" ? 1 : time == "dusk" ? 2 : time == "night" ? 3 : 0;
         s.sharedFog = j.value("sharedFog", s.sharedFog);
+        s.reactionPrompts = j.value("reactionPrompts", s.reactionPrompts);
         s.playerName = j.value("playerName", s.playerName).substr(0, 32);
         s.joinAddress = j.value("joinAddress", s.joinAddress).substr(0, 253);
         s.lastPackage = j.value("lastPackage", s.lastPackage);

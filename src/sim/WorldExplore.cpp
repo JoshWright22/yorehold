@@ -46,6 +46,12 @@ void World::takeTurns(double deltaSeconds, bool heroesListen, const std::functio
     if (!chapter_)
         return;
     // The host runs the enemies (and the heroes in auto-play); a hero's own player runs their turn.
+    if (pendingMovement_)
+    {
+        reactionTime(deltaSeconds);
+        updateVisibility();
+        return;
+    }
     if (const std::optional<size_t> now = currentCreature())
     {
         if (creatures_[*now].team == 0 && !autoPlay_)

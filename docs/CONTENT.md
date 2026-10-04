@@ -212,7 +212,21 @@ Three ids are ones the game itself uses: clicking an enemy uses `strike`, Space 
 
 Each effect step accepts `ifFlag` to apply only to targets carrying that condition flag. Help heals only `downed` allies; its `aided` condition grants advantage until the next attack or the ally's turn ends. Hidden grants attack advantage and ends on attacking, taking damage or moving in combat. Hide checks against each standing enemy's passive Perception; all checks must pass. Seek checks one enemy's passive Stealth. Shove and Grapple check passive Athletics. A push stops at a wall or occupied square and spends no movement from its target.
 
-Interact currently stands up from prone; equipment and map objects extend it in D1 and F1. Ready records a Strike and ends the turn; its reaction trigger is added in B6.
+Interact currently stands up from prone; equipment and map objects extend it in D1 and F1. Ready records a Strike and ends the turn. The next enemy entering reach triggers it, spending the creature's reaction.
+
+## Reactions
+
+The ruleset's `reactions/<id>.json` files name movement triggers and the action they offer. The game ships `opportunity` (Strike when a foe leaves reach) and `readied` (the recorded action when a foe enters reach). A ruleset without this folder has no movement reactions. New definitions are included in the chapter signature, and malformed definitions stop loading with the file and field named.
+
+```json
+{ "id": "opportunity", "name": "Opportunity Strike", "trigger": "leavesReach", "action": "strike", "order": 10, "promptSeconds": 2 }
+```
+
+`trigger` is `leavesReach` or `entersReach`. Name `action`, or use `readied: true` in its place. `order` defaults to 0; `promptSeconds` defaults to 2 (0.1 to 30). Reach comes from the action's targeting range. The same action effects run for a reaction, spending one reaction instead of turn actions, including for two-handed weapons. A creature gets its reaction back at the start of its turn.
+
+Every edge of voluntary movement is checked, including free movement and movement bought with Dash. An opportunity happens before leaving; a readied action happens after entering. Forced movement does not provoke. A lethal reaction stops movement where it happened and advances the turn. Planned movement is paid when the move starts.
+
+Reactions are automatic by default. The host's Settings switch asks the reacting hero's owner to Take or Skip and defaults to Take after `promptSeconds`. The move waits for the answer; Skip preserves the reaction budget. Each offer has its own id, so stale replies cannot choose a later offer. Other actions wait while an offer is open; the host supplies the prompt setting in the movement command so peers use the same rule. The test browser's Reaction prompt scene holds time for inspection.
 
 ## Stealth rules
 

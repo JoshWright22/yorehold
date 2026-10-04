@@ -188,8 +188,8 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     }
     case Menu::Settings:
         y = screen.h * 0.25f + 20;
-        drawSettings({screen.w / 2 - 260, y, 520, 454});
-        y += 454 + gap;
+        drawSettings({screen.w / 2 - 260, y - 30, 520, 498});
+        y += 468 + gap;
         if (button("Back (Esc)"))
             openMenu(settingsBack_);
         break;
@@ -250,6 +250,8 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
     ui_.checkbox({x, y, w, h}, "Fullscreen", settings_.fullscreen);
     y += h + 8;
     ui_.checkbox({x, y, w, h}, "Shared party view (off: only the selected hero's)", settings_.sharedFog);
+    y += h + 8;
+    ui_.checkbox({x, y, w, h}, "Ask before taking a reaction (default: take it)", settings_.reactionPrompts);
     y += h + 12;
     ui_.label({x, y + 10}, "Lighting", ui_.theme.textDim);
     const std::array<const char*, 4> modes{"Map", "Off", "Mood", "Rules"};
@@ -289,7 +291,8 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
         || before.edgeScroll != settings_.edgeScroll || before.cameraFollows != settings_.cameraFollows
         || before.fullscreen != settings_.fullscreen || before.panSpeed != settings_.panSpeed
         || before.lighting != settings_.lighting || before.sharedFog != settings_.sharedFog
-        || before.timeOfDay != settings_.timeOfDay || before.skin != settings_.skin;
+        || before.timeOfDay != settings_.timeOfDay || before.skin != settings_.skin
+        || before.reactionPrompts != settings_.reactionPrompts;
     if (before.skin != settings_.skin)
         skinChanged_ = true; // swapped at the next update, once this frame's text has been drawn
     if (changed)

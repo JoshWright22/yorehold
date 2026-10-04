@@ -119,6 +119,7 @@ public:
         int lighting = 0;
         int timeOfDay = 0;
         bool sharedFog = true;
+        bool reactionPrompts = false;
     };
     void setOptions(const Options& options);
 
@@ -224,6 +225,17 @@ public:
     // Sends the "use" intent for the creature whose turn it is.
     void use(std::string_view action, std::optional<size_t> target = std::nullopt);
 
+    struct ReactionPrompt
+    {
+        size_t creature = 0;
+        size_t target = 0;
+        std::string name;
+        double secondsLeft = 0;
+        uint64_t id = 0;
+    };
+    const std::optional<ReactionPrompt>& reactionPrompt() const { return reactionPrompt_; }
+    void react(bool take);
+
     // What the party sees, and sneaking (WorldStealth.cpp).
     GameMap::LightingMode lightingMode() const;
     GameMap::Time timeOfDay() const;
@@ -262,6 +274,11 @@ protected:
     void syncLog(); // the encounter's new lines into the adventure log
     // The current creature does `action`: pays for it, runs its effects and shows what happened.
     void perform(const yh::ActionDefinition& action, std::optional<size_t> target);
+    void runActionEffect(size_t creature, const yh::ActionDefinition& action, std::optional<size_t> target);
+    void startMovement(size_t creature, std::vector<yh::Cell> path, bool prompts);
+    void continueMovement();
+    void resolveReaction(bool take);
+    void reactionTime(double seconds);
     void narrate(const yh::EffectResult& result); // an effect's events as log lines and floating numbers
     class EffectsHost;                            // what effects ask of the world (WorldActions.cpp)
     bool swingReady() const; // tryAttack's walk has landed
@@ -321,6 +338,28 @@ protected:
     std::optional<size_t> pendingAttack_; // walk next to this creature, then hit it
     std::string pendingAction_;           // with this action
     std::optional<yh::Cell> pendingStep_; // pendingAttack_ swings once the hero stands here
+    struct PendingMovement
+    {
+        size_t creature = 0;
+        std::vector<yh::Cell> path;
+        size_t edge = 1;
+        size_t nextCreature = 0;
+        int phase = 0; // leaving reach before entering another creature's reach
+        size_t animateFrom = 0;
+        bool prompts = false;
+    };
+    struct PendingReaction
+    {
+        size_t creature = 0;
+        size_t target = 0;
+        std::string action;
+        std::string name;
+        bool readied = false;
+    };
+    std::optional<PendingMovement> pendingMovement_;
+    std::optional<PendingReaction> pendingReaction_;
+    std::optional<ReactionPrompt> reactionPrompt_;
+    uint64_t reactionSequence_ = 0;
     EnemyStep enemyStep_ = EnemyStep::Think;
     double enemyTimer_ = 0;
     std::optional<size_t> enemyTarget_;

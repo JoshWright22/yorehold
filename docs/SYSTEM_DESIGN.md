@@ -415,6 +415,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 27. Generic actions: Defend uses Shielded; Help revives a downed ally at 1 HP or aids the next attack. Hide must beat every standing enemy's passive Perception; Seek beats passive Stealth within 6 squares; Shove and Grapple beat passive Athletics. Shove moves one square; Grapple lasts through the fight. Interact first stands up from prone (equipment in D1, objects in F1). Ready costs 2 actions, ends the turn and records a Strike until the next turn; triggers come in B6. All numbers and conditions are action files.
 
+28. Reactions: everyone can Strike when a foe leaves reach; Ready fires on a foe entering reach. Both spend one reaction regardless of weapon hands. Free movement and Dash provoke; pushes do not. Each crossed square is checked, lethal reactions stop the move, and planned movement is paid up front. Reactions are automatic; the host's optional prompt defaults to Take after 2 seconds (`promptSeconds` in each reaction file).
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

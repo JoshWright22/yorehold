@@ -45,6 +45,10 @@ void World::newAdventure(uint64_t seed)
     restsUsed_.clear();
     restRandom_ = yh::Random(seed ^ 0x5eedull);
     encounter_.reset();
+    pendingMovement_.reset();
+    pendingReaction_.reset();
+    reactionPrompt_.reset();
+    reactionSequence_ = 0;
     reach_.clear();
     pendingAttack_.reset();
     emit({Event::Kind::Reset});

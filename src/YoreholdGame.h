@@ -82,6 +82,7 @@ private:
         int lighting = 0; // 0 = as the map says, else 1 + GameMap::LightingMode
         int timeOfDay = 0; // 0 = as the map says, else 1 + GameMap::Time (day, dusk, night)
         bool sharedFog = true; // the whole party's view; off = only what the selected hero sees
+        bool reactionPrompts = false;
         std::string playerName = "Player";
         std::string joinAddress = "127.0.0.1"; // the last co-op host joined
         std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)

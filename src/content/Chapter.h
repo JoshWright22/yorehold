@@ -3,6 +3,7 @@
 #include "GameMap.h"
 
 #include <yorehold/framework/rpg/Action.h>
+#include <yorehold/framework/rpg/Reaction.h>
 #include <yorehold/framework/rpg/Compendium.h>
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/rpg/Stealth.h>
@@ -107,6 +108,7 @@ struct Chapter
     // What creatures can do on their turns, in the order the action bar lists them: the ruleset
     // folder's actions/, over the framework's basic three.
     std::vector<yh::ActionDefinition> actions;
+    std::vector<yh::ReactionDefinition> reactions;
     yh::Compendium compendium;
     GameMap map;
 

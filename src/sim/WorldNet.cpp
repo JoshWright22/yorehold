@@ -51,6 +51,20 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
         auto cellFrom = [](const nlohmann::json& at) { return yh::Cell{at.at(0).get<int>(), at.at(1).get<int>()}; };
         const std::string accepted(data);
 
+        if (type == "reaction")
+        {
+            if (!pendingReaction_ || !reactionPrompt_ || !j.at("take").is_boolean()
+                || j.at("creature").get<size_t>() != pendingReaction_->creature || j.at("offer").get<uint64_t>() != reactionPrompt_->id)
+                return std::nullopt;
+            const bool take = j.at("take").get<bool>();
+            const bool timedOut = player == 0 && take && reactionPrompt_->secondsLeft <= 0;
+            if (!mayAct(player, pendingReaction_->creature) && !timedOut)
+                return std::nullopt;
+            return nlohmann::json{{"take", take}, {"creature", pendingReaction_->creature}, {"offer", reactionPrompt_->id}}.dump();
+        }
+        if (pendingMovement_ && type != "seats")
+            return std::nullopt;
+
         if (type == "walk")
         {
             if (fighting || !j.at("heroes").is_array())
@@ -140,7 +154,7 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 reason = "Can't move there.";
                 return std::nullopt;
             }
-            return accepted;
+            return nlohmann::json{{"at", {to.x, to.y}}, {"prompts", options_.reactionPrompts}}.dump();
         }
         if (type == "use")
         {
@@ -281,12 +295,15 @@ void World::apply(const yh::NetCommand& command)
         if (cost == reach_.end())
             return;
         const int squares = static_cast<int>(std::ceil(cost->second - 0.01f));
-        const std::vector<yh::Cell> path = findPath(grid_, standing_, to, [this](yh::Cell c) { return c == standing_ || reach_.contains(c); });
-        for (size_t i = 1; i < path.size(); i++)
-            token.path.push_back(grid_.center(path[i]));
+        std::vector<yh::Cell> path = findPath(grid_, standing_, to, [this](yh::Cell c) { return c == standing_ || reach_.contains(c); });
         encounter_->spendMovement(std::min(squares, encounter_->current().budget.movementLeft));
         creatures_[*current].sheet.conditionEvent(rules_, "move");
-        computeReach(*current);
+        startMovement(*current, std::move(path), j.value("prompts", false));
+    }
+    else if (type == "reaction")
+    {
+        resolveReaction(j.at("take").get<bool>());
+        continueMovement();
     }
     else if (type == "use" && current)
     {

@@ -58,6 +58,19 @@ void hud::combatBar(Hud& hud)
     ui.panel(bar);
     hud.panels.push_back(bar);
 
+    if (const auto& prompt = world.reactionPrompt())
+    {
+        ui.label({bar.x + 16, bar.y + 8}, world.creatures()[prompt->creature].sheet.name + ": " + prompt->name, ui.theme.accent);
+        const bool owned = world.mine(prompt->creature);
+        ui.label({bar.x + 16, bar.y + 36}, owned ? world.creatures()[prompt->target].sheet.name + "   Enter: take   X: skip"
+            : "Waiting for " + world.seatName(prompt->creature), ui.theme.textDim);
+        if (ui.button({bar.x + bar.w - 272, bar.y + bar.h - 53, 124, 40}, "Take", owned))
+            world.react(true);
+        else if (ui.button({bar.x + bar.w - 138, bar.y + bar.h - 53, 124, 40}, "Skip", owned))
+            world.react(false);
+        return;
+    }
+
     const yh::Combatant& c = encounter.order()[encounter.currentIndex()];
     char text[160];
     if (!heroTurn)

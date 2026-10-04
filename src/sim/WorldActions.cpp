@@ -116,7 +116,7 @@ bool World::canUse(size_t creature, const yh::ActionDefinition& action, std::str
 {
     if (why)
         why->clear();
-    if (currentCreature() != creature)
+    if (pendingMovement_ || currentCreature() != creature)
         return false;
     const std::vector<const yh::ActionDefinition*> has = actionsOf(creature);
     if (std::find(has.begin(), has.end(), &action) == has.end())
@@ -182,6 +182,17 @@ void World::perform(const yh::ActionDefinition& action, std::optional<size_t> ta
         say(line);
     }
 
+    runActionEffect(me, action, target);
+    if (action.endsTurn && !encounter_->finished())
+        endTurn();
+    else if (encounter_->finished())
+        endCombat();
+    else if (currentCreature() == me)
+        computeReach(me);
+}
+
+void World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::optional<size_t> target)
+{
     yh::EffectResult result;
     if (!action.effect.empty())
     {
@@ -214,12 +225,6 @@ void World::perform(const yh::ActionDefinition& action, std::optional<size_t> ta
             setFlags(chapter_->npcs[creatures_[who].npc].killed);
     }
 
-    if (action.endsTurn && !encounter_->finished())
-        endTurn();
-    else if (encounter_->finished())
-        endCombat();
-    else if (currentCreature() == me)
-        computeReach(me);
 }
 
 void World::narrate(const yh::EffectResult& result)
