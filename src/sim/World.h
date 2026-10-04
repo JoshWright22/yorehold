@@ -48,8 +48,15 @@ public:
         bool surrendered = false; // gave up: out of the fight, stays where it is and can be talked to
         std::string surrender;    // the dialogue for that (see Chapter::surrender)
         float facing = 0;      // radians: where an enemy looks until it notices the party
-        bool sneaking = false; // a hero moving quietly: slower, lights covered, only noticed inside a vision cone
+        // A hero moving quietly (the Hidden condition): slower, lights covered, only noticed inside a vision cone.
+        bool sneaking() const { return sheet.hasCondition(hiddenCondition); }
     };
+
+    // The ruleset's conditions the game itself puts on creatures (rulesets/yorehold/conditions/).
+    // A ruleset without one of them still plays: the state is tracked, with nothing attached to it.
+    static constexpr const char* hiddenCondition = "hidden"; // sneaking
+    static constexpr const char* downedCondition = "downed"; // a hero at 0 HP
+    static constexpr const char* deadCondition = "dead";     // anyone else at 0 HP
 
     // What a number or word floating up from a token is about; the screen picks the colour.
     enum class FloatKind { Miss, Hit, Critical, Heal, Unseen };
@@ -251,6 +258,11 @@ protected:
     yh::AiProfile aiFor(size_t creature) const;
     void applyServerAi(const nlohmann::json& config);
     void reloadAi(const nlohmann::json& serverConfig);
+
+    // Conditions the game keeps in step with what happened (WorldStealth.cpp, WorldCombat.cpp).
+    void setSneaking(size_t hero, bool on);
+    void raise(std::string_view event); // tells everyone's conditions: "fightStart", "fightEnd", "rest"
+    void fallenConditions();            // Downed or Dead for whoever is at 0 HP, and off again once they are up
 
     void emit(Event event) { events_.push_back(std::move(event)); }
     void flagsChanged(const std::set<std::string>& before);

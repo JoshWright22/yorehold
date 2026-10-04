@@ -195,7 +195,8 @@ content files, "client" = Yorehold code.
 - Flanking: a foe on each opposite side gives off-guard. Cover: +2 / +4 from walls and creatures on
   the line. Both are FW helpers over the grid, with the numbers in data.
 - Conditions are files: modifiers, flags (`cantAct`, `cantMove`, `offGuard`), duration and how they
-  end (save at end of turn, timed, until rest).
+  end (save at end of round, timed, an event such as a rest or being hit). Done: FW machinery, the
+  ten files in `rulesets/yorehold/conditions/` (CONTENT.md).
 
 ### Characters and progression (part)
 
@@ -401,6 +402,11 @@ These were open; each is the provisional answer and is data or a small switch wh
     was already played with; the magic item limit is 3 and is held there until inventory uses it.
     Stealth numbers moved into the folder as `stealth.json`. A creature running for help has to get
     within 3 squares of its allies (`alarmReach` in its AI profile).
+25. Condition numbers, all in `rulesets/yorehold/conditions/`: off-guard, prone and grabbed each take
+    2 from AC, and penalties from different conditions add up; prone also takes 2 from attacks;
+    frightened takes its value (up to 4) from attacks and AC and drops by one a round; a raised shield
+    adds 2 AC until the next turn; slowed halves speed. Sneaking is `hidden`; a hero at 0 HP is
+    `downed`, anyone else `dead`. `dying` waits for death saves (roadmap B10).
 
 ### Structure choices made in this document
 

@@ -1,0 +1,8 @@
+{
+  "id": "off-guard",
+  "name": "Off-guard",
+  "description": "Caught out of position and easier to hit, until its next turn starts.",
+  "modifiers": [{ "stat": "ac", "op": "add", "value": -2 }],
+  "flags": ["offGuard"],
+  "ends": ["turnStart"]
+}

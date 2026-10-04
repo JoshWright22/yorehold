@@ -1,0 +1,7 @@
+{
+  "id": "hidden",
+  "name": "Hidden",
+  "description": "Moving quietly and out of sight. Attacking, or a fight starting, gives it away.",
+  "flags": ["hidden"],
+  "ends": ["attack", "fightStart"]
+}

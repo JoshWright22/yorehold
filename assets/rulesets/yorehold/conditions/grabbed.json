@@ -1,0 +1,8 @@
+{
+  "id": "grabbed",
+  "name": "Grabbed",
+  "description": "Held in place by someone: it cannot move away and is easier to hit.",
+  "modifiers": [{ "stat": "ac", "op": "add", "value": -2 }],
+  "flags": ["cantMove", "offGuard"],
+  "ends": ["fightEnd"]
+}

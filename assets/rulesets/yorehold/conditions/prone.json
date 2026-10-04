@@ -1,0 +1,11 @@
+{
+  "id": "prone",
+  "name": "Prone",
+  "description": "On the ground: attacks badly and is easier to hit until it stands up.",
+  "modifiers": [
+    { "stat": "attack", "op": "add", "value": -2 },
+    { "stat": "ac", "op": "add", "value": -2 }
+  ],
+  "flags": ["prone", "offGuard"],
+  "ends": ["fightEnd"]
+}

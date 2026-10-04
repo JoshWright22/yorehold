@@ -21,7 +21,7 @@ void World::walk(double deltaSeconds)
     const yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
     // Each sneaking hero is slower, whoever plays them, so they walk the same on every machine.
     for (size_t i = 0; i < heroCount_; i++)
-        tokens_.tokens[i].pace = !fighting && creatures_[i].sneaking ? chapter_->stealth.sneakSpeed : 1.0f;
+        tokens_.tokens[i].pace = !fighting && creatures_[i].sneaking() ? chapter_->stealth.sneakSpeed : 1.0f;
     tokens_.advance(grid_, passable, deltaSeconds);
 }
 
@@ -186,6 +186,7 @@ void World::dialogueActions()
             return;
         }
     }
+    fallenConditions();
 }
 
 void World::chooseReply(size_t index, size_t hero)
@@ -254,6 +255,8 @@ void World::rest(const yh::RestDefinition& rest)
         say(c.name + " recovers " + std::to_string(healed) + " HP" + (detail.empty() ? "." : " (" + detail + ")."));
         emit({Event::Kind::Floater, "+" + std::to_string(healed), tokens_.tokens[i].position, FloatKind::Heal});
     }
+    raise("rest");
+    fallenConditions();
     if (const int left = restsLeft(rest); left >= 0)
         say(std::to_string(left) + " left.");
     requestSave();

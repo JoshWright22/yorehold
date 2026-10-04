@@ -1,0 +1,8 @@
+{
+  "id": "shielded",
+  "name": "Shielded",
+  "description": "A raised shield turns blows aside until its next turn starts.",
+  "modifiers": [{ "stat": "ac", "op": "add", "value": 2 }],
+  "flags": ["shielded"],
+  "ends": ["turnStart"]
+}

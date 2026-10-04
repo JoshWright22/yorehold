@@ -354,7 +354,7 @@ void PlayScreen::drawWorld(yh::Renderer& renderer)
     }
     for (size_t i = 0; i < world_.heroCount(); i++)
     {
-        if (tokens.tokens[i].floor != World::dead && map.lighting().carried > 0 && !creatures[i].sneaking)
+        if (tokens.tokens[i].floor != World::dead && map.lighting().carried > 0 && !creatures[i].sneaking())
             lights.push_back({tokens.tokens[i].position, map.lighting().carried * cell, {255, 215, 160, 255}});
     }
     if (world_.lightingMode() != GameMap::LightingMode::Off)

@@ -121,7 +121,7 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 return std::nullopt;
             bool hiding = false;
             for (size_t i = 0; i < heroCount_; i++)
-                hiding |= tokens_.tokens[i].owner == player && creatures_[i].sneaking && !creatures_[i].sheet.down();
+                hiding |= tokens_.tokens[i].owner == player && creatures_[i].sneaking() && !creatures_[i].sheet.down();
             if (!hiding)
                 return std::nullopt;
             nlohmann::json at = nlohmann::json::array();
@@ -233,7 +233,7 @@ void World::apply(const yh::NetCommand& command)
         {
             if (tokens_.tokens[i].owner != command.player || creatures_[i].sheet.down())
                 continue;
-            creatures_[i].sneaking = on;
+            setSneaking(i, on);
             sneak_[i].reset();
         }
         if (command.player == self_)
@@ -352,6 +352,7 @@ void World::apply(const yh::NetCommand& command)
         token.floor = dead;
         gone.sheet.hp = 0;
         gone.fled = true;
+        gone.sheet.conditions.clear(); // it is out of the adventure, not lying dead in it
         if (encounter_->finished())
             endCombat();
         else

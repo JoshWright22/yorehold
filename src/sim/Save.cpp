@@ -49,7 +49,7 @@ std::string World::stateJson() const
             {"awake", creatures_[i].awake},
             {"fled", creatures_[i].fled},
             {"surrendered", creatures_[i].surrendered},
-            {"sneaking", creatures_[i].sneaking},
+            {"sneaking", creatures_[i].sneaking()},
             {"team", creatures_[i].team},
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
@@ -137,7 +137,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];
-            creatures_[i].sneaking = sneaking[i];
+            setSneaking(i, sneaking[i]); // also for saves from before sneaking was a condition on the sheet
             creatures_[i].team = teams[i];
             yh::Token& token = tokens_.tokens[i];
             if (creatures_[i].npc >= 0)
@@ -147,6 +147,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             if (creatures_[i].sheet.down())
                 token.floor = dead;
         }
+        fallenConditions();
         emit({Event::Kind::Resumed});
         return true;
     }

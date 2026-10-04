@@ -43,6 +43,9 @@ public:
     // Steps until `done` holds or `limitSeconds` have passed; true if it held.
     bool stepUntil(const std::function<bool()>& done, double limitSeconds);
 
+    // A creature's sheet, to set a situation up (wounds, conditions) before sending intents at it.
+    yh::Character& sheet(size_t creature) { return creatures_[creature].sheet; }
+
     // What the world has said so far, and whether it asked for its ending.
     std::vector<std::string> log;
     bool ended = false;

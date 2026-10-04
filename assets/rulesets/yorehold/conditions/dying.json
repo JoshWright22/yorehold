@@ -1,0 +1,7 @@
+{
+  "id": "dying",
+  "name": "Dying",
+  "description": "Downed and slipping away until healed or steadied.",
+  "flags": ["dying", "cantAct", "cantMove"],
+  "ends": ["healed"]
+}

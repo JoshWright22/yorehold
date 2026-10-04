@@ -26,6 +26,7 @@ creatures/goblin.json
 rulesets/yorehold/             the game's rules (built in; see Rulesets)
   ruleset.json
   stealth.json
+  conditions/prone.json        one file per condition
 rulesets/my-rules.json         optional custom rules, as one file or a folder like the above
 ui/theme.json                  colors and frame styling
 design/                        optional game/UI design documents
@@ -129,11 +130,50 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited) and a `recovery`. The first is the one R takes. |
 | `afterVictory`, `reviveAfterVictory` | A `recovery` for the winners of a fight, and the HP downed winners get back up with (0 = they stay down). |
 | `defaultHitDie`, `hitDieByClass`, `hitDieAbility` | Sides of the hit die, by class name, and the ability added per die. |
-| `conditions` | Named states: `id`, `name`, `description`, `modifiers`, `advantageOnAttacks`, `disadvantageOnAttacks`. |
+| `conditions` | Optional list of conditions written inline; a ruleset folder keeps them as files instead (see Conditions). |
 
 A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.
 
 A package can carry rules of its own as one JSON file or as a folder of the same shape and name it in `chapter.json`. The shipped adventures do not.
+
+## Conditions
+
+Each condition is one file in the ruleset folder, `conditions/<id>.json`, named after its `id`. A new condition is a new file. The game ships off-guard, frightened, prone, slowed, grabbed, hidden, downed, dying, dead and shielded.
+
+```json
+{
+  "id": "frightened",
+  "name": "Frightened",
+  "description": "Shaken: worse at attacking and defending by its value, which drops by one each round.",
+  "modifiers": [
+    { "stat": "attack", "op": "add", "value": -1 },
+    { "stat": "ac", "op": "add", "value": -1 }
+  ],
+  "flags": ["frightened"],
+  "stacking": "value",
+  "maxValue": 4,
+  "perValue": true,
+  "decay": 1,
+  "ends": ["rest"]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `id`, `name`, `description` | `id` must match the file name. `name` and `description` are what players read. |
+| `modifiers` | Changes to stats while it lasts: `stat` (`ac`, `attack`, `damage`, `speed`, an ability...), `op` (`add`, `multiply`, `override`) and `value`. |
+| `advantageOnAttacks`, `disadvantageOnAttacks` | `true` forces the creature's attack rolls. |
+| `flags` | What it stops or marks. `cantAct` takes the creature's actions and reaction for the turn and `cantMove` its movement. `offGuard`, `prone`, `hidden`, `downed`, `dying`, `dead`, `frightened`, `slowed` and `shielded` mark the state for rules that ask about it. |
+| `duration` | Rounds it lasts unless the effect applying it says otherwise. Leave out (or -1) for "until something ends it". |
+| `stacking` | Applying it again: `refresh` (default) restarts the duration, `longest` keeps the longer one, `value` adds the values up to `maxValue`. |
+| `maxValue`, `perValue`, `decay` | With `value` stacking: the highest value, whether `add` modifiers count once per point of value, and how much the value falls at the end of each round. |
+| `ends` | What ends it: `turnStart` or `turnEnd` (its own turn), `attack` (it attacks), `damage` (it is hit), `healed` (it is brought back above 0 HP), `move`, `rest`, `fightStart`, `fightEnd`. |
+| `save` | `{ "ability": "wis", "dc": 12 }`: a save at the end of each round that ends it on a success. |
+| `removes` | Other conditions taken off when this one goes on. |
+
+A file with an unknown event or stacking, a save with an ability the ruleset lacks, or `removes` naming a condition that does not exist stops the chapter from loading and is named in the error.
+
+The game puts three of them on by itself. A sneaking hero is `hidden`. A hero at 0 HP is `downed` until healed; any other creature at 0 HP is `dead`, unless it got away or was let go. The rest are for actions, spells and items to apply.
 
 ## Stealth rules
 

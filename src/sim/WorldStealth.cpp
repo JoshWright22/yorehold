@@ -83,7 +83,7 @@ void World::updateVisibility()
             continue;
         const float darkvision = creatures_[i].sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
         eyes[i] = {tokens_.tokens[i].position, sky.sight * cell, darkvision};
-        if (lighting.carried > 0 && !creatures_[i].sneaking)
+        if (lighting.carried > 0 && !creatures_[i].sneaking())
             carried.push_back({tokens_.tokens[i].position, lighting.carried * cell});
     }
     // In rules mode a cell is only seen if some light reaches it (or it's within darkvision).
@@ -141,10 +141,19 @@ void World::updateVisibility()
         updateStealth();
 }
 
+void World::setSneaking(size_t hero, bool on)
+{
+    yh::Character& sheet = creatures_[hero].sheet;
+    if (!on)
+        sheet.removeCondition(hiddenCondition);
+    else if (!sheet.hasCondition(hiddenCondition))
+        sheet.addCondition(rules_, hiddenCondition);
+}
+
 bool World::sneakingMine() const
 {
     for (size_t i = 0; i < heroCount_; i++)
-        if (creatures_[i].sneaking && mine(i) && !creatures_[i].sheet.down())
+        if (creatures_[i].sneaking() && mine(i) && !creatures_[i].sheet.down())
             return true;
     return false;
 }
@@ -159,7 +168,7 @@ yh::LightLevel World::lightAt(yh::Vec2 point) const
         return sky.level;
     std::vector<yh::Light> carried;
     for (size_t i = 0; i < heroCount_; i++)
-        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0 && !creatures_[i].sneaking)
+        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0 && !creatures_[i].sneaking())
             carried.push_back({tokens_.tokens[i].position, map().lighting().carried * cell});
     return lightLevels_.level(c, carried, map().walls());
 }
@@ -204,7 +213,7 @@ void World::updateStealth()
             from = at;
             sneak_[h].reset();
         }
-        if (!creatures_[h].sneaking)
+        if (!creatures_[h].sneaking())
         {
             // Walking openly: the fight starts as soon as they and an enemy can see each other.
             for (size_t w = 0; w < watching.size() && !noticed; w++)

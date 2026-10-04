@@ -29,7 +29,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [x] **B1. Yorehold ruleset as a folder.** `rulesets/yorehold/ruleset.json` with the numbers the
   game uses today (actions per turn, rests, XP table, stealth step, magic item limit). The game
   loads it by default; `modern`/`classic` stay for tests.
-- [ ] **B2. Conditions as files.** `conditions/*.json`: modifiers, flags, duration, how they end.
+- [x] **B2. Conditions as files.** `conditions/*.json`: modifiers, flags, duration, how they end.
   Off-guard, frightened, prone, slowed, grabbed, hidden, downed, dying, dead, shielded.
 - [ ] **B3. Effects.** `yh::Effect`: the step list from SYSTEM_DESIGN section 3, parsed and
   validated from JSON, run against a small host interface. Unit checks for each step, `when`,

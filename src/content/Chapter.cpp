@@ -139,6 +139,13 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             std::optional<yh::Ruleset> rules = yh::Ruleset::fromJson(readOrThrow(files, where), &problem);
             if (!rules) throw std::invalid_argument(problem);
             c.rules = std::move(*rules);
+            // A ruleset folder keeps its conditions one to a file.
+            where = c.rulesFolder + "/conditions";
+            if (!c.rulesFolder.empty() && !c.rules.loadConditions(files, where, &problem))
+            {
+                where = "conditions";
+                throw std::invalid_argument(problem);
+            }
         }
 
         // How sneaking works: the ruleset folder's file, then the content's own from before

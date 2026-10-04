@@ -32,9 +32,10 @@ void World::syncLog()
 
 void World::startCombat(int group, std::optional<size_t> only, bool surprise)
 {
+    raise("fightStart");
     for (size_t i = 0; i < heroCount_; i++)
     {
-        creatures_[i].sneaking = false;
+        setSneaking(i, false); // whatever the ruleset says about Hidden, nobody sneaks through a fight yet
         sneak_[i].reset();
     }
     // Everyone stops on a square of their own.
@@ -113,6 +114,8 @@ void World::endCombat()
     for (yh::Token& token : tokens_.tokens)
         token.selected = false;
     pendingStep_.reset();
+    raise("fightEnd");
+    fallenConditions();
 
     if (encounter_->winningTeam() != 0)
     {
@@ -137,6 +140,7 @@ void World::endCombat()
             tokens_.tokens[i].floor = 0;
         c.sheet.addXp(rules_, chapter_->xpPerVictory);
     }
+    fallenConditions(); // the revived are no longer Downed
     selectOwnHero();
     say(fillXp(chapter_->victoryText, chapter_->xpPerVictory));
 
@@ -160,6 +164,32 @@ void World::endCombat()
     if (!rules_.rests.empty() && restsLeft(rules_.rests.front()) != 0)
         say("Hurt? Rest (R) before pushing on.");
     requestSave();
+}
+
+void World::raise(std::string_view event)
+{
+    for (Creature& c : creatures_)
+        c.sheet.conditionEvent(rules_, event);
+}
+
+void World::fallenConditions()
+{
+    for (size_t i = 0; i < creatures_.size(); i++)
+    {
+        Creature& c = creatures_[i];
+        const char* fallen = i < heroCount_ ? downedCondition : deadCondition;
+        if (c.sheet.down())
+        {
+            // Someone who got away or was let go is out of the adventure, not lying in it.
+            if (!c.fled && !c.sheet.hasCondition(fallen) && rules_.condition(fallen))
+                c.sheet.addCondition(rules_, fallen);
+        }
+        else if (c.sheet.hasCondition(fallen))
+        {
+            c.sheet.conditionEvent(rules_, "healed");
+            c.sheet.removeCondition(fallen); // whatever its file says ends it, nobody on their feet is down
+        }
+    }
 }
 
 void World::playEnding()
@@ -301,6 +331,7 @@ void World::attack(size_t target)
         return;
     const yh::AttackResult result = encounter_->attack(*targetIndex);
     syncLog();
+    fallenConditions();
 
     const yh::Vec2 at = tokens_.tokens[target].position;
     if (!result.hit)

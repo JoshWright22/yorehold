@@ -1,0 +1,8 @@
+{
+  "id": "downed",
+  "name": "Downed",
+  "description": "At 0 HP and out of the fight until healed.",
+  "flags": ["downed", "cantAct", "cantMove", "offGuard"],
+  "ends": ["healed"],
+  "removes": ["hidden"]
+}
