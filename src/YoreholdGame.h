@@ -41,6 +41,11 @@ public:
     bool handleEvent(const SDL_Event& event) override;
     std::string describe() const override;
 
+protected:
+    // For test scenes: picks the aimed action as its button on the action bar would.
+    void armAction(std::string action) { play_.arm(std::move(action)); }
+    yh::Camera& playCamera() { return play_.camera(); }
+
 private:
     int configSeen_ = 0;
     double configTimer_ = 0;

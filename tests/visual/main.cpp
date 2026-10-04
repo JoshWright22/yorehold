@@ -245,6 +245,88 @@ private:
     ConsumableGame game_;
 };
 
+// A caster's turn with Mire armed and empty hands: the burst, the squares, the goblins it would
+// slow and the range ruler follow the pointer. Flame fan (a cone from the caster) is the other.
+class SpellGame : public YoreholdGame
+{
+public:
+    void prepare()
+    {
+        load();
+        SDL_Event key{};
+        key.type = SDL_EVENT_KEY_DOWN; key.key.key = SDLK_RETURN;
+        handleEvent(key); handleEvent(key); newAdventure(7);
+        if (!chapter_ || heroCount_ >= creatures_.size()) return;
+        // The keep's party has no wizard: the first hero with slots learns the wizard's spells.
+        size_t wizard = heroCount_;
+        for (size_t i = 0; i < heroCount_ && wizard == heroCount_; i++)
+            if (creatures_[i].sheet.resources.contains("slots-1"))
+                wizard = i;
+        if (wizard == heroCount_ || !findSpell("flame-fan") || !findSpell("mire")) return;
+        creatures_[wizard].sheet.spells.insert(creatures_[wizard].sheet.spells.end(), {"flame-fan", "mire"});
+        // An open strip: the wizard, then two enemies in a row.
+        yh::Cell at{1, 1};
+        bool found = false;
+        for (int y = 2; y < map().height() - 2 && !found; y++)
+            for (int x = 1; x < map().width() - 5 && !found; x++)
+            {
+                bool open = true;
+                for (int dx = 0; dx < 5; dx++)
+                    for (int dy = -1; dy <= 1; dy++) open &= walkable({x + dx, y + dy});
+                if (open) { at = {x, y}; found = true; }
+            }
+        if (!found) return;
+        yh::Character& sheet = creatures_[wizard].sheet;
+        for (size_t i = 0; i < sheet.inventory.size(); i++)
+            if (sheet.inventory[i].equipped && yh::Character::held(sheet.inventory[i])) sheet.unequip(i);
+        const int dex = sheet.abilityScore("dex");
+        sheet.stats.setBase("dex", 1000);
+        // The camera centres the caster under the action bar, so the burst is aimed off to the
+        // right where it can be seen; the cone is in the unit checks.
+        tokens_.tokens[wizard].position = grid_.center(at);
+        tokens_.tokens[heroCount_].position = grid_.center({at.x + 4, at.y});
+        if (heroCount_ + 1 < creatures_.size() && creatures_[heroCount_ + 1].group == creatures_[heroCount_].group)
+            tokens_.tokens[heroCount_ + 1].position = grid_.center({at.x + 5, at.y + 1});
+        startCombat(creatures_[heroCount_].group);
+        sheet.stats.setBase("dex", static_cast<float>(dex));
+        while (currentCreature() && currentCreature() != wizard) endTurn();
+        update(2); // shows the events first: a new adventure puts any armed action away
+        armAction("mire");
+        aimAt_ = grid_.center({at.x + 4, at.y});
+    }
+    // Where the pointer goes: the first goblin, wherever the camera has got to.
+    yh::Vec2 aim() { return playCamera().worldToScreen(aimAt_); }
+    yh::Vec2 aimAt_;
+};
+
+class TestSceneSpellTargeting : public yh::TestScene
+{
+public:
+    TestSceneSpellTargeting() { game_.prepare(); }
+    void update(double) override
+    {
+        // Until someone moves the mouse, the pointer stays on the goblin as the camera settles.
+        if (!moved_)
+        {
+            SDL_Event move{};
+            move.type = SDL_EVENT_MOUSE_MOTION;
+            move.motion.x = game_.aim().x;
+            move.motion.y = game_.aim().y;
+            game_.handleEvent(move);
+        }
+        game_.update(1.0 / 60);
+    }
+    void draw(yh::Renderer& renderer) override { game_.draw(renderer); }
+    bool handleEvent(const SDL_Event& event) override
+    {
+        moved_ |= event.type == SDL_EVENT_MOUSE_MOTION;
+        return game_.handleEvent(event);
+    }
+private:
+    SpellGame game_;
+    bool moved_ = false;
+};
+
 int main(int argc, char** argv)
 {
     yh::TestBrowser browser;
@@ -255,6 +337,7 @@ int main(int argc, char** argv)
     browser.add<TestSceneDeath>("Death saves");
     browser.add<TestSceneMerchant>("Merchants");
     browser.add<TestSceneConsumables>("Consumables");
+    browser.add<TestSceneSpellTargeting>("Spell targeting");
 
     yh::HostSettings settings;
     settings.title = "yorehold tests";

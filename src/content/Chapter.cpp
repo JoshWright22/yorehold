@@ -217,6 +217,25 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         for (const auto& [id, item] : c.compendium.items)
             if (item.use && !item.use->effect.check(c.rules, &problem))
                 throw std::invalid_argument("item " + id + " use: " + problem);
+        // Spells: how the ruleset casts, and each spell's effects against its conditions and abilities.
+        if (!c.rulesFolder.empty() && files.exists(c.rulesFolder + "/spellcasting.json"))
+        {
+            where = c.rulesFolder + "/spellcasting.json";
+            const auto spellcasting = yh::SpellRules::fromJson(readOrThrow(files, where), &problem);
+            if (!spellcasting || !spellcasting->check(c.rules, &problem)) throw std::invalid_argument(problem);
+            c.spellcasting = *spellcasting;
+        }
+        for (const auto& [id, spell] : c.compendium.spells)
+        {
+            where = c.rulesFolder + "/spells/" + id + ".json";
+            if (!spell.action.effect.check(c.rules, &problem)) throw std::invalid_argument(problem);
+            if (yh::findAction(c.actions, id)) throw std::invalid_argument("an action already has this id");
+        }
+        if (!c.compendium.spells.empty() && !c.spellcasting.check(c.rules, &problem))
+        {
+            where = c.rulesFolder + "/spellcasting.json";
+            throw std::invalid_argument(problem);
+        }
         if (!c.rules.checkDeathRules(&problem))
         {
             where = c.rulesFolder.empty() ? folder + "/chapter.json" : c.rulesFolder + "/ruleset.json";
@@ -248,6 +267,8 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         if (c.positioning.enabled) include(c.positioning.toJson());
         for (const yh::ActionDefinition& action : c.actions) include(action.json);
         for (const yh::ReactionDefinition& reaction : c.reactions) include(reaction.json);
+        if (!c.compendium.spells.empty()) include(c.spellcasting.toJson());
+        for (const auto& [id, spell] : c.compendium.spells) include(spell.json);
         for (const auto& [id, item] : c.compendium.items) include(yh::Compendium::itemToJson(item));
         for (const auto& [id, definition] : c.compendium.classes) include(yh::Compendium::classToJson(definition));
         for (auto& [id, definition] : c.compendium.creatures)

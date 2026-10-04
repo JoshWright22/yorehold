@@ -141,7 +141,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `feetPerSquare` | Size of a map square. |
 | `carryPerStrength` | Pounds carried per point of the first ability. |
 | `magicItemLimit` | Magic items one character may carry (0 = no limit). Held here until inventory rules use it. |
-| `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited) and a `recovery`. The first is the one R takes. |
+| `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited), a `recovery` and optional `restores`, the resources it refills (`"slots-*"` for every spell slot). The first is the one R takes. The long rest restores spell slots. |
 | `afterVictory`, `reviveAfterVictory` | A `recovery` for the winners of a fight, and the HP downed winners get back up with (0 = they stay down). |
 | `defaultHitDie`, `hitDieByClass`, `hitDieAbility` | Sides of the hit die, by class name, and the ability added per die. |
 | `conditions` | Optional list of conditions written inline; a ruleset folder keeps them as files instead (see Conditions). |
@@ -294,7 +294,8 @@ What a creature can do on its turn is a file in the ruleset folder, `actions/<id
 | `endsTurn` | `true` ends the turn once it is done. |
 | `general` | `true` (default): every creature has it. `false`: only creatures something grants it to. |
 | `requires` | `{ "flags": [...], "without": [...], "resources": { "name": 1 } }`: condition flags needed, flags that bar it, and resources it uses. |
-| `target` | `kind` `self` (default) or `creature`; a creature target has `side` (`enemy`, `ally`, `any`), `range` in squares, and `downed` (default false) to allow unconscious targets. Dead or withdrawn creatures cannot be targeted. Ranged creature actions need a clear line of sight. |
+| `target` | `kind` `self` (default), `creature` or `point` (a square, for an action with an `area`); a creature or point target has `side` (`enemy`, `ally`, `any`), `range` in squares, and `downed` (default false) to allow unconscious targets. Dead or withdrawn creatures cannot be targeted. Ranged creature actions need a clear line of sight. |
+| `area` | `shape` `burst`, `cone`, `line` or `square` with `size` in squares (plus `width` for a line, `angle` for a cone). The effect lands on everyone of the target's `side` inside it with a clear line from where it starts; see Spells. |
 | `readies` | Records this action id for a reaction, until the creature's next turn or the fight ends. It must name an existing action that neither readies another nor ends the turn. |
 | `log` | A line for the log when it is done; `{name}` is whoever does it. |
 | `effects`, `save` | What it does, in the effect steps the framework reads (see FRAMEWORK.md, Effects). Movement left this turn is the resource `movement`. |
@@ -405,6 +406,47 @@ for half, range 6 squares, two actions, 50 gp). Consumables do not count as magi
 their file sets `magic`. Each starting class carries one potion; Wren sells all three. Legacy
 character sheets retaining a `potions` resource can still use the old Potion action; new sheets
 use inventory instead. Older adventure saves whose content signature changed report that clearly.
+
+## Spells
+
+Spells live only in the ruleset folder, `spells/<id>.json`, in the framework's spell format
+(FRAMEWORK.md, "Spells"): an action with `level` (0 = cantrip), `hands` and `concentration`.
+A spell costs one action per hand unless it gives a `cost`, and may not share an id with an action.
+Class files list them by level, `"spells": {"0": ["spark"], "1": ["flame-fan", "mire"]}`; a hero
+knows every listed cantrip and every listed spell of a level it has slots for, rebuilt from its
+choices on every load. Effects are checked against the ruleset when the chapter loads; a bad
+field, an unknown condition or a spell listed under the wrong level names the file.
+
+`spellcasting.json` beside `ruleset.json` says how the ruleset casts (every field optional):
+
+```json
+{ "hands": "free", "slotPrefix": "slots-", "upcast": true,
+  "concentration": { "onDamage": "save", "ability": "con", "minimumDc": 10, "damageShare": 0.5, "endsWhenDown": true } }
+```
+
+`hands: "free"` means the spell's hands must be empty: put a shield or weapon away in Gear first
+(`"ignored"` makes hands only set the cost). Cantrips spend nothing; a levelled spell spends the
+lowest slot of its level or above (`upcast`), and a step with `"scale": {"by": "slot"}` grows with
+the slot spent. Concentration: one such spell at a time per caster. Casting another ends the
+first; damage asks for a save against the larger of `minimumDc` and `damageShare` of the damage
+(`onDamage` may be `breaks` or `ignored`); dropping to 0 HP, the end of the fight and a rest end
+it, and so does everything it left running out. Ending it takes off the conditions and modifiers
+the spell put on creatures. Concentration and spent slots are saved.
+
+In a fight a hero's spells are on the action bar. A creature target is clicked like Strike; a
+point target is aimed at a square: the burst, cone, line or square is drawn on the map with the
+squares it covers, a ring on everyone it would land on and the range ruler in feet, in orange
+when it can be cast there and red when not. Esc puts an aimed spell away. K opens the spell panel:
+slots, free hands, what the hero concentrates on, and every spell with why it can't be cast now.
+Between fights, spells that help can be cast from there on the party; spells that harm or aim at
+the map need a fight.
+
+The sample spells (the full lists are a later step): `spark` (cantrip, one hand, 1d6 lightning,
+Dexterity save negates, +1d6 every four levels), `flame-fan` (level 1, two hands, a three-square
+cone, 2d6 fire, Dexterity save for half, +1d6 per higher slot), `mire` (level 1, concentration,
+a one-square burst within 6 squares slowing enemies who fail a Strength save) for the wizard, and
+`mend` (level 1, touch, 1d8+2 healing, gets a downed ally up) for the cleric. The **Spell
+targeting** test scene arms Mire on a caster's turn with the pointer on a goblin.
 
 ## NPCs, dialogue, quests and story flags
 

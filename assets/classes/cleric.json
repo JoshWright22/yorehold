@@ -19,6 +19,9 @@
     "shield",
     "healing-potion"
   ],
+  "spells": {
+    "1": ["mend"]
+  },
   "levels": [
     { "slots": { "1": 2 } },
     { "feats": ["class"], "slots": { "1": 3 }, "features": [{ "id": "channel-divinity", "name": "Channel Divinity", "description": "Once a rest, call on their god directly.", "resources": { "channel-divinity": 1 } }] },

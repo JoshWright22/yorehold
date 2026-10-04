@@ -1,0 +1,11 @@
+{
+  "id": "mend",
+  "name": "Mend",
+  "description": "A touch that closes wounds and gets a downed ally up.",
+  "level": 1,
+  "hands": 1,
+  "target": { "kind": "creature", "side": "ally", "range": 1, "downed": true },
+  "effects": [
+    { "do": "heal", "dice": "1d8+2", "scale": { "by": "slot", "from": 1, "dice": "1d8" } }
+  ]
+}

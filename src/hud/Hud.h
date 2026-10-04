@@ -24,7 +24,8 @@ struct Hud
     size_t& tradePage;
     std::optional<std::pair<size_t, size_t>>& consuming; // hero and inventory entry whose target is being picked
     size_t& inventoryPage;
-    bool inSession = false;        // co-op: cards show who plays each hero
+    std::optional<std::string>& casting; // spell panel: the spell whose target is being picked
+    bool inSession = false;       // co-op: cards show who plays each hero
     bool guest = false;            // joined someone else's game: only the host can start it again
 };
 
@@ -44,5 +45,6 @@ void inventoryPanel(Hud& hud);  // I: what the selected (or acting) hero carries
 // Between fights, beside something to take: a button to open it (E), or its contents once open.
 void lootPanel(Hud& hud);
 void merchantPanel(Hud& hud);
+void spellPanel(Hud& hud);      // K: the selected (or acting) hero's slots and spells; casts the helpful ones between fights
 
 }

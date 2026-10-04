@@ -83,7 +83,7 @@ bool PlayScreen::handle(const SDL_Event& event)
     if (keyDown && event.key.key == SDLK_J && world_.journal())
     {
         journalOpen_ = !journalOpen_;
-        inventoryOpen_ = false;
+        inventoryOpen_ = spellsOpen_ = false;
         trading_.reset();
         return true;
     }
@@ -92,8 +92,20 @@ bool PlayScreen::handle(const SDL_Event& event)
         inventoryOpen_ = !inventoryOpen_;
         consuming_.reset();
         inventoryPage_ = 0;
-        journalOpen_ = false;
+        journalOpen_ = spellsOpen_ = false;
         giving_.reset();
+        looting_.reset();
+        trading_.reset();
+        return true;
+    }
+    if (keyDown && event.key.key == SDLK_K)
+    {
+        spellsOpen_ = !spellsOpen_;
+        casting_.reset();
+        inventoryPage_ = 0;
+        journalOpen_ = inventoryOpen_ = false;
+        giving_.reset();
+        consuming_.reset();
         looting_.reset();
         trading_.reset();
         return true;
@@ -104,7 +116,7 @@ bool PlayScreen::handle(const SDL_Event& event)
         const size_t hero = world_.leaderIndex();
         if (looting_)
             world_.act("loot", nlohmann::json{{"hero", hero}, {"pile", *looting_}, {"all", true}}.dump());
-        else if (!inventoryOpen_ && !journalOpen_ && !trading_)
+        else if (!inventoryOpen_ && !journalOpen_ && !trading_ && !spellsOpen_)
         {
             looting_ = world_.pileNear(hero);
             if (!looting_)
@@ -117,9 +129,18 @@ bool PlayScreen::handle(const SDL_Event& event)
     }
     if (keyDown && event.key.key == SDLK_ESCAPE)
     {
-        if (!journalOpen_ && !inventoryOpen_ && !looting_ && !trading_)
-            return false;
-        journalOpen_ = inventoryOpen_ = false;
+        if (!journalOpen_ && !inventoryOpen_ && !looting_ && !trading_ && !spellsOpen_)
+        {
+            // An aimed spell is put away first; the next Esc is the pause menu's.
+            const std::optional<size_t> acting = world_.currentCreature();
+            const yh::ActionDefinition* armed = acting && !armed_.empty() ? hud::armedAction(world_, *acting, armed_) : nullptr;
+            if (!armed || armed->id != armed_ || armed->target != yh::ActionDefinition::Target::Point)
+                return false;
+            armed_.clear();
+            return true;
+        }
+        journalOpen_ = inventoryOpen_ = spellsOpen_ = false;
+        casting_.reset();
         giving_.reset();
         looting_.reset();
         trading_.reset();
@@ -220,7 +241,22 @@ void PlayScreen::heroInput()
     if (!overUi(input_.mouse()) && (walkClick || selectClick))
     {
         const yh::ActionDefinition* armed = hud::armedAction(world_, me, armed_);
-        if (const std::optional<size_t> target = hoveredCreature(); target && armed
+        if (armed && armed->target == yh::ActionDefinition::Target::Point)
+        {
+            // Aimed at the map: the square under the pointer, or the one a creature under it stands on.
+            if (token.path.empty())
+            {
+                const std::optional<size_t> under = hoveredCreature();
+                const yh::Cell at = under ? world_.cellOf(*under) : world_.grid().cellAt(camera_.screenToWorld(input_.mouse()));
+                auto actionsLeft = [this] { return world_.encounter()->order()[world_.encounter()->currentIndex()].budget.actions; };
+                const int before = actionsLeft();
+                world_.use(armed->id, std::nullopt, at);
+                // Once it is cast, clicks walk again.
+                if (!world_.fighting() || world_.currentCreature() != me || actionsLeft() != before)
+                    armed_.clear();
+            }
+        }
+        else if (const std::optional<size_t> target = hoveredCreature(); target && armed
             && (armed->side == yh::ActionDefinition::Side::Any
                 || (world_.creatures()[*target].team == world_.creatures()[me].team) == (armed->side == yh::ActionDefinition::Side::Ally)))
             attackWithArmed(me, *target);
@@ -240,7 +276,10 @@ void PlayScreen::heroInput()
 void PlayScreen::attackWithArmed(size_t hero, size_t target)
 {
     const yh::ActionDefinition* armed = hud::armedAction(world_, hero, armed_);
-    world_.tryAttack(target, armed ? armed->id : World::strikeAction);
+    if (armed && armed->target == yh::ActionDefinition::Target::Point)
+        world_.use(armed->id, std::nullopt, world_.cellOf(target));
+    else
+        world_.tryAttack(target, armed ? armed->id : World::strikeAction);
 }
 
 void PlayScreen::updateCamera(double deltaSeconds)
@@ -265,7 +304,9 @@ void PlayScreen::show(World::Event& event)
         log_.clear();
         cutscene_ = {};
         cutsceneDone_ = false;
-        journalOpen_ = inventoryOpen_ = false;
+        journalOpen_ = inventoryOpen_ = spellsOpen_ = false;
+        casting_.reset();
+        armed_.clear();
         giving_.reset();
         looting_.reset();
         cameraPlaced_ = false;
@@ -313,7 +354,7 @@ void PlayScreen::show(World::Event& event)
         }
         break;
     case Kind::Talk:
-        journalOpen_ = inventoryOpen_ = false;
+        journalOpen_ = inventoryOpen_ = spellsOpen_ = false;
         break;
     case Kind::Save:
         break; // the game keeps the saves
@@ -489,11 +530,49 @@ void PlayScreen::drawWorld(yh::Renderer& renderer)
                 const yh::Cell t = world_.cellOf(*target);
                 renderer.drawRect({t.x * cell + 1, t.y * cell + 1, cell - 2, cell - 2}, {255, 70, 50, 255}, 3);
             }
+            // Something aimed from a distance or over an area shows where it would land.
+            if (world_.mine(*current) && tokens.tokens[*current].path.empty())
+                if (const yh::ActionDefinition* armed = hud::armedAction(world_, *current, armed_);
+                    armed && (armed->area || armed->range > 1) && world_.canUse(*current, *armed))
+                    drawAim(renderer, *current, *armed);
         }
     }
     world_.fog().draw(renderer, view, world_.viewTeam(), 0, {0, 0, 0, 255}, {4, 6, 14, 175});
     renderer.pop();
     tokens.drawOverlay(renderer, camera_, grid);
+}
+
+void PlayScreen::drawAim(yh::Renderer& renderer, size_t hero, const yh::ActionDefinition& action)
+{
+    const yh::Grid& grid = world_.grid();
+    const yh::Cell here = world_.cellOf(hero);
+    const std::optional<size_t> under = hoveredCreature();
+    const yh::Cell aim = under ? world_.cellOf(*under) : grid.cellAt(camera_.screenToWorld(input_.mouse()));
+    const bool point = action.target == yh::ActionDefinition::Target::Point;
+    const bool ok = point ? world_.validAim(hero, action, aim)
+        : under ? world_.validTarget(hero, action, *under)
+        : grid.distance(here, aim) <= static_cast<float>(action.range) + 0.01f;
+    const yh::Color edge = ok ? yh::Color{255, 190, 90, 230} : yh::Color{230, 70, 60, 230};
+    if (action.area && (point || under))
+    {
+        const yh::AreaTemplate area = world_.areaOf(hero, action, aim);
+        area.draw(renderer, grid, {edge.r, edge.g, edge.b, 40}, edge, camera_.zoom());
+        // The squares it covers, and a ring on everyone it would land on.
+        for (const yh::Cell c : area.cells(grid))
+            if (c.x >= 0 && c.y >= 0 && c.x < world_.map().width() && c.y < world_.map().height() && world_.map().walkable(c))
+                renderer.fillRect({c.x * cell + 3, c.y * cell + 3, cell - 6, cell - 6}, {edge.r, edge.g, edge.b, 50});
+        for (const size_t who : world_.creaturesIn(hero, action, aim))
+        {
+            const yh::Cell c = world_.cellOf(who);
+            renderer.drawRect({c.x * cell + 1, c.y * cell + 1, cell - 2, cell - 2}, edge, 3);
+        }
+    }
+    // How far it is, in the ruleset's feet. A cone or line has no range to measure.
+    if (!(action.area && action.area->directed()) && aim != here)
+    {
+        const yh::Vec2 points[] = {grid.center(here), grid.center(aim)};
+        yh::drawRuler(renderer, grid, points, static_cast<float>(world_.rules().feetPerSquare), "ft", edge, camera_.zoom());
+    }
 }
 
 void PlayScreen::drawOverlay(yh::Renderer& renderer)
@@ -570,7 +649,8 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     ui_.begin(renderer, input_);
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
-    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, trading_, tradePage_, consuming_, inventoryPage_, table.inSession, table.guest};
+    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, trading_, tradePage_, consuming_, inventoryPage_, casting_,
+        table.inSession, table.guest};
 
     if (!table.netStatus.empty())
         ui_.label({screen.w / 2 - 160, screen.h - 58}, table.netStatus, ui_.theme.textDim);
@@ -593,6 +673,12 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     if (inventoryOpen_ && !world_.talk())
     {
         hud::inventoryPanel(hud);
+        if (!log_.empty()) ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
+        return;
+    }
+    if (spellsOpen_ && !world_.talk())
+    {
+        hud::spellPanel(hud);
         if (!log_.empty()) ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
         return;
     }
@@ -626,7 +712,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
         std::string hint = table.controls == yh::ControlPreset::BG3
             ? "Left-click: walk / select / talk   Drag: box-select   WASD / edges: pan   Wheel: zoom   F6: Foundry controls"
             : "Right-click: walk / talk   Left: select / drag   Right-drag: pan   Wheel: zoom   F6: BG3 controls";
-        hint += "   C: sneak   I: gear";
+        hint += "   C: sneak   I: gear   K: spells";
         if (world_.journal())
             hint += "   J: journal";
         ui_.label({12, screen.h - 30}, hint, ui_.theme.textDim);

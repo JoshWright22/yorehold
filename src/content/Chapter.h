@@ -9,6 +9,7 @@
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/rpg/Stealth.h>
 #include <yorehold/framework/rpg/PositioningRules.h>
+#include <yorehold/framework/rpg/Spell.h>
 
 #include <optional>
 #include <string>
@@ -131,7 +132,8 @@ struct Chapter
     std::vector<yh::ActionDefinition> actions;
     std::vector<yh::ReactionDefinition> reactions;
     yh::PositioningRules positioning;
-    yh::Compendium compendium;
+    yh::SpellRules spellcasting; // the ruleset folder's spellcasting.json, if it has one
+    yh::Compendium compendium;   // its spells are the ruleset folder's spells/
     GameMap map;
 
     // The stealth rules with distances in the map's world units, as yh::StealthTracker wants them.

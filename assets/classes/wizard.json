@@ -16,6 +16,10 @@
     "quarterstaff",
     "healing-potion"
   ],
+  "spells": {
+    "0": ["spark"],
+    "1": ["flame-fan", "mire"]
+  },
   "levels": [
     { "slots": { "1": 2 }, "features": [{ "id": "arcane-recovery", "name": "Arcane Recovery", "description": "Once a long rest, win back some spent magic.", "resources": { "arcane-recovery": 1 } }] },
     { "feats": ["class"], "slots": { "1": 3 } },

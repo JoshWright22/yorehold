@@ -176,13 +176,51 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             const std::string id = j.at("action").get<std::string>();
             const yh::ActionDefinition* action = acting ? findAction(id) : nullptr;
             if (!action || !canUse(*current, *action))
+            {
+                // A spell says what it lacks (a slot, a free hand); other actions stay quiet as before.
+                std::string lacks;
+                if (const yh::SpellDefinition* spell = action ? findSpell(id) : nullptr;
+                    spell && &spell->action == action && !yh::canCast(creatures_[*current].sheet, *spell, spellRules(), &lacks))
+                    reason = spell->name() + " " + lacks + ".";
                 return std::nullopt;
-            if (action->target != yh::ActionDefinition::Target::Creature)
-                return nlohmann::json{{"action", id}}.dump();
+            }
+            nlohmann::json command{{"action", id}};
+            // A spell names the slot it spends: the one asked for, else the lowest that will do.
+            if (const yh::SpellDefinition* spell = findSpell(id); spell && &spell->action == action)
+            {
+                const std::optional<int> slot = yh::slotFor(creatures_[*current].sheet, *spell, spellRules(), j.value("slot", 0));
+                if (!slot)
+                    return std::nullopt;
+                command["slot"] = *slot;
+            }
+            if (action->target == yh::ActionDefinition::Target::Self)
+                return command.dump();
+            if (action->target == yh::ActionDefinition::Target::Point)
+            {
+                const yh::Cell at = cellFrom(j.at("at"));
+                if (!validAim(*current, *action, at, &reason))
+                    return std::nullopt;
+                command["at"] = {at.x, at.y};
+                return command.dump();
+            }
             const size_t target = j.at("target").get<size_t>();
             if (!validTarget(*current, *action, target))
                 return std::nullopt;
-            return nlohmann::json{{"action", id}, {"target", target}}.dump();
+            command["target"] = target;
+            return command.dump();
+        }
+        if (type == "cast")
+        {
+            // A spell between fights, on the party: free of actions, but it spends its slot.
+            const size_t hero = j.at("hero").get<size_t>();
+            const std::string id = j.at("spell").get<std::string>();
+            const size_t target = j.value("target", hero);
+            if (!canCast(hero, id, target, &reason) || !mayAct(player, hero))
+                return std::nullopt;
+            const std::optional<int> slot = yh::slotFor(creatures_[hero].sheet, *findSpell(id), spellRules(), j.value("slot", 0));
+            if (!slot)
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"spell", id}, {"target", target}, {"slot", *slot}}.dump();
         }
         // Only the creatures the game plays lose their nerve; "escape" takes one out of the fight for
         // good, "surrender" leaves it standing; "alarm" brings in a group it ran to.
@@ -437,7 +475,17 @@ void World::apply(const yh::NetCommand& command)
     else if (type == "use" && current)
     {
         if (const yh::ActionDefinition* action = findAction(j.at("action").get<std::string>()))
-            perform(*action, j.contains("target") ? std::optional(j.at("target").get<size_t>()) : std::nullopt);
+            perform(*action, j.contains("target") ? std::optional(j.at("target").get<size_t>()) : std::nullopt,
+                j.contains("at") ? std::optional(yh::Cell{j.at("at")[0].get<int>(), j.at("at")[1].get<int>()}) : std::nullopt, j.value("slot", 0));
+    }
+    else if (type == "cast")
+    {
+        const size_t hero = j.at("hero").get<size_t>();
+        if (const yh::SpellDefinition* spell = findSpell(j.at("spell").get<std::string>()))
+        {
+            castSpell(hero, *spell, j.at("target").get<size_t>(), std::nullopt, j.value("slot", 0));
+            requestSave();
+        }
     }
     else if (type == "flee" && current)
     {
@@ -670,6 +718,12 @@ uint64_t World::checksum() const
             mix(item.equipped);
         }
         mix(static_cast<uint64_t>(c.sheet.hp + 1000));
+        for (const auto& [id, resource] : c.sheet.resources)
+        {
+            mixText(id);
+            mix(static_cast<uint64_t>(resource.current));
+        }
+        mixText(c.concentration.toJson());
         mix(c.sheet.level);
         mix(c.sheet.death.saves); mix(c.sheet.death.successes); mix(c.sheet.death.failures);
         mix(c.sheet.death.stable); mix(c.sheet.death.dead);

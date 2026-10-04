@@ -1,0 +1,14 @@
+{
+  "id": "mire",
+  "name": "Mire",
+  "description": "The ground turns to sucking mud. Enemies in it who fail a Strength save are slowed.",
+  "level": 1,
+  "hands": 1,
+  "concentration": true,
+  "target": { "kind": "point", "side": "enemy", "range": 6 },
+  "area": { "shape": "burst", "size": 1 },
+  "save": { "ability": "str", "dc": "caster" },
+  "effects": [
+    { "do": "condition", "id": "slowed", "duration": 10, "onSave": "none" }
+  ]
+}

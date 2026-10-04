@@ -119,6 +119,7 @@ void World::endCombat()
     for (yh::Token& token : tokens_.tokens)
         token.selected = false;
     pendingStep_.reset();
+    endAllConcentration(); // a spell held through a fight ends with it
     raise("fightEnd");
     fallenConditions();
 
@@ -258,6 +259,7 @@ void World::turnHostile(size_t creature)
 void World::beginTurn()
 {
     fallenConditions();
+    tidyConcentration(); // what a spell left has counted down with the rounds
     const std::optional<size_t> current = currentCreature();
     if (!current)
         return;

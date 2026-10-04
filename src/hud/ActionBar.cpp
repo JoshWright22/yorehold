@@ -10,7 +10,7 @@ const yh::ActionDefinition* hud::armedAction(const World& world, size_t creature
     const yh::ActionDefinition* first = nullptr;
     for (const yh::ActionDefinition* action : world.actionsOf(creature))
     {
-        if (action->target != yh::ActionDefinition::Target::Creature)
+        if (action->target == yh::ActionDefinition::Target::Self)
             continue;
         if (action->id == armed)
             return action;
@@ -90,7 +90,8 @@ void hud::combatBar(Hud& hud)
     }
     // Clicking an enemy uses the armed action: the one picked on the bar, else the first that can be aimed.
     const yh::ActionDefinition* armed = armedAction(world, *current, hud.armed);
-    const std::string aim = armed && armed->side == yh::ActionDefinition::Side::Ally ? ": click an ally."
+    const std::string aim = armed && armed->target == yh::ActionDefinition::Target::Point ? ": click where to aim it (Esc: put it away)."
+        : armed && armed->side == yh::ActionDefinition::Side::Ally ? ": click an ally."
         : armed && armed->side == yh::ActionDefinition::Side::Any ? ": click a creature." : ": click an enemy.";
     ui.label({bar.x + 16, bar.y + 36}, armed && world.canUse(*current, *armed) ? armed->name + aim : "Move on, or end your turn.",
         ui.theme.textDim);
@@ -102,7 +103,7 @@ void hud::combatBar(Hud& hud)
         const yh::Rect button{bar.x + bar.w - 12 - places[i].second, bar.y + bar.h - 53 - rowHeight * static_cast<float>(places[i].first),
             widthOf(action), 40};
         const bool usable = world.canUse(*current, action);
-        if (action.target == yh::ActionDefinition::Target::Creature)
+        if (action.target != yh::ActionDefinition::Target::Self)
         {
             // Aimed actions wait for a click on the map; the button picks which one that click uses.
             if (!usable)

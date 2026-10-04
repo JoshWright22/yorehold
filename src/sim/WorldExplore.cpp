@@ -264,9 +264,13 @@ void World::rest(const yh::RestDefinition& rest)
     restsUsed_[rest.id]++;
     restRandom_ = nextRandom(0x5eedull);
     say("The party takes a " + (rest.name.empty() ? rest.id : rest.name) + ".");
+    endAllConcentration(); // nobody holds a spell through a rest
     for (size_t i = 0; i < heroCount_; i++)
     {
         yh::Character& c = creatures_[i].sheet;
+        // Spell slots and whatever else the rest's file names come back, to the living.
+        if (!c.death.dead && c.restoreResources(rest.restores) > 0)
+            say(c.name + " is ready to cast again.");
         if (c.hp >= c.maxHp())
             continue;
         std::string detail;

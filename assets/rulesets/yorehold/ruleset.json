@@ -69,7 +69,7 @@
 
   "rests": [
     { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 } },
-    { "id": "long", "name": "Long rest", "perAdventure": 1, "recovery": { "kind": "full", "reviveDowned": true } }
+    { "id": "long", "name": "Long rest", "perAdventure": 1, "recovery": { "kind": "full", "reviveDowned": true }, "restores": ["slots-*"] }
   ],
   "afterVictory": { "kind": "none" },
   "reviveAfterVictory": 1,

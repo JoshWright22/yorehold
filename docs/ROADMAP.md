@@ -77,7 +77,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 ## E. Magic
 
-- [ ] **E1. Spell files and casting.** Slots, cantrips, hands as cost, targeting with area
+- [x] **E1. Spell files and casting.** Slots, cantrips, hands as cost, targeting with area
   templates and the ruler, saves, concentration.
 - [ ] **E2. Prepared and spontaneous casters, focus points.**
 - [ ] **E3. Starter lists.** About eight spells each for cleric and wizard across levels 0 to 3,

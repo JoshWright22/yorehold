@@ -1,0 +1,13 @@
+{
+  "id": "spark",
+  "name": "Spark",
+  "description": "A snap of lightning at one enemy. Dexterity save to dodge it.",
+  "level": 0,
+  "hands": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 6 },
+  "save": { "ability": "dex", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "1d6", "type": "lightning", "onSave": "none",
+      "scale": { "by": "level", "from": 1, "every": 4, "dice": "1d6" } }
+  ]
+}

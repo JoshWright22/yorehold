@@ -64,6 +64,8 @@ std::string World::stateJson() const
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
         });
+        if (creatures_[i].concentration.active())
+            data["creatures"].back()["concentration"] = nlohmann::json::parse(creatures_[i].concentration.toJson());
     }
     return data.dump();
 }
@@ -135,8 +137,18 @@ bool World::restoreState(std::string_view text, std::string* problem)
         std::vector<yh::Vec2> positions;
         std::vector<bool> awake, fled, surrendered, sneaking, dropped;
         std::vector<int> teams;
+        std::vector<yh::Concentration> concentrating; // older saves have none
         for (const nlohmann::json& c : saved)
         {
+            concentrating.emplace_back();
+            if (c.contains("concentration"))
+            {
+                std::optional<yh::Concentration> held = yh::Concentration::fromJson(c.at("concentration").dump(), &error);
+                if (!held || std::any_of(held->holds.begin(), held->holds.end(),
+                    [&](const yh::Concentration::Hold& hold) { return hold.who < 0 || static_cast<size_t>(hold.who) >= saved.size(); }))
+                    throw std::runtime_error("saved concentration doesn't match the chapter");
+                concentrating.back() = std::move(*held);
+            }
             std::optional<yh::Character> sheet = yh::Character::fromJson(c.at("sheet").dump(), &error);
             if (!sheet || !sheet->checkProficiencyRanks(rules_, &error))
                 throw std::runtime_error(error);
@@ -194,6 +206,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
                 creatures_[i].library = library[i];
                 tokens_.tokens[i].name = creatures_[i].sheet.name; // a brought character in a ready-made hero's seat
             }
+            creatures_[i].concentration = std::move(concentrating[i]);
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];

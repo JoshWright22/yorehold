@@ -53,6 +53,7 @@ public:
         bool dropped = false;     // dead, and what it had now lies in a pile
         std::string surrender;    // the dialogue for that (see Chapter::surrender)
         std::string readiedAction; // waiting for a reaction, until the next turn or the fight ends
+        yh::Concentration concentration; // the spell it is holding in place, if any
         float facing = 0;      // radians: where an enemy looks until it notices the party
         // A hero moving quietly (the Hidden condition): slower, lights covered, only noticed inside a vision cone.
         bool sneaking() const { return sheet.hasCondition(hiddenCondition); }
@@ -270,8 +271,23 @@ public:
     bool inRange(size_t creature, const yh::ActionDefinition& action, size_t target) const;
     // `target` is someone the action may be aimed at from where `creature` stands.
     bool validTarget(size_t creature, const yh::ActionDefinition& action, size_t target) const;
-    // Sends the "use" intent for the creature whose turn it is.
-    void use(std::string_view action, std::optional<size_t> target = std::nullopt);
+    // Sends the "use" intent for the creature whose turn it is. `at` aims an action with a point target.
+    void use(std::string_view action, std::optional<size_t> target = std::nullopt, std::optional<yh::Cell> at = std::nullopt);
+
+    // Spells (WorldSpells.cpp): the ruleset's spells/ files. A creature has the ones on its sheet,
+    // listed with its actions; in a fight they are used like any action. Between fights "cast"
+    // uses the ones that help, on the party.
+    const yh::SpellDefinition* findSpell(std::string_view id) const;
+    const yh::SpellRules& spellRules() const { return chapter_->spellcasting; }
+    // Where an action's area lies when aimed at `aim` from where `creature` stands.
+    yh::AreaTemplate areaOf(size_t creature, const yh::ActionDefinition& action, yh::Cell aim) const;
+    // Who an action with an area lands on when aimed there: those of its side, inside it, with a
+    // clear line from where it starts.
+    std::vector<size_t> creaturesIn(size_t creature, const yh::ActionDefinition& action, yh::Cell aim) const;
+    // `at` is a square an action with a point target may be aimed at from where `creature` stands.
+    bool validAim(size_t creature, const yh::ActionDefinition& action, yh::Cell at, std::string* why = nullptr) const;
+    // Between fights: `hero` may cast `spell` on `target` (itself for a self target).
+    bool canCast(size_t hero, std::string_view spell, size_t target, std::string* why = nullptr) const;
 
     struct ReactionPrompt
     {
@@ -321,9 +337,21 @@ protected:
     void endTurn();
     void syncLog(); // the encounter's new lines into the adventure log
     // The current creature does `action`: pays for it, runs its effects and shows what happened.
-    void perform(const yh::ActionDefinition& action, std::optional<size_t> target);
+    void perform(const yh::ActionDefinition& action, std::optional<size_t> target, std::optional<yh::Cell> at = std::nullopt, int slot = 0);
     void consume(size_t hero, size_t item, size_t target);
-    void runActionEffect(size_t creature, const yh::ActionDefinition& action, std::optional<size_t> target);
+    // Runs an action's effect on its target, or on everyone in its area. `slot` is the spell slot
+    // it was cast from, for steps that scale by it.
+    yh::EffectResult runActionEffect(size_t creature, const yh::ActionDefinition& action, std::optional<size_t> target,
+        std::optional<yh::Cell> at = std::nullopt, int slot = 0);
+    // A casting: spends the slot, ends what the caster was concentrating on if this spell needs
+    // concentration, runs the effect and starts concentrating on what it left.
+    void castSpell(size_t caster, const yh::SpellDefinition& spell, std::optional<size_t> target, std::optional<yh::Cell> at, int slot);
+    void endConcentration(size_t creature, std::string_view why);
+    // Damage makes a concentrating creature check, as the ruleset's spellcasting says.
+    void concentrationChecks(const yh::EffectResult& result, yh::Random& random);
+    // Concentration with nothing left to hold, or held by someone who fell, is over.
+    void tidyConcentration();
+    void endAllConcentration();
     void startMovement(size_t creature, std::vector<yh::Cell> path, bool prompts);
     void continueMovement();
     void resolveReaction(bool take);

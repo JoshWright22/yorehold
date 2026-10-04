@@ -33,11 +33,13 @@ public:
     }
 
     // Allies and enemies are whoever still stands in the fight, on the doer's side or another.
-    // Areas come with spells.
+    // An area is whoever the action's template covered: they are the effect's targets already.
     std::vector<yh::EffectActor> group(std::string_view which, const yh::EffectContext& context) override
     {
         std::vector<yh::EffectActor> out;
-        if (which == "area" || !world_.encounter_ || !sheet(context.self))
+        if (which == "area")
+            return context.targets;
+        if (!world_.encounter_ || !sheet(context.self))
             return out;
         const int team = world_.creatures_[static_cast<size_t>(context.self)].team;
         for (size_t i = 0; i < world_.creatures_.size(); i++)
@@ -107,7 +109,12 @@ private:
 
 const yh::ActionDefinition* World::findAction(std::string_view id) const
 {
-    return chapter_ ? yh::findAction(chapter_->actions, id) : nullptr;
+    if (!chapter_)
+        return nullptr;
+    if (const yh::ActionDefinition* action = yh::findAction(chapter_->actions, id))
+        return action;
+    const yh::SpellDefinition* spell = findSpell(id); // a spell is an action too
+    return spell ? &spell->action : nullptr;
 }
 
 std::vector<const yh::ActionDefinition*> World::actionsOf(size_t creature) const
@@ -120,6 +127,11 @@ std::vector<const yh::ActionDefinition*> World::actionsOf(size_t creature) const
         if (a.general && std::all_of(a.needsResources.begin(), a.needsResources.end(),
             [&](const auto& need) { return creatures_[creature].sheet.resources.contains(need.first); }))
             has.push_back(&a);
+    // The spells on its sheet, among the others by `order` (after the general ones unless a file says otherwise).
+    for (const std::string& id : creatures_[creature].sheet.spells)
+        if (const yh::SpellDefinition* spell = findSpell(id))
+            has.push_back(&spell->action);
+    std::stable_sort(has.begin(), has.end(), [](const yh::ActionDefinition* a, const yh::ActionDefinition* b) { return a->order < b->order; });
     return has;
 }
 
@@ -149,6 +161,9 @@ bool World::canUse(size_t creature, const yh::ActionDefinition& action, std::str
             *why = "not enough actions left";
         return false;
     }
+    if (const yh::SpellDefinition* spell = findSpell(action.id); spell && &spell->action == &action
+        && !yh::canCast(creatures_[creature].sheet, *spell, spellRules(), why))
+        return false;
     return action.meets(creatures_[creature].sheet, rules_, why);
 }
 
@@ -181,15 +196,17 @@ bool World::inRange(size_t creature, const yh::ActionDefinition& action, size_t 
         : grid_.distance(cellOf(creature), cellOf(target)) <= static_cast<float>(action.range) + 0.01f;
 }
 
-void World::use(std::string_view id, std::optional<size_t> target)
+void World::use(std::string_view id, std::optional<size_t> target, std::optional<yh::Cell> at)
 {
     nlohmann::json data{{"action", id}};
     if (target)
         data["target"] = *target;
+    if (at)
+        data["at"] = {at->x, at->y};
     act("use", data.dump());
 }
 
-void World::perform(const yh::ActionDefinition& action, std::optional<size_t> target)
+void World::perform(const yh::ActionDefinition& action, std::optional<size_t> target, std::optional<yh::Cell> at, int slot)
 {
     const std::optional<size_t> current = currentCreature();
     if (!current)
@@ -206,7 +223,10 @@ void World::perform(const yh::ActionDefinition& action, std::optional<size_t> ta
         say(line);
     }
 
-    runActionEffect(me, action, target);
+    if (const yh::SpellDefinition* spell = findSpell(action.id); spell && &spell->action == &action)
+        castSpell(me, *spell, target, at, slot);
+    else
+        runActionEffect(me, action, target, at, slot);
     if (action.endsTurn && !encounter_->finished())
         endTurn();
     else if (encounter_->finished())
@@ -215,7 +235,8 @@ void World::perform(const yh::ActionDefinition& action, std::optional<size_t> ta
         computeReach(me);
 }
 
-void World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::optional<size_t> target)
+yh::EffectResult World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::optional<size_t> target,
+    std::optional<yh::Cell> at, int slot)
 {
     yh::EffectResult result;
     if (!action.effect.empty())
@@ -228,10 +249,19 @@ void World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::
         context.random = exploration ? &*exploration : &encounter_->random();
         context.self = static_cast<yh::EffectActor>(me);
         context.targets = {static_cast<yh::EffectActor>(target.value_or(me))};
+        if (action.area)
+        {
+            // Everyone the template covers, from where it was aimed.
+            context.targets.clear();
+            for (const size_t inside : creaturesIn(me, action, at ? *at : cellOf(target.value_or(me))))
+                context.targets.push_back(static_cast<yh::EffectActor>(inside));
+        }
         context.source = action.id;
+        context.slot = slot;
         context.dc = creatures_[me].sheet.difficultyClass(rules_);
         result = action.effect.run(host, context);
         narrate(result);
+        concentrationChecks(result, *context.random);
     }
     fallenConditions();
     // Healing can bring an ally back into the same encounter.
@@ -251,7 +281,8 @@ void World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::
         if (creatures_[who].npc >= 0)
             setFlags(chapter_->npcs[creatures_[who].npc].killed);
     }
-
+    tidyConcentration();
+    return result;
 }
 
 void World::narrate(const yh::EffectResult& result)

@@ -53,6 +53,8 @@ public:
     void drawOverlay(yh::Renderer& renderer); // the ending, or the bars and HUD
 
     void stopCutscene() { cutscene_ = {}; }
+    // Picks the aimed action the next click on the map uses, as its button on the action bar does.
+    void arm(std::string action) { armed_ = std::move(action); }
     void banner(std::string text, double seconds);
     yh::Camera& camera() { return camera_; }
     yh::CameraControls& cameraControls() { return controls_; }
@@ -73,6 +75,8 @@ private:
     std::optional<size_t> hoveredCreature() const;
     std::optional<size_t> hoveredTalker() const;
     bool overUi(yh::Vec2 screen) const;
+    // The armed action's reach on the map: the ruler to the pointer and, for an area, its template.
+    void drawAim(yh::Renderer& renderer, size_t hero, const yh::ActionDefinition& action);
     void drawBars(yh::Renderer& renderer);
     void drawHud(yh::Renderer& renderer);
 
@@ -102,5 +106,7 @@ private:
     size_t tradePage_ = 0;
     std::optional<std::pair<size_t, size_t>> consuming_;
     size_t inventoryPage_ = 0;
+    bool spellsOpen_ = false;
+    std::optional<std::string> casting_; // spell panel: the spell waiting for its target
     std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

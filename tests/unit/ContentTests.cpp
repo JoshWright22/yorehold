@@ -265,12 +265,18 @@ void contentTests(const fs::path& scratch)
         renamed.xpForLevel = modern.xpForLevel;
         json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
         // Conditions are checked on their own, and a full recovery has no use for a fraction.
+        // Spell slots coming back on a long rest are new with spells; the keep had no casting.
+        check(renamed.rests.size() == 2 && renamed.rests[1].restores == std::vector<std::string>{"slots-*"},
+            "A long rest restores spell slots");
         for (json* set : {&mine, &theirs})
         {
             set->erase("conditions");
             for (json& rest : set->at("rests"))
+            {
+                rest.erase("restores");
                 if (rest.at("recovery").at("kind") == "full")
                     rest.at("recovery").erase("fraction");
+            }
         }
         check(mine == theirs, "The game's ruleset matches the numbers the keep was played with");
     }
@@ -960,6 +966,7 @@ void worldProficiencyTests(const std::function<void(bool, const char*)>& check);
 void worldDeathTests(const std::function<void(bool, const char*)>& check);
 void worldCharacterTests(const std::function<void(bool, const char*)>& check);
 void worldItemTests(const std::function<void(bool, const char*)>& check);
+void worldSpellTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -976,6 +983,7 @@ int main()
         worldDeathTests(check);
         worldCharacterTests(check);
         worldItemTests(check);
+        worldSpellTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();
