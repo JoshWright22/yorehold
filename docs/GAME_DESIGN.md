@@ -98,12 +98,17 @@ Power grows as in Pathfinder 2e, not 5e:
     fight on.
   - More advanced decision models can be added without changing content.
 
-## Death
+## Rest and death (as in BG3)
 
-- **Default:** permadeath. A dead character stays dead; the player makes a new one.
-- **Option:** BG3 style, where the fallen can be revived at camp or with magic.
-- **Party wipe:** handled by the adventure's or the table's settings (reload, retreat, or the
-  campaign ends).
+- **Short rests:** 2 between long rests. They heal some HP and restore short-rest abilities.
+- **Long rests** happen at camp and use up camp supplies. Supplies are a resource: food found and
+  bought while adventuring. A long rest restores HP, spell slots and daily abilities.
+- **Going down:** a character at 0 HP is downed and makes death saving throws. Allies can get them
+  up with Help, healing or a potion.
+- **Death isn't permanent.** The dead are revived with a scroll of revivify (found or bought), a
+  spell, or at camp for a price. Scrolls save the trip back.
+- **Party wipe:** reload the last save (**default**). An adventure can choose something else, such as
+  waking up captured.
 
 ## Multiplayer
 
@@ -119,7 +124,7 @@ Power grows as in Pathfinder 2e, not 5e:
 - `yh::Encounter`'s action, bonus action, reaction and movement budget becomes free movement plus
   two actions plus one reaction. The AI's "dash" becomes the Stride action.
 - Character creation, character libraries and level ranges per adventure.
-- Death options per table.
+- Camp, supplies and long rests; downed, death saves and revival.
 - DM seats and enemy briefs in the chapter format.
 - Stealth: the detection radius, sneaking and checks, which also feed surprise.
 
@@ -129,4 +134,4 @@ Power grows as in Pathfinder 2e, not 5e:
    (**default:** in use, like attunement)?
 2. Votes: on the website, per season (**default**)? When the conversion can't keep a choice (say a
    removed class), does the player pick a replacement before playing (**default**)?
-3. Rests: short and long rests as in 5e (**default**)?
+3. Supplies: how much food a long rest costs, and can you rest anywhere or only where the adventure allows it (**default:** anywhere outside combat, unless the area forbids it)?
