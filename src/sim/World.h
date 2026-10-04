@@ -11,6 +11,9 @@
 #include <yorehold/framework/rpg/QuestJournal.h>
 #include <yorehold/framework/rpg/Random.h>
 #include <yorehold/framework/rpg/Stealth.h>
+#include <yorehold/framework/rpg/Tactics.h>
+
+#include <nlohmann/json.hpp>
 
 #include <map>
 #include <memory>
@@ -119,8 +122,47 @@ public:
     yh::Cell cellOf(size_t creature) const;
     bool adjacent(size_t a, size_t b) const;
 
+    // The ending cutscene the world asked for (Event::Ending) has finished or was skipped.
+    void endCutscene();
+
 protected:
     enum class EnemyStep { Think, Walk, Strike, Wait };
+
+    // Sends what a player (or the AI) wants done. The game decides where it goes: alone it is
+    // checked and applied at once, in co-op it goes through the session.
+    virtual void act(std::string_view type, const std::string& data = "{}") = 0;
+
+    // Fights (WorldCombat.cpp).
+    // Wakes `group` (or only `only` of it) and starts a fight with the party.
+    // `surprise`: the party struck from hiding, so the enemies lose their first turn.
+    void startCombat(int group, std::optional<size_t> only = std::nullopt, bool surprise = false);
+    void endCombat();
+    void beginTurn();
+    void endTurn();
+    void syncLog(); // the encounter's new lines into the adventure log
+    void attack(size_t target);
+    // Strikes `target`, walking next to it first if the current creature's movement reaches.
+    void tryAttack(size_t target);
+    bool swingReady() const; // tryAttack's walk has landed
+    void swingIfReady();
+    void updateEnemyTurn(double deltaSeconds);
+    void turnHostile(size_t creature); // an NPC or a creature that surrendered attacks the party
+    // The chapter is cleared: its ending cutscene goes out as an event, or a banner if it has none.
+    void playEnding();
+    // Cells the current creature can reach with its movement left, and what each costs.
+    // `extra` squares on top (what a dash would add).
+    void computeReach(size_t mover, int extra = 0);
+
+    // How the creatures the game plays think (WorldAi.cpp).
+    // What a creature's AI sees on its turn (see yh::decide). `who` maps the view's units back to creatures_.
+    yh::TacticalView tacticalView(size_t me, std::vector<size_t>& who);
+    yh::CellCosts distanceToFoes(int team) const;
+    yh::CellCosts distanceFrom(const std::vector<yh::Cell>& cells) const; // walking distance to the nearest of them
+    std::optional<int> sleepingGroupNear(size_t creature, float squares) const; // allies not yet fighting, within reach
+    // How a creature thinks right now: its file, the chapter, the story so far and the server, in that order.
+    yh::AiProfile aiFor(size_t creature) const;
+    void applyServerAi(const nlohmann::json& config);
+    void reloadAi(const nlohmann::json& serverConfig);
 
     void emit(Event event) { events_.push_back(std::move(event)); }
     void flagsChanged(const std::set<std::string>& before);

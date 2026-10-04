@@ -21,7 +21,8 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   Done when: no file in `src/` is over 900 lines; a unit test plays the keep to victory through
   `World` with scripted intents and no window; the scripted run and auto-play seeds give the same
   results as before the split.
-  Progress: content loading and state/save are split; exploring, combat, commands and screens remain.
+  Progress: content loading, state/save, and fights with the AI are split; exploring, commands and
+  screens remain.
 - [ ] **A3. World test helpers.** A small fixture: load a chapter from a folder or from JSON
   strings, send intents, step time, read state. Use it in every later step.
 
@@ -117,7 +118,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [ ] **H3. Votes and scores.**
 - [ ] **H4. Library browser in the game.** Search, install, update.
 - [ ] **H5. Internet co-op through the server relay.**
-- [ ] **H6. Web site.** Next.js: home, library, content page, sign in, profile.
+- [x] **H6. Web site.** Next.js: home, library, content page, sign in, profile.
 - [ ] **H7. Canon review.** Approvers, sign-offs and the queue, on the server and the site.
 - [ ] **H8. Reports, blocking and bans.**
 - [ ] **H9. Completions.** Finishing an adventure is recorded on the account and shown on the

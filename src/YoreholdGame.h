@@ -54,20 +54,10 @@ private:
         float age = 0;
     };
 
-    // What a creature's AI sees on its turn (see yh::decide). `who` maps the view's units back to creatures_.
-    yh::TacticalView tacticalView(size_t me, std::vector<size_t>& who);
-    yh::CellCosts distanceToFoes(int team) const;
-    yh::CellCosts distanceFrom(const std::vector<yh::Cell>& cells) const; // walking distance to the nearest of them
-    std::optional<int> sleepingGroupNear(size_t creature, float squares) const; // allies not yet fighting, within reach
-    // How a creature thinks right now: its file, the chapter, the story so far and the server, in that order.
-    yh::AiProfile aiFor(size_t creature) const;
-    void applyServerAi(const nlohmann::json& config);
-    void reloadAi();
     int configSeen_ = 0;
     double configTimer_ = 0;
 
     void applyScheme(yh::ControlPreset preset);
-    void syncLog();
     // Shows, prints and plays what the world has to tell since the last time.
     void drainEvents();
     void step(double deltaSeconds);
@@ -80,23 +70,13 @@ private:
     GameMap::Time timeOfDay() const;
     int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
     void revealWalls(int team);
-    // Wakes `group` (or only `only` of it) and starts a fight with the party.
-    // `surprise`: the party struck from hiding, so the enemies lose their first turn.
-    void startCombat(int group, std::optional<size_t> only = std::nullopt, bool surprise = false);
     // Sneaking. Enemies that haven't noticed the party watch in a cone; a sneaking hero inside one
     // rolls Stealth against their passive Perception (see yh::StealthTracker).
     std::vector<yh::Watcher> watchers() const; // one per creature after the heroes; range below 0 = not watching
     yh::LightLevel lightAt(yh::Vec2 point) const;
     void updateStealth();
     bool sneakingMine() const; // one of this machine's heroes is sneaking
-    void turnHostile(size_t creature); // an NPC or a creature that surrendered attacks the party
-    void endCombat();
-    void beginTurn();
-    void endTurn();
     void updateHeroTurn();
-    void updateEnemyTurn(double deltaSeconds);
-    void attack(size_t target);
-    void tryAttack(size_t target);
     void autoExplore();
 
     std::string dialogueFor(size_t creature) const;
@@ -122,7 +102,7 @@ private:
     // applies at once, hosting it goes through the session's rules, joined it goes to the host.
     // Each player moves their own heroes while exploring and their positions are shared.
     bool inSession() const { return host_ || client_; }
-    void act(std::string_view type, const std::string& data = "{}");
+    void act(std::string_view type, const std::string& data = "{}") override;
     std::optional<std::string> validate(yh::PlayerId player, std::string_view type, std::string_view data, std::string& reason);
     void apply(const yh::NetCommand& command);
     void hostSession();
@@ -185,13 +165,9 @@ private:
     void loadSettings();
     std::string stateDir() const;
 
-    // The end cutscene, then back to the title (the finished adventure's save is removed).
-    void playEnding();
+    // After the end cutscene, back to the title (the finished adventure's save is removed).
     void finishAdventure();
 
-    // Cells the current creature can reach with its movement left, and what each costs.
-    // `extra` squares on top (what a dash would add).
-    void computeReach(size_t mover, int extra = 0);
     std::optional<size_t> hoveredCreature() const;
 
     void drawWorld(yh::Renderer& renderer);
