@@ -232,6 +232,7 @@ public:
     const yh::Merchant* merchant(size_t npc) const;
     bool canTrade(size_t hero, size_t npc) const;
     std::optional<size_t> merchantNear(size_t hero) const;
+    bool canConsume(size_t hero, size_t item, size_t target, std::string* why = nullptr) const;
     const yh::Encounter* encounter() const { return encounter_.get(); }
     bool fighting() const { return encounter_ && !encounter_->finished(); }
     const yh::DialogueSession* talk() const { return talk_.get(); }
@@ -321,6 +322,7 @@ protected:
     void syncLog(); // the encounter's new lines into the adventure log
     // The current creature does `action`: pays for it, runs its effects and shows what happened.
     void perform(const yh::ActionDefinition& action, std::optional<size_t> target);
+    void consume(size_t hero, size_t item, size_t target);
     void runActionEffect(size_t creature, const yh::ActionDefinition& action, std::optional<size_t> target);
     void startMovement(size_t creature, std::vector<yh::Cell> path, bool prompts);
     void continueMovement();

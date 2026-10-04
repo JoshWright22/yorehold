@@ -383,6 +383,29 @@ How it plays: C or the Sneak button makes a player's heroes sneak. They walk at 
 
 Writer-owned text includes `intro` lines, encounter `text`, `victoryText` (supports `{xp}`), `defeatText`, `resumeText` and `clearedText`. `xpPerVictory` supplies the reward. The code only provides generic defaults for omitted text.
 
+## Consumables
+
+Items may have a `use` action: for example, `"use": {"cost":1,
+"target":{"kind":"creature","side":"ally","range":1,"downed":true},
+"effects":[{"do":"heal","dice":"2d4+2"}]}`. Effects and optional `save` use the framework's
+effect format. The item must have no equipment slot. `cost` is a numeric action cost (defaults
+to the item's hands); id and name default to the item's. Item effects are checked against the
+chapter's ruleset at load. Bad fields and unknown conditions report the offending item.
+
+In Gear (I), click Use and choose a target. One unit is removed on use, including when a target
+saves; an invalid target or insufficient actions spends nothing. Reach, line of sight, side,
+death state and ownership are checked. Healing can get a living downed ally up. Between fights,
+use is free and limited to party targets; hostile scrolls require a fight. In combat the acting
+hero pays the item's cost. Scrolls consume no spell slots. Pages keep all inventory entries and
+valid targets accessible. Saved, traded and handed-over consumables retain their effects.
+
+The starter items are `healing-potion` (2d4+2 HP, one action, 50 gp), `ward-scroll`
+(1d6+2 temporary HP on self, one action, 25 gp), and `ember-scroll` (2d6 fire, Dexterity DC 12
+for half, range 6 squares, two actions, 50 gp). Consumables do not count as magic items unless
+their file sets `magic`. Each starting class carries one potion; Wren sells all three. Legacy
+character sheets retaining a `potions` resource can still use the old Potion action; new sheets
+use inventory instead. Older adventure saves whose content signature changed report that clearly.
+
 ## NPCs, dialogue, quests and story flags
 
 An NPC may have a `merchant` object. Example:

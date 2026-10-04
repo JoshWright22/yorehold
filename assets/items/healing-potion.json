@@ -1,0 +1,12 @@
+{
+  "id": "healing-potion",
+  "name": "Healing potion",
+  "hands": 1,
+  "weight": 0.5,
+  "value": 5000,
+  "use": {
+    "cost": 1,
+    "target": { "kind": "creature", "side": "ally", "range": 1, "downed": true },
+    "effects": [{ "do": "heal", "dice": "2d4+2" }]
+  }
+}

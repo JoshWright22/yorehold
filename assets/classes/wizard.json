@@ -6,7 +6,6 @@
   "bonusHp": 2,
   "speed": 30,
   "dcAbility": "int",
-  "resources": { "potions": { "current": 1, "max": 1 } },
   "proficiencyRanks": { "weapons": "trained", "dc": "trained", "int": "trained", "wis": "trained" },
   "proficiencies": [
     "weapons",
@@ -14,7 +13,8 @@
     "investigation"
   ],
   "items": [
-    "quarterstaff"
+    "quarterstaff",
+    "healing-potion"
   ],
   "levels": [
     { "slots": { "1": 2 }, "features": [{ "id": "arcane-recovery", "name": "Arcane Recovery", "description": "Once a long rest, win back some spent magic.", "resources": { "arcane-recovery": 1 } }] },

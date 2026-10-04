@@ -30,6 +30,9 @@ void World::addTo(yh::Character& sheet, yh::Item item)
         for (yh::Item& have : sheet.inventory)
             if (have.id == item.id && have.slot.empty())
             {
+                yh::Item existing = have, incoming = item;
+                existing.quantity = incoming.quantity = 1;
+                if (yh::Compendium::itemToJson(existing) != yh::Compendium::itemToJson(incoming)) continue;
                 have.quantity += item.quantity;
                 return;
             }

@@ -198,6 +198,14 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             const int group = j.at("group").get<int>();
             return acting && *current >= heroCount_ && sleepingGroupNear(*current, aiFor(*current).alarmReach) == group ? std::optional(accepted) : std::nullopt;
         }
+        if (type == "consume")
+        {
+            const size_t hero = j.at("hero").get<size_t>(), item = j.at("item").get<size_t>();
+            const size_t target = j.value("target", hero);
+            if (!canConsume(hero, item, target, &reason) || !mayAct(player, hero))
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"item", item}, {"target", target}}.dump();
+        }
         if (type == "equip")
         {
             // Putting an item on or away: free between fights, an Interact on the hero's own turn in one.
@@ -591,6 +599,8 @@ void World::apply(const yh::NetCommand& command)
             say(from.name + " gives " + item.name + " to " + to.name + ".");
         }
     }
+    else if (type == "consume")
+        consume(j.at("hero").get<size_t>(), j.at("item").get<size_t>(), j.at("target").get<size_t>());
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);
     else if (type == "buy" || type == "sell")

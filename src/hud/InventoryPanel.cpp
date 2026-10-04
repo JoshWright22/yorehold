@@ -3,6 +3,8 @@
 #include <nlohmann/json.hpp>
 
 #include <cctype>
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
@@ -54,6 +56,8 @@ void hud::inventoryPanel(Hud& hud)
     const yh::Character& sheet = world.creatures()[hero].sheet;
     const float line = ui.lineHeight();
     const bool calm = !world.fighting();
+    if (hud.consuming && (hud.consuming->first != hero || hud.consuming->second >= sheet.inventory.size()
+        || !sheet.inventory[hud.consuming->second].use)) hud.consuming.reset();
     if (!calm || (hud.giving && *hud.giving != coinsPicked && *hud.giving >= sheet.inventory.size()))
         hud.giving.reset();
 
@@ -83,23 +87,76 @@ void hud::inventoryPanel(Hud& hud)
         hud.giving = coinsPicked;
     y += line + 14;
 
+    if (hud.consuming)
+    {
+        const size_t item = hud.consuming->second;
+        ui.label({x, y}, "Use " + sheet.inventory[item].name + ": choose a target", ui.theme.accent);
+        y += line + 8;
+        std::vector<size_t> targets;
+        for (size_t target = 0; target < world.creatures().size(); target++)
+            if (world.canConsume(hero, item, target)) targets.push_back(target);
+        const size_t rows = static_cast<size_t>(std::max(1.0f, std::floor((area.y + area.h - 64 - y) / 42)));
+        const size_t pages = std::max<size_t>(1, (targets.size() + rows - 1) / rows);
+        hud.inventoryPage = std::min(hud.inventoryPage, pages - 1);
+        if (targets.empty()) ui.label({x, y}, "No valid target in reach, or not enough actions.", ui.theme.textDim);
+        for (size_t i = hud.inventoryPage * rows; i < targets.size() && i < (hud.inventoryPage + 1) * rows; i++, y += 42)
+        {
+            const size_t target = targets[i];
+            const auto& who = world.creatures()[target].sheet;
+            if (ui.button({x, y, w, 36}, who.name + "  HP " + std::to_string(who.hp) + "/" + std::to_string(who.maxHp()), world.mine(hero)))
+            {
+                world.act("consume", nlohmann::json{{"hero", hero}, {"item", item}, {"target", target}}.dump());
+                hud.consuming.reset();
+                hud.inventoryPage = 0;
+                return;
+            }
+        }
+        const float bottom = area.y + area.h - 50;
+        if (ui.button({x, bottom, 110, 36}, "Previous", hud.inventoryPage > 0)) --hud.inventoryPage;
+        if (ui.button({x + 118, bottom, 90, 36}, "Next", hud.inventoryPage + 1 < pages)) ++hud.inventoryPage;
+        if (ui.button({x + w - 100, bottom, 100, 36}, "Cancel")) { hud.consuming.reset(); hud.inventoryPage = 0; }
+        return;
+    }
+
     if (sheet.inventory.empty())
         ui.label({x, y}, "Nothing.", ui.theme.textDim);
-    for (size_t i = 0; i < sheet.inventory.size() && y + 40 < area.y + area.h - 110; i++)
+    const size_t rows = static_cast<size_t>(std::max(1.0f, std::floor((area.y + area.h - 150 - y) / 42)));
+    const size_t pages = std::max<size_t>(1, (sheet.inventory.size() + rows - 1) / rows);
+    hud.inventoryPage = std::min(hud.inventoryPage, pages - 1);
+    for (size_t i = hud.inventoryPage * rows; i < sheet.inventory.size() && i < (hud.inventoryPage + 1) * rows; i++)
     {
         const yh::Item& item = sheet.inventory[i];
         const float rowWidth = calm ? w - giveWidth - 8 : w;
-        if (item.slot.empty())
+        if (item.use)
+        {
+            if (ui.button({x, y, rowWidth, 36}, "Use: " + itemLabel(item) + " (" + std::to_string(item.use->cost) + (item.use->cost == 1 ? " action)" : " actions)"), world.mine(hero)))
+            {
+                hud.giving.reset();
+                hud.consuming = std::pair(hero, i);
+                hud.inventoryPage = 0;
+                return;
+            }
+        }
+        else if (item.slot.empty())
             ui.label({x + 12, y + 8}, itemLabel(item), ui.theme.textDim);
         else if (ui.toggle({x, y, rowWidth, 36}, itemLabel(item), item.equipped))
             world.act("equip", nlohmann::json{{"hero", hero}, {"item", i}, {"on", !item.equipped}}.dump());
         if (calm && ui.button({x + w - giveWidth, y, giveWidth, 36}, "Give"))
+        {
             hud.giving = i;
+            hud.consuming.reset();
+        }
         y += 42;
     }
 
     // Handing something over: pick who gets it.
     const float bottom = area.y + area.h;
+    if (pages > 1)
+    {
+        if (ui.button({x, bottom - 148, 110, 32}, "Previous", hud.inventoryPage > 0)) --hud.inventoryPage;
+        if (ui.button({x + 118, bottom - 148, 90, 32}, "Next", hud.inventoryPage + 1 < pages)) ++hud.inventoryPage;
+        ui.label({x + 228, bottom - 142}, "Page " + std::to_string(hud.inventoryPage + 1) + "/" + std::to_string(pages), ui.theme.textDim);
+    }
     if (hud.giving)
     {
         const bool coins = *hud.giving == coinsPicked;
@@ -128,7 +185,7 @@ void hud::inventoryPanel(Hud& hud)
     else if (!calm)
         ui.label({x, bottom - 62}, "In a fight, changing gear takes " + std::to_string(world.equipCost(hero))
             + (world.equipCost(hero) == 1 ? " action" : " actions") + " on " + sheet.name + "'s turn.", ui.theme.textDim);
-    ui.label({x, bottom - 34}, "Click an item to put it on or away.   I or Esc: close", ui.theme.textDim);
+    ui.label({x, bottom - 34}, "Click gear to equip, or Use to consume.   I or Esc: close", ui.theme.textDim);
 }
 
 void hud::lootPanel(Hud& hud)

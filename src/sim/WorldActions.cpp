@@ -117,7 +117,8 @@ std::vector<const yh::ActionDefinition*> World::actionsOf(size_t creature) const
         return has;
     // The ruleset's general actions. Classes, feats and items will add their own to this list.
     for (const yh::ActionDefinition& a : chapter_->actions)
-        if (a.general)
+        if (a.general && std::all_of(a.needsResources.begin(), a.needsResources.end(),
+            [&](const auto& need) { return creatures_[creature].sheet.resources.contains(need.first); }))
             has.push_back(&a);
     return has;
 }
@@ -221,8 +222,10 @@ void World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::
     {
         EffectsHost host(*this);
         yh::EffectContext context;
+        std::optional<yh::Random> exploration;
+        if (!fighting()) exploration = nextRandom(0xc05eull);
         context.rules = &rules_;
-        context.random = &encounter_->random(); // the fight's own dice, the same on every machine
+        context.random = exploration ? &*exploration : &encounter_->random();
         context.self = static_cast<yh::EffectActor>(me);
         context.targets = {static_cast<yh::EffectActor>(target.value_or(me))};
         context.source = action.id;

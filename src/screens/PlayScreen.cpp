@@ -90,6 +90,8 @@ bool PlayScreen::handle(const SDL_Event& event)
     if (keyDown && event.key.key == SDLK_I)
     {
         inventoryOpen_ = !inventoryOpen_;
+        consuming_.reset();
+        inventoryPage_ = 0;
         journalOpen_ = false;
         giving_.reset();
         looting_.reset();
@@ -269,6 +271,8 @@ void PlayScreen::show(World::Event& event)
         cameraPlaced_ = false;
         trading_.reset();
         tradePage_ = 0;
+        consuming_.reset();
+        inventoryPage_ = 0;
         break;
     case Kind::Resumed:
         log_.clear();
@@ -566,7 +570,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     ui_.begin(renderer, input_);
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
-    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, trading_, tradePage_, table.inSession, table.guest};
+    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, trading_, tradePage_, consuming_, inventoryPage_, table.inSession, table.guest};
 
     if (!table.netStatus.empty())
         ui_.label({screen.w / 2 - 160, screen.h - 58}, table.netStatus, ui_.theme.textDim);
@@ -586,6 +590,12 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
             ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
         return;
     }
+    if (inventoryOpen_ && !world_.talk())
+    {
+        hud::inventoryPanel(hud);
+        if (!log_.empty()) ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
+        return;
+    }
     hud::partyCards(hud);
     if (world_.fighting())
     {
@@ -600,9 +610,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
 
     if (world_.journal())
         hud::journalPanel(hud, journalOpen_, title_);
-    if (inventoryOpen_ && !world_.talk())
-        hud::inventoryPanel(hud);
-    else if (!journalOpen_)
+    if (!journalOpen_)
     {
         hud::merchantPanel(hud);
         if (!trading_)

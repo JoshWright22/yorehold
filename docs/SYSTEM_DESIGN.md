@@ -479,6 +479,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 42. Merchants: stock and purse are finite and saved, with no restocking. Wren carries two maces (5 gp) and two shields (10 gp), with 100 gp to buy loot. Buy at the item's value, sell at half, rounded up/down respectively; values and multipliers live in content. Trade one unit at a time, beside a peaceful NPC and between fights; worn items must be put away before selling. Zero-valued items have no offer, and buying respects the magic item limit. Shops close when the hero leaves, talks, or starts fighting.
 
+43. Consumables: healing potions restore 2d4+2 HP (50 gp); ward scrolls grant 1d6+2 temporary HP (25 gp); ember scrolls deal 2d6 fire with a DC 12 Dexterity save for half (50 gp). Each starting hero carries one potion. Using one spends one inventory unit, costs its authored actions in combat, and is free between fights; hostile scrolls require combat. Scrolls need no class or spell slots, and consumables count toward the magic item limit only when marked magic. All prices, targets, saves and effects are item data; legacy potion resources remain usable on older sheets.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

@@ -22,6 +22,8 @@ struct Hud
     std::optional<size_t>& looting; // the pile whose contents are shown
     std::optional<size_t>& trading; // the NPC whose shop is open
     size_t& tradePage;
+    std::optional<std::pair<size_t, size_t>>& consuming; // hero and inventory entry whose target is being picked
+    size_t& inventoryPage;
     bool inSession = false;        // co-op: cards show who plays each hero
     bool guest = false;            // joined someone else's game: only the host can start it again
 };

@@ -74,7 +74,10 @@
         "sellMultiplier": 0.5,
         "stock": [
           { "item": "mace", "quantity": 2, "value": 500 },
-          { "item": "shield", "quantity": 2, "value": 1000 }
+          { "item": "shield", "quantity": 2, "value": 1000 },
+          { "item": "healing-potion", "quantity": 4 },
+          { "item": "ward-scroll", "quantity": 2 },
+          { "item": "ember-scroll", "quantity": 2 }
         ]
       },
       "killed": ["wren_dead"]

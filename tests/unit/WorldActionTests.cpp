@@ -51,7 +51,7 @@ void defendingAndHelping(const Check& check)
     WorldFixture world;
     check(loadFight(world), "The action yard starts with Ana's turn");
     if (!world.fighting()) return;
-    check(world.actionsOf(0).size() == 12, "All twelve actions come from the ruleset folder");
+    check(world.actionsOf(0).size() == 11, "Generic actions come from the ruleset folder; inventory replaces the legacy potion action");
     const int ac = world.sheet(0).armorClass(world.rules());
     check(world.send("use", {{"action", "defend"}}) && world.sheet(0).armorClass(world.rules()) == ac + 2
         && world.encounter()->order()[world.encounter()->currentIndex()].budget.actions == 1, "Defend costs one action and adds two AC");

@@ -1,0 +1,12 @@
+{
+  "id": "ward-scroll",
+  "name": "Ward scroll",
+  "hands": 1,
+  "weight": 0.1,
+  "value": 2500,
+  "use": {
+    "cost": 1,
+    "target": { "kind": "self" },
+    "effects": [{ "do": "tempHp", "dice": "1d6+2", "target": "self" }]
+  }
+}

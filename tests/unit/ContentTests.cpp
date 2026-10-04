@@ -299,7 +299,8 @@ void contentTests(const fs::path& scratch)
     yh::Random random(1);
     const auto hero = chapter->compendium.makeCharacter(chapter->rules, "fighter", "Hero", random);
     const auto goblin = chapter->compendium.makeCreature(chapter->rules, "goblin", "Custom name", random);
-    check(hero && hero->inventory.size() == 3 && hero->weapon() && hero->weapon()->id == "longsword", "Classes supply starting gear");
+    check(hero && hero->inventory.size() == 4 && hero->weapon() && hero->weapon()->id == "longsword"
+        && hero->inventory.back().id == "healing-potion", "Classes supply starting gear and a carried potion");
     check(goblin && goblin->name == "Custom name" && goblin->hp == 7 && goblin->armorClass(chapter->rules) == 13, "Creature files supply names, HP and final AC");
     const auto& originalClass = *chapter->compendium.characterClass("fighter");
     const auto classCopy = yh::Compendium::classFromJson(yh::Compendium::classToJson(originalClass));
@@ -404,7 +405,7 @@ void libraryTests(const fs::path& scratch)
     auto added = ContentLibrary::install(archive.string(), library, &error);
     check(added && added->adventures.size() == 1 && added->adventures.front().title == "The Goblin Keep"
         && added->adventures.front().folder == "chapters/goblin-keep", "Opening a .yore adds its adventures");
-    check(added && added->classes == 5 && added->items == 12 && added->creatures == 3, "Added files report what they hold");
+    check(added && added->classes == 5 && added->items == 15 && added->creatures == 3, "Added files report what they hold");
     check(added && fs::path(added->path).filename() == "my-keep-2.yore" && fs::exists(added->path) && fs::exists(archive),
         "Files are copied into the library under plain names");
     check(ContentLibrary::install(archive.string(), library, &error) && ContentLibrary::installed(library).size() == 1,
@@ -420,7 +421,7 @@ void libraryTests(const fs::path& scratch)
     const auto defsArchive = scratch / "classes.yore";
     check(yh::FileSystem::packFolder(defs.string(), defsArchive.string()), "Pack definitions without a chapter");
     const auto pack = ContentLibrary::install(defsArchive.string(), library, &error);
-    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 5 && pack->items == 12 && pack->creatures == 0,
+    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 5 && pack->items == 15 && pack->creatures == 0,
         "Classes and items can be shared without an adventure");
 
     // A pack with one new class: it joins the compendium without touching the installed adventure.
@@ -435,7 +436,7 @@ void libraryTests(const fs::path& scratch)
         && ContentLibrary::install((scratch / "wardens.yore").string(), library, &error), "Add a pack with one new class");
     const auto packs = ContentLibrary::installed(library);
     const yh::Compendium all = ContentLibrary::compendium(YH_GAME_ASSETS, packs);
-    check(all.classes.size() == 6 && all.characterClass("warden") && all.characterClass("fighter") && all.items.size() == 12,
+    check(all.classes.size() == 6 && all.characterClass("warden") && all.characterClass("fighter") && all.items.size() == 15,
         "Added packs extend the compendium used for making things");
     const auto unchanged = ContentLibrary::inspect(added->path, &error);
     yh::FileSystem keepFiles;
@@ -750,7 +751,7 @@ void characterLibraryTests(const fs::path& scratch)
     write(saveDir / "adventure.json", saved);
     playAndLeave();
     auto back = CharacterLibrary::find(characters, hero.fileName(), &error);
-    check(back && back->away == "adventure.json" && back->choices.xp == 40 && back->inventory.size() == 3,
+    check(back && back->away == "adventure.json" && back->choices.xp == 40 && back->inventory.size() == 4,
         "Leaving writes the hero back to the library, away in this adventure");
     saved["data"]["creatures"][0]["sheet"]["hp"] = 0;
     saved["data"]["creatures"][0]["sheet"]["death"] = {{"dead", true}, {"failures", 3}};
@@ -958,6 +959,7 @@ void worldPositioningTests(const std::function<void(bool, const char*)>& check);
 void worldProficiencyTests(const std::function<void(bool, const char*)>& check);
 void worldDeathTests(const std::function<void(bool, const char*)>& check);
 void worldCharacterTests(const std::function<void(bool, const char*)>& check);
+void worldItemTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -973,6 +975,7 @@ int main()
         worldProficiencyTests(check);
         worldDeathTests(check);
         worldCharacterTests(check);
+        worldItemTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

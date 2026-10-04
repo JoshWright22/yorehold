@@ -100,5 +100,7 @@ private:
     std::optional<size_t> looting_; // the pile whose contents are open
     std::optional<size_t> trading_; // NPC index, only while beside a peaceful merchant
     size_t tradePage_ = 0;
+    std::optional<std::pair<size_t, size_t>> consuming_;
+    size_t inventoryPage_ = 0;
     std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

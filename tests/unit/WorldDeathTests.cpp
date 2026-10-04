@@ -61,6 +61,8 @@ void recovering(const Check& check)
         "Help gets a dying ally up and removes the fallen conditions");
     world.sheet(1).takeDamage(1, world.rules());
     world.sheet(1).death.successes = 3; world.sheet(1).death.stable = true; world.sheet(1).syncDeath(world.rules());
+    // Sheets from before inventory consumables keep their remaining resource-backed uses.
+    world.sheet(0).resources["potions"] = {1, 1};
     check(world.send("use", {{"action", "potion"}, {"target", 1}}) && world.sheet(1).hp >= 4 && world.sheet(1).hp <= 10
         && !world.sheet(1).death.stable && world.sheet(1).death.successes == 0
         && world.sheet(0).resources.at("potions").current == 0, "A potion heals a stable ally and spends one carried use");

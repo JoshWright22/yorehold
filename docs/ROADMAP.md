@@ -73,7 +73,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   ally, coins.
 - [x] **D3. Weight and the magic item limit.**
 - [x] **D4. Merchants.** An NPC with stock and prices, buy and sell.
-- [ ] **D5. Consumables.** Potions and scrolls as items with effects.
+- [x] **D5. Consumables.** Potions and scrolls as items with effects.
 
 ## E. Magic
 

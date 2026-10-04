@@ -214,6 +214,9 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         };
         checkRanks(c.compendium.classes, "classes");
         checkRanks(c.compendium.creatures, "creatures");
+        for (const auto& [id, item] : c.compendium.items)
+            if (item.use && !item.use->effect.check(c.rules, &problem))
+                throw std::invalid_argument("item " + id + " use: " + problem);
         if (!c.rules.checkDeathRules(&problem))
         {
             where = c.rulesFolder.empty() ? folder + "/chapter.json" : c.rulesFolder + "/ruleset.json";
