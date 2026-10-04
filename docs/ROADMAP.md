@@ -129,7 +129,8 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 - [ ] **I1. DM mode.** The DM seat, creature briefs in chapter files, live tools with a log.
 - [ ] **I2. Ruleset versions.** Migration files, the graveyard, rebuilt characters.
-- [ ] **I3. UI pass** after the UI design is agreed.
+- [ ] **I3. UI pass.** Once most of the game is implemented; until then screens keep the
+  placeholder look and only need to work.
 - [ ] **I4. Audio events and music states.**
 - [ ] **I5. The remaining SRD classes and races.**
 - [ ] **I7. Touch layout for Create on mobile.**
