@@ -90,6 +90,7 @@
         {
           "creature": "goblin",
           "name": "Gob",
+          "facing": 180,
           "at": [
             28,
             12

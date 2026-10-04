@@ -222,13 +222,12 @@ These follow BG3 for now and may be revisited.
 - Done: a turn in `yh::Encounter` is free movement plus the ruleset's actions (two) plus one
   reaction, and a Strike costs the weapon's hands. The AI can Stride then Strike, or Strike twice.
   Still to do: the other generic actions, and opportunity attacks spending the reaction.
-- Done in the framework (`Stealth.h`), not yet in the game: vision cones, light and sneak checks.
+- Done: vision cones, the sneak toggle, light and sneak checks, and ambushes that surprise.
 - Shared turns for side-by-side initiative.
 - Character creation with multiclassing, character libraries, and level ranges per adventure.
 - Camp, supplies and long rests; downed, death saves and revival.
 - Per-character inventories, giving items, and the camp stash.
 - DM seats and enemy briefs in the chapter format.
-- Stealth: vision cones, sneaking, light and checks, which also feed surprise.
 - The node-based writing tool and its suggestions.
 
 ## Open questions (defaults apply until answered)

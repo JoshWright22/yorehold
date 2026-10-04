@@ -14,7 +14,9 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <set>
+#include <span>
 
 namespace
 {
@@ -63,6 +65,13 @@ void contentTests(const fs::path& scratch)
     check(chapter->map.width() == 48 && chapter->map.height() == 30, "Map size comes from the rows");
     check(!chapter->clearedCutscene.empty() && files.exists(chapter->clearedCutscene), "The chapter resolves its own ending file");
     check(chapter->clearedText == "The goblins are gone. The keep is yours!", "The writer owns the completion text");
+    check(chapter->stealth.checkEvery == 5 && chapter->encounters[0].creatures[0].facing == 180.0f && !chapter->encounters[0].creatures[1].facing,
+        "Stealth rules and where enemies look come from files");
+    {
+        const auto shipped = json::parse(*files.readText("rules/stealth.json"));
+        check(shipped.at("checkEvery") == 5 && shipped.at("sneakSpeed") == 0.5 && shipped.at("darkBonus") == 5 && shipped.at("critical") == true,
+            "The shipped stealth rules are the designed defaults");
+    }
 
     const yh::Grid grid(yh::GridType::Square, GameMap::cellSize);
     const auto start = chapter->party.front().at;
@@ -409,6 +418,190 @@ void saveTests(const fs::path& scratch)
     SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
 }
 
+// The rules of sneaking, with the keep's own map, creatures and numbers.
+void stealthTests(const fs::path& scratch)
+{
+    yh::FileSystem files;
+    check(files.mountFolder(YH_GAME_ASSETS, "game"), "Mount game files for stealth");
+    std::string error;
+    const auto chapter = Chapter::load(files, "chapters/goblin-keep", &error);
+    check(chapter.has_value(), "Load the keep for stealth");
+    if (!chapter) return;
+
+    const float cell = GameMap::cellSize;
+    const yh::Grid grid(yh::GridType::Square, cell);
+    const yh::StealthRules onMap = chapter->stealthOnMap();
+    check(std::fabs(onMap.checkEvery - 5 / 1.524f * cell) < 0.01f && onMap.sneakSpeed == chapter->stealth.sneakSpeed,
+        "The check distance is metres in the file and world units on the map");
+
+    // Gob guards the entry hall, looking west at the door; Snik was told nothing and looks toward where the party starts.
+    const Chapter::Placement& gob = chapter->encounters[0].creatures[0];
+    const Chapter::Placement& snik = chapter->encounters[0].creatures[1];
+    const float pi = 3.14159265f;
+    check(std::fabs(chapter->facingOf(gob) - pi) < 0.001f, "A placement's facing is degrees in the file");
+    check(std::fabs(std::cos(chapter->facingOf(snik)) + 1) < 0.05f, "Without one, a creature watches the way the party comes from");
+
+    yh::Random dice(1);
+    const auto goblin = chapter->compendium.makeCreature(chapter->rules, gob.creatureId, gob.name, dice);
+    const auto rogue = chapter->compendium.makeCharacter(chapter->rules, "rogue", "Cel", dice);
+    check(goblin && rogue, "Make the keep's goblin and rogue");
+    if (!goblin || !rogue) return;
+    yh::Watcher watcher;
+    watcher.position = grid.center(gob.at);
+    watcher.facing = chapter->facingOf(gob);
+    watcher.range = chapter->map.lighting().sight * cell;
+    watcher.passivePerception = 10 + goblin->checkModifier(chapter->rules, "perception");
+    const auto walls = std::span<const yh::Wall>(chapter->map.walls());
+    // Along the hall toward Gob, one row below him.
+    const yh::Vec2 door = grid.center({18, 13}), close = grid.center({27, 13});
+    const int hopeless = -100, expert = 100;
+
+    {
+        // Looking the other way, he never gets a roll, however clumsy the sneaker.
+        yh::Watcher away = watcher;
+        away.facing = 0;
+        yh::StealthTracker tracker(onMap);
+        yh::Random random(1);
+        check(tracker.move(door, close, true, hopeless, std::span(&away, 1), walls, random).empty(), "Sneak past a watcher that faces away");
+        check(!yh::sees(away, close, walls) && yh::sees(watcher, close, walls), "A cone only covers what is in front");
+    }
+    {
+        yh::StealthTracker tracker(onMap);
+        yh::Random random(1);
+        const auto rolls = tracker.move(door, close, true, hopeless, std::span(&watcher, 1), walls, random);
+        check(!rolls.empty() && rolls.back().spotted && rolls.back().dc == watcher.passivePerception
+            && rolls.back().total == rolls.back().roll + hopeless, "A sneaker inside a cone is spotted when Stealth falls short of passive Perception");
+    }
+    {
+        // A sure hand is checked on coming into view and again every 5 m: three times over this walk.
+        yh::StealthRules steady = onMap;
+        steady.critical = false;
+        yh::StealthTracker tracker(steady);
+        yh::Random random(1);
+        const auto rolls = tracker.move(door, close, true, expert, std::span(&watcher, 1), walls, random);
+        check(rolls.size() == 3 && std::none_of(rolls.begin(), rolls.end(), [](const yh::StealthCheck& c) { return c.spotted; }),
+            "Stealth is checked on entering a cone and every few metres after");
+        if (rolls.size() == 3)
+            check(std::fabs(rolls[1].at.x - rolls[2].at.x) > onMap.checkEvery * 0.75f && std::fabs(rolls[1].at.x - rolls[2].at.x) < onMap.checkEvery * 1.25f,
+                "Checks are the ruleset's distance apart");
+    }
+    {
+        // Light: the same roll counts for more in the dark, and a watcher without darkvision sees nothing there.
+        const std::function<yh::LightLevel(yh::Vec2)> dark = [](yh::Vec2) { return yh::LightLevel::Dark; };
+        yh::StealthTracker blind(onMap), keen(onMap);
+        yh::Random random(1);
+        check(blind.move(door, close, true, hopeless, std::span(&watcher, 1), walls, random, dark).empty(), "Darkness hides a sneaker from eyes that need light");
+        yh::Watcher goblinEyes = watcher;
+        goblinEyes.darkRange = goblin->stats.value("darkvision") / static_cast<float>(chapter->rules.feetPerSquare) * cell;
+        const auto rolls = keen.move(grid.center({22, 13}), close, true, 0, std::span(&goblinEyes, 1), walls, random, dark);
+        check(goblinEyes.darkRange > 0 && !rolls.empty() && rolls.front().total == rolls.front().roll + chapter->stealth.darkBonus,
+            "Darkvision sees in the dark, where Stealth gets the ruleset's bonus");
+    }
+    {
+        // An ambush: the goblins are surprised and the whole party acts before any of them.
+        yh::Random random(2);
+        auto fighter = chapter->compendium.makeCharacter(chapter->rules, "fighter", "Astra", random);
+        auto sneak = chapter->compendium.makeCharacter(chapter->rules, "rogue", "Cel", random);
+        auto first = chapter->compendium.makeCreature(chapter->rules, "goblin", "Gob", random);
+        auto second = chapter->compendium.makeCreature(chapter->rules, "goblin", "Snik", random);
+        yh::Encounter fight(chapter->rules, 5);
+        fight.add(*fighter, 0);
+        fight.add(*sneak, 0);
+        fight.add(*first, 1);
+        fight.add(*second, 1);
+        fight.surprise(1);
+        fight.start();
+        int heroTurns = 0, goblinTurns = 0;
+        while (fight.round() == 1)
+        {
+            ++(fight.current().team == 0 ? heroTurns : goblinTurns);
+            fight.nextTurn();
+        }
+        check(heroTurns == 2 && goblinTurns == 0 && fight.round() == 2, "An ambush costs the enemies their first turn");
+        bool later = false;
+        for (int i = 0; i < 4; i++)
+        {
+            later |= fight.current().team == 1;
+            fight.nextTurn();
+        }
+        check(later, "Surprised enemies act from the second round");
+    }
+
+    // The game itself, started from a save that puts the party where the test needs it.
+    const auto saveDir = scratch / "sneak-saves";
+    SDL_setenv_unsafe("YOREHOLD_SAVE_DIR", saveDir.string().c_str(), 1);
+    SDL_setenv_unsafe("YOREHOLD_CONTENT", YH_GAME_ASSETS, 1);
+    SDL_Event enter{};
+    enter.type = SDL_EVENT_KEY_DOWN;
+    enter.key.key = SDLK_RETURN;
+    SDL_Event sneakKey = enter;
+    sneakKey.key.key = SDLK_C;
+    {
+        YoreholdGame game;
+        game.handleEvent(enter);
+        game.handleEvent(enter);
+        game.unload();
+    }
+    json saved;
+    {
+        std::ifstream file(saveDir / "adventure.json", std::ios::binary);
+        saved = json::parse(file);
+    }
+    auto place = [&](const std::vector<yh::Cell>& cells, bool sneaking) {
+        json edited = saved;
+        for (size_t i = 0; i < cells.size(); i++)
+        {
+            const yh::Vec2 at = grid.center(cells[i]);
+            edited["data"]["creatures"][i]["x"] = at.x;
+            edited["data"]["creatures"][i]["y"] = at.y;
+            edited["data"]["creatures"][i]["sneaking"] = sneaking;
+        }
+        write(saveDir / "adventure.json", edited);
+    };
+    auto frames = [](YoreholdGame& game, int count) {
+        for (int i = 0; i < count; i++) game.update(1.0 / 60);
+    };
+    check(saved["data"]["creatures"][0].contains("sneaking") && saved["data"]["creatures"][0]["sneaking"] == false, "Saves record who is sneaking");
+
+    // Behind both goblins of the entry hall, out of sight of the other rooms.
+    const std::vector<yh::Cell> behind{{30, 12}, {30, 13}, {30, 17}, {30, 18}};
+    place(behind, true);
+    {
+        YoreholdGame game;
+        game.handleEvent(enter);
+        game.handleEvent(enter);
+        check(game.describe() == "screen: exploring, sneaking", "A save restores sneaking heroes");
+        frames(game, 30);
+        check(game.describe() == "screen: exploring, sneaking", "Sneaking behind the goblins' backs goes unnoticed");
+        game.handleEvent(sneakKey);
+        check(game.describe() == "screen: exploring", "C stops sneaking");
+        frames(game, 2);
+        check(game.describe() == "screen: combat round 1", "Standing up in plain sight starts the fight");
+    }
+    place(behind, false);
+    {
+        YoreholdGame game;
+        game.handleEvent(enter);
+        game.handleEvent(enter);
+        game.handleEvent(sneakKey); // before the goblins get a look
+        check(game.describe() == "screen: exploring, sneaking", "C starts sneaking");
+        frames(game, 30);
+        check(game.describe() == "screen: exploring, sneaking", "Sneaking from the first moment keeps the party hidden");
+    }
+    // In front of Gob, well inside his cone: eight rolls against two goblins do not all pass.
+    place({{22, 12}, {22, 13}, {21, 12}, {21, 13}}, true);
+    {
+        YoreholdGame game;
+        game.handleEvent(enter);
+        game.handleEvent(enter);
+        check(game.describe() == "screen: exploring, sneaking", "The party sneaks into the hall");
+        frames(game, 2);
+        check(game.describe() == "screen: combat round 1", "Being spotted inside a cone starts the fight");
+    }
+    SDL_unsetenv_unsafe("YOREHOLD_SAVE_DIR");
+    SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
+}
+
 }
 
 int main()
@@ -421,6 +614,7 @@ int main()
         mapTests();
         gameErrorTests();
         saveTests(scratch.path);
+        stealthTests(scratch.path);
         openFileTests(scratch.path);
     }
     catch (const std::exception& e)

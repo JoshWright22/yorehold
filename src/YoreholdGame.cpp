@@ -498,7 +498,15 @@ void YoreholdGame::newAdventure(uint64_t seed)
             token.position = grid_.center(placement.at);
             token.floor = hidden;
             tokens_.tokens.push_back(token);
+            creatures_.back().facing = chapter_->facingOf(placement);
         }
+    }
+    {
+        sneak_.assign(heroCount_, yh::StealthTracker(chapter_->stealthOnMap()));
+        lastAt_.clear();
+        for (size_t i = 0; i < heroCount_; i++)
+            lastAt_.push_back(tokens_.tokens[i].position);
+        stealthRandom_ = yh::Random(seed ^ 0x57ea1ull);
     }
     npcStart_ = creatures_.size();
     for (size_t i = 0; i < chapter_->npcs.size(); i++)
@@ -649,6 +657,11 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
             openMenu(Menu::Pause);
         return true;
     }
+    if (keyDown && event.key.key == SDLK_C)
+    {
+        act("sneak", nlohmann::json{{"on", !sneakingMine()}}.dump());
+        return true;
+    }
     if (keyDown && event.key.key == SDLK_R && !rules_.rests.empty())
     {
         act("rest", R"({"rest": 0})"); // R = the ruleset's first (usually shortest) rest
@@ -671,7 +684,7 @@ std::string YoreholdGame::describe() const
     if (talk_ && talk_->current())
         return "screen: talking " + (creatures_[talkWith_].npc >= 0 ? chapter_->npcs[creatures_[talkWith_].npc].id : creatures_[talkWith_].sheet.name)
             + " at " + talk_->current()->id;
-    return "screen: exploring";
+    return sneakingMine() ? "screen: exploring, sneaking" : "screen: exploring";
 }
 
 // ---------------------------------------------------------------- update
@@ -745,6 +758,9 @@ void YoreholdGame::update(double deltaSeconds)
     const yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
     const bool tokensListen = !menuOpen && !mouseOnUi && !partyDown() && !talk_ && !fighting;
     const yh::Input& tokenInput = tokensListen ? input_ : noInput_;
+    // Each sneaking hero is slower, whoever plays them, so they walk the same on every machine.
+    for (size_t i = 0; i < heroCount_; i++)
+        tokens_.tokens[i].pace = !fighting && creatures_[i].sneaking ? chapter_->stealth.sneakSpeed : 1.0f;
     tokens_.update(tokenInput, camera_, grid_, passable, deltaSeconds);
     if (&tokenInput == &input_ && input_.clicked(yh::actions::moveTo))
         controls_.resumeFollowing();
@@ -786,6 +802,8 @@ void YoreholdGame::update(double deltaSeconds)
         const auto [index, action] = *tokens_.contextChoice;
         if (action == "Attack" && fighting && heroTurn && creatures_[index].team == 1 && mine(*current))
             tryAttack(index);
+        else if (action == "Attack" && !fighting && creatures_[index].team == 1 && !creatures_[index].awake && sneakingMine())
+            act("ambush", nlohmann::json{{"creature", index}}.dump());
         else if (action == "Inspect" || action == "Attack")
         {
             const yh::Character& c = creatures_[index].sheet;
@@ -878,7 +896,7 @@ void YoreholdGame::updateVisibility()
             continue;
         const float darkvision = creatures_[i].sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
         eyes[i] = {tokens_.tokens[i].position, sky.sight * cell, darkvision};
-        if (lighting.carried > 0)
+        if (lighting.carried > 0 && !creatures_[i].sneaking)
             carried.push_back({tokens_.tokens[i].position, lighting.carried * cell});
     }
     // In rules mode a cell is only seen if some light reaches it (or it's within darkvision).
@@ -929,24 +947,114 @@ void YoreholdGame::updateVisibility()
         yh::Token& token = tokens_.tokens[i];
         if (token.floor == dead)
             continue;
-        const bool seen = fog_.state(0, 0, cellOf(i)) == yh::FogState::Visible;
         token.floor = fog_.state(view, 0, cellOf(i)) == yh::FogState::Visible ? 0 : hidden;
-        // The host decides when a fight starts and sends everyone's positions with it.
-        if (seen && !fighting && !partyDown() && creatures_[i].team == 1 && !creatures_[i].awake && !client_ && !talk_)
-        {
-            nlohmann::json at = nlohmann::json::array();
-            for (size_t c = 0; c < creatures_.size(); c++)
-            {
-                at.push_back({tokens_.tokens[c].position.x, tokens_.tokens[c].position.y});
-            }
-            act("fight", nlohmann::json{{"group", creatures_[i].group}, {"at", at}}.dump());
-            return;
-        }
     }
+    // The host decides when a fight starts.
+    if (!fighting && !partyDown() && !client_ && !talk_)
+        updateStealth();
 }
 
-void YoreholdGame::startCombat(int group, std::optional<size_t> only)
+bool YoreholdGame::sneakingMine() const
 {
+    for (size_t i = 0; i < heroCount_; i++)
+        if (creatures_[i].sneaking && mine(i) && !creatures_[i].sheet.down())
+            return true;
+    return false;
+}
+
+yh::LightLevel YoreholdGame::lightAt(yh::Vec2 point) const
+{
+    if (lightingMode() != GameMap::LightingMode::Rules)
+        return yh::LightLevel::Bright;
+    const yh::Cell c = grid_.cellAt(point);
+    const GameMap::Sky sky = map().sky(timeOfDay());
+    if (sky.differs && !map().indoors(c) && sky.level != yh::LightLevel::Dark)
+        return sky.level;
+    std::vector<yh::Light> carried;
+    for (size_t i = 0; i < heroCount_; i++)
+        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0 && !creatures_[i].sneaking)
+            carried.push_back({tokens_.tokens[i].position, map().lighting().carried * cell});
+    return lightLevels_.level(c, carried, map().walls());
+}
+
+std::vector<yh::Watcher> YoreholdGame::watchers() const
+{
+    // They see as far as the heroes do: the usual distance under a roof, further under an open sky.
+    const GameMap::Sky sky = map().sky(timeOfDay());
+    const char* perception = rules_.skill("perception") ? "perception" : "wis";
+    std::vector<yh::Watcher> watching(creatures_.size() - heroCount_);
+    for (size_t i = heroCount_; i < creatures_.size(); i++)
+    {
+        const Creature& c = creatures_[i];
+        yh::Watcher& watcher = watching[i - heroCount_];
+        watcher.position = tokens_.tokens[i].position;
+        watcher.facing = c.facing;
+        watcher.passivePerception = 10 + c.sheet.checkModifier(rules_, perception);
+        watcher.darkRange = c.sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
+        // Only enemies that haven't noticed anything yet keep watch.
+        const float sight = (sky.differs && map().indoors(cellOf(i)) ? map().lighting().sight : sky.sight) * cell;
+        watcher.range = c.team == 1 && !c.awake && !c.sheet.down() ? sight : -1;
+    }
+    return watching;
+}
+
+void YoreholdGame::updateStealth()
+{
+    const std::vector<yh::Watcher> watching = watchers();
+    const std::function<yh::LightLevel(yh::Vec2)> light = [this](yh::Vec2 point) { return lightAt(point); };
+    const char* stealth = rules_.skill("stealth") ? "stealth" : "dex";
+    std::optional<size_t> noticed; // the enemy that saw someone
+    std::string note;              // how, for the log
+    for (size_t h = 0; h < heroCount_; h++)
+    {
+        const yh::Vec2 at = tokens_.tokens[h].position;
+        yh::Vec2 from = lastAt_[h];
+        lastAt_[h] = at;
+        if (noticed || tokens_.tokens[h].floor == dead)
+            continue;
+        if (distance(from, at) > 2 * cell) // put somewhere else (a load, the end of a fight), not walked
+        {
+            from = at;
+            sneak_[h].reset();
+        }
+        if (!creatures_[h].sneaking)
+        {
+            // Walking openly: the fight starts as soon as they and an enemy can see each other.
+            for (size_t w = 0; w < watching.size() && !noticed; w++)
+                if (watching[w].range > 0 && fog_.state(0, 0, cellOf(heroCount_ + w)) == yh::FogState::Visible
+                    && distance(at, watching[w].position) <= watching[w].range + cell / 2 && yh::lineOfSight(at, watching[w].position, map().walls()))
+                    noticed = heroCount_ + w;
+            continue;
+        }
+        const int bonus = creatures_[h].sheet.checkModifier(rules_, stealth);
+        for (const yh::StealthCheck& check : sneak_[h].move(from, at, true, bonus, watching, map().walls(), stealthRandom_, light))
+        {
+            if (!check.spotted)
+            {
+                act("unseen", nlohmann::json{{"hero", h}}.dump());
+                continue;
+            }
+            noticed = heroCount_ + check.watcher;
+            note = creatures_[*noticed].sheet.name + " spots " + creatures_[h].sheet.name + "! (Stealth " + std::to_string(check.total) + " against "
+                + std::to_string(check.dc) + ")";
+        }
+    }
+    if (!noticed)
+        return;
+    // Everyone's positions go with it, so the fight starts the same on every machine.
+    nlohmann::json at = nlohmann::json::array();
+    for (size_t c = 0; c < creatures_.size(); c++)
+        at.push_back({tokens_.tokens[c].position.x, tokens_.tokens[c].position.y});
+    act("fight", nlohmann::json{{"group", creatures_[*noticed].group}, {"at", at}, {"note", note}}.dump());
+}
+
+void YoreholdGame::startCombat(int group, std::optional<size_t> only, bool surprise)
+{
+    for (size_t i = 0; i < heroCount_; i++)
+    {
+        creatures_[i].sneaking = false;
+        sneak_[i].reset();
+    }
     // Everyone stops on a square of their own.
     std::vector<yh::Cell> taken;
     for (size_t i = 0; i < creatures_.size(); i++)
@@ -1003,6 +1111,11 @@ void YoreholdGame::startCombat(int group, std::optional<size_t> only)
     if (group < static_cast<int>(chapter_->encounters.size()) && !chapter_->encounters[group].text.empty())
         say(chapter_->encounters[group].text);
     tokens_.settings.inCombat = true;
+    if (surprise)
+    {
+        say("The party strikes from hiding!");
+        encounter_->surprise(1);
+    }
     encounter_->start();
     syncLog();
     banner_ = "Combat";
@@ -2098,6 +2211,7 @@ std::string YoreholdGame::stateJson() const
             {"awake", creatures_[i].awake},
             {"fled", creatures_[i].fled},
             {"surrendered", creatures_[i].surrendered},
+            {"sneaking", creatures_[i].sneaking},
             {"team", creatures_[i].team},
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
@@ -2158,7 +2272,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             throw std::runtime_error("seats don't match the party");
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
-        std::vector<bool> awake, fled, surrendered;
+        std::vector<bool> awake, fled, surrendered, sneaking;
         std::vector<int> teams;
         for (const nlohmann::json& c : saved)
         {
@@ -2173,6 +2287,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
             fled.push_back(c.value("fled", false) && sheets.back().down());
+            sneaking.push_back(c.value("sneaking", false) && sneaking.size() < heroCount_ && !sheets.back().down()); // older saves have none
             // Only an NPC's side can change (a peaceful one the party attacked), or an enemy's that gave up.
             const int team = c.value("team", creatures_[teams.size()].team);
             surrendered.push_back(c.value("surrendered", false) && team == 2 && teams.size() >= heroCount_);
@@ -2193,6 +2308,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];
+            creatures_[i].sneaking = sneaking[i];
             creatures_[i].team = teams[i];
             yh::Token& token = tokens_.tokens[i];
             if (creatures_[i].npc >= 0)
@@ -2439,7 +2555,7 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
     }
     for (size_t i = 0; i < heroCount_; i++)
     {
-        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0)
+        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0 && !creatures_[i].sneaking)
             lights.push_back({tokens_.tokens[i].position, map().lighting().carried * cell, {255, 215, 160, 255}});
     }
     if (lightingMode() != GameMap::LightingMode::Off)
@@ -2454,6 +2570,26 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
     }
 
     camera_.apply(renderer);
+    // While sneaking, show where each enemy that hasn't noticed the party is looking.
+    if (!(encounter_ && !encounter_->finished()) && sneakingMine())
+    {
+        const std::vector<yh::Watcher> watching = watchers();
+        for (size_t w = 0; w < watching.size(); w++)
+        {
+            if (watching[w].range <= 0 || tokens_.tokens[heroCount_ + w].floor != 0)
+                continue;
+            const std::vector<yh::Vec2> cone = yh::visionCone(watching[w], map().walls(), 40);
+            for (size_t p = 1; p < cone.size(); p++)
+            {
+                // The tint is a fan of wide lines; started a little way out so they don't pile up over the token.
+                renderer.drawLine(cone[0] + (cone[p] - cone[0]) * 0.2f, cone[p], {230, 60, 50, 26}, 8);
+                if (p > 1)
+                    renderer.drawLine(cone[p - 1], cone[p], {230, 60, 50, 170}, 2);
+            }
+            renderer.drawLine(cone[0], cone[1], {230, 60, 50, 170}, 2);
+            renderer.drawLine(cone.back(), cone[0], {230, 60, 50, 170}, 2);
+        }
+    }
     const std::optional<size_t> current = currentCreature();
     if (current)
     {
@@ -2557,6 +2693,7 @@ void YoreholdGame::drawHud(yh::Renderer& renderer)
         std::string hint = scheme_.preset == yh::ControlPreset::BG3
             ? "Left-click: walk / select / talk   Drag: box-select   WASD / edges: pan   Wheel: zoom   F6: Foundry controls"
             : "Right-click: walk / talk   Left: select / drag   Right-drag: pan   Wheel: zoom   F6: BG3 controls";
+        hint += "   C: sneak";
         if (journal_)
             hint += "   J: journal";
         ui_.label({12, screen.h - 30}, hint, ui_.theme.textDim);
@@ -2589,6 +2726,10 @@ void YoreholdGame::drawHud(yh::Renderer& renderer)
                 act("rest", nlohmann::json{{"rest", i}}.dump());
             uiRects_.push_back(button);
         }
+        const yh::Rect sneak{10, y, 280, 40};
+        if (ui_.button(sneak, sneakingMine() ? "Stop sneaking (C)" : "Sneak (C)"))
+            act("sneak", nlohmann::json{{"on", !sneakingMine()}}.dump());
+        uiRects_.push_back(sneak);
     }
 }
 

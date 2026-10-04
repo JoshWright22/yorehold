@@ -1,0 +1,22 @@
+2 key Return
+3 keyup Return
+10 key C
+11 keyup C
+20 move 1000 360
+21 down left
+22 up left
+320 move 1000 360
+321 down left
+322 up left
+620 move 1000 360
+621 down left
+622 up left
+740 shot .dev/sneak-cones.png
+741 move 1095 232
+742 down right
+743 up right
+745 move 1170 252
+746 shot .dev/sneak-menu.png
+747 down left
+748 up left
+760 shot .dev/sneak-ambush.png

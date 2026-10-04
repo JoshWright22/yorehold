@@ -9,7 +9,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 ## A. Foundation
 
-- [ ] **A1. Stealth in the game.** Finish the sneak toggle, vision cones, checks every few metres,
+- [x] **A1. Stealth in the game.** Finish the sneak toggle, vision cones, checks every few metres,
   light, and ambush for surprise, in single player and co-op.
   Done when: unit checks cover a sneak past a watcher, getting spotted and an ambush; the keep has
   one enemy with a set `facing`; CONTENT.md describes `rules/stealth.json` and `facing`.

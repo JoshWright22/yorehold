@@ -8,7 +8,9 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <numbers>
 #include <set>
 #include <stdexcept>
 
@@ -134,6 +136,16 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             c.rules = std::move(*rules);
         }
 
+        // How sneaking works, if the content says.
+        if (files.exists("rules/stealth.json"))
+        {
+            where = "rules/stealth.json";
+            std::string problem;
+            const std::optional<yh::StealthRules> stealth = yh::StealthRules::fromJson(readOrThrow(files, where), &problem);
+            if (!stealth) throw std::invalid_argument(problem);
+            c.stealth = *stealth;
+        }
+
         // Shared content first, then the chapter's own (which can replace shared entries).
         std::string problem;
         if (!c.compendium.load(files, "", &problem) || !c.compendium.load(files, folder, &problem))
@@ -236,6 +248,12 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                     throw std::invalid_argument("unknown creature \"" + placement.creatureId + "\" in " + encounter.id);
                 placement.ai = aiFrom(p, c.compendium);
                 placement.surrender = dialogueFrom(p, "");
+                if (p.contains("facing"))
+                {
+                    placement.facing = p.at("facing").get<float>();
+                    if (!std::isfinite(*placement.facing) || std::fabs(*placement.facing) > 360)
+                        throw std::invalid_argument("facing is in degrees, -360 to 360, in " + encounter.id);
+                }
                 place(placement.at, placement.name.empty() ? placement.creatureId : placement.name);
                 encounter.creatures.push_back(std::move(placement));
             }
@@ -300,4 +318,22 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         if (error) *error = where + ": " + e.what();
         return std::nullopt;
     }
+}
+
+yh::StealthRules Chapter::stealthOnMap() const
+{
+    yh::StealthRules onMap = stealth;
+    const float metresPerSquare = static_cast<float>(std::max(1, rules.feetPerSquare)) * 0.3048f;
+    onMap.checkEvery = stealth.checkEvery / metresPerSquare * GameMap::cellSize;
+    return onMap;
+}
+
+float Chapter::facingOf(const Placement& placement) const
+{
+    if (placement.facing)
+        return *placement.facing * std::numbers::pi_v<float> / 180;
+    if (party.empty() || party.front().at == placement.at)
+        return 0;
+    // Nobody told it where to look: it watches the way the party comes from.
+    return std::atan2(static_cast<float>(party.front().at.y - placement.at.y), static_cast<float>(party.front().at.x - placement.at.x));
 }

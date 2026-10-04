@@ -132,7 +132,7 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
         {
             const int group = j.at("group").get<int>();
             if (player != 0 || !calm || talk_ || group < 0 || group >= static_cast<int>(chapter_->encounters.size())
-                || j.at("at").size() != creatures_.size())
+                || j.at("at").size() != creatures_.size() || (j.contains("note") && !j.at("note").is_string()))
                 return std::nullopt;
             for (const nlohmann::json& p : j.at("at"))
                 if (!finiteWorld(p))
@@ -145,6 +145,34 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
             // stands, as for "fight".
             const size_t creature = j.at("creature").get<size_t>();
             if (!calm || talk_ || !talkable(creature))
+                return std::nullopt;
+            nlohmann::json at = nlohmann::json::array();
+            for (const yh::Token& t : std::span(tokens_.tokens).first(creatures_.size()))
+                at.push_back({t.position.x, t.position.y});
+            return nlohmann::json{{"creature", creature}, {"at", at}}.dump();
+        }
+        if (type == "sneak")
+        {
+            // A player's standing heroes start or stop sneaking together.
+            bool any = false;
+            for (size_t i = 0; i < heroCount_; i++)
+                any |= tokens_.tokens[i].owner == player && !creatures_[i].sheet.down();
+            return calm && !talk_ && any && j.at("on").is_boolean() ? std::optional(accepted) : std::nullopt;
+        }
+        if (type == "unseen") // the host telling everyone a sneaking hero passed a check
+            return player == 0 && calm && j.at("hero").get<size_t>() < heroCount_ ? std::optional(accepted) : std::nullopt;
+        if (type == "ambush")
+        {
+            // Attacking from hiding: the fight starts with the enemies caught off guard.
+            const size_t creature = j.at("creature").get<size_t>();
+            if (!calm || talk_ || creature < heroCount_ || creature >= creatures_.size() || creatures_[creature].team != 1
+                || creatures_[creature].awake || creatures_[creature].sheet.down()
+                || fog_.state(0, 0, cellOf(creature)) != yh::FogState::Visible)
+                return std::nullopt;
+            bool hiding = false;
+            for (size_t i = 0; i < heroCount_; i++)
+                hiding |= tokens_.tokens[i].owner == player && creatures_[i].sneaking && !creatures_[i].sheet.down();
+            if (!hiding)
                 return std::nullopt;
             nlohmann::json at = nlohmann::json::array();
             for (const yh::Token& t : std::span(tokens_.tokens).first(creatures_.size()))
@@ -246,7 +274,22 @@ void YoreholdGame::apply(const yh::NetCommand& command)
                 token.position = at;
         }
     }
-    else if (type == "fight" || type == "provoke")
+    else if (type == "sneak")
+    {
+        const bool on = j.at("on").get<bool>();
+        for (size_t i = 0; i < heroCount_; i++)
+        {
+            if (tokens_.tokens[i].owner != command.player || creatures_[i].sheet.down())
+                continue;
+            creatures_[i].sneaking = on;
+            sneak_[i].reset();
+        }
+        if (command.player == self_)
+            say(on ? "Sneaking: slower, with lights covered. Stay out of the red cones." : "No longer sneaking.");
+    }
+    else if (type == "unseen")
+        floaters_.push_back({tokens_.tokens[j.at("hero").get<size_t>()].position, "Unseen", {150, 200, 255, 255}});
+    else if (type == "fight" || type == "provoke" || type == "ambush")
     {
         const nlohmann::json& at = j.at("at");
         for (size_t i = 0; i < creatures_.size(); i++)
@@ -258,7 +301,14 @@ void YoreholdGame::apply(const yh::NetCommand& command)
         pendingTalk_.reset();
         if (type == "fight")
         {
+            if (const std::string note = j.value("note", ""); !note.empty())
+                say(note);
             startCombat(j.at("group").get<int>());
+            return;
+        }
+        if (type == "ambush")
+        {
+            startCombat(creatures_[j.at("creature").get<size_t>()].group, std::nullopt, true);
             return;
         }
         turnHostile(j.at("creature").get<size_t>());

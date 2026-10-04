@@ -19,6 +19,7 @@
 #include <yorehold/framework/rpg/Dialogue.h>
 #include <yorehold/framework/rpg/QuestJournal.h>
 #include <yorehold/framework/rpg/Random.h>
+#include <yorehold/framework/rpg/Stealth.h>
 #include <yorehold/framework/ui/Ui.h>
 
 #include <map>
@@ -59,6 +60,8 @@ private:
         std::string breakAs;  // how it reacts now its morale has broken this fight (AiProfile::onBreak); empty = it hasn't
         bool surrendered = false; // gave up: out of the fight, stays where it is and can be talked to
         std::string surrender;    // the dialogue for that (see Chapter::surrender)
+        float facing = 0;      // radians: where an enemy looks until it notices the party
+        bool sneaking = false; // a hero moving quietly: slower, lights covered, only noticed inside a vision cone
     };
 
     // Damage numbers and "Miss!" that float up from a token.
@@ -102,7 +105,17 @@ private:
     int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
     void revealWalls(int team);
     // Wakes `group` (or only `only` of it) and starts a fight with the party.
-    void startCombat(int group, std::optional<size_t> only = std::nullopt);
+    // `surprise`: the party struck from hiding, so the enemies lose their first turn.
+    void startCombat(int group, std::optional<size_t> only = std::nullopt, bool surprise = false);
+    // Sneaking. Enemies that haven't noticed the party watch in a cone; a sneaking hero inside one
+    // rolls Stealth against their passive Perception (see yh::StealthTracker).
+    std::vector<yh::Watcher> watchers() const; // one per creature after the heroes; range below 0 = not watching
+    yh::LightLevel lightAt(yh::Vec2 point) const;
+    void updateStealth();
+    bool sneakingMine() const; // one of this machine's heroes is sneaking
+    std::vector<yh::StealthTracker> sneak_; // per hero
+    std::vector<yh::Vec2> lastAt_;          // per hero: where they stood last frame
+    yh::Random stealthRandom_{1};
     void turnHostile(size_t creature); // an NPC or a creature that surrendered attacks the party
     void endCombat();
     void beginTurn();

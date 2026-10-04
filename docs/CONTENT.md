@@ -24,6 +24,7 @@ classes/fighter.json
 items/longsword.json
 creatures/goblin.json
 rulesets/my-rules.json          optional custom rules
+rules/stealth.json             optional: how sneaking works
 ui/theme.json                  colors and frame styling
 design/                        optional game/UI design documents
 dialogues/                     optional dialogue documents
@@ -101,6 +102,32 @@ Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in
 `chapter.json` declares `id`, `title`, `map`, `ruleset`, `party` and `encounters`. `ruleset` can be `modern`, `classic`, or a relative JSON path. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.
 
 Party members have `name`, `class`, `color` and integer `at` cells. Encounter groups have unique `id`, optional starting `text`, and `creatures` with a `creature` id, optional `name` and `at`. Placements must be on walkable, distinct cells. Party size comes from the file. Seeing one enemy starts its authored encounter group.
+
+A creature placement may set `facing`: the direction it looks until it notices the party, in degrees from -360 to 360, where 0 is east (right on the map), 90 south, 180 west and 270 north. Without it the creature looks toward where the party starts. Facing only matters to sneaking heroes, who are noticed inside the vision cone in front of an enemy and not behind it. In the keep, Gob has `"facing": 180` and watches the door.
+
+## Stealth rules
+
+`rules/stealth.json` at the content root sets the numbers sneaking runs on. Every field is optional, and so is the file; these are the defaults:
+
+```json
+{
+  "checkEvery": 5,
+  "sneakSpeed": 0.5,
+  "darkBonus": 5,
+  "dimBonus": 2,
+  "brightBonus": 0,
+  "critical": true
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `checkEvery` | Metres a sneaking hero moves inside an enemy's vision cone between Stealth checks (above 0). A check is also made on first coming into view. One square is the ruleset's `feetPerSquare`. |
+| `sneakSpeed` | Walking speed while sneaking, as a share of normal speed (above 0, at most 1). |
+| `darkBonus`, `dimBonus`, `brightBonus` | Added to a Stealth check made in darkness, dim light or bright light (-20 to 20). Light levels only differ on maps whose lighting `mode` is `rules`; elsewhere everything counts as bright. |
+| `critical` | With `true`, a natural 1 is always spotted and a natural 20 never is. |
+
+How it plays: C or the Sneak button makes a player's heroes sneak. They walk at `sneakSpeed`, cover their carried light, and see a red cone in front of each visible enemy that has not noticed the party. A cone reaches as far as heroes see on that map (`sight` under a roof) and stops at walls. Inside one, a hero rolls Stealth (the `stealth` skill, or Dexterity in a ruleset without it) plus the light bonus against the enemy's passive Perception (10 + its Perception modifier). In darkness an enemy only sees as far as its `darkvision`. A failed check starts the fight with that enemy's group. Right-click > Attack on an unaware enemy while sneaking starts the fight as an ambush: its group is surprised and loses its first turn. Heroes who are not sneaking start the fight as soon as they and an enemy see each other, whichever way it faces. A value out of range fails the content check and names the file.
 
 Writer-owned text includes `intro` lines, encounter `text`, `victoryText` (supports `{xp}`), `defeatText`, `resumeText` and `clearedText`. `xpPerVictory` supplies the reward. The code only provides generic defaults for omitted text.
 

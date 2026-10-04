@@ -4,6 +4,7 @@
 
 #include <yorehold/framework/rpg/Compendium.h>
 #include <yorehold/framework/rpg/Ruleset.h>
+#include <yorehold/framework/rpg/Stealth.h>
 
 #include <optional>
 #include <string>
@@ -35,6 +36,7 @@ struct Chapter
         yh::Cell at;
         std::string ai;   // JSON (a profile name or changes) on top of the creature's and the encounter's; empty = none
         std::string surrender; // dialogue when it gives up; empty = the encounter's
+        std::optional<float> facing; // where it looks until it notices the party, in degrees (0 = east, 90 = south); empty = toward the party's start
     };
 
     // The story changing how creatures fight: once every flag in `when` is set, the creatures it
@@ -96,8 +98,14 @@ struct Chapter
     std::vector<std::string> completeWhen;
 
     yh::Ruleset rules;
+    yh::StealthRules stealth; // rules/stealth.json, if the content has one; checkEvery is in metres
     yh::Compendium compendium;
     GameMap map;
+
+    // The stealth rules with distances in the map's world units, as yh::StealthTracker wants them.
+    yh::StealthRules stealthOnMap() const;
+    // Where a placed creature looks until it notices the party, in radians (0 = east, clockwise on screen).
+    float facingOf(const Placement& placement) const;
 
     // Loads the shared compendium (items/, classes/, creatures/ at the root), then the chapter's own
     // additions, the ruleset ("modern"/"classic" or a .json path) and the map, and checks that every
