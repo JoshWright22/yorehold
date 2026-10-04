@@ -21,6 +21,7 @@ add_library(yorehold-game STATIC
     src/ContentPackage.cpp
     src/FileAssociation.cpp
     src/GameMap.cpp
+    src/Online.cpp
     src/YoreholdGame.cpp
 )
 target_include_directories(yorehold-game PUBLIC src)

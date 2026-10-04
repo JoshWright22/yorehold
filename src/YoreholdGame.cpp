@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <queue>
+#include <random>
 
 namespace
 {
@@ -118,6 +119,32 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     }
     for (const std::string& file : openFiles)
         addContent(file);
+    connectOnline();
+}
+
+// The account server comes from YOREHOLD_SERVER + YOREHOLD_SERVER_KEY (the dev script sets them
+// when a local server is set up), else from the settings file. Without one the game is offline.
+void YoreholdGame::connectOnline()
+{
+    const char* server = SDL_getenv("YOREHOLD_SERVER");
+    const char* key = SDL_getenv("YOREHOLD_SERVER_KEY");
+    const std::string address = server ? server : settings_.server;
+    if (address.empty())
+        return;
+    if (const char* device = SDL_getenv("YOREHOLD_DEVICE"))
+        settings_.deviceId = device;
+    else if (testRun_)
+        settings_.deviceId = "yorehold-test-run";
+    else if (settings_.deviceId.size() < 10)
+    {
+        static constexpr char hex[] = "0123456789abcdef";
+        std::random_device random;
+        settings_.deviceId.clear();
+        for (int i = 0; i < 32; i++)
+            settings_.deviceId += hex[random() % 16];
+        saveSettings();
+    }
+    online_.connect(address, key ? key : settings_.serverKey, settings_.deviceId);
 }
 
 // ---------------------------------------------------------------- content library
@@ -541,6 +568,13 @@ void YoreholdGame::update(double deltaSeconds)
 {
     time_ += deltaSeconds;
     updateSession(deltaSeconds);
+    online_.update();
+    if (online_.status() != onlineStatus_)
+    {
+        onlineStatus_ = online_.status();
+        if (SDL_getenv("YOREHOLD_PRINT_LOG"))
+            std::printf("[online] %s\n", onlineStatus_.c_str());
+    }
     // The title and pause menus freeze the world, except in co-op, where it carries on for everyone else.
     const bool pauseMenu = menu_ == Menu::Pause || (menu_ == Menu::Settings && settingsBack_ == Menu::Pause);
     if (!chapter_ || (menu_ != Menu::None && !(inSession() && pauseMenu)))
@@ -1468,6 +1502,9 @@ void YoreholdGame::saveSettings() const
         {"joinAddress", settings_.joinAddress},
         {"lastPackage", settings_.lastPackage},
         {"lastFolder", settings_.lastFolder},
+        {"server", settings_.server},
+        {"serverKey", settings_.serverKey},
+        {"deviceId", settings_.deviceId},
     };
     yh::writeFileAtomically(stateDir() + "settings.json", j.dump(2), false);
 }
@@ -1498,6 +1535,9 @@ void YoreholdGame::loadSettings()
         s.joinAddress = j.value("joinAddress", s.joinAddress).substr(0, 253);
         s.lastPackage = j.value("lastPackage", s.lastPackage);
         s.lastFolder = j.value("lastFolder", s.lastFolder);
+        s.server = j.value("server", s.server).substr(0, 253);
+        s.serverKey = j.value("serverKey", s.serverKey).substr(0, 128);
+        s.deviceId = j.value("deviceId", s.deviceId).substr(0, 128);
         settings_ = s;
     }
     catch (const nlohmann::json::exception&)
@@ -2063,6 +2103,8 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             ui_.label({screen.w / 2 - ui_.theme.font->measure(subtitle) / 2, screen.h * 0.12f + 88}, subtitle, ui_.theme.textDim);
         }
     }
+    if (!paused && !online_.status().empty() && ui_.theme.font)
+        ui_.label({screen.w - 16 - ui_.theme.font->measure(online_.status()), screen.h - 30}, online_.status(), ui_.theme.textDim);
 
     const float w = menu_ == Menu::Adventures ? 460.0f : 280.0f, h = 48, gap = 14, x = screen.w / 2 - w / 2;
     float y = screen.h * 0.36f;

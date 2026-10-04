@@ -2,6 +2,7 @@
 
 #include "Chapter.h"
 #include "ContentPackage.h"
+#include "Online.h"
 
 #include <yorehold/framework/Host.h>
 #include <yorehold/framework/animation/Cutscene.h>
@@ -157,7 +158,11 @@ private:
         std::string joinAddress = "127.0.0.1"; // the last co-op host joined
         std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)
         std::string lastFolder;
+        std::string server;    // the account server, like http://127.0.0.1:7350 ("" = play offline)
+        std::string serverKey;
+        std::string deviceId;  // names this install to the server; made up on first use
     };
+    void connectOnline();
     void drawMenu(yh::Renderer& renderer);
     void drawSettings(const yh::Rect& area);
     void openMenu(Menu menu);
@@ -266,6 +271,8 @@ private:
     std::string sessionEnded_; // set by the client's disconnect handler, handled after its update
     bool reseat_ = false; // someone joined or left: deal the heroes out again after the host's update
     std::string netStatus_;
+    Online online_;
+    std::string onlineStatus_; // the last one printed
     double syncTimer_ = 0;
     std::string lastSync_;
     std::optional<yh::Cell> pendingStep_; // pendingAttack_ swings once the hero stands here
