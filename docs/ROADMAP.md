@@ -13,7 +13,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   light, and ambush for surprise, in single player and co-op.
   Done when: unit checks cover a sneak past a watcher, getting spotted and an ambush; the keep has
   one enemy with a set `facing`; CONTENT.md describes `rules/stealth.json` and `facing`.
-- [ ] **A2. Split the simulation from the screens.** Move game state and rules out of
+- [x] **A2. Split the simulation from the screens.** Move game state and rules out of
   `YoreholdGame.cpp` into `src/sim/World*` with no renderer or input, as in SYSTEM_DESIGN section 2.
   Do it in slices that each build and pass: (1) content loading into `src/content/`; (2) state and
   save into `World`; (3) exploring; (4) combat; (5) validate/apply; (6) what is left becomes
@@ -21,7 +21,6 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   Done when: no file in `src/` is over 900 lines; a unit test plays the keep to victory through
   `World` with scripted intents and no window; the scripted run and auto-play seeds give the same
   results as before the split.
-  Progress: all six slices are split; the unit test that plays the keep through `World` remains.
 - [ ] **A3. World test helpers.** A small fixture: load a chapter from a folder or from JSON
   strings, send intents, step time, read state. Use it in every later step.
 

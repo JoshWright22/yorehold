@@ -55,19 +55,21 @@ input or AI or DM ──> intent ──> World::validate (host) ──> command 
 - A `World` can be built, played and checked in a unit test with no window. That is how rules are
   tested: scripted intents in, state out.
 
-Today this logic lives in `YoreholdGame.cpp` together with drawing and menus. Splitting it is the
-first step of the roadmap; nothing else is added to that file.
+`YoreholdGame` is what is left around `World` and `PlayScreen`: the title and pause menus, settings, the library,
+saves and the co-op session. It derives from `World` and overrides `act()` to carry intents through
+the session.
 
-Client source layout after the split:
+Client source layout (planned screens in brackets):
 
 ```
-src/main.cpp
+src/main.cpp, YoreholdGame, Coop, Settings
 src/content/   ContentPackage, Adventure, Chapter, GameMap
-src/sim/       World, WorldCombat, WorldExplore, WorldStealth, WorldNet (validate/apply), Save
-src/screens/   TitleScreen, LibraryScreen, CharacterScreen, PlayScreen, CampScreen, CreateScreen, SettingsScreen
-src/hud/       PartyCards, ActionBar, InitiativeStrip, LogPanel, JournalPanel, InventoryPanel, DialoguePanel
+src/sim/       World, WorldCombat, WorldAi, WorldExplore, WorldStealth, WorldNet (validate/apply), Save
+src/screens/   PlayScreen, Menus (title, pause, settings) [Library, Character, Camp, Create]
+src/hud/       PartyCards, ActionBar, InitiativeStrip, JournalPanel, DialoguePanel [InventoryPanel]
 src/online/    Online (accounts, storage, registry)
-src/create/    the editor modes
+src/create/    [the editor modes]
+tests/unit/    WorldFixture: load a chapter, send intents, step time, read state
 ```
 
 ## 3. Data
@@ -367,8 +369,8 @@ Inside the client, one screen with modes that share one open package, one undo h
 ## 5. Testing
 
 - Framework: unit checks for every new module, plus a visual scene for anything drawn.
-- Client rules: `World` tests that load content, feed intents and check state. Every roadmap item
-  adds some.
+- Client rules: `World` tests that load content, feed intents and check state, through
+  `WorldFixture` (tests/unit). Every roadmap item adds some.
 - Content: `yorehold-content check` on the shipped assets and on a packed `.yore`.
 - Whole game: scripted input runs and auto-play over fixed seeds, with screenshots.
 - Server: `tsc` clean, and RPC tests against the local server where it is running.

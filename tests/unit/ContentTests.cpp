@@ -637,6 +637,8 @@ void stealthTests(const fs::path& scratch)
 
 }
 
+void worldPlayTests(const std::function<void(bool, const char*)>& check); // WorldTests.cpp
+
 int main()
 {
     try
@@ -644,6 +646,7 @@ int main()
         Scratch scratch;
         contentTests(scratch.path);
         worldSaveTests();
+        worldPlayTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();
