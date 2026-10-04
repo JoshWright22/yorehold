@@ -1502,9 +1502,9 @@ void YoreholdGame::updateHeroTurn()
 void YoreholdGame::tryAttack(size_t target)
 {
     const size_t me = *currentCreature();
-    if (!encounter_->current().budget.action)
+    if (!encounter_->canStrike())
     {
-        say(creatures_[me].sheet.name + " has already used their action. End the turn (Space).");
+        say(creatures_[me].sheet.name + " doesn't have the actions left to attack. End the turn (Space).");
         return;
     }
     if (adjacent(me, target))
@@ -1625,7 +1625,7 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         if (!token.path.empty())
             return;
         enemyTimer_ = 0;
-        enemyStep_ = enemyTarget_ && adjacent(me, *enemyTarget_) && encounter_->current().budget.action ? EnemyStep::Strike : EnemyStep::Wait;
+        enemyStep_ = enemyTarget_ && adjacent(me, *enemyTarget_) && encounter_->canStrike() ? EnemyStep::Strike : EnemyStep::Wait;
         return;
     case EnemyStep::Strike:
         if (enemyTimer_ < 0.25)
@@ -1633,6 +1633,10 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         enemyTimer_ = 0;
         enemyStep_ = EnemyStep::Wait;
         act("attack", nlohmann::json{{"target", *enemyTarget_}}.dump());
+        // Actions to spare and the target still up: hit it again.
+        if (encounter_ && !encounter_->finished() && currentCreature() == me && encounter_->canStrike()
+            && !creatures_[*enemyTarget_].sheet.down() && orderIndex(*enemyTarget_))
+            enemyStep_ = EnemyStep::Strike;
         return;
     case EnemyStep::Wait:
         if (enemyTimer_ < 0.6)
@@ -1880,8 +1884,9 @@ yh::TacticalView YoreholdGame::tacticalView(size_t me, std::vector<size_t>& who)
         who.push_back(i);
     }
     const int team = creatures_[me].team;
-    view.action = encounter_->current().budget.action;
-    if (view.action)
+    view.actions = encounter_->current().budget.actions;
+    view.strikeCost = encounter_->strikeCost();
+    if (view.actions >= 1)
     {
         computeReach(me, creatures_[me].sheet.speedSquares(rules_));
         view.dashReach = reach_;
@@ -2965,19 +2970,19 @@ void YoreholdGame::drawCombatBar(yh::Renderer& renderer)
         return;
     }
 
-    std::snprintf(text, sizeof(text), "%s: move %d sq   action %s", c.character->name.c_str(), c.budget.movementLeft,
-        c.budget.action ? "ready" : "used");
+    std::snprintf(text, sizeof(text), "%s: move %d sq   actions %d", c.character->name.c_str(), c.budget.movementLeft,
+        c.budget.actions);
     ui_.label({bar.x + 16, bar.y + 8}, text, ui_.theme.accent);
     if (!mine(*current))
     {
         ui_.label({bar.x + 16, bar.y + 36}, seatName(*current) + " is taking this turn.", ui_.theme.textDim);
         return;
     }
-    ui_.label({bar.x + 16, bar.y + 36}, c.budget.action ? "Click an enemy to attack." : "Move on, or end your turn.",
+    ui_.label({bar.x + 16, bar.y + 36}, encounter_->canStrike() ? "Click an enemy to attack." : "Move on, or end your turn.",
         ui_.theme.textDim);
 
     const bool walking = !tokens_.tokens[*current].path.empty();
-    if (ui_.button({bar.x + bar.w - 250, bar.y + 13, 100, 40}, "Dash", c.budget.action && !walking))
+    if (ui_.button({bar.x + bar.w - 250, bar.y + 13, 100, 40}, "Dash", encounter_->canAct() && !walking))
         act("dash");
     if (ui_.button({bar.x + bar.w - 140, bar.y + 13, 128, 40}, "End turn", !walking))
         act("end");

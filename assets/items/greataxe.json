@@ -4,5 +4,6 @@
   "slot": "mainHand",
   "damage": "1d12",
   "attackAbility": "str",
+  "hands": 2,
   "weight": 3
 }

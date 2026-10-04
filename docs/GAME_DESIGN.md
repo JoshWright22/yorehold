@@ -191,8 +191,10 @@ These follow BG3 for now and may be revisited.
 
 ## What this changes in the code
 
-- `yh::Encounter`'s action, bonus action, reaction and movement budget becomes free movement plus
-  two actions plus one reaction. The AI's "dash" becomes the Stride action.
+- Done: a turn in `yh::Encounter` is free movement plus the ruleset's actions (two) plus one
+  reaction, and a Strike costs the weapon's hands. The AI can Stride then Strike, or Strike twice.
+  Still to do: the other generic actions, and opportunity attacks spending the reaction.
+- Done in the framework (`Stealth.h`), not yet in the game: vision cones, light and sneak checks.
 - Shared turns for side-by-side initiative.
 - Character creation with multiclassing, character libraries, and level ranges per adventure.
 - Camp, supplies and long rests; downed, death saves and revival.

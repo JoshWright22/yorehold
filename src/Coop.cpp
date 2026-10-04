@@ -165,11 +165,11 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
             return accepted;
         }
         if (type == "dash")
-            return acting && encounter_->current().budget.action ? std::optional(accepted) : std::nullopt;
+            return acting && encounter_->canAct() ? std::optional(accepted) : std::nullopt;
         if (type == "attack")
         {
             const size_t target = j.at("target").get<size_t>();
-            if (!acting || target >= creatures_.size() || !encounter_->current().budget.action || creatures_[target].sheet.down()
+            if (!acting || target >= creatures_.size() || !encounter_->canStrike() || creatures_[target].sheet.down()
                 || creatures_[target].team == creatures_[*current].team || !orderIndex(target) || !adjacent(*current, target))
                 return std::nullopt;
             return accepted;
