@@ -27,15 +27,17 @@ Our own d20 system, written from scratch. It starts as 5e reworded (the 5.1 SRD 
 mechanics can be reused with attribution) plus new spells of our own. Pathfinder 2e ideas are
 welcome where they play better.
 
+- **One ruleset for the whole game.** Every adventure uses the same rules, so characters move
+  between them freely. The ruleset is updated over time based on player feedback and votes.
+- **Players vote on** skills, classes, spells, races and the like. The game ships with a starting set.
 - **Abilities:** six.
-- **Skills:**
-  - About as many as D&D has.
-  - Players vote on which skills exist.
-  - The list is data in the ruleset, so it can change between votes and each adventure can use its own.
-  - Until a vote, dialogue checks use whatever the current ruleset has; the surrender talk's
-    Persuasion check is a stand-in.
-- **Rulesets are data.** Adventures pick one; the built-in "modern" and "classic" rulesets are
-  prototypes, not the final game.
+- **Skills:** about as many as D&D has. Until the first vote, dialogue checks use the current list;
+  the surrender talk's Persuasion check is a stand-in.
+- **Adventures add** their own creatures, items and NPCs, but not player options. New skills,
+  classes, spells and races only come through the shared ruleset (**default**).
+- **The ruleset is data** (files, versioned), so an update is a content release, not a code change.
+  The built-in "modern" and "classic" rulesets are prototypes. Letting adventures choose a ruleset
+  will go away.
 
 ## Turns
 
@@ -103,5 +105,6 @@ welcome where they play better.
 
 1. Proficiency: a 5e-style bonus by level (**default**), or Pathfinder's trained/expert/master ranks?
 2. Spellcasting: spell slots (**default**), or another resource?
-3. The skill vote: on the website, per season (**default**)?
+3. Votes: on the website, per season (**default**)? What happens to existing characters when a vote
+   removes or changes something they use (**default:** they get a free rebuild)?
 4. Rests: short and long rests as in 5e (**default**)?
