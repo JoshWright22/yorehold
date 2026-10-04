@@ -175,6 +175,9 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
         }
         if (type == "end")
             return acting ? std::optional(accepted) : std::nullopt;
+        // Only the creatures the game plays lose their nerve; "escape" takes one out of the fight for good.
+        if (type == "flee" || type == "escape")
+            return acting && *current >= heroCount_ ? std::optional(accepted) : std::nullopt;
         if (type == "rest")
         {
             const size_t index = j.at("rest").get<size_t>();
@@ -284,6 +287,27 @@ void YoreholdGame::apply(const yh::NetCommand& command)
         attack(j.at("target").get<size_t>());
     else if (type == "end")
         endTurn();
+    else if (type == "flee" && current)
+    {
+        creatures_[*current].fleeing = true;
+        say(creatures_[*current].sheet.name + " turns and runs!");
+    }
+    else if (type == "escape" && current)
+    {
+        Creature& gone = creatures_[*current];
+        yh::Token& token = tokens_.tokens[*current];
+        say(gone.sheet.name + " gets away.");
+        if (!token.path.empty())
+            token.position = token.path.back();
+        token.path.clear();
+        token.floor = dead;
+        gone.sheet.hp = 0;
+        gone.fled = true;
+        if (encounter_->finished())
+            endCombat();
+        else
+            endTurn();
+    }
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);
     else if (type == "talk")

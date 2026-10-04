@@ -82,6 +82,10 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     // Test runs skip the title screen and never touch the player's save, settings or library.
     const char* seed = SDL_getenv("YOREHOLD_SEED");
     testRun_ = seed != nullptr;
+    aiNotes_ = SDL_getenv("YOREHOLD_AI_NOTES") != nullptr;
+    // YOREHOLD_TIME=day|dusk|night overrides the map's time of day (test runs don't read the settings file).
+    if (const char* time = SDL_getenv("YOREHOLD_TIME"); time && testRun_)
+        settings_.timeOfDay = std::string_view(time) == "day" ? 1 : std::string_view(time) == "dusk" ? 2 : std::string_view(time) == "night" ? 3 : 0;
     if (!testRun_)
         loadSettings();
     applySettings();
@@ -377,6 +381,12 @@ void YoreholdGame::newAdventure(uint64_t seed)
         token.position = grid_.center(member.at);
         token.owner = tokens_.tokens.size() < seats_.size() ? seats_[tokens_.tokens.size()] : 0;
         tokens_.tokens.push_back(token);
+        // In auto-play heroes fight like goblins that never run.
+        yh::AiProfile& ai = creatures_.back().ai;
+        ai = *yh::AiProfile::preset("cunning");
+        ai.fleeHp = 0;
+        ai.fleeLosses = 2;
+        ai.fleeLeaderless = false;
     }
     heroCount_ = creatures_.size();
     selectOwnHero();
@@ -387,6 +397,7 @@ void YoreholdGame::newAdventure(uint64_t seed)
             const yh::CreatureDefinition& definition = *chapter_->compendium.creature(placement.creatureId);
             creatures_.push_back({*chapter_->compendium.makeCreature(rules_, placement.creatureId, placement.name, random), 1,
                 static_cast<int>(group)});
+            creatures_.back().ai = definition.ai;
             yh::Token token;
             token.name = creatures_.back().sheet.name;
             token.owner = enemyOwner;
@@ -406,6 +417,7 @@ void YoreholdGame::newAdventure(uint64_t seed)
         Creature creature{*chapter_->compendium.makeCreature(rules_, npc.creature, npc.name, random), 2,
             static_cast<int>(chapter_->encounters.size() + i)};
         creature.npc = static_cast<int>(i);
+        creature.ai = definition.ai;
         creatures_.push_back(std::move(creature));
         yh::Token token;
         token.name = npc.name;
@@ -479,6 +491,12 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
             cutscene_.skip(camera_);
             finishAdventure();
         }
+        return true;
+    }
+    if (keyDown && event.key.key == SDLK_F8)
+    {
+        aiNotes_ = !aiNotes_;
+        say(aiNotes_ ? "AI notes on (F8): the log explains each creature's choice." : "AI notes off.");
         return true;
     }
     if (keyDown && event.key.key == SDLK_F9)
@@ -699,6 +717,14 @@ GameMap::LightingMode YoreholdGame::lightingMode() const
     return map().lighting().mode;
 }
 
+GameMap::Time YoreholdGame::timeOfDay() const
+{
+    // There's no sky to change underground.
+    if (map().lighting().time != GameMap::Time::Underground && settings_.timeOfDay >= 1 && settings_.timeOfDay <= 3)
+        return static_cast<GameMap::Time>(settings_.timeOfDay - 1);
+    return map().lighting().time;
+}
+
 int YoreholdGame::viewTeam() const
 {
     if (settings_.sharedFog)
@@ -716,6 +742,7 @@ void YoreholdGame::updateVisibility()
 {
     const GameMap::Lighting& lighting = map().lighting();
     const bool rules = lightingMode() == GameMap::LightingMode::Rules;
+    const GameMap::Sky sky = map().sky(timeOfDay());
     std::vector<yh::Vision> eyes(heroCount_);
     std::vector<yh::Light> carried;
     for (size_t i = 0; i < heroCount_; i++)
@@ -723,14 +750,32 @@ void YoreholdGame::updateVisibility()
         if (tokens_.tokens[i].floor == dead)
             continue;
         const float darkvision = creatures_[i].sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
-        eyes[i] = {tokens_.tokens[i].position, lighting.sight * cell, darkvision};
+        eyes[i] = {tokens_.tokens[i].position, sky.sight * cell, darkvision};
         if (lighting.carried > 0)
             carried.push_back({tokens_.tokens[i].position, lighting.carried * cell});
     }
     // In rules mode a cell is only seen if some light reaches it (or it's within darkvision).
+    // By day the outdoors is lit by the sky and seen from far off; under a roof it's the usual
+    // sight distance and the map's own lights.
     std::function<bool(yh::Cell)> lit;
-    if (rules)
-        lit = [&](yh::Cell c) { return lightLevels_.lit(c, carried, map().walls()); };
+    if (rules || sky.differs)
+    {
+        lit = [&, rules](yh::Cell c) {
+            if (sky.differs && !map().indoors(c))
+                return !rules || sky.level != yh::LightLevel::Dark || lightLevels_.lit(c, carried, map().walls());
+            if (sky.differs)
+            {
+                const yh::Vec2 at = grid_.center(c);
+                const float reach = lighting.sight * cell;
+                bool near = false;
+                for (size_t i = 0; i < heroCount_ && !near; i++)
+                    near = tokens_.tokens[i].floor != dead && distance(at, tokens_.tokens[i].position) <= reach;
+                if (!near)
+                    return false;
+            }
+            return !rules || lightLevels_.lit(c, carried, map().walls());
+        };
+    }
 
     // Team 0 is everyone's view together; it decides when enemies are spotted. With shared fog
     // off, each hero also keeps a view of their own (team 1 + index) for the screen.
@@ -806,9 +851,12 @@ void YoreholdGame::startCombat(int group)
 
     encounter_ = std::make_unique<yh::Encounter>(rules_, seed_ * 7919 + static_cast<uint64_t>(++fights_));
     encounterLogShown_ = 0;
+    sideAtStart_[0] = sideAtStart_[1] = 0;
+    hadLeader_[0] = hadLeader_[1] = false;
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         Creature& c = creatures_[i];
+        c.fleeing = false;
         if (c.sheet.down())
             continue;
         if (c.team == 0)
@@ -818,6 +866,10 @@ void YoreholdGame::startCombat(int group)
             c.awake = true;
             encounter_->add(c.sheet, 1);
         }
+        else
+            continue;
+        sideAtStart_[c.team]++;
+        hadLeader_[c.team] |= c.ai.leader;
     }
 
     if (group < static_cast<int>(chapter_->encounters.size()) && !chapter_->encounters[group].text.empty())
@@ -1321,58 +1373,33 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
     {
         if (enemyTimer_ < 0.45)
             return;
-        // Go for the nearest foe still standing (heroes run this too in auto-play).
-        enemyTarget_.reset();
-        float nearest = 0;
-        const int myTeam = creatures_[me].team;
-        for (size_t i = 0; i < creatures_.size(); i++)
+        // Score everything it could do and take the best (heroes run this too in auto-play).
+        std::vector<size_t> who;
+        const yh::TacticalView view = tacticalView(me, who);
+        yh::Random random(seed_ ^ (static_cast<uint64_t>(fights_) << 40) ^ (static_cast<uint64_t>(encounter_->round()) << 20) ^ me);
+        std::vector<yh::TacticalChoice> considered;
+        const yh::TacticalChoice choice = yh::decide(creatures_[me].ai, view, grid_, random, &considered);
+        using Kind = yh::TacticalChoice::Kind;
+        if (aiNotes_)
         {
-            if (creatures_[i].team == myTeam || creatures_[i].sheet.down() || !orderIndex(i))
-                continue;
-            const float d = grid_.distance(cellOf(me), cellOf(i));
-            if (!enemyTarget_ || d < nearest)
-            {
-                enemyTarget_ = i;
-                nearest = d;
-            }
-        }
-        if (!enemyTarget_)
-        {
-            act("end");
-            return;
-        }
-        enemyTimer_ = 0;
-        if (adjacent(me, *enemyTarget_))
-        {
-            enemyStep_ = EnemyStep::Strike;
-            return;
+            const char* names[] = {"holds", "attacks", "advances", "flees"};
+            char score[32];
+            std::snprintf(score, sizeof score, "%.1f", choice.score);
+            say("[AI " + creatures_[me].ai.base + "] " + creatures_[me].sheet.name + " " + names[static_cast<int>(choice.kind)]
+                + (choice.kind == Kind::Attack ? " " + creatures_[who[choice.target]].sheet.name : std::string())
+                + " (" + score + ", best of " + std::to_string(considered.size()) + ")");
         }
 
-        const yh::Cell goal = cellOf(*enemyTarget_);
-        auto closest = [&]() {
-            std::pair<yh::Cell, float> best{standing_, 0.0f};
-            float bestDistance = grid_.distance(standing_, goal);
-            for (const auto& [c, cost] : reach_)
-            {
-                const float d = grid_.distance(c, goal);
-                if (d < bestDistance || (d == bestDistance && cost < best.second))
-                {
-                    best = {c, cost};
-                    bestDistance = d;
-                }
-            }
-            return std::pair{best, bestDistance};
-        };
-        computeReach(me);
-        auto [best, bestDistance] = closest();
-        // Can't reach anyone this turn: dash to close the gap instead of attacking.
-        if (bestDistance > 1.01f && encounter_->current().budget.action)
-        {
+        enemyTimer_ = 0;
+        enemyTarget_.reset();
+        if (choice.kind == Kind::Attack)
+            enemyTarget_ = who[choice.target];
+        if (choice.kind == Kind::Flee && !creatures_[me].fleeing)
+            act("flee");
+        if (choice.dash)
             act("dash"); // recomputes reach_
-            best = closest().first;
-        }
-        if (best.first != standing_)
-            act("step", nlohmann::json{{"at", {best.first.x, best.first.y}}}.dump());
+        if (choice.cell != standing_)
+            act("step", nlohmann::json{{"at", {choice.cell.x, choice.cell.y}}}.dump());
         enemyStep_ = EnemyStep::Walk;
         return;
     }
@@ -1390,10 +1417,103 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         act("attack", nlohmann::json{{"target", *enemyTarget_}}.dump());
         return;
     case EnemyStep::Wait:
-        if (enemyTimer_ >= 0.6)
-            act("end");
+        if (enemyTimer_ < 0.6)
+            return;
+        // Running, far enough from everyone and out of their sight (or walled off from them): it's gone.
+        // While the party can still see it they get a chance to chase it down.
+        if (creatures_[me].fleeing)
+        {
+            const yh::CellCosts away = distanceToFoes(creatures_[me].team);
+            const auto distance = away.find(cellOf(me));
+            const bool watched = creatures_[me].team != 0 && fog_.state(0, 0, cellOf(me)) == yh::FogState::Visible;
+            if (distance == away.end() || (distance->second >= creatures_[me].ai.escapeAt && !watched))
+            {
+                act("escape");
+                return;
+            }
+        }
+        act("end");
         return;
     }
+}
+
+// Walking distance from every cell to the nearest standing foe of `team`, through other creatures.
+yh::CellCosts YoreholdGame::distanceToFoes(int team) const
+{
+    yh::CellCosts distance;
+    using Entry = std::pair<float, yh::Cell>;
+    auto later = [](const Entry& a, const Entry& b) { return a.first > b.first; };
+    std::priority_queue<Entry, std::vector<Entry>, decltype(later)> queue(later);
+    for (size_t i = 0; i < creatures_.size(); i++)
+    {
+        if (creatures_[i].team == team || creatures_[i].sheet.down() || !orderIndex(i))
+            continue;
+        distance[cellOf(i)] = 0;
+        queue.push({0.0f, cellOf(i)});
+    }
+    std::vector<yh::Cell> neighbours;
+    while (!queue.empty())
+    {
+        const auto [cost, c] = queue.top();
+        queue.pop();
+        if (cost > distance[c])
+            continue;
+        grid_.neighbours(c, neighbours);
+        for (const yh::Cell next : neighbours)
+        {
+            if (!walkable(next) || (next.x != c.x && next.y != c.y && (!walkable({next.x, c.y}) || !walkable({c.x, next.y}))))
+                continue;
+            const float nextCost = cost + grid_.stepCost(c, next, 0);
+            const auto known = distance.find(next);
+            if (known == distance.end() || nextCost < known->second)
+            {
+                distance[next] = nextCost;
+                queue.push({nextCost, next});
+            }
+        }
+    }
+    return distance;
+}
+
+yh::TacticalView YoreholdGame::tacticalView(size_t me, std::vector<size_t>& who)
+{
+    yh::TacticalView view;
+    who.clear();
+    for (size_t i = 0; i < creatures_.size(); i++)
+    {
+        const Creature& c = creatures_[i];
+        if (c.sheet.down() || !orderIndex(i))
+            continue;
+        if (i == me)
+            view.self = who.size();
+        yh::TacticalUnit unit;
+        unit.team = c.team;
+        unit.at = cellOf(i);
+        unit.hp = c.sheet.hp;
+        unit.maxHp = c.sheet.maxHp();
+        unit.armorClass = c.sheet.armorClass(rules_);
+        unit.attackBonus = c.sheet.attackModifier(rules_);
+        const std::optional<yh::DiceExpression> damage = yh::DiceExpression::parse(c.sheet.damageDice(rules_));
+        unit.averageDamage = damage ? std::max(1.0f, static_cast<float>(damage->minimum() + damage->maximum()) / 2) : 1.0f;
+        unit.speed = c.sheet.speedSquares(rules_);
+        unit.leader = c.ai.leader;
+        view.units.push_back(unit);
+        who.push_back(i);
+    }
+    const int team = creatures_[me].team;
+    view.action = encounter_->current().budget.action;
+    if (view.action)
+    {
+        computeReach(me, creatures_[me].sheet.speedSquares(rules_));
+        view.dashReach = reach_;
+    }
+    computeReach(me);
+    view.reach = reach_;
+    view.foeDistance = distanceToFoes(team);
+    view.sideAtStart = sideAtStart_[team == 0 ? 0 : 1];
+    view.hadLeader = hadLeader_[team == 0 ? 0 : 1];
+    view.fleeing = creatures_[me].fleeing;
+    return view;
 }
 
 void YoreholdGame::autoExplore()
@@ -1497,6 +1617,7 @@ void YoreholdGame::saveSettings() const
         {"panSpeed", settings_.panSpeed},
         {"fullscreen", settings_.fullscreen},
         {"lighting", std::array<const char*, 4>{"map", "off", "mood", "rules"}[std::clamp(settings_.lighting, 0, 3)]},
+        {"timeOfDay", std::array<const char*, 4>{"map", "day", "dusk", "night"}[std::clamp(settings_.timeOfDay, 0, 3)]},
         {"sharedFog", settings_.sharedFog},
         {"playerName", settings_.playerName},
         {"joinAddress", settings_.joinAddress},
@@ -1530,6 +1651,8 @@ void YoreholdGame::loadSettings()
         s.fullscreen = j.value("fullscreen", s.fullscreen);
         const std::string lighting = j.value("lighting", std::string("map"));
         s.lighting = lighting == "off" ? 1 : lighting == "mood" ? 2 : lighting == "rules" ? 3 : 0;
+        const std::string time = j.value("timeOfDay", std::string("map"));
+        s.timeOfDay = time == "day" ? 1 : time == "dusk" ? 2 : time == "night" ? 3 : 0;
         s.sharedFog = j.value("sharedFog", s.sharedFog);
         s.playerName = j.value("playerName", s.playerName).substr(0, 32);
         s.joinAddress = j.value("joinAddress", s.joinAddress).substr(0, 253);
@@ -1577,6 +1700,7 @@ std::string YoreholdGame::stateJson() const
         data["creatures"].push_back({
             {"sheet", nlohmann::json::parse(creatures_[i].sheet.toJson())},
             {"awake", creatures_[i].awake},
+            {"fled", creatures_[i].fled},
             {"team", creatures_[i].team},
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
@@ -1637,7 +1761,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             throw std::runtime_error("seats don't match the party");
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
-        std::vector<bool> awake;
+        std::vector<bool> awake, fled;
         std::vector<int> teams;
         for (const nlohmann::json& c : saved)
         {
@@ -1651,6 +1775,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
                 throw std::runtime_error("saved token is outside the map");
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
+            fled.push_back(c.value("fled", false) && sheets.back().down());
             // Only an NPC's side can change (a peaceful one the party attacked).
             const int team = c.value("team", creatures_[teams.size()].team);
             if (team != creatures_[teams.size()].team && !(creatures_[teams.size()].npc >= 0 && (team == 1 || team == 2)))
@@ -1668,6 +1793,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
         {
             creatures_[i].sheet = std::move(sheets[i]);
             creatures_[i].awake = awake[i];
+            creatures_[i].fled = fled[i];
             creatures_[i].team = teams[i];
             yh::Token& token = tokens_.tokens[i];
             if (creatures_[i].npc >= 0)
@@ -1696,11 +1822,11 @@ bool YoreholdGame::partyDown() const
 
 // ---------------------------------------------------------------- grid helpers
 
-void YoreholdGame::computeReach(size_t mover)
+void YoreholdGame::computeReach(size_t mover, int extra)
 {
     reach_.clear();
     standing_ = cellOf(mover);
-    const float budget = static_cast<float>(encounter_->current().budget.movementLeft) + 0.01f;
+    const float budget = static_cast<float>(encounter_->current().budget.movementLeft + extra) + 0.01f;
     auto open = [&](yh::Cell c) { return walkable(c) && !occupied(c, mover); };
 
     using Entry = std::pair<float, yh::Cell>;
@@ -1893,7 +2019,7 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
-        if (token.floor != dead || fog_.state(viewTeam(), 0, grid_.cellAt(token.position)) == yh::FogState::Unexplored)
+        if (token.floor != dead || creatures_[i].fled || fog_.state(viewTeam(), 0, grid_.cellAt(token.position)) == yh::FogState::Unexplored)
             continue;
         const float r = token.radius * 0.7f;
         renderer.fillCircle(token.position, token.radius, creatures_[i].team == 0 ? yh::Color{90, 90, 100, 255} : yh::Color{70, 30, 25, 255});
@@ -1917,8 +2043,13 @@ void YoreholdGame::drawWorld(yh::Renderer& renderer)
     }
     if (lightingMode() != GameMap::LightingMode::Off)
     {
-        lighting_.ambient = map().ambient();
-        lighting_.apply(renderer, camera_, lights, map().walls());
+        const GameMap::Sky sky = map().sky(timeOfDay());
+        std::vector<yh::Shade> shaded;
+        if (sky.differs)
+            for (const yh::Rect& area : map().indoorAreas())
+                shaded.push_back({area, sky.indoors});
+        lighting_.ambient = sky.outdoors;
+        lighting_.apply(renderer, camera_, lights, map().walls(), shaded);
     }
 
     camera_.apply(renderer);
@@ -2235,9 +2366,9 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
         break;
     }
     case Menu::Settings:
-        y = screen.h * 0.25f;
-        drawSettings({screen.w / 2 - 260, y, 520, 430});
-        y += 430 + gap;
+        y = screen.h * 0.25f + 20;
+        drawSettings({screen.w / 2 - 260, y, 520, 410});
+        y += 410 + gap;
         if (button("Back (Esc)"))
             openMenu(settingsBack_);
         break;
@@ -2279,8 +2410,8 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
 {
     ui_.panel(area);
     const Settings before = settings_;
-    const float x = area.x + 20, w = area.w - 40, h = 40;
-    float y = area.y + 18;
+    const float x = area.x + 20, w = area.w - 40, h = 36;
+    float y = area.y + 16;
 
     ui_.label({x, y + 10}, "Controls", ui_.theme.textDim);
     const float half = (w - 120 - 10) / 2;
@@ -2305,6 +2436,12 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
     for (int i = 0; i < 4; i++)
         if (ui_.toggle({x + 120 + i * (quarter + 10), y, quarter, h}, modes[i], settings_.lighting == i))
             settings_.lighting = i;
+    y += h + 8;
+    ui_.label({x, y + 10}, "Time of day", ui_.theme.textDim);
+    const std::array<const char*, 4> times{"Map", "Day", "Dusk", "Night"};
+    for (int i = 0; i < 4; i++)
+        if (ui_.toggle({x + 120 + i * (quarter + 10), y, quarter, h}, times[i], settings_.timeOfDay == i))
+            settings_.timeOfDay = i;
     y += h + 14;
     char text[48];
     std::snprintf(text, sizeof(text), "Pan speed  %.0f", settings_.panSpeed);
@@ -2314,7 +2451,8 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
     const bool changed = before.controls != settings_.controls || before.zoomToCursor != settings_.zoomToCursor
         || before.edgeScroll != settings_.edgeScroll || before.cameraFollows != settings_.cameraFollows
         || before.fullscreen != settings_.fullscreen || before.panSpeed != settings_.panSpeed
-        || before.lighting != settings_.lighting || before.sharedFog != settings_.sharedFog;
+        || before.lighting != settings_.lighting || before.sharedFog != settings_.sharedFog
+        || before.timeOfDay != settings_.timeOfDay;
     if (changed)
     {
         applySettings();

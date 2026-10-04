@@ -120,9 +120,20 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
             m.lighting_.brightFraction = l.value("brightFraction", m.lighting_.brightFraction);
             m.lighting_.carried = l.value("carried", m.lighting_.carried);
             m.lighting_.sight = l.value("sight", m.lighting_.sight);
+            const std::string time = l.value("time", "night");
+            if (time == "day") m.lighting_.time = Time::Day;
+            else if (time == "dusk") m.lighting_.time = Time::Dusk;
+            else if (time == "night") m.lighting_.time = Time::Night;
+            else if (time == "underground") m.lighting_.time = Time::Underground;
+            else throw std::invalid_argument("lighting time is \"day\", \"dusk\", \"night\" or \"underground\"");
+            m.lighting_.daySight = l.value("daySight", m.lighting_.daySight);
+            m.lighting_.duskSight = l.value("duskSight", m.lighting_.duskSight);
+            if (l.contains("daySky")) m.lighting_.daySky = colorFrom(l.at("daySky"));
+            if (l.contains("duskSky")) m.lighting_.duskSky = colorFrom(l.at("duskSky"));
             const Lighting& k = m.lighting_;
             if (!std::isfinite(k.brightFraction) || k.brightFraction < 0 || k.brightFraction > 1 || !std::isfinite(k.carried)
-                || k.carried < 0 || k.carried > 100 || !std::isfinite(k.sight) || k.sight <= 0 || k.sight > 200)
+                || k.carried < 0 || k.carried > 100 || !std::isfinite(k.sight) || k.sight <= 0 || k.sight > 200
+                || !std::isfinite(k.daySight) || k.daySight <= 0 || k.daySight > 200 || !std::isfinite(k.duskSight) || k.duskSight <= 0 || k.duskSight > 200)
                 throw std::invalid_argument("lighting numbers are out of range");
         }
 
@@ -135,6 +146,7 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
             if (t.contains("color")) type.color = colorFrom(t.at("color"));
             type.walkable = t.value("walkable", true);
             type.blocksSight = t.value("blocksSight", false);
+            type.indoors = t.value("indoors", false);
             m.types_.push_back(std::move(type));
             ids[name] = static_cast<yh::TileId>(m.types_.size());
         }
@@ -211,6 +223,18 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
                         m.map_->setTile(index, x, y, id);
         }
         m.buildWalls();
+        for (int y = 0; y < m.height_; y++)
+        {
+            for (int x = 0; x < m.width_; x++)
+            {
+                if (!m.indoors({x, y}))
+                    continue;
+                const int start = x;
+                while (x + 1 < m.width_ && m.indoors({x + 1, y}))
+                    x++;
+                m.indoorAreas_.push_back({start * cellSize, y * cellSize, (x - start + 1) * cellSize, cellSize});
+            }
+        }
         return m;
     }
     catch (const std::exception& e)
@@ -228,6 +252,27 @@ bool GameMap::walkable(yh::Cell c) const
     if (layers_.front()[i] == 0)
         return false; // empty ground is a hole, not a floor
     return std::all_of(layers_.begin(), layers_.end(), [&](const auto& layer) { return layer[i] == 0 || types_[layer[i] - 1].walkable; });
+}
+
+bool GameMap::indoors(yh::Cell c) const
+{
+    if (!inside(c))
+        return false;
+    const size_t i = static_cast<size_t>(c.y) * width_ + c.x;
+    return std::any_of(layers_.begin(), layers_.end(), [&](const auto& layer) { return layer[i] != 0 && types_[layer[i] - 1].indoors; });
+}
+
+GameMap::Sky GameMap::sky(Time time) const
+{
+    if (time != Time::Day && time != Time::Dusk)
+        return {ambient_, ambient_, lighting_.ambient, lighting_.sight, false};
+    const bool day = time == Time::Day;
+    const yh::Color open = day ? lighting_.daySky : lighting_.duskSky;
+    // Some of the daylight finds its way in through doors and windows.
+    const float leak = day ? 0.3f : 0.15f;
+    auto mix = [&](uint8_t dark, uint8_t bright) { return static_cast<uint8_t>(dark + (std::max(dark, bright) - dark) * leak); };
+    const yh::Color roofed{mix(ambient_.r, open.r), mix(ambient_.g, open.g), mix(ambient_.b, open.b), 255};
+    return {open, roofed, day ? yh::LightLevel::Bright : yh::LightLevel::Dim, std::max(lighting_.sight, day ? lighting_.daySight : lighting_.duskSight), true};
 }
 
 bool GameMap::blocksSight(yh::Cell c) const

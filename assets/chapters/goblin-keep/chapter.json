@@ -4,7 +4,7 @@
   "ruleset": "modern",
   "map": "map.json",
   "intro": [
-    "Night falls on the old keep. Goblins have taken it.",
+    "The old keep stands ahead. Goblins have taken it.",
     "Click the ground to walk. The party follows the leader."
   ],
   "xpPerVictory": 50,

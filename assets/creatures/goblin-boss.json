@@ -19,5 +19,6 @@
       50
     ],
     "size": 0.46
-  }
+  },
+  "ai": { "base": "tactical", "leader": true, "fleeHp": 0 }
 }

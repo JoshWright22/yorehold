@@ -18,7 +18,8 @@
 //   "layers"  rows of legend characters; the first layer is the ground, later ones sit on top
 //   "lights"  torches and braziers in cell coordinates
 //   "markers" named cells the chapter refers to ("partyStart")
-//   "lighting" how light works on this map: mode, ambient level, carried lights
+//   "lighting" how light works on this map: mode, ambient level, carried lights, time of day
+//              ("time": "day", "dusk", "night" or "underground"; tiles marked "indoors" stay dark by day)
 class GameMap
 {
 public:
@@ -29,7 +30,12 @@ public:
         yh::Color color{128, 128, 128, 255};
         bool walkable = true;
         bool blocksSight = false;
+        bool indoors = false; // under a roof: daylight doesn't reach it
     };
+
+    // Day and dusk light everything outdoors and let the party see further there; indoors stays
+    // as dark as the map's own lighting says. Underground has no outdoors at all.
+    enum class Time { Day, Dusk, Night, Underground };
 
     // Off: everything lit, no darkness drawn. Mood: lights and darkness are only for looks.
     // Rules: what the party can see depends on light (bright/dim/dark) and darkvision.
@@ -42,7 +48,26 @@ public:
         float brightFraction = 0.5f; // part of each light's radius that is bright; the rest is dim
         float carried = 3.5f;        // radius in cells of the light each hero carries; 0 = none
         float sight = 8.5f;          // how far heroes see, in cells
+        Time time = Time::Night;
+        float daySight = 40;         // how far they see outdoors by day, and at dusk
+        float duskSight = 18;
+        yh::Color daySky{255, 250, 238, 255};
+        yh::Color duskSky{176, 136, 128, 255};
     };
+
+    // What the sky gives at a time of day. At night (and underground) it's the map's own ambient.
+    struct Sky
+    {
+        yh::Color outdoors;       // ambient colour outside
+        yh::Color indoors;        // ... and under a roof: the map's ambient with some daylight leaking in
+        yh::LightLevel level;     // light level outside where no lamp reaches
+        float sight;              // how far heroes see outside, in cells
+        bool differs;             // indoors and outdoors aren't lit the same
+    };
+    Sky sky(Time time) const;
+    bool indoors(yh::Cell c) const;
+    // The indoor cells as rectangles in world units (one per run along a row).
+    const std::vector<yh::Rect>& indoorAreas() const { return indoorAreas_; }
 
     struct Light
     {
@@ -87,6 +112,7 @@ private:
     std::vector<std::vector<yh::TileId>> layers_; // [layer][y * width + x], 0 = empty
     std::unique_ptr<yh::TileMap> map_;
     std::vector<yh::Wall> walls_;
+    std::vector<yh::Rect> indoorAreas_;
     std::vector<Light> lights_;
     yh::Color ambient_{46, 54, 86, 255};
     Lighting lighting_;

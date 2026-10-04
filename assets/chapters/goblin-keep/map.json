@@ -5,7 +5,8 @@
     "ambient": "dark",
     "brightFraction": 0.5,
     "carried": 3.5,
-    "sight": 8.5
+    "sight": 8.5,
+    "time": "day"
   },
   "tiles": {
     "grass": {
@@ -15,13 +16,16 @@
       "art": "dirt"
     },
     "stone": {
-      "art": "stone"
+      "art": "stone",
+      "indoors": true
     },
     "wood": {
-      "art": "wood"
+      "art": "wood",
+      "indoors": true
     },
     "wall": {
       "art": "wall",
+      "indoors": true,
       "walkable": false,
       "blocksSight": true
     },

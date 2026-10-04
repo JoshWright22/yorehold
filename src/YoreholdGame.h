@@ -52,6 +52,9 @@ private:
         int group = -1; // index into the chapter's encounters (enemies that wake up together); NPCs fight alone
         bool awake = false;
         int npc = -1; // index into the chapter's NPCs
+        yh::AiProfile ai;     // how it fights when the game plays it
+        bool fleeing = false; // its morale broke this fight: it runs until it gets away or is cornered
+        bool fled = false;    // it got away: out of the adventure, and no body is left behind
     };
 
     // Damage numbers and "Miss!" that float up from a token.
@@ -65,6 +68,10 @@ private:
 
     enum class EnemyStep { Think, Walk, Strike, Wait };
 
+    // What a creature's AI sees on its turn (see yh::decide). `who` maps the view's units back to creatures_.
+    yh::TacticalView tacticalView(size_t me, std::vector<size_t>& who);
+    yh::CellCosts distanceToFoes(int team) const;
+
     size_t heroCount_ = 0; // the chapter's party; creatures_ lists heroes first
     static constexpr int dead = -1;   // token floor for fallen creatures (the controller ignores them)
     static constexpr int hidden = 1;  // token floor for enemies the party can't see
@@ -77,6 +84,7 @@ private:
     // Exploration and combat.
     void updateVisibility();
     GameMap::LightingMode lightingMode() const;
+    GameMap::Time timeOfDay() const;
     int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
     void revealWalls(int team);
     void startCombat(int group);
@@ -153,6 +161,7 @@ private:
         float panSpeed = 900;
         bool fullscreen = false;
         int lighting = 0; // 0 = as the map says, else 1 + GameMap::LightingMode
+        int timeOfDay = 0; // 0 = as the map says, else 1 + GameMap::Time (day, dusk, night)
         bool sharedFog = true; // the whole party's view; off = only what the selected hero sees
         std::string playerName = "Player";
         std::string joinAddress = "127.0.0.1"; // the last co-op host joined
@@ -187,7 +196,8 @@ private:
     void finishAdventure();
 
     // Cells the current creature can reach with its movement left, and what each costs.
-    void computeReach(size_t mover);
+    // `extra` squares on top (what a dash would add).
+    void computeReach(size_t mover, int extra = 0);
     bool occupied(yh::Cell cell, size_t except) const;
     bool walkable(yh::Cell cell) const;
     std::optional<size_t> orderIndex(size_t creature) const;
@@ -245,6 +255,9 @@ private:
     EnemyStep enemyStep_ = EnemyStep::Think;
     double enemyTimer_ = 0;
     std::optional<size_t> enemyTarget_;
+    int sideAtStart_[2] = {0, 0};      // how many each side brought to this fight, and whether a leader was among them
+    bool hadLeader_[2] = {false, false};
+    bool aiNotes_ = false; // F8: each AI decision is explained in the log
 
     std::vector<std::string> log_;
     std::vector<Floater> floaters_;
