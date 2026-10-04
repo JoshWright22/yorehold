@@ -31,7 +31,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   loads it by default; `modern`/`classic` stay for tests.
 - [x] **B2. Conditions as files.** `conditions/*.json`: modifiers, flags, duration, how they end.
   Off-guard, frightened, prone, slowed, grabbed, hidden, downed, dying, dead, shielded.
-- [ ] **B3. Effects.** `yh::Effect`: the step list from SYSTEM_DESIGN section 3, parsed and
+- [x] **B3. Effects.** `yh::Effect`: the step list from SYSTEM_DESIGN section 3, parsed and
   validated from JSON, run against a small host interface. Unit checks for each step, `when`,
   `scale`, saves and half damage.
 - [ ] **B4. Actions as files.** `actions/*.json` with cost, requirements, targeting and effects.

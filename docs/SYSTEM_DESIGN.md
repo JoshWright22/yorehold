@@ -407,6 +407,11 @@ These were open; each is the provisional answer and is data or a small switch wh
     frightened takes its value (up to 4) from attacks and AC and drops by one a round; a raised shield
     adds 2 AC until the next turn; slowed halves speed. Sneaking is `hidden`; a hero at 0 HP is
     `downed`, anyone else `dead`. `dying` waits for death saves (roadmap B10).
+26. Effects (the framework's FRAMEWORK.md has the format): a critical hit rolls the damage dice twice
+    unless the step says `"crit": "normal"`; an area's damage is rolled once for everyone in it; a
+    save or check succeeds on a total at or above the DC, with no special 1 or 20; temporary HP never
+    add up; a step that waits for an event (`"when": "turnStart"`) only runs when the effect is run
+    for that event.
 
 ### Structure choices made in this document
 
