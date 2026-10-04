@@ -355,13 +355,14 @@ only reads the result; nothing listens to speech while the game runs.
 - Pipeline: `voice/<name>.wav` (or `.ogg`) is decoded, mixed to mono and resampled to 16 kHz
   floats (miniaudio, which audio playback will use too), run through whisper.cpp, and written to
   `voice/<name>.voice.json` beside it. The original file is never changed and is what plays.
-- whisper.cpp (MIT) comes in through `FetchContent` at a pinned tag, behind a CMake option, and
-  only the editor tools link it: a `yorehold-voice` command and a button in Dialogue mode. The
-  game itself never contains it.
-- Model: `base.en` quantized q5_1 (about 57 MB) by default; `tiny.en` q5_1 (about 31 MB) as the
-  light setting. Models are not in git. The first use downloads one into the user cache and
-  checks its SHA-256; after that everything works offline. If the download fails, the tool says
-  which file to fetch and where to put it.
+- whisper.cpp (MIT) comes in through `FetchContent` at a pinned tag and is part of the normal
+  client build, since Create lives inside the client: a button in Dialogue mode, plus a
+  `yorehold-voice` command for batches. It only runs in Create, never during play. The browser
+  build leaves it out.
+- Model: `base.en` quantized q5_1 (about 57 MB) ships with the build. CMake downloads it once at
+  configure time from the whisper.cpp model page, checks a pinned SHA-256, keeps it in the build
+  cache and copies it beside the exe, so it is never in git and nobody fetches anything at run
+  time. `tiny.en` q5_1 (about 31 MB) can be picked instead with a CMake setting.
 - Timings come from whisper.cpp's DTW token timestamps, which use the model's alignment-heads
   preset and are tighter than its older per-token estimates. Flash attention stays off because
   DTW needs the attention weights. Tokens are joined into words. Expect an error of tens of
