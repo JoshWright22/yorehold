@@ -54,10 +54,15 @@ welcome where they play better.
   - Grapple
   - Interact or use an item
   - Ready
-- **Reaction:** one per round (default).
+- **Hands set the cost.** A Strike or spell costs one action per hand it needs:
+  - A dagger, shortsword or one-handed spell: 1 action.
+  - A greatsword, bow or spell with two-handed components: 2 actions.
+  - What each weapon and spell needs is data, so the rule holds for anything added later.
+- **Hands must be free.** Something held in the other hand (a shield, a torch, a second weapon)
+  limits what can be used (**default**). Changing grip is part of Interact.
+- **Reaction:** one per round (**default**).
 - **Repeated Strikes:** each Strike after the first in a turn takes a penalty, -5 by default, as in
-  Pathfinder.
-- **Spells and abilities** cost one or two actions each.
+  Pathfinder. Two one-handed Strikes in a turn (dual wielding) count as repeats (**default**).
 
 ## Play
 
