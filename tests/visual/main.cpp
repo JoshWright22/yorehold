@@ -104,12 +104,57 @@ private:
     SharedTurnGame game_;
 };
 
+class PositioningGame : public YoreholdGame
+{
+public:
+    void prepare()
+    {
+        load();
+        SDL_Event enter{}; enter.type = SDL_EVENT_KEY_DOWN; enter.key.key = SDLK_RETURN;
+        handleEvent(enter); handleEvent(enter); newAdventure(7);
+        if (!chapter_ || heroCount_ < 3 || heroCount_ >= creatures_.size()) return;
+        yh::Cell at{1, 1};
+        bool found = false;
+        for (int y = 1; y < map().height() - 1 && !found; y++)
+            for (int x = 1; x < map().width() - 4 && !found; x++)
+            {
+                bool open = true;
+                for (int dx = 0; dx < 4; dx++) open &= walkable({x + dx, y}) && !occupied({x + dx, y}, 0);
+                if (open) { at = {x, y}; found = true; }
+            }
+        if (!found) return;
+        const size_t enemy = heroCount_;
+        for (size_t i = 0; i < heroCount_; i++)
+            creatures_[i].sheet.stats.setBase("dex", 1000.0f - static_cast<float>(i) * 100.0f);
+        tokens_.tokens[0].position = grid_.center(at);
+        tokens_.tokens[2].position = grid_.center({at.x + 1, at.y});
+        tokens_.tokens[enemy].position = grid_.center({at.x + 2, at.y});
+        tokens_.tokens[1].position = grid_.center({at.x + 3, at.y});
+        for (auto& action : chapter_->actions)
+            if (action.id == "strike") action.range = 6; // ranged test action; the shipped melee Strike stays as authored
+        startCombat(creatures_[enemy].group);
+        update(2);
+    }
+};
+
+class TestScenePositioning : public yh::TestScene
+{
+public:
+    TestScenePositioning() { game_.prepare(); }
+    void update(double seconds) override { game_.update(seconds); }
+    void draw(yh::Renderer& renderer) override { game_.draw(renderer); }
+    bool handleEvent(const SDL_Event& event) override { return game_.handleEvent(event); }
+private:
+    PositioningGame game_;
+};
+
 int main(int argc, char** argv)
 {
     yh::TestBrowser browser;
     browser.add<TestSceneGame>("Game");
     browser.add<TestSceneReactionPrompt>("Reaction prompt");
     browser.add<TestSceneSharedTurns>("Shared turns");
+    browser.add<TestScenePositioning>("Flanking/cover");
 
     yh::HostSettings settings;
     settings.title = "yorehold tests";

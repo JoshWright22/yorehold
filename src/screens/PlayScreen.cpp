@@ -174,7 +174,7 @@ void PlayScreen::contextMenu(bool fighting, std::optional<size_t> current)
         {
             const yh::Character& c = creatures[index].sheet;
             world_.say(c.name + ": " + c.characterClass + ", HP " + std::to_string(c.hp) + "/" + std::to_string(c.maxHp()) + ", AC " +
-                std::to_string(c.armorClass(world_.rules())));
+                std::to_string(world_.positionalArmorClass(index)));
         }
     }
 }
@@ -473,6 +473,23 @@ void PlayScreen::drawBars(yh::Renderer& renderer)
         renderer.fillRect({back.x - 1, back.y - 1, back.w + 2, back.h + 2}, {0, 0, 0, 200});
         const float fraction = std::clamp(static_cast<float>(c.hp) / std::max(1, c.maxHp()), 0.0f, 1.0f);
         renderer.fillRect({back.x, back.y, back.w * fraction, back.h}, world_.creatures()[i].team == 0 ? ui_.theme.good : ui_.theme.bad);
+        if (world_.fighting() && world_.fog().state(world_.viewTeam(), 0, world_.cellOf(i)) == yh::FogState::Visible)
+        {
+            std::string positioning = world_.isFlanked(i) ? "Flanked" : "";
+            if (const auto current = world_.currentCreature(); current && world_.creatures()[*current].team != world_.creatures()[i].team)
+                if (const auto* action = hud::armedAction(world_, *current, armed_); action && action->range > 1)
+                {
+                    const auto cover = world_.coverFrom(*current, i);
+                    const char* name = cover == yh::Cover::Half ? "Half cover" : cover == yh::Cover::ThreeQuarters ? "3/4 cover"
+                        : cover == yh::Cover::Full ? "Full cover" : "";
+                    if (*name) positioning += (positioning.empty() ? "" : " / ") + std::string(name);
+                }
+            if (!positioning.empty() && ui_.theme.font)
+            {
+                const float width = ui_.theme.font->measure(positioning);
+                ui_.theme.font->draw(renderer, {top.x - width / 2, top.y - 26}, positioning, ui_.theme.accent);
+            }
+        }
     }
 
     for (const Floater& floater : floaters_)

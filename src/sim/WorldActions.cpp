@@ -17,6 +17,21 @@ public:
         return who >= 0 && static_cast<size_t>(who) < world_.creatures_.size() ? &world_.creatures_[static_cast<size_t>(who)].sheet : nullptr;
     }
 
+    // A positional condition applies for this evaluation and never remains on a saved sheet.
+    int armorClass(yh::EffectActor who, const yh::EffectContext& context) override
+    {
+        if (!sheet(who) || !sheet(context.self)) return yh::EffectHost::armorClass(who, context);
+        const auto* action = world_.findAction(context.source);
+        return world_.attackArmorClass(static_cast<size_t>(context.self), static_cast<size_t>(who), action && action->range > 1);
+    }
+
+    bool hasFlag(yh::EffectActor who, std::string_view flag, const yh::EffectContext& context) override
+    {
+        if (yh::EffectHost::hasFlag(who, flag, context)) return true;
+        const auto* condition = world_.rules_.condition(world_.chapter_->positioning.flankingCondition);
+        return sheet(who) && condition && condition->hasFlag(flag) && world_.isFlanked(static_cast<size_t>(who));
+    }
+
     // Allies and enemies are whoever still stands in the fight, on the doer's side or another.
     // Areas come with spells.
     std::vector<yh::EffectActor> group(std::string_view which, const yh::EffectContext& context) override
@@ -147,8 +162,10 @@ bool World::validTarget(size_t creature, const yh::ActionDefinition& action, siz
     const bool sameSide = creatures_[target].team == creatures_[creature].team;
     if ((action.side == yh::ActionDefinition::Side::Enemy && sameSide) || (action.side == yh::ActionDefinition::Side::Ally && !sameSide))
         return false;
-    return inRange(creature, action, target)
-        && (action.range <= 1 || yh::lineOfSight(grid_.center(cellOf(creature)), grid_.center(cellOf(target)), map().walls()));
+    if (!inRange(creature, action, target)) return false;
+    if (chapter_->positioning.enabled)
+        return (action.range <= 1 && !chapter_->positioning.coverAgainstMelee) || coverFrom(creature, target) != yh::Cover::Full;
+    return action.range <= 1 || yh::lineOfSight(grid_.center(cellOf(creature)), grid_.center(cellOf(target)), map().walls());
 }
 
 bool World::inRange(size_t creature, const yh::ActionDefinition& action, size_t target) const

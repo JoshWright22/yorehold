@@ -7,6 +7,7 @@
 #include <yorehold/framework/rpg/Compendium.h>
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/rpg/Stealth.h>
+#include <yorehold/framework/rpg/PositioningRules.h>
 
 #include <optional>
 #include <string>
@@ -109,6 +110,7 @@ struct Chapter
     // folder's actions/, over the framework's basic three.
     std::vector<yh::ActionDefinition> actions;
     std::vector<yh::ReactionDefinition> reactions;
+    yh::PositioningRules positioning;
     yh::Compendium compendium;
     GameMap map;
 

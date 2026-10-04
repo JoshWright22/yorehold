@@ -162,6 +162,15 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             throw std::invalid_argument(problem);
         }
 
+        if (!c.rulesFolder.empty() && files.exists(c.rulesFolder + "/positioning.json"))
+        {
+            where = c.rulesFolder + "/positioning.json";
+            std::string problem;
+            const auto positioning = yh::PositioningRules::fromJson(readOrThrow(files, where), &problem);
+            if (!positioning || !positioning->check(c.rules, &problem)) throw std::invalid_argument(problem);
+            c.positioning = *positioning;
+        }
+
         // How sneaking works: the ruleset folder's file, then the content's own from before
         // rulesets were folders, which still wins so older packages play as they did.
         for (const std::string& path : {c.rulesFolder.empty() ? std::string() : c.rulesFolder + "/stealth.json", std::string("rules/stealth.json")})
@@ -205,6 +214,7 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         include(nlohmann::json::parse(readOrThrow(files, where)).dump());
         include(c.rules.toJson());
         include(c.stealth.toJson());
+        if (c.positioning.enabled) include(c.positioning.toJson());
         for (const yh::ActionDefinition& action : c.actions) include(action.json);
         for (const yh::ReactionDefinition& reaction : c.reactions) include(reaction.json);
         for (const auto& [id, item] : c.compendium.items) include(yh::Compendium::itemToJson(item));

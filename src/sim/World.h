@@ -1,5 +1,7 @@
 #pragma once
 
+#include <yorehold/framework/map/Positioning.h>
+
 #include "content/Chapter.h"
 
 #include <yorehold/framework/assets/FileSystem.h>
@@ -156,6 +158,10 @@ public:
     bool canChooseTurn(size_t creature) const; // an unfinished member of the active block, while no action is moving
     yh::Cell cellOf(size_t creature) const;
     bool adjacent(size_t a, size_t b) const;
+    bool isFlanked(size_t creature) const;
+    yh::Cover coverFrom(size_t from, size_t target) const;
+    int positionalArmorClass(size_t target) const; // flanking, without an attacker's cover
+    int attackArmorClass(size_t from, size_t target, bool ranged) const;
 
     // The ending cutscene the world asked for (Event::Ending) has finished or was skipped.
     void endCutscene();

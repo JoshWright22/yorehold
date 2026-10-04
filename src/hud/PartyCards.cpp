@@ -32,7 +32,7 @@ void hud::partyCards(Hud& hud)
             c.down() ? ui.theme.textDim : world.mine(i) ? ui.theme.text : ui.theme.textDim);
         const float fraction = std::clamp(static_cast<float>(c.hp) / std::max(1, c.maxHp()), 0.0f, 1.0f);
         ui.bar({area.x + 58, area.y + 32, 110, 16}, fraction, fraction > 0.5f ? ui.theme.good : ui.theme.bad);
-        std::snprintf(text, sizeof(text), c.down() ? "Down" : "%d/%d  AC %d", c.hp, c.maxHp(), c.armorClass(world.rules()));
+        std::snprintf(text, sizeof(text), c.down() ? "Down" : "%d/%d  AC %d", c.hp, c.maxHp(), world.positionalArmorClass(i));
         ui.label({area.x + 176, area.y + 30}, text, ui.theme.textDim);
 
         if (fighting && world.mine(i) && world.canChooseTurn(i) && ui.hovered(area) && hud.input.buttonClicked(yh::MouseButton::Left))

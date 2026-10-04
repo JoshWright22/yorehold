@@ -215,6 +215,28 @@ Each effect step accepts `ifFlag` to apply only to targets carrying that conditi
 
 Interact currently stands up from prone; equipment and map objects extend it in D1 and F1. Ready records a Strike and ends the turn. The next enemy entering reach triggers it, spending the creature's reaction.
 
+## Flanking and cover
+
+The ruleset folder may contain `positioning.json`. Missing files keep the older targeting and AC
+rules. Yorehold enables positioning and names `off-guard` as `flankingCondition`, with
+`flankingReach: 1`. Two standing foes on exactly opposite sides, both within that reach and able
+to act with clear centre rays, flank the creature. Its AC and effect flags are evaluated with that
+condition while the geometry holds. An existing copy of the condition does not stack with flanking;
+moving away leaves no condition on the saved sheet. The condition file supplies the -2 AC.
+
+Cover traces rays from the attacker's centre to the target's inset corners: any obstructed corner
+gives half cover, three of four gives three-quarters, and four gives full cover. Terrain can obscure
+a shot completely; one clear corner permits a ranged action. Standing creatures screen rays but
+provide at most half cover; downed creatures provide none. `halfCoverArmorClass: 2` and
+`threeQuartersCoverArmorClass: 4` add to AC for ranged attacks (action range above 1).
+`creaturesProvideCover: true` enables body screening; `coverAgainstMelee: false` keeps melee
+unaffected by cover. `enabled: false` disables positioning. The generic defaults and validation
+are in FRAMEWORK.md; an unknown flanking condition names the file and problem when loading.
+
+The HUD marks visible flanked creatures and previews cover against the selected ranged action.
+The **Flanking/cover** test scene gives the first hero a ranged test Strike: the enemy is
+flanked by two allies and screened by one of them. The shipped Strike remains melee.
+
 ## Shared turns
 
 With `sharedTurns: true`, adjacent entries on the same side in initiative share a block, for heroes

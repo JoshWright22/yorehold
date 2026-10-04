@@ -419,6 +419,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 29. Shared turns: `sharedTurns: true` enables blocks of consecutive allies. Budgets and turn-start conditions refresh together; switching preserves them, and End turn finishes one member. Blocks follow the full initiative list, including down or withdrawn entries. Reinforcements first act next round. Movement and reaction decisions finish before switching; enemies default to initiative order.
 
+30. Positioning: opposite standing foes within one square with clear centre rays flank a creature. The Off-guard file supplies its AC and flags without stacking an existing Off-guard. Corner rays classify wall cover; any blocked corner gives half cover, three of four gives three-quarters, and all gives full cover. Standing bodies give at most half cover; downed bodies give none. Cover applies to ranged attacks by default. `positioning.json` holds the condition, reach and +2/+4 bonuses.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.
