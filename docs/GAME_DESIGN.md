@@ -20,6 +20,11 @@ combine them. People play them alone or together.
 - Starting a new adventure begins character creation at the adventure's recommended level. A player
   can bring an existing character instead.
 - Classes and levels. Adventures normally cover levels 1 to 20 but can declare any range.
+- **Creation:** background + race + class.
+- **Ability scores:** point buy, rolling or a standard array, whichever the player likes.
+- **Feats** at set levels, PF2e style (class, skill, general and race feats). There are fewer of
+  them than in Pathfinder, and each one should be interesting rather than a small number bump.
+- **Party:** up to 4 characters for now. One player can run several.
 
 ## Rules
 
@@ -78,8 +83,20 @@ Power grows as in Pathfinder 2e, not 5e:
   - What each weapon and spell needs is data, so the rule holds for anything added later.
 - **Hands must be free.** Something held in the other hand (a shield, a torch, a second weapon)
   limits what can be used (**default**). Changing grip is part of Interact.
-- **Reaction:** one per round (**default**).
+- **Reaction:** one per round: opportunity attacks, Shield Block, readied actions and the like.
+- **Opportunity attacks:** leaving an enemy's reach provokes one, free movement included
+  (**default:** everyone can make them).
 - **Repeated Strikes:** no penalty. Two Strikes in a turn hit as hard as one.
+
+## Checks and teamwork
+
+- **Degrees of success:** a natural 1 is a critical failure and a natural 20 a critical success.
+  Anything else simply succeeds or fails against the DC or AC.
+- **Flanking:** an enemy with a foe on each side is off-guard (-2 AC).
+- **Cover:** +2 for half cover, +4 for three-quarters.
+- **Teamwork is the point**, as in Pathfinder. Classes and encounters are designed so that fights go
+  badly without setup: flanking, debuffs from spells and skills (frightened, off-guard, prone,
+  slowed), and buffs. A party that just trades blows will struggle.
 
 ## Play
 
