@@ -229,6 +229,18 @@ public:
     const std::vector<Pile>& piles() const { return piles_; }
     // The nearest pile with something in it that `hero` can reach from where they stand.
     std::optional<size_t> pileNear(size_t hero) const;
+
+    struct Surface
+    {
+        std::string id;       // fire, grease, water, ice or custom
+        yh::Cell at;          // center position
+        float size = 0;       // radius in squares
+        int durationLeft = 0; // rounds remaining; 0 = expired
+    };
+    const std::vector<Surface>& surfaces() const { return surfaces_; }
+    // Check if a cell is within any surface and return the surface ids there.
+    std::vector<std::string> surfacesAt(yh::Cell cell) const;
+
     // Coins as the game counts them: 1234 -> "12 gp 3 sp 4 cp".
     static std::string coinText(int copper);
     const yh::Merchant* merchant(size_t npc) const;
@@ -339,6 +351,7 @@ protected:
     void endCombat();
     void beginTurn();
     void endTurn();
+    void updateSurfaces(); // decrement surface durations each round
     void syncLog(); // the encounter's new lines into the adventure log
     // The current creature does `action`: pays for it, runs its effects and shows what happened.
     void perform(const yh::ActionDefinition& action, std::optional<size_t> target, std::optional<yh::Cell> at = std::nullopt, int slot = 0);
@@ -414,6 +427,7 @@ protected:
     size_t heroCount_ = 0; // the chapter's party; creatures_ lists heroes first
     std::vector<std::optional<PartyPick>> partyPicks_;
     std::vector<Pile> piles_;
+    std::vector<Surface> surfaces_;
     std::vector<std::optional<yh::Merchant>> merchants_; // one entry per chapter NPC
     nlohmann::json merchantsJson() const;
     std::vector<std::optional<yh::Merchant>> merchantsFrom(const nlohmann::json& saved) const;
@@ -421,6 +435,8 @@ protected:
     void dropLoot();       // after a win: the dead enemies' gear and loot, where they fell
     nlohmann::json pilesJson() const;
     std::vector<Pile> pilesFrom(const nlohmann::json& saved) const; // throws for loot that doesn't fit the chapter
+    nlohmann::json surfacesJson() const;
+    std::vector<Surface> surfacesFrom(const nlohmann::json& saved) const;
     static void addTo(yh::Character& sheet, yh::Item item); // into an inventory, stacking with the same unworn item
     std::string magicLimitText(size_t hero) const; // why this hero can't take another magic item
     size_t npcStart_ = 0;

@@ -1,0 +1,13 @@
+{
+  "id": "ice",
+  "name": "Ice",
+  "description": "A frozen surface that makes movement difficult and deals cold damage each round.",
+  "speed": 0.5,
+  "damagePerRound": "1d4",
+  "damageType": "cold",
+  "save": {
+    "ability": "con",
+    "dc": 12
+  },
+  "onSave": "none"
+}

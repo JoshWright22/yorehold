@@ -103,6 +103,28 @@ public:
         return moved;
     }
 
+    bool surface(std::string_view id, float size, int rounds, const yh::EffectContext& context) override
+    {
+        if (size <= 0 || rounds <= 0 || id.empty())
+            return false;
+        // Create a new surface centered at the caster's position
+        if (context.self < 0 || static_cast<size_t>(context.self) >= world_.creatures_.size())
+            return false;
+        const yh::Cell at = world_.grid_.cellAt(world_.tokens_.tokens[static_cast<size_t>(context.self)].position);
+        // If there's already a surface of this type at this location, update it instead
+        for (World::Surface& s : world_.surfaces_)
+        {
+            if (s.durationLeft > 0 && s.id == id && s.at == at)
+            {
+                s.durationLeft = std::max(s.durationLeft, rounds);
+                s.size = std::max(s.size, size);
+                return true;
+            }
+        }
+        world_.surfaces_.push_back({std::string(id), at, size, rounds});
+        return true;
+    }
+
 private:
     World& world_;
 };

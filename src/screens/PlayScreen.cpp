@@ -458,6 +458,25 @@ void PlayScreen::drawWorld(yh::Renderer& renderer)
             renderer.fillCircle(at, cell * 0.11f, {200, 165, 80, 255});
         }
     }
+
+    // Surfaces: fire, grease, water, ice; displayed as coloured circles.
+    for (const World::Surface& surface : world_.surfaces())
+    {
+        const yh::Vec2 centre{(surface.at.x + 0.5f) * cell, (surface.at.y + 0.5f) * cell};
+        const float radius = surface.size * cell;
+        yh::Color color{100, 100, 100, 60}; // default gray
+        if (surface.id == "fire")
+            color = yh::Color{255, 140, 60, 80};
+        else if (surface.id == "grease")
+            color = yh::Color{180, 160, 60, 70};
+        else if (surface.id == "water")
+            color = yh::Color{70, 140, 200, 70};
+        else if (surface.id == "ice")
+            color = yh::Color{180, 220, 255, 70};
+        renderer.fillCircle(centre, radius, color);
+        renderer.drawCircle(centre, radius, yh::Color{color.r, color.g, color.b, 200}, 1);
+    }
+
     tokens.draw(renderer, camera_, grid);
     renderer.pop();
 

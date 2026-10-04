@@ -1,0 +1,9 @@
+{
+  "id": "grease",
+  "name": "Grease",
+  "description": "A slippery surface that makes movement difficult. Creatures may slip when moving through it.",
+  "speed": 0.5,
+  "slips": true,
+  "slipDc": 12,
+  "slipAbility": "str"
+}

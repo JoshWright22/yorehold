@@ -306,11 +306,23 @@ void World::endTurn()
         token.path.clear();
     }
     encounter_->nextTurn();
+    updateSurfaces();
     syncLog();
     if (encounter_->finished())
         endCombat();
     else
         beginTurn();
+}
+
+void World::updateSurfaces()
+{
+    for (Surface& surface : surfaces_)
+    {
+        if (surface.durationLeft > 0)
+            surface.durationLeft--;
+    }
+    // Remove expired surfaces
+    std::erase_if(surfaces_, [](const Surface& s) { return s.durationLeft <= 0; });
 }
 
 void World::tryAttack(size_t target, std::string_view with)

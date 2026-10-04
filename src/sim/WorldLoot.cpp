@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <stdexcept>
 
@@ -138,4 +139,50 @@ std::vector<World::Pile> World::pilesFrom(const nlohmann::json& saved) const
         piles.push_back(std::move(pile));
     }
     return piles;
+}
+
+nlohmann::json World::surfacesJson() const
+{
+    nlohmann::json surfaces = nlohmann::json::array();
+    for (const Surface& surface : surfaces_)
+    {
+        if (surface.durationLeft > 0)
+            surfaces.push_back({{"id", surface.id}, {"at", {surface.at.x, surface.at.y}}, {"size", surface.size}, {"duration", surface.durationLeft}});
+    }
+    return surfaces;
+}
+
+std::vector<World::Surface> World::surfacesFrom(const nlohmann::json& saved) const
+{
+    if (!saved.is_array() || saved.size() > 1000)
+        return {}; // Old saves have no surfaces; fail silently
+    std::vector<Surface> surfaces;
+    for (const nlohmann::json& entry : saved)
+    {
+        Surface surface;
+        surface.id = entry.at("id").get<std::string>();
+        surface.at = {entry.at("at").at(0).get<int>(), entry.at("at").at(1).get<int>()};
+        surface.size = entry.at("size").get<float>();
+        surface.durationLeft = entry.at("duration").get<int>();
+        if (surface.size > 0 && !surface.id.empty() && map().inside(surface.at))
+            surfaces.push_back(std::move(surface));
+    }
+    return surfaces;
+}
+
+std::vector<std::string> World::surfacesAt(yh::Cell cell) const
+{
+    std::vector<std::string> found;
+    for (const Surface& surface : surfaces_)
+    {
+        if (surface.durationLeft > 0)
+        {
+            const float dx = static_cast<float>(cell.x) - static_cast<float>(surface.at.x);
+            const float dy = static_cast<float>(cell.y) - static_cast<float>(surface.at.y);
+            const float distance = std::sqrt(dx * dx + dy * dy);
+            if (distance <= surface.size + 0.5f) // +0.5 for half a cell
+                found.push_back(surface.id);
+        }
+    }
+    return found;
 }
