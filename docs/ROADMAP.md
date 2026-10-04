@@ -53,8 +53,10 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   rebuilt from them. Migration from the current sheets in saves.
 - [ ] **C2. Races, backgrounds and feats as files.** Human, elf, dwarf, halfling; six backgrounds;
   a first set of feats per kind.
-- [ ] **C3. Class level tables.** Fighter, rogue, cleric, wizard, levels 1 to 5: HP, features,
-  ranks, feats, slots. Level-up from XP, any level into any class.
+- [ ] **C3. Class level tables.** Fighter, rogue, cleric, wizard, levels 1 to 20: HP, features,
+  ranks, feats, slots. Level-up from XP, any level into any class. Build the table format and
+  levels 1 to 5 first, then fill 6 to 20 in the same format; a unit check builds each class at
+  every level.
 - [ ] **C4. Character library.** `characters/` beside the save, graveyard folder, the "away" flag,
   writing a character back at chapter end.
 - [ ] **C5. Character screens.** Create (three steps, three score methods, live sheet), level up,
@@ -116,7 +118,12 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [ ] **H5. Internet co-op through the server relay.**
 - [ ] **H6. Web site.** Next.js: home, library, content page, sign in, profile.
 - [ ] **H7. Canon review.** Approvers, sign-offs and the queue, on the server and the site.
-- [ ] **H8. Reports and blocking.**
+- [ ] **H8. Reports, blocking and bans.**
+- [ ] **H9. Completions.** Finishing an adventure is recorded on the account and shown on the
+  profile.
+- [ ] **H10. The game embedded in the site.** The browser build on `/play`, signed in through the
+  site.
+- [ ] **H11. Forums.**
 
 ## I. Later
 
@@ -124,5 +131,6 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [ ] **I2. Ruleset versions.** Migration files, the graveyard, rebuilt characters.
 - [ ] **I3. UI pass** after the UI design is agreed.
 - [ ] **I4. Audio events and music states.**
-- [ ] **I5. The remaining SRD classes and races; levels 6 to 20.**
+- [ ] **I5. The remaining SRD classes and races.**
+- [ ] **I7. Touch layout for Create on mobile.**
 - [ ] **I6. One CI run for Linux and macOS.**

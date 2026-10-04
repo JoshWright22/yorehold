@@ -201,8 +201,8 @@ content files, "client" = Yorehold code.
   with a live sheet.
 - Levelling by XP from the table in `ruleset.json`. Level-up walks the class's level row: HP,
   features, feats, spells, skill ranks. Any level may go into any class.
-- Launch set: fighter, rogue, cleric, wizard; human, elf, dwarf, halfling; levels 1 to 5 complete
-  before more classes are added (**default**).
+- Launch set: fighter, rogue, cleric, wizard; human, elf, dwarf, halfling; all four classes cover
+  levels 1 to 20 before more classes are added (decided 2026-10-03).
 - Martials get weapon rank increases and extra damage dice from their class rows; casters get slots
   and lists. These are table entries, not code.
 
@@ -277,7 +277,10 @@ content files, "client" = Yorehold code.
 - DM mode (last): a DM seat owns team 1 and the NPCs, sees each creature's brief, may leave any
   creature to the AI, and has live tools (spawn, change DC, give loot) that are ordinary commands
   and show in every player's log.
-- Ranked or verified runs (later): dice from the server and the command log uploaded for checking.
+- Cheating (decided 2026-10-03): the server does not check rules, and a host who wants to cheat
+  can. Accounts record which adventures a player has beaten, so cheating that is reported or found
+  is handled by banning the account, not by making the server run the game.
+- Verified runs (later, optional): dice from the server and the command log uploaded for checking.
 
 ### Accounts and online (part)
 
@@ -292,7 +295,8 @@ Server API, all under Nakama RPCs with JSON bodies:
 | Votes | up, down, clear; one per account per item | table `votes`; score cached on `content` |
 | Canon | nominate, sign off, flag, list queue | tables `approvers`, `signoffs` |
 | Config | get | collection `config` (done: AI settings) |
-| Reports | report, block | table `reports` |
+| Completions | record a finished adventure (id, revision, party, difficulty, date), list | table `completions`; shown on the profile |
+| Reports | report, block, ban | tables `reports`, `bans` |
 
 The game works fully offline; online adds sync, the library browser and co-op over the internet.
 
@@ -305,6 +309,10 @@ Next.js (App Router, TypeScript), talking only to the server API.
   (`yorehold://` link the client registers, falling back to a `.yore` download).
 - `/canon` the review queue for approvers.
 - `/u/<name>` profile and published work. `/docs` the format docs from the repos.
+- `/play` the game itself, embedded: the browser build of the client runs in the page, signed in
+  with the site's session, so playing and Create work on the web without a download (decided
+  2026-10-03). The site around it is ordinary pages: sign in, account, forums, library.
+- `/forums` discussion per category and per content item.
 - Sign in with the same account as the game.
 
 ### Create (todo)
@@ -327,6 +335,10 @@ Inside the client, one screen with modes that share one open package, one undo h
 - Every mode edits the same JSON the game loads; there is no separate project format.
 - Suggestions (maps for scenes, XP, quest steps) are proposals the writer accepts or edits.
 - Playtest starts the chapter from the cursor with a chosen party, without saving.
+- One editor, several layouts (decided 2026-10-03): the modes and the files are the same
+  everywhere. Desktop and the web build use the layout above. Mobile gets its own touch layout
+  (one panel at a time, larger targets, tools in a bottom sheet). So editor logic lives apart from
+  editor layout: each mode is a model plus commands, with a layout drawn over it.
 
 ### UI
 
@@ -384,9 +396,11 @@ These shape the code and are the costly ones to change later.
 15. The simulation is split from the screens before any new feature is added (roadmap A2).
 16. One effects vocabulary runs spells, features, feats, items, conditions and traps.
 17. Character files hold choices; the sheet is rebuilt from the ruleset on every load.
-18. The editor is C++ inside the client and edits the same JSON the game loads.
-19. The host runs the rules, also over the internet; the server never does. Verified runs would
-    replay the command log.
+18. The editor is C++ inside the client and edits the same JSON the game loads. Confirmed
+    2026-10-03, with a separate touch layout on mobile and the same editor on the web through the
+    embedded game.
+19. The host runs the rules, also over the internet; the server never does. Confirmed 2026-10-03:
+    cheaters are banned rather than prevented.
 20. The DM can change things live with a visible log, as GAME_DESIGN says. An earlier note had the
     DM only playing creatures as written.
 21. The rules start from 5e reworded with Pathfinder 2e ideas, as GAME_DESIGN says. An earlier note
@@ -411,7 +425,6 @@ Each gets a provisional value in `rulesets/yorehold/` when its step is built. No
 - Co-op: who picks dialogue replies (anyone, as now), who gets loot (whoever picks it up), what
   happens to a leaver's character mid-fight (the host takes it).
 - Difficulty options and the list of table rules in the lobby.
-- First release covers levels 1 to 5.
 
 ### Not designed yet
 
