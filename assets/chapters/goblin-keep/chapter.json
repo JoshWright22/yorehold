@@ -1,7 +1,6 @@
 {
   "id": "goblin-keep",
   "title": "The Goblin Keep",
-  "ruleset": "modern",
   "map": "map.json",
   "intro": [
     "The old keep stands ahead. Goblins have taken it.",

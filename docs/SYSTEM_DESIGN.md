@@ -241,7 +241,7 @@ content files, "client" = Yorehold code.
 
 - FW `Stealth`, `FogOfWar`, `LightLevels` done. In the game (done): sneak toggle, cones while
   sneaking, a check every 5 m in a cone, light adjusting the roll, ambush for surprise. Numbers in
-  `rules/stealth.json`, enemy `facing` in the chapter file (CONTENT.md). The host makes the checks;
+  `rulesets/yorehold/stealth.json`, enemy `facing` in the chapter file (CONTENT.md). The host makes the checks;
   "sneak" and "ambush" are intents like any other.
 - Still to add: Hide and Seek as actions in a fight (roadmap B5), enemies turning or patrolling,
   noise.
@@ -397,6 +397,10 @@ These were open; each is the provisional answer and is data or a small switch wh
 23. Stealth: an enemy with no `facing` looks toward where the party starts, watches as far as heroes
     see, and stands still. A player's heroes sneak together. An ambush is Attack on an unaware enemy
     while sneaking, from any distance at which it is seen.
+24. A chapter that names no ruleset plays by `rulesets/yorehold`. Its numbers are the ones the keep
+    was already played with; the magic item limit is 3 and is held there until inventory uses it.
+    Stealth numbers moved into the folder as `stealth.json`. A creature running for help has to get
+    within 3 squares of its allies (`alarmReach` in its AI profile).
 
 ### Structure choices made in this document
 

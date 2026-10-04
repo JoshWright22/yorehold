@@ -403,7 +403,7 @@ void World::updateEnemyTurn(double deltaSeconds)
         // Running for help and close enough to shout: the allies it reached join the fight.
         if (creatures_[me].fleeing && creatures_[me].breakAs == "alarm")
         {
-            if (const std::optional<int> group = sleepingGroupNear(me, 3))
+            if (const std::optional<int> group = sleepingGroupNear(me, aiFor(me).alarmReach))
             {
                 act("alarm", nlohmann::json{{"group", *group}}.dump());
                 act("end");

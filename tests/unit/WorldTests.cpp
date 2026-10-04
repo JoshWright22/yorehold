@@ -108,6 +108,7 @@ void keepVictory(const Check& check)
         return;
     }
     check(world.said("Goblins have taken it."), "The chapter's intro is in the log");
+    check(world.rules().id == "yorehold", "The keep plays by the game's own ruleset");
     check(!world.send("attack", {{"target", world.heroCount()}}), "An attack while exploring is refused");
     check(!world.send("end"), "Ending a turn outside a fight is refused");
 
@@ -184,6 +185,7 @@ void chapterFromStrings(const Check& check)
         return;
     }
     check(world.heroCount() == 2 && world.creatures().size() == 3 && world.said("A goblin waits"), "The JSON chapter has its party, goblin and intro");
+    check(world.rules().id == "modern" && world.chapter()->stealth.checkEvery == 5, "A chapter can still name a built-in ruleset");
     check(!world.send("go", {{"hero", 0}, {"at", {0, 0}}}), "Walking into a wall is refused");
     check(world.send("go", {{"hero", 0}, {"at", {7, 4}}}), "A hero is sent across the yard");
     check(world.stepUntil([&] { return world.fighting(); }, 30) && world.said("A goblin!"), "Seeing the goblin starts its fight");

@@ -121,25 +121,33 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         }
         if (c.xpPerVictory < 0) throw std::invalid_argument("xpPerVictory can't be negative");
 
-        // Rules: a built-in name or a file.
-        const std::string ruleset = j.value("ruleset", "modern");
+        // Rules: the game's own unless the chapter names a built-in set, a file, or a folder with
+        // ruleset.json in it. Content checked away from the game has no such folder and gets "modern".
+        const std::string ruleset = j.value("ruleset", files.exists(std::string(defaultRuleset) + "/ruleset.json") ? defaultRuleset : "modern");
         if (ruleset == "modern")
             c.rules = yh::Ruleset::modern();
         else if (ruleset == "classic")
             c.rules = yh::Ruleset::classic();
         else
         {
-            where = resolve(files, folder, ruleset);
+            where = resolve(files, folder, ruleset + "/ruleset.json");
+            if (files.exists(where))
+                c.rulesFolder = where.substr(0, where.size() - std::string_view("/ruleset.json").size());
+            else
+                where = resolve(files, folder, ruleset);
             std::string problem;
             std::optional<yh::Ruleset> rules = yh::Ruleset::fromJson(readOrThrow(files, where), &problem);
             if (!rules) throw std::invalid_argument(problem);
             c.rules = std::move(*rules);
         }
 
-        // How sneaking works, if the content says.
-        if (files.exists("rules/stealth.json"))
+        // How sneaking works: the ruleset folder's file, then the content's own from before
+        // rulesets were folders, which still wins so older packages play as they did.
+        for (const std::string& path : {c.rulesFolder.empty() ? std::string() : c.rulesFolder + "/stealth.json", std::string("rules/stealth.json")})
         {
-            where = "rules/stealth.json";
+            if (path.empty() || !files.exists(path))
+                continue;
+            where = path;
             std::string problem;
             const std::optional<yh::StealthRules> stealth = yh::StealthRules::fromJson(readOrThrow(files, where), &problem);
             if (!stealth) throw std::invalid_argument(problem);
@@ -175,6 +183,7 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         include(withoutAi(j).dump());
         include(nlohmann::json::parse(readOrThrow(files, where)).dump());
         include(c.rules.toJson());
+        include(c.stealth.toJson());
         for (const auto& [id, item] : c.compendium.items) include(yh::Compendium::itemToJson(item));
         for (const auto& [id, definition] : c.compendium.classes) include(yh::Compendium::classToJson(definition));
         for (auto& [id, definition] : c.compendium.creatures)

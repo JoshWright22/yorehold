@@ -23,8 +23,10 @@ content.json
 classes/fighter.json
 items/longsword.json
 creatures/goblin.json
-rulesets/my-rules.json          optional custom rules
-rules/stealth.json             optional: how sneaking works
+rulesets/yorehold/             the game's rules (built in; see Rulesets)
+  ruleset.json
+  stealth.json
+rulesets/my-rules.json         optional custom rules, as one file or a folder like the above
 ui/theme.json                  colors and frame styling
 design/                        optional game/UI design documents
 dialogues/                     optional dialogue documents
@@ -99,15 +101,43 @@ Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in
 
 ## Chapters and writer-owned text
 
-`chapter.json` declares `id`, `title`, `map`, `ruleset`, `party` and `encounters`. `ruleset` can be `modern`, `classic`, or a relative JSON path. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.
+`chapter.json` declares `id`, `title`, `map`, `party` and `encounters`, and optionally `ruleset`. Without `ruleset` the chapter plays by the game's own rules, `rulesets/yorehold` (see Rulesets); leave it out unless the chapter is a test of other rules. It can be `modern` or `classic` (sets built into the framework, kept for tests), a relative JSON path, or a folder with `ruleset.json` in it. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.
 
 Party members have `name`, `class`, `color` and integer `at` cells. Encounter groups have unique `id`, optional starting `text`, and `creatures` with a `creature` id, optional `name` and `at`. Placements must be on walkable, distinct cells. Party size comes from the file. Seeing one enemy starts its authored encounter group.
 
 A creature placement may set `facing`: the direction it looks until it notices the party, in degrees from -360 to 360, where 0 is east (right on the map), 90 south, 180 west and 270 north. Without it the creature looks toward where the party starts. Facing only matters to sneaking heroes, who are noticed inside the vision cone in front of an enemy and not behind it. In the keep, Gob has `"facing": 180` and watches the door.
 
+## Rulesets
+
+The game's rules are a folder, `rulesets/yorehold/`, and every number the rules use is in it. Changing a number there changes the game; nothing in the code repeats it. `ruleset.json` is the framework's ruleset format:
+
+| Field | Meaning |
+|---|---|
+| `version`, `id`, `name` | Format version (1), the ruleset's id and its display name. |
+| `abilities` | List of `id` and `name`. The first is the one carrying uses. |
+| `skills` | List of `id`, `name` and the `ability` each uses. |
+| `modifierTable` | `d20` ((score - 10) / 2, rounded down) or `classic`. |
+| `scoreMin`, `scoreMax` | Bounds on ability scores. |
+| `baseArmorClass`, `armorClassAbility`, `initiativeAbility` | Unarmoured AC, and the abilities added to AC and initiative (empty = none). |
+| `passiveBase` | A passive score, such as the passive Perception sneaking is rolled against, is this plus the modifier. |
+| `proficiencyByLevel` | Proficiency bonus at each level, level 1 first. |
+| `xpForLevel` | Total XP needed for each level, level 2 first. |
+| `actionsPerTurn`, `bonusActions`, `strikeCostsHands` | Actions in a turn (1 to 10), whether there is a bonus action as well, and whether a Strike costs one action per hand the weapon needs. |
+| `feetPerSquare` | Size of a map square. |
+| `carryPerStrength` | Pounds carried per point of the first ability. |
+| `magicItemLimit` | Magic items one character may carry (0 = no limit). Held here until inventory rules use it. |
+| `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited) and a `recovery`. The first is the one R takes. |
+| `afterVictory`, `reviveAfterVictory` | A `recovery` for the winners of a fight, and the HP downed winners get back up with (0 = they stay down). |
+| `defaultHitDie`, `hitDieByClass`, `hitDieAbility` | Sides of the hit die, by class name, and the ability added per die. |
+| `conditions` | Named states: `id`, `name`, `description`, `modifiers`, `advantageOnAttacks`, `disadvantageOnAttacks`. |
+
+A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.
+
+A package can carry rules of its own as one JSON file or as a folder of the same shape and name it in `chapter.json`. The shipped adventures do not.
+
 ## Stealth rules
 
-`rules/stealth.json` at the content root sets the numbers sneaking runs on. Every field is optional, and so is the file; these are the defaults:
+`stealth.json` in the ruleset's folder sets the numbers sneaking runs on. Content made before rulesets were folders keeps working: a `rules/stealth.json` at the content root is still read, and wins. Every field is optional, and so is the file; these are the defaults:
 
 ```json
 {
@@ -127,7 +157,7 @@ A creature placement may set `facing`: the direction it looks until it notices t
 | `darkBonus`, `dimBonus`, `brightBonus` | Added to a Stealth check made in darkness, dim light or bright light (-20 to 20). Light levels only differ on maps whose lighting `mode` is `rules`; elsewhere everything counts as bright. |
 | `critical` | With `true`, a natural 1 is always spotted and a natural 20 never is. |
 
-How it plays: C or the Sneak button makes a player's heroes sneak. They walk at `sneakSpeed`, cover their carried light, and see a red cone in front of each visible enemy that has not noticed the party. A cone reaches as far as heroes see on that map (`sight` under a roof) and stops at walls. Inside one, a hero rolls Stealth (the `stealth` skill, or Dexterity in a ruleset without it) plus the light bonus against the enemy's passive Perception (10 + its Perception modifier). In darkness an enemy only sees as far as its `darkvision`. A failed check starts the fight with that enemy's group. Right-click > Attack on an unaware enemy while sneaking starts the fight as an ambush: its group is surprised and loses its first turn. Heroes who are not sneaking start the fight as soon as they and an enemy see each other, whichever way it faces. A value out of range fails the content check and names the file.
+How it plays: C or the Sneak button makes a player's heroes sneak. They walk at `sneakSpeed`, cover their carried light, and see a red cone in front of each visible enemy that has not noticed the party. A cone reaches as far as heroes see on that map (`sight` under a roof) and stops at walls. Inside one, a hero rolls Stealth (the `stealth` skill, or Dexterity in a ruleset without it) plus the light bonus against the enemy's passive Perception (the ruleset's `passiveBase`, 10, plus its Perception modifier). In darkness an enemy only sees as far as its `darkvision`. A failed check starts the fight with that enemy's group. Right-click > Attack on an unaware enemy while sneaking starts the fight as an ambush: its group is surprised and loses its first turn. Heroes who are not sneaking start the fight as soon as they and an enemy see each other, whichever way it faces. A value out of range fails the content check and names the file.
 
 Writer-owned text includes `intro` lines, encounter `text`, `victoryText` (supports `{xp}`), `defeatText`, `resumeText` and `clearedText`. `xpPerVictory` supplies the reward. The code only provides generic defaults for omitted text.
 

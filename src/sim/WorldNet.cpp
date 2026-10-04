@@ -166,7 +166,7 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
         if (type == "alarm")
         {
             const int group = j.at("group").get<int>();
-            return acting && *current >= heroCount_ && sleepingGroupNear(*current, 3) == group ? std::optional(accepted) : std::nullopt;
+            return acting && *current >= heroCount_ && sleepingGroupNear(*current, aiFor(*current).alarmReach) == group ? std::optional(accepted) : std::nullopt;
         }
         if (type == "rest")
         {

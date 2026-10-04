@@ -26,7 +26,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 ## B. Rules machinery (framework first, numbers in `assets/rulesets/yorehold/`)
 
-- [ ] **B1. Yorehold ruleset as a folder.** `rulesets/yorehold/ruleset.json` with the numbers the
+- [x] **B1. Yorehold ruleset as a folder.** `rulesets/yorehold/ruleset.json` with the numbers the
   game uses today (actions per turn, rests, XP table, stealth step, magic item limit). The game
   loads it by default; `modern`/`classic` stay for tests.
 - [ ] **B2. Conditions as files.** `conditions/*.json`: modifiers, flags, duration, how they end.

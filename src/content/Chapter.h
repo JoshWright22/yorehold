@@ -97,8 +97,12 @@ struct Chapter
     // The chapter is complete once all of these story flags are set. Empty = once every encounter is won.
     std::vector<std::string> completeWhen;
 
+    // The game's own rules, used by every chapter that doesn't name another set.
+    static constexpr const char* defaultRuleset = "rulesets/yorehold";
+
     yh::Ruleset rules;
-    yh::StealthRules stealth; // rules/stealth.json, if the content has one; checkEvery is in metres
+    std::string rulesFolder;  // virtual path of the ruleset's folder; empty for a built-in set or a single file
+    yh::StealthRules stealth; // the ruleset folder's stealth.json, if it has one; checkEvery is in metres
     yh::Compendium compendium;
     GameMap map;
 
@@ -108,7 +112,7 @@ struct Chapter
     float facingOf(const Placement& placement) const;
 
     // Loads the shared compendium (items/, classes/, creatures/ at the root), then the chapter's own
-    // additions, the ruleset ("modern"/"classic" or a .json path) and the map, and checks that every
+    // additions, the ruleset ("modern"/"classic", a .json path or a folder) and the map, and checks that every
     // class, creature and placement makes sense.
     static std::optional<Chapter> load(const yh::FileSystem& files, std::string_view folder, std::string* error = nullptr);
 };

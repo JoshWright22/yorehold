@@ -176,7 +176,7 @@ std::vector<yh::Watcher> World::watchers() const
         yh::Watcher& watcher = watching[i - heroCount_];
         watcher.position = tokens_.tokens[i].position;
         watcher.facing = c.facing;
-        watcher.passivePerception = 10 + c.sheet.checkModifier(rules_, perception);
+        watcher.passivePerception = rules_.passiveBase + c.sheet.checkModifier(rules_, perception);
         watcher.darkRange = c.sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
         // Only enemies that haven't noticed anything yet keep watch.
         const float sight = (sky.differs && map().indoors(cellOf(i)) ? map().lighting().sight : sky.sight) * cell;

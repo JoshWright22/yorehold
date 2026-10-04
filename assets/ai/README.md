@@ -20,6 +20,7 @@ A profile starts from another one (`"base": "cunning"`) or from nothing, then se
 | `fleeLeaderless` | `true`: runs once its side's leader is down |
 | `leader` | `true`: it is a leader for its allies |
 | `escapeAt` | squares from the nearest hero, out of sight, at which a runner gets away |
+| `alarmReach` | squares from allies not yet fighting at which one running for help brings them in (3) |
 
 ## Where an AI can be set
 

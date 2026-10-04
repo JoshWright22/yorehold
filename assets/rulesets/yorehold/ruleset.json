@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "id": "yorehold",
+  "name": "Yorehold",
+
+  "abilities": [
+    { "id": "str", "name": "Strength" },
+    { "id": "dex", "name": "Dexterity" },
+    { "id": "con", "name": "Constitution" },
+    { "id": "int", "name": "Intelligence" },
+    { "id": "wis", "name": "Wisdom" },
+    { "id": "cha", "name": "Charisma" }
+  ],
+  "skills": [
+    { "id": "athletics", "name": "Athletics", "ability": "str" },
+    { "id": "acrobatics", "name": "Acrobatics", "ability": "dex" },
+    { "id": "stealth", "name": "Stealth", "ability": "dex" },
+    { "id": "arcana", "name": "Arcana", "ability": "int" },
+    { "id": "investigation", "name": "Investigation", "ability": "int" },
+    { "id": "perception", "name": "Perception", "ability": "wis" },
+    { "id": "insight", "name": "Insight", "ability": "wis" },
+    { "id": "survival", "name": "Survival", "ability": "wis" },
+    { "id": "persuasion", "name": "Persuasion", "ability": "cha" },
+    { "id": "deception", "name": "Deception", "ability": "cha" }
+  ],
+
+  "modifierTable": "d20",
+  "scoreMin": 3,
+  "scoreMax": 20,
+  "baseArmorClass": 10,
+  "armorClassAbility": "dex",
+  "initiativeAbility": "dex",
+  "passiveBase": 10,
+  "proficiencyByLevel": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6],
+  "xpForLevel": [250, 800, 2500, 6000, 13000, 22000, 33000, 46000, 62000],
+
+  "actionsPerTurn": 2,
+  "bonusActions": false,
+  "strikeCostsHands": true,
+  "feetPerSquare": 5,
+
+  "carryPerStrength": 15,
+  "magicItemLimit": 3,
+
+  "rests": [
+    { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 } },
+    { "id": "long", "name": "Long rest", "perAdventure": 1, "recovery": { "kind": "full", "reviveDowned": true } }
+  ],
+  "afterVictory": { "kind": "none" },
+  "reviveAfterVictory": 1,
+  "defaultHitDie": 8,
+  "hitDieAbility": "con",
+  "hitDieByClass": { "Barbarian": 12, "Fighter": 10, "Cleric": 8, "Rogue": 8, "Wizard": 6 },
+
+  "conditions": [
+    { "id": "poisoned", "name": "Poisoned", "description": "Sick and slow to react.", "disadvantageOnAttacks": true },
+    { "id": "blessed", "name": "Blessed", "description": "Fortune favours you.", "modifiers": [{ "stat": "attack", "op": "add", "value": 2 }] },
+    { "id": "slowed", "name": "Slowed", "description": "Moves at half speed.", "modifiers": [{ "stat": "speed", "op": "multiply", "value": 0.5 }] },
+    { "id": "shielded", "name": "Shielded", "description": "A magical barrier turns blows aside.", "modifiers": [{ "stat": "ac", "op": "add", "value": 4 }] },
+    { "id": "inspired", "name": "Inspired", "description": "Ready for anything.", "advantageOnAttacks": true }
+  ]
+}

@@ -101,9 +101,35 @@ void contentTests(const fs::path& scratch)
     check(chapter->stealth.checkEvery == 5 && chapter->encounters[0].creatures[0].facing == 180.0f && !chapter->encounters[0].creatures[1].facing,
         "Stealth rules and where enemies look come from files");
     {
-        const auto shipped = json::parse(*files.readText("rules/stealth.json"));
+        const auto shipped = json::parse(*files.readText("rulesets/yorehold/stealth.json"));
         check(shipped.at("checkEvery") == 5 && shipped.at("sneakSpeed") == 0.5 && shipped.at("darkBonus") == 5 && shipped.at("critical") == true,
             "The shipped stealth rules are the designed defaults");
+    }
+    {
+        // The keep names no ruleset, so it plays by the game's own folder.
+        const yh::Ruleset& rules = chapter->rules;
+        check(rules.id == "yorehold" && chapter->rulesFolder == Chapter::defaultRuleset, "A chapter that names no ruleset uses the game's own");
+        check(rules.actionsPerTurn == 2 && !rules.bonusActions && rules.strikeCostsHands && rules.magicItemLimit == 3 && rules.passiveBase == 10
+            && rules.rest("short") && rules.rest("short")->perAdventure == 2 && rules.rest("long") && rules.rest("long")->recovery.reviveDowned
+            && rules.levelForXp(249) == 1 && rules.levelForXp(250) == 2 && rules.reviveAfterVictory == 1 && rules.hitDie("Fighter") == 10,
+            "The game's ruleset file holds its turn, rest, XP and item numbers");
+        // Moving the numbers into a file changed none of them: apart from its name and the item
+        // limit it is the built-in set the keep used before.
+        const yh::Ruleset modern = yh::Ruleset::modern();
+        yh::Ruleset renamed = rules;
+        renamed.id = modern.id;
+        renamed.name = modern.name;
+        renamed.magicItemLimit = modern.magicItemLimit;
+        json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
+        // Conditions are checked on their own, and a full recovery has no use for a fraction.
+        for (json* set : {&mine, &theirs})
+        {
+            set->erase("conditions");
+            for (json& rest : set->at("rests"))
+                if (rest.at("recovery").at("kind") == "full")
+                    rest.at("recovery").erase("fraction");
+        }
+        check(mine == theirs, "The game's ruleset matches the numbers the keep was played with");
     }
 
     const yh::Grid grid(yh::GridType::Square, GameMap::cellSize);
