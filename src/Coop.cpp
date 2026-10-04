@@ -96,6 +96,15 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
             }
             return accepted;
         }
+        if (type == "go")
+        {
+            // A hero walking to a square between fights (the mouse walks heroes through the token
+            // controller and "walk" instead).
+            const size_t hero = j.at("hero").get<size_t>();
+            if (!calm || talk_ || hero >= heroCount_ || !mayAct(player, hero) || !canGo(hero, cellFrom(j.at("at"))))
+                return std::nullopt;
+            return accepted;
+        }
         if (type == "fight")
         {
             const int group = j.at("group").get<int>();
@@ -242,6 +251,8 @@ void YoreholdGame::apply(const yh::NetCommand& command)
                 token.position = at;
         }
     }
+    else if (type == "go")
+        go(j.at("hero").get<size_t>(), {j.at("at")[0].get<int>(), j.at("at")[1].get<int>()});
     else if (type == "sneak")
     {
         const bool on = j.at("on").get<bool>();

@@ -466,6 +466,9 @@ void YoreholdGame::drainEvents()
             case Kind::Save:
                 writeSave(event.text);
                 break;
+            case Kind::Talk:
+                journalOpen_ = false;
+                break;
             }
         }
     }
@@ -679,10 +682,8 @@ void YoreholdGame::step(double deltaSeconds)
     const yh::TokenController::Passable passable = [this](yh::Cell c) { return walkable(c); };
     const bool tokensListen = !menuOpen && !mouseOnUi && !partyDown() && !talk_ && !fighting;
     const yh::Input& tokenInput = tokensListen ? input_ : noInput_;
-    // Each sneaking hero is slower, whoever plays them, so they walk the same on every machine.
-    for (size_t i = 0; i < heroCount_; i++)
-        tokens_.tokens[i].pace = !fighting && creatures_[i].sneaking ? chapter_->stealth.sneakSpeed : 1.0f;
-    tokens_.update(tokenInput, camera_, grid_, passable, deltaSeconds);
+    tokens_.handleInput(tokenInput, camera_, grid_, passable);
+    walk(deltaSeconds);
     if (&tokenInput == &input_ && input_.clicked(yh::actions::moveTo))
         controls_.resumeFollowing();
     shareWalking(deltaSeconds);
@@ -691,19 +692,7 @@ void YoreholdGame::step(double deltaSeconds)
     if (tokensListen && (input_.clicked(yh::actions::moveTo) || input_.clicked(yh::actions::select)))
         if (const std::optional<size_t> who = hoveredTalker())
             walkToTalk(*who);
-    if (pendingTalk_ && !fighting)
-    {
-        const size_t leader = leaderIndex();
-        if (tokens_.tokens[leader].path.empty())
-        {
-            const size_t who = *pendingTalk_;
-            pendingTalk_.reset();
-            if (talkable(who) && grid_.distance(cellOf(leader), cellOf(who)) <= 1.5f)
-                act("talk", nlohmann::json{{"creature", who}}.dump());
-            else
-                say("Can't reach " + creatures_[who].sheet.name + " from here.");
-        }
-    }
+    arrive();
 
     // Right-click menu. On an NPC or someone who surrendered: Talk walks over, Attack picks a fight with them.
     const std::optional<size_t> menuTalker = tokens_.contextChoice && tokens_.contextChoice->first < creatures_.size()
@@ -733,20 +722,7 @@ void YoreholdGame::step(double deltaSeconds)
         }
     }
 
-    // The host runs the enemies (and the heroes in auto-play); a hero's own player runs their turn.
-    if (const std::optional<size_t> now = currentCreature())
-    {
-        if (creatures_[*now].team == 0 && !autoPlay_)
-        {
-            if (!menuOpen && mine(*now))
-                updateHeroTurn();
-        }
-        else if (!client_)
-            updateEnemyTurn(deltaSeconds);
-    }
-    else if (autoPlay_ && !partyDown() && !client_)
-        autoExplore();
-    updateVisibility();
+    takeTurns(deltaSeconds, !menuOpen, [this] { heroInput(); });
     drainEvents(); // the world's camera moves land before the camera follows
 
     std::optional<yh::Vec2> follow = tokens_.followTarget();
@@ -757,217 +733,6 @@ void YoreholdGame::step(double deltaSeconds)
     for (Floater& floater : floaters_)
         floater.age += static_cast<float>(deltaSeconds);
     std::erase_if(floaters_, [](const Floater& f) { return f.age > 1.4f; });
-}
-
-// Wall cells are never in line of sight (their centre is behind the wall edge), so show the ones
-// bordering what a view sees.
-void YoreholdGame::revealWalls(int team)
-{
-    for (int y = 0; y < map().height(); y++)
-    {
-        for (int x = 0; x < map().width(); x++)
-        {
-            if (map().blocksSight({x, y}) || fog_.state(team, 0, {x, y}) != yh::FogState::Visible)
-                continue;
-            for (int dy = -1; dy <= 1; dy++)
-                for (int dx = -1; dx <= 1; dx++)
-                    if (map().inside({x + dx, y + dy}) && map().blocksSight({x + dx, y + dy}))
-                        fog_.reveal(team, 0, {x + dx, y + dy});
-        }
-    }
-}
-
-GameMap::LightingMode YoreholdGame::lightingMode() const
-{
-    if (settings_.lighting >= 1 && settings_.lighting <= 3)
-        return static_cast<GameMap::LightingMode>(settings_.lighting - 1);
-    return map().lighting().mode;
-}
-
-GameMap::Time YoreholdGame::timeOfDay() const
-{
-    // There's no sky to change underground.
-    if (map().lighting().time != GameMap::Time::Underground && settings_.timeOfDay >= 1 && settings_.timeOfDay <= 3)
-        return static_cast<GameMap::Time>(settings_.timeOfDay - 1);
-    return map().lighting().time;
-}
-
-int YoreholdGame::viewTeam() const
-{
-    if (settings_.sharedFog)
-        return 0;
-    // Whoever's turn it is in a fight, otherwise the selected (leading) hero.
-    if (const std::optional<size_t> current = currentCreature(); current && *current < heroCount_)
-        return static_cast<int>(*current) + 1;
-    for (size_t i = 0; i < heroCount_; i++)
-        if (tokens_.tokens[i].selected)
-            return static_cast<int>(i) + 1;
-    return 1;
-}
-
-void YoreholdGame::updateVisibility()
-{
-    const GameMap::Lighting& lighting = map().lighting();
-    const bool rules = lightingMode() == GameMap::LightingMode::Rules;
-    const GameMap::Sky sky = map().sky(timeOfDay());
-    std::vector<yh::Vision> eyes(heroCount_);
-    std::vector<yh::Light> carried;
-    for (size_t i = 0; i < heroCount_; i++)
-    {
-        if (tokens_.tokens[i].floor == dead)
-            continue;
-        const float darkvision = creatures_[i].sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
-        eyes[i] = {tokens_.tokens[i].position, sky.sight * cell, darkvision};
-        if (lighting.carried > 0 && !creatures_[i].sneaking)
-            carried.push_back({tokens_.tokens[i].position, lighting.carried * cell});
-    }
-    // In rules mode a cell is only seen if some light reaches it (or it's within darkvision).
-    // By day the outdoors is lit by the sky and seen from far off; under a roof it's the usual
-    // sight distance and the map's own lights.
-    std::function<bool(yh::Cell)> lit;
-    if (rules || sky.differs)
-    {
-        lit = [&, rules](yh::Cell c) {
-            if (sky.differs && !map().indoors(c))
-                return !rules || sky.level != yh::LightLevel::Dark || lightLevels_.lit(c, carried, map().walls());
-            if (sky.differs)
-            {
-                const yh::Vec2 at = grid_.center(c);
-                const float reach = lighting.sight * cell;
-                bool near = false;
-                for (size_t i = 0; i < heroCount_ && !near; i++)
-                    near = tokens_.tokens[i].floor != dead && distance(at, tokens_.tokens[i].position) <= reach;
-                if (!near)
-                    return false;
-            }
-            return !rules || lightLevels_.lit(c, carried, map().walls());
-        };
-    }
-
-    // Team 0 is everyone's view together; it decides when enemies are spotted. With shared fog
-    // off, each hero also keeps a view of their own (team 1 + index) for the screen.
-    std::vector<yh::Vision> all;
-    for (size_t i = 0; i < heroCount_; i++)
-        if (tokens_.tokens[i].floor != dead)
-            all.push_back(eyes[i]);
-    fog_.update(0, 0, all, map().walls(), lit);
-    revealWalls(0);
-    if (!settings_.sharedFog)
-    {
-        for (size_t i = 0; i < heroCount_; i++)
-        {
-            const std::span<const yh::Vision> mine = tokens_.tokens[i].floor == dead ? std::span<const yh::Vision>() : std::span(&eyes[i], 1);
-            fog_.update(static_cast<int>(i) + 1, 0, mine, map().walls(), lit);
-            revealWalls(static_cast<int>(i) + 1);
-        }
-    }
-    const int view = viewTeam();
-
-    const bool fighting = encounter_ && !encounter_->finished();
-    for (size_t i = heroCount_; i < creatures_.size(); i++)
-    {
-        yh::Token& token = tokens_.tokens[i];
-        if (token.floor == dead)
-            continue;
-        token.floor = fog_.state(view, 0, cellOf(i)) == yh::FogState::Visible ? 0 : hidden;
-    }
-    // The host decides when a fight starts.
-    if (!fighting && !partyDown() && !client_ && !talk_)
-        updateStealth();
-}
-
-bool YoreholdGame::sneakingMine() const
-{
-    for (size_t i = 0; i < heroCount_; i++)
-        if (creatures_[i].sneaking && mine(i) && !creatures_[i].sheet.down())
-            return true;
-    return false;
-}
-
-yh::LightLevel YoreholdGame::lightAt(yh::Vec2 point) const
-{
-    if (lightingMode() != GameMap::LightingMode::Rules)
-        return yh::LightLevel::Bright;
-    const yh::Cell c = grid_.cellAt(point);
-    const GameMap::Sky sky = map().sky(timeOfDay());
-    if (sky.differs && !map().indoors(c) && sky.level != yh::LightLevel::Dark)
-        return sky.level;
-    std::vector<yh::Light> carried;
-    for (size_t i = 0; i < heroCount_; i++)
-        if (tokens_.tokens[i].floor != dead && map().lighting().carried > 0 && !creatures_[i].sneaking)
-            carried.push_back({tokens_.tokens[i].position, map().lighting().carried * cell});
-    return lightLevels_.level(c, carried, map().walls());
-}
-
-std::vector<yh::Watcher> YoreholdGame::watchers() const
-{
-    // They see as far as the heroes do: the usual distance under a roof, further under an open sky.
-    const GameMap::Sky sky = map().sky(timeOfDay());
-    const char* perception = rules_.skill("perception") ? "perception" : "wis";
-    std::vector<yh::Watcher> watching(creatures_.size() - heroCount_);
-    for (size_t i = heroCount_; i < creatures_.size(); i++)
-    {
-        const Creature& c = creatures_[i];
-        yh::Watcher& watcher = watching[i - heroCount_];
-        watcher.position = tokens_.tokens[i].position;
-        watcher.facing = c.facing;
-        watcher.passivePerception = 10 + c.sheet.checkModifier(rules_, perception);
-        watcher.darkRange = c.sheet.stats.value("darkvision") / std::max(1, rules_.feetPerSquare) * cell;
-        // Only enemies that haven't noticed anything yet keep watch.
-        const float sight = (sky.differs && map().indoors(cellOf(i)) ? map().lighting().sight : sky.sight) * cell;
-        watcher.range = c.team == 1 && !c.awake && !c.sheet.down() ? sight : -1;
-    }
-    return watching;
-}
-
-void YoreholdGame::updateStealth()
-{
-    const std::vector<yh::Watcher> watching = watchers();
-    const std::function<yh::LightLevel(yh::Vec2)> light = [this](yh::Vec2 point) { return lightAt(point); };
-    const char* stealth = rules_.skill("stealth") ? "stealth" : "dex";
-    std::optional<size_t> noticed; // the enemy that saw someone
-    std::string note;              // how, for the log
-    for (size_t h = 0; h < heroCount_; h++)
-    {
-        const yh::Vec2 at = tokens_.tokens[h].position;
-        yh::Vec2 from = lastAt_[h];
-        lastAt_[h] = at;
-        if (noticed || tokens_.tokens[h].floor == dead)
-            continue;
-        if (distance(from, at) > 2 * cell) // put somewhere else (a load, the end of a fight), not walked
-        {
-            from = at;
-            sneak_[h].reset();
-        }
-        if (!creatures_[h].sneaking)
-        {
-            // Walking openly: the fight starts as soon as they and an enemy can see each other.
-            for (size_t w = 0; w < watching.size() && !noticed; w++)
-                if (watching[w].range > 0 && fog_.state(0, 0, cellOf(heroCount_ + w)) == yh::FogState::Visible
-                    && distance(at, watching[w].position) <= watching[w].range + cell / 2 && yh::lineOfSight(at, watching[w].position, map().walls()))
-                    noticed = heroCount_ + w;
-            continue;
-        }
-        const int bonus = creatures_[h].sheet.checkModifier(rules_, stealth);
-        for (const yh::StealthCheck& check : sneak_[h].move(from, at, true, bonus, watching, map().walls(), stealthRandom_, light))
-        {
-            if (!check.spotted)
-            {
-                act("unseen", nlohmann::json{{"hero", h}}.dump());
-                continue;
-            }
-            noticed = heroCount_ + check.watcher;
-            note = creatures_[*noticed].sheet.name + " spots " + creatures_[h].sheet.name + "! (Stealth " + std::to_string(check.total) + " against "
-                + std::to_string(check.dc) + ")";
-        }
-    }
-    if (!noticed)
-        return;
-    // Everyone's positions go with it, so the fight starts the same on every machine.
-    nlohmann::json at = nlohmann::json::array();
-    for (size_t c = 0; c < creatures_.size(); c++)
-        at.push_back({tokens_.tokens[c].position.x, tokens_.tokens[c].position.y});
-    act("fight", nlohmann::json{{"group", creatures_[*noticed].group}, {"at", at}, {"note", note}}.dump());
 }
 
 void YoreholdGame::finishAdventure()
@@ -1002,29 +767,6 @@ void YoreholdGame::finishAdventure()
 }
 
 
-size_t YoreholdGame::leaderIndex() const
-{
-    for (size_t i = 0; i < heroCount_; i++)
-        if (tokens_.tokens[i].selected && mine(i) && !creatures_[i].sheet.down())
-            return i;
-    for (size_t i = 0; i < heroCount_; i++)
-        if (mine(i) && !creatures_[i].sheet.down())
-            return i;
-    for (size_t i = 0; i < heroCount_; i++)
-        if (!creatures_[i].sheet.down())
-            return i;
-    return 0;
-}
-
-
-std::string YoreholdGame::dialogueFor(size_t creature) const
-{
-    const Creature& c = creatures_[creature];
-    if (c.surrendered)
-        return c.surrender;
-    return c.npc >= 0 ? chapter_->npcs[c.npc].dialogue : std::string();
-}
-
 std::optional<size_t> YoreholdGame::hoveredTalker() const
 {
     if (!chapter_)
@@ -1039,188 +781,10 @@ std::optional<size_t> YoreholdGame::hoveredTalker() const
     return std::nullopt;
 }
 
-void YoreholdGame::walkToTalk(size_t creature)
-{
-    const size_t leader = leaderIndex();
-    if (creatures_[leader].sheet.down())
-        return;
-    yh::Token& token = tokens_.tokens[leader];
-    const yh::Cell from = cellOf(leader);
-    const yh::Cell goal = cellOf(creature);
-    token.path.clear();
-    if (grid_.distance(from, goal) > 1.5f)
-    {
-        // The nearest open square next to them.
-        std::vector<yh::Cell> best;
-        for (int dy = -1; dy <= 1; dy++)
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                const yh::Cell next{goal.x + dx, goal.y + dy};
-                if ((dx || dy) && walkable(next))
-                {
-                    std::vector<yh::Cell> path = findPath(grid_, from, next, [this](yh::Cell c) { return walkable(c); });
-                    if (!path.empty() && (best.empty() || path.size() < best.size()))
-                        best = std::move(path);
-                }
-            }
-        for (size_t i = 1; i < best.size(); i++)
-            token.path.push_back(grid_.center(best[i]));
-    }
-    pendingTalk_ = creature;
-}
-
-void YoreholdGame::startTalk(size_t creature)
-{
-    const std::string name = creatures_[creature].sheet.name;
-    const std::string path = dialogueFor(creature);
-    if (path.empty())
-    {
-        say(name + " has nothing to say.");
-        return;
-    }
-    std::string error = "not found";
-    const std::optional<std::string> text = files_.readText(path);
-    std::optional<yh::Dialogue> dialogue = text ? yh::Dialogue::fromJson(*text, &error) : std::nullopt;
-    if (!dialogue)
-    {
-        say(name + "'s dialogue " + path + ": " + error);
-        return;
-    }
-    for (yh::Token& token : tokens_.tokens)
-        token.path.clear();
-    talkWith_ = creature;
-    talk_ = std::make_unique<yh::DialogueSession>(std::move(*dialogue), flags_);
-    journalOpen_ = false;
-    // Node entry effects of the first line count too.
-    if (talk_->flags() != flags_)
-    {
-        const std::set<std::string> before = flags_;
-        flags_ = talk_->flags();
-        flagsChanged(before);
-    }
-    dialogueActions();
-}
-
-// What a conversation can make happen beyond story flags ("do" in the dialogue file):
-//   release  they leave for good (no body)
-//   kill     they die where they stand
-//   fight    they attack the party (again)
-void YoreholdGame::dialogueActions()
-{
-    if (!talk_)
-        return;
-    const size_t who = talkWith_;
-    Creature& c = creatures_[who];
-    yh::Token& token = tokens_.tokens[who];
-    for (const std::string& action : talk_->takeActions())
-    {
-        if (c.sheet.down())
-            break;
-        if (action == "release")
-        {
-            say(c.sheet.name + " leaves.");
-            c.sheet.hp = 0;
-            c.fled = true;
-            token.floor = dead;
-        }
-        else if (action == "kill")
-        {
-            say(c.sheet.name + " is killed.");
-            c.sheet.hp = 0;
-            token.floor = dead;
-            if (c.npc >= 0)
-                setFlags(chapter_->npcs[c.npc].killed);
-        }
-        else if (action == "fight")
-        {
-            turnHostile(who);
-            return;
-        }
-    }
-}
-
-void YoreholdGame::chooseReply(size_t index, size_t hero)
-{
-    if (!talk_)
-        return;
-    const std::vector<const yh::DialogueChoice*> choices = talk_->choices();
-    if (talk_->finished() || choices.empty())
-    {
-        // The last line: any key or click ends it.
-        talk_.reset();
-        if (chapterCleared())
-            playEnding();
-        else
-            saveAdventure();
-        return;
-    }
-    if (index >= choices.size())
-        return;
-    const yh::DialogueChoice choice = *choices[index];
-    const yh::Character& speaker = creatures_[hero].sheet;
-    const std::optional<yh::DialogueResult> result = talk_->choose(choice.id, [&](std::string_view skill) {
-        yh::Random dice = nextRandom(0x7a1cull);
-        return speaker.rollCheck(rules_, skill, yh::Advantage::None, dice);
-    });
-    if (!result)
-        return;
-    say(speaker.name + ": " + choice.text);
-    if (result->roll && choice.check)
-        say(speaker.name + " rolls " + choice.check->skill + ": " + result->roll->describe() + " vs " +
-            std::to_string(choice.check->difficulty) + (result->passed ? ", success" : ", failure"));
-    const std::set<std::string> before = flags_;
-    flags_ = talk_->flags();
-    if (flags_ != before)
-        flagsChanged(before);
-    dialogueActions();
-    if (!talk_)
-        return; // it ended in a fight
-    if (talk_->finished() && !talk_->current())
-    {
-        talk_.reset();
-        if (chapterCleared())
-            playEnding();
-        else
-            saveAdventure();
-    }
-}
-
-
-void YoreholdGame::rest(const yh::RestDefinition& rest)
-{
-    if (restsLeft(rest) == 0 || (encounter_ && !encounter_->finished()) || partyDown())
-        return;
-    restsUsed_[rest.id]++;
-    restRandom_ = nextRandom(0x5eedull);
-    say("The party takes a " + (rest.name.empty() ? rest.id : rest.name) + ".");
-    for (size_t i = 0; i < heroCount_; i++)
-    {
-        yh::Character& c = creatures_[i].sheet;
-        if (c.hp >= c.maxHp())
-            continue;
-        std::string detail;
-        const int healed = c.recover(rules_, rest.recovery, restRandom_, &detail);
-        if (healed <= 0)
-            continue;
-        tokens_.tokens[i].floor = 0; // revived
-        say(c.name + " recovers " + std::to_string(healed) + " HP" + (detail.empty() ? "." : " (" + detail + ")."));
-        floaters_.push_back({tokens_.tokens[i].position, "+" + std::to_string(healed), ui_.theme.good});
-    }
-    if (const int left = restsLeft(rest); left >= 0)
-        say(std::to_string(left) + " left.");
-    saveAdventure();
-}
-
-void YoreholdGame::updateHeroTurn()
+void YoreholdGame::heroInput()
 {
     const size_t me = *currentCreature();
     const yh::Token& token = tokens_.tokens[me];
-
-    if (swingReady())
-    {
-        swingIfReady();
-        return;
-    }
 
     const bool walkClick = input_.clicked(yh::actions::moveTo), selectClick = input_.clicked(yh::actions::select);
     if (!overUi(input_.mouse()) && (walkClick || selectClick))
@@ -1238,51 +802,6 @@ void YoreholdGame::updateHeroTurn()
     }
     if (input_.keyPressed(SDLK_SPACE) && token.path.empty())
         act("end");
-}
-
-void YoreholdGame::autoExplore()
-{
-    // The leader heads for the nearest enemy still standing; the rest follow their links.
-    const size_t leader = 0;
-    const bool hurt = std::any_of(creatures_.begin(), creatures_.begin() + heroCount_,
-        [](const Creature& c) { return !c.sheet.down() && c.sheet.hp * 2 < c.sheet.maxHp(); });
-    // Use the first rest that still has uses (short before long).
-    for (size_t i = 0; i < rules_.rests.size(); i++)
-    {
-        if (hurt && restsLeft(rules_.rests[i]) != 0)
-        {
-            act("rest", nlohmann::json{{"rest", i}}.dump());
-            break;
-        }
-    }
-    yh::Token& token = tokens_.tokens[leader];
-    if (!token.path.empty() || creatures_[leader].sheet.down())
-        return;
-    std::optional<yh::Cell> goal;
-    float nearest = 0;
-    for (size_t i = heroCount_; i < creatures_.size(); i++)
-    {
-        if (creatures_[i].sheet.down() || creatures_[i].team != 1)
-            continue;
-        const float d = grid_.distance(cellOf(leader), cellOf(i));
-        if (!goal || d < nearest)
-        {
-            goal = cellOf(i);
-            nearest = d;
-        }
-    }
-    if (!goal)
-        return;
-    const std::vector<yh::Cell> path = findPath(grid_, cellOf(leader), *goal, [this](yh::Cell c) { return walkable(c); });
-    if (path.size() < 4)
-    {
-        if (path.empty() && autoExploreStuck_++ == 0)
-            say("Auto-play: no path to the next enemy.");
-        return;
-    }
-    // Stop a few squares short; spotting them starts the fight anyway.
-    for (size_t i = 1; i + 2 < path.size() && i < 8; i++)
-        token.path.push_back(grid_.center(path[i]));
 }
 
 // ---------------------------------------------------------------- saves
@@ -1320,6 +839,7 @@ void YoreholdGame::applySettings()
     controls_.settings.followSelection = settings_.cameraFollows;
     controls_.settings.keyPanSpeed = settings_.panSpeed;
     controls_.settings.edgeScrollSpeed = settings_.panSpeed;
+    setOptions({settings_.lighting, settings_.timeOfDay, settings_.sharedFog});
     int count = 0;
     if (SDL_Window** windows = SDL_GetWindows(&count))
     {

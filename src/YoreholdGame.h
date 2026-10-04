@@ -64,33 +64,12 @@ private:
     bool handle(const SDL_Event& event);
     void render(yh::Renderer& renderer);
 
-    // Exploration and combat.
-    void updateVisibility();
-    GameMap::LightingMode lightingMode() const;
-    GameMap::Time timeOfDay() const;
-    int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
-    void revealWalls(int team);
-    // Sneaking. Enemies that haven't noticed the party watch in a cone; a sneaking hero inside one
-    // rolls Stealth against their passive Perception (see yh::StealthTracker).
-    std::vector<yh::Watcher> watchers() const; // one per creature after the heroes; range below 0 = not watching
-    yh::LightLevel lightAt(yh::Vec2 point) const;
-    void updateStealth();
-    bool sneakingMine() const; // one of this machine's heroes is sneaking
-    void updateHeroTurn();
-    void autoExplore();
+    // The player's own hero's turn in a fight: clicks and keys.
+    void heroInput();
 
-    std::string dialogueFor(size_t creature) const;
     std::optional<size_t> hoveredTalker() const;
-    size_t leaderIndex() const; // the selected hero, else the first one standing
-    void walkToTalk(size_t creature);
-    void startTalk(size_t creature);
-    void chooseReply(size_t index, size_t hero);
-    void dialogueActions(); // carries out the conversation's "do" actions
     void drawDialogue(yh::Renderer& renderer);
     void drawJournal(yh::Renderer& renderer);
-
-    // Rests come from the ruleset (short, long...), each with its own healing and limit.
-    void rest(const yh::RestDefinition& rest);
 
     // One autosave slot, written after victories and rests (never mid-fight).
     std::string savePath() const;

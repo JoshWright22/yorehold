@@ -15,6 +15,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -67,6 +68,7 @@ public:
             Follow,  // go back to following the party
             Ending,  // `text` is the ending cutscene (JSON) to play; call endCutscene() when it is over
             Save,    // `text` is the adventure between fights, for the autosave
+            Talk,    // a conversation began
         };
         Kind kind = Kind::Log;
         std::string text;
@@ -88,6 +90,22 @@ public:
     // Starts the chapter again from its files. Every roll that follows comes from `seed`.
     void newAdventure(uint64_t seed);
     void say(std::string line);
+
+    // One step of time: walking, conversations opening on arrival, the turns of whatever the game
+    // plays, and what the party can see (which can start a fight). The play screen runs the same
+    // parts with its input in between (walk, arrive, takeTurns).
+    void update(double deltaSeconds);
+
+    // Player choices that change what the rules see: lighting (0 = as the map says, else 1 +
+    // GameMap::LightingMode), time of day (0 = as the map says, else 1 + GameMap::Time) and whether
+    // the fog shows the whole party's view or only the selected hero's.
+    struct Options
+    {
+        int lighting = 0;
+        int timeOfDay = 0;
+        bool sharedFog = true;
+    };
+    void setOptions(const Options& options);
 
     bool partyDown() const;
     bool chapterCleared() const;
@@ -132,6 +150,38 @@ protected:
     // checked and applied at once, in co-op it goes through the session.
     virtual void act(std::string_view type, const std::string& data = "{}") = 0;
 
+    // Exploring (WorldExplore.cpp).
+    void walk(double deltaSeconds); // everyone on the move takes their next steps
+    void arrive();                  // the leader reached someone they walked over to talk to
+    // Whoever's turn it is acts. `heroesListen`: this machine's heroes may act (no menu over them);
+    // `heroInput` reads the player's input on their own hero's turn.
+    void takeTurns(double deltaSeconds, bool heroesListen, const std::function<void()>& heroInput);
+    size_t leaderIndex() const; // the selected hero, else the first one standing
+    std::string dialogueFor(size_t creature) const;
+    void walkToTalk(size_t creature);
+    void startTalk(size_t creature);
+    void chooseReply(size_t index, size_t hero);
+    void dialogueActions(); // carries out the conversation's "do" actions
+    // Rests come from the ruleset (short, long...), each with its own healing and limit.
+    void rest(const yh::RestDefinition& rest);
+    // A hero walking to a square between fights; the others follow their links.
+    bool canGo(size_t hero, yh::Cell to) const;
+    void go(size_t hero, yh::Cell to);
+    void autoExplore();
+
+    // What the party sees, and sneaking (WorldStealth.cpp).
+    GameMap::LightingMode lightingMode() const;
+    GameMap::Time timeOfDay() const;
+    int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
+    void revealWalls(int team);
+    void updateVisibility();
+    // Enemies that haven't noticed the party watch in a cone; a sneaking hero inside one rolls
+    // Stealth against their passive Perception (see yh::StealthTracker).
+    std::vector<yh::Watcher> watchers() const; // one per creature after the heroes; range below 0 = not watching
+    yh::LightLevel lightAt(yh::Vec2 point) const;
+    void updateStealth();
+    bool sneakingMine() const; // one of this machine's heroes is sneaking
+
     // Fights (WorldCombat.cpp).
     // Wakes `group` (or only `only` of it) and starts a fight with the party.
     // `surprise`: the party struck from hiding, so the enemies lose their first turn.
@@ -170,6 +220,7 @@ protected:
 
     const yh::FileSystem& chapterFiles_;
     std::vector<Event> events_;
+    Options options_;
 
     // The adventure being played. Null if it failed to load.
     std::unique_ptr<Chapter> chapter_;
