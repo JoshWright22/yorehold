@@ -12,7 +12,9 @@ combine them. People play them alone or together.
 - Fantasy is the base (D&D or BG3 in feel). Each adventure sets its own tone.
 - Players make the campaigns. There is no overworld outside adventures, but an adventure can have
   its own overworld.
-- Choice over prescription: death, difficulty and table rules are options, with sensible defaults.
+- Choice over prescription: difficulty and table rules are options, with sensible defaults.
+- **Everything is community content.** Classes, spells, races, items, maps and adventures can all be
+  made by players, shared as files, voted on and ranked (see Community).
 
 ## Characters
 
@@ -24,7 +26,11 @@ combine them. People play them alone or together.
 - **Ability scores:** point buy, rolling or a standard array, whichever the player likes.
 - **Feats** at set levels, PF2e style (class, skill, general and race feats). There are fewer of
   them than in Pathfinder, and each one should be interesting rather than a small number bump.
+- **Multiclassing** as in BG3: any level can go into any class.
 - **Party:** up to 4 characters for now. One player can run several.
+- **Loot comes along.** Characters keep everything between adventures, whatever the level range.
+  Matching gear to an adventure is up to the players: they can agree to bring the right gear, or
+  make a character for that game.
 
 ## Rules
 
@@ -59,8 +65,14 @@ Power grows as in Pathfinder 2e, not 5e:
   answers to problems a sword can't solve.
 - **Magic items:** each character can have at most 3. The limit is a number in the ruleset and can
   change. A fourth can't be picked up or used until one is given up.
-- **Spellcasting:** spell slots by default. The system also supports other casting resources (spell
-  points, focus, charges...) so classes and content can be built on them.
+
+## Magic
+
+- **Spell slots**, cantrips that scale with level, and focus spells.
+- **Prepared and spontaneous casting:** both of Pathfinder's styles are supported, so a class can
+  use either. Other resources (spell points, charges...) are also possible for new classes.
+- **Spell lists belong to classes**, not shared traditions. Adding a spell to the warlock's and
+  wizard's lists doesn't touch the druid's, so votes on one class never change another.
 
 ## Turns
 
@@ -87,6 +99,8 @@ Power grows as in Pathfinder 2e, not 5e:
 - **Opportunity attacks:** leaving an enemy's reach provokes one, free movement included
   (**default:** everyone can make them).
 - **Repeated Strikes:** no penalty. Two Strikes in a turn hit as hard as one.
+- **Turn order as in BG3:** everyone rolls initiative. Party members whose turns come back to back
+  share that turn and can act in any order, and so can enemies.
 
 ## Checks and teamwork
 
@@ -97,15 +111,22 @@ Power grows as in Pathfinder 2e, not 5e:
 - **Teamwork is the point**, as in Pathfinder. Classes and encounters are designed so that fights go
   badly without setup: flanking, debuffs from spells and skills (frightened, off-guard, prone,
   slowed), and buffs. A party that just trades blows will struggle.
+- **Dialogue checks** are rolled by whoever is speaking, as in BG3.
 
 ## Play
 
 - Combat, talking and exploration are balanced as in 5e or Pathfinder 2e adventures.
-- Looting, an economy and crafting follow those games as well.
+- Looting, an economy (gp, sp, cp) and crafting follow those games as well.
+- **Inventory as in BG3:**
+  - Each character has their own inventory, and the camp has a shared stash.
+  - A player manages the characters they control.
+  - Players can't change other players' inventories, but they can give them items.
 - **Stealth works like BG3:**
-  - A sneak toggle slows movement and shows each enemy's detection radius.
-  - Inside a radius, the character makes a Stealth check against the enemy's passive Perception
+  - Enemies see in vision cones, shown while sneaking.
+  - A sneak toggle slows movement.
+  - Inside a cone, the character makes a Stealth check against the enemy's passive Perception
     every 5 m, a distance the ruleset can change.
+  - Light matters: darkness and shadow make hiding easier, bright light harder.
   - Getting spotted starts the fight.
   - Attacking unseen surprises the enemies, who lose their first turn.
 - **Enemy AI:**
@@ -114,8 +135,11 @@ Power grows as in Pathfinder 2e, not 5e:
   - Enemies whose nerve breaks may run, run for help, surrender (and can then be talked to), or
     fight on.
   - More advanced decision models can be added without changing content.
+- **Levelling** is by XP, mostly from encounters. The adventure sets how much each one gives.
 
 ## Rest and death (as in BG3)
+
+These follow BG3 for now and may be revisited.
 
 - **Short rests:** 2 between long rests. They heal some HP and restore short-rest abilities.
 - **Long rests** happen at camp and use up camp supplies. Supplies are a resource: food found and
@@ -129,26 +153,55 @@ Power grows as in Pathfinder 2e, not 5e:
 
 ## Multiplayer
 
-- **Party against the game:** co-op as now, with the host running the enemies.
-- **DM mode:**
-  - One player runs the enemies and NPCs.
-  - The DM gets a brief on each enemy and scene from the adventure's written content: what it
-    wants, how it fights, and what it knows.
+- **Party against the game:** up to 4 players, with the host running the enemies.
+- **DM mode** (built last):
+  - Up to 4 players plus a DM for now; more if people want it.
+  - The DM runs the enemies and NPCs. For each enemy and scene they get a brief from the
+    adventure's written content: what it wants, how it fights, and what it knows.
   - The DM plays those creatures directly; the AI takes over anything the DM leaves to it.
+  - The DM can also change things live (spawn creatures, change DCs, hand out loot). The players
+    see a log of every change.
+
+## Making adventures
+
+- **Writing comes first.** Writers build an adventure from story nodes: scenes, encounters,
+  dialogue and quests, linked together, each with its writing.
+- **The editor makes suggestions from the nodes.** It proposes:
+  - maps and layouts for the scenes and their triggers
+  - XP for enemies and encounters
+  - dialogue and quest steps
+  Every suggestion is a starting point the writer edits freely.
+- Everything an adventure uses is files, so it can be shared, combined and packaged (see
+  CONTENT.md).
+
+## Community
+
+- **Votes:** anyone with an account can upvote or downvote anything, in the game or on the website.
+- **Canon:** content that ranks above a threshold in its category also needs 1 to 3 approved users
+  (curators; the name isn't settled) to sign off before it becomes canon. Canon content goes into
+  the shared ruleset or the featured library.
+- **Homebrew is the point:** everything in the game can be made by players, submitted, ranked and
+  passed around as files.
 
 ## What this changes in the code
 
 - `yh::Encounter`'s action, bonus action, reaction and movement budget becomes free movement plus
   two actions plus one reaction. The AI's "dash" becomes the Stride action.
-- Character creation, character libraries and level ranges per adventure.
+- Shared turns for side-by-side initiative.
+- Character creation with multiclassing, character libraries, and level ranges per adventure.
 - Camp, supplies and long rests; downed, death saves and revival.
+- Per-character inventories, giving items, and the camp stash.
 - DM seats and enemy briefs in the chapter format.
-- Stealth: the detection radius, sneaking and checks, which also feed surprise.
+- Stealth: vision cones, sneaking, light and checks, which also feed surprise.
+- The node-based writing tool and its suggestions.
 
 ## Open questions (defaults apply until answered)
 
 1. Magic items: does the limit of 3 count only items in use (worn or held), or everything carried
    (**default:** in use, like attunement)?
-2. Votes: on the website, per season (**default**)? When the conversion can't keep a choice (say a
-   removed class), does the player pick a replacement before playing (**default**)?
-3. Supplies: how much food a long rest costs, and can you rest anywhere or only where the adventure allows it (**default:** anywhere outside combat, unless the area forbids it)?
+2. Votes: when a ruleset conversion can't keep a choice (say a removed class), does the player pick
+   a replacement before playing (**default**)?
+3. Supplies: how much food does a long rest cost, and can you rest anywhere or only where the
+   adventure allows it (**default:** anywhere outside combat, unless the area forbids it)?
+4. Canon: what decides the threshold, and who picks the curators (**default:** set by the project
+   team per category)?
