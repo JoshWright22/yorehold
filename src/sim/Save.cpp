@@ -49,6 +49,7 @@ std::string World::stateJson() const
             yh::CharacterChoices choices = creatures_[i].choices;
             choices.xp = creatures_[i].sheet.xp;
             data["choices"].push_back(nlohmann::json::parse(choices.toJson()));
+            data["library"].push_back(creatures_[i].library);
         }
         data["creatures"].push_back({
             {"sheet", nlohmann::json::parse(creatures_[i].sheet.toJson())},
@@ -119,6 +120,10 @@ bool World::restoreState(std::string_view text, std::string* problem)
         const nlohmann::json savedChoices = data.value("choices", nlohmann::json::array());
         if (!savedChoices.is_array() || (!savedChoices.empty() && savedChoices.size() != heroCount_))
             throw std::runtime_error("saved characters don't match the party");
+        // Which heroes came from the character library (older saves: none).
+        const auto library = data.value("library", std::vector<std::string>(heroCount_));
+        if (library.size() != heroCount_)
+            throw std::runtime_error("saved characters don't match the party");
         std::vector<yh::CharacterChoices> choices;
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
@@ -172,7 +177,10 @@ bool World::restoreState(std::string_view text, std::string* problem)
         {
             creatures_[i].sheet = std::move(sheets[i]);
             if (i < heroCount_)
+            {
                 creatures_[i].choices = std::move(choices[i]);
+                creatures_[i].library = library[i];
+            }
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];

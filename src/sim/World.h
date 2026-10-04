@@ -44,6 +44,7 @@ public:
         int npc = -1; // index into the chapter's NPCs
         std::string creatureId;            // its definition in the compendium ("" for heroes)
         yh::CharacterChoices choices;      // heroes: what the sheet is rebuilt from on every load
+        std::string library;               // heroes: their file in the character library ("" = made for this adventure)
         std::vector<std::string> aiLayers; // the chapter's AI changes for it (JSON; see aiFor)
         bool fleeing = false; // its morale broke this fight: it runs until it gets away or is cornered
         bool fled = false;    // it got away: out of the adventure, and no body is left behind

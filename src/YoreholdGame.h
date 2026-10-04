@@ -55,6 +55,10 @@ private:
     void saveAdventure();
     void writeSave(const std::string& state);
     bool loadAdventure();
+    // The character library beside the save. Heroes that came from it are written back when the
+    // player leaves (still "away" in this adventure) and when the adventure ends (free again).
+    std::string charactersDir() const;
+    void writeBackCharacters(bool finished);
 
     // Co-op (Coop.cpp). Everything that changes the shared game goes through act(): alone it
     // applies at once, hosting it goes through the session's rules, joined it goes to the host.

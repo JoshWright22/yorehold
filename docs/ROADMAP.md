@@ -58,7 +58,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   ranks, feats, slots. Level-up from XP, any level into any class. Build the table format and
   levels 1 to 5 first, then fill 6 to 20 in the same format; a unit check builds each class at
   every level.
-- [ ] **C4. Character library.** `characters/` beside the save, graveyard folder, the "away" flag,
+- [x] **C4. Character library.** `characters/` beside the save, graveyard folder, the "away" flag,
   writing a character back at chapter end.
 - [ ] **C5. Character screens.** Create (three steps, three score methods, live sheet), level up,
   library list. Play > Characters.

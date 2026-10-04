@@ -1,5 +1,6 @@
 #include "YoreholdGame.h"
 
+#include "content/CharacterLibrary.h"
 #include "sim/Save.h"
 
 #include <yorehold/framework/assets/Skin.h>
@@ -473,6 +474,7 @@ void YoreholdGame::finishAdventure()
     // A finished adventure can't be continued. Test runs never touch the save.
     if (!testRun_)
     {
+        writeBackCharacters(true);
         std::remove(savePath().c_str());
         std::remove((savePath() + ".bak").c_str());
         hasSave_ = false;
@@ -517,7 +519,44 @@ std::string YoreholdGame::savePath() const
 void YoreholdGame::saveAdventure()
 {
     if (!testRun_ && canSave())
+    {
         writeSave(stateJson());
+        writeBackCharacters(false);
+    }
+}
+
+std::string YoreholdGame::charactersDir() const
+{
+    const std::string dir = stateDir();
+    return dir.empty() ? std::string() : dir + "characters";
+}
+
+void YoreholdGame::writeBackCharacters(bool finished)
+{
+    if (testRun_ || client_ || !chapter_ || charactersDir().empty())
+        return;
+    const std::string away = finished ? std::string() : std::filesystem::path(savePath()).filename().string();
+    for (size_t i = 0; i < heroCount_; i++)
+    {
+        const Creature& hero = creatures_[i];
+        if (hero.library.empty())
+            continue;
+        std::string error;
+        std::optional<CharacterLibrary::Entry> entry = CharacterLibrary::find(charactersDir(), hero.library, &error);
+        if (entry)
+        {
+            entry->choices = hero.choices;
+            entry->choices.xp = hero.sheet.xp;
+            entry->inventory = hero.sheet.inventory;
+            entry->away = hero.sheet.death.dead ? std::string() : away;
+        }
+        bool written = entry && CharacterLibrary::write(charactersDir(), *entry, &error);
+        // Death is permanent: the character stays viewable in the graveyard but can't be played again.
+        if (written && hero.sheet.death.dead)
+            written = CharacterLibrary::retire(charactersDir(), *entry, &error);
+        if (!written)
+            say("Couldn't write " + hero.sheet.name + " back to the character library: " + error);
+    }
 }
 
 void YoreholdGame::writeSave(const std::string& state)

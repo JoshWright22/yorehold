@@ -156,6 +156,10 @@ The game ships human, elf, dwarf and halfling; acolyte, criminal, farmhand, sage
 
 `xpForLevel` in `ruleset.json` runs to level 20. A character levels into its latest class when XP crosses a threshold; choosing the class and the picks comes with the level-up screen. The content check builds each of the four classes at every level and a mixed fighter/wizard/rogue.
 
+## Character files
+
+The player's characters live in `characters/` beside the save, one file each, written by the game in the save envelope (`"format": "yorehold.character"`, `"version": 1`). The data holds `choices` (the framework's character choices, FRAMEWORK.md), `inventory` (items as a sheet writes them), `coins`, and `away`: the file name of the adventure save the character is playing in, empty when free. `characters/graveyard/` holds characters that can't be played any more; the game lists them after the others and never writes to them. A save names each hero's library file in `library` (empty for heroes made for that adventure; older saves have none).
+
 ## Proficiency ranks
 
 Yorehold uses Untrained/Trained/Expert/Master/Legendary: bonuses 0/2/4/6/8, with level added

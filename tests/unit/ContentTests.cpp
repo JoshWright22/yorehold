@@ -1,5 +1,6 @@
 #include "YoreholdGame.h"
 #include "content/Chapter.h"
+#include "content/CharacterLibrary.h"
 #include "content/ContentPackage.h"
 #include "sim/World.h"
 
@@ -618,6 +619,83 @@ void saveTests(const fs::path& scratch)
     SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
 }
 
+void characterLibraryTests(const fs::path& scratch)
+{
+    const std::string folder = (scratch / "library-characters").string();
+    std::string error;
+    check(CharacterLibrary::list(folder).empty(), "A missing character folder is just empty");
+    yh::Random random(3);
+    CharacterLibrary::Entry ada;
+    ada.choices = yh::rollChoices(yh::Ruleset::modern(), "Ser Ada", "fighter", random);
+    ada.inventory.push_back({});
+    ada.inventory.back().id = "rope";
+    ada.inventory.back().name = "Rope";
+    ada.inventory.back().quantity = 2;
+    ada.coins = 12;
+    ada.away = "adventure.json";
+    CharacterLibrary::Entry twin = ada;
+    twin.away.clear();
+    check(CharacterLibrary::write(folder, ada, &error) && ada.fileName() == "ser-ada.json"
+        && CharacterLibrary::write(folder, twin, &error) && twin.fileName() == "ser-ada-2.json",
+        "New characters get plain file names that never overwrite another");
+    const auto read = CharacterLibrary::find(folder, "ser-ada.json", &error);
+    check(read && read->choices.name == "Ser Ada" && read->choices.scores == ada.choices.scores && read->inventory.size() == 1
+        && read->inventory.front().quantity == 2 && read->coins == 12 && read->away == "adventure.json" && !read->retired,
+        "Character files keep choices, what is carried, coins and where the character is");
+    check(!CharacterLibrary::find(folder, "../ser-ada.json", &error) && !CharacterLibrary::find(folder, "ser-ada", &error),
+        "Saves can only name files inside the character folder");
+    write(fs::path(folder) / "broken.json", json{{"format", "yorehold.character"}, {"version", 1}, {"data", {{"choices", 5}}}});
+    std::vector<std::string> problems;
+    auto all = CharacterLibrary::list(folder, &problems);
+    check(all.size() == 2 && problems.size() == 1 && problems.front().starts_with("broken.json"), "Broken character files are listed as problems");
+    check(CharacterLibrary::retire(folder, twin, &error) && twin.retired && !fs::exists(fs::path(folder) / "ser-ada-2.json")
+        && fs::exists(fs::path(folder) / "graveyard" / "ser-ada-2.json"), "Retiring moves a character into the graveyard");
+    all = CharacterLibrary::list(folder);
+    check(all.size() == 2 && !all.front().retired && all.back().retired, "The graveyard is listed after the living");
+    check(!CharacterLibrary::write(folder, all.back(), &error), "Graveyard characters can't be changed");
+
+    // A hero from the library, in the keep: leaving writes it back, still away; dying retires it.
+    const auto saveDir = scratch / "library-saves";
+    SDL_setenv_unsafe("YOREHOLD_SAVE_DIR", saveDir.string().c_str(), 1);
+    SDL_setenv_unsafe("YOREHOLD_CONTENT", YH_GAME_ASSETS, 1);
+    SDL_Event enter{};
+    enter.type = SDL_EVENT_KEY_DOWN;
+    enter.key.key = SDLK_RETURN;
+    auto playAndLeave = [&] {
+        YoreholdGame game;
+        game.handleEvent(enter);
+        game.handleEvent(enter);
+        game.unload();
+    };
+    playAndLeave();
+    json saved;
+    {
+        std::ifstream file(saveDir / "adventure.json", std::ios::binary);
+        saved = json::parse(file);
+    }
+    check(saved["data"]["library"] == json::array({"", "", "", ""}), "Heroes made for the adventure have no library file");
+    const std::string characters = (saveDir / "characters").string();
+    CharacterLibrary::Entry hero;
+    hero.choices = *yh::CharacterChoices::fromJson(saved["data"]["choices"][0].dump());
+    check(CharacterLibrary::write(characters, hero, &error), "Put a hero in the library");
+    saved["data"]["library"][0] = hero.fileName();
+    saved["data"]["creatures"][0]["sheet"]["xp"] = 40;
+    write(saveDir / "adventure.json", saved);
+    playAndLeave();
+    auto back = CharacterLibrary::find(characters, hero.fileName(), &error);
+    check(back && back->away == "adventure.json" && back->choices.xp == 40 && back->inventory.size() == 3,
+        "Leaving writes the hero back to the library, away in this adventure");
+    saved["data"]["creatures"][0]["sheet"]["hp"] = 0;
+    saved["data"]["creatures"][0]["sheet"]["death"] = {{"dead", true}, {"failures", 3}};
+    write(saveDir / "adventure.json", saved);
+    playAndLeave();
+    back = CharacterLibrary::read((fs::path(characters) / "graveyard" / hero.fileName()).string(), &error);
+    check(back && back->retired && back->away.empty() && !fs::exists(fs::path(characters) / hero.fileName()),
+        "A hero who dies goes to the graveyard");
+    SDL_unsetenv_unsafe("YOREHOLD_SAVE_DIR");
+    SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
+}
+
 // The rules of sneaking, with the keep's own map, creatures and numbers.
 void stealthTests(const fs::path& scratch)
 {
@@ -832,6 +910,7 @@ int main()
         mapTests();
         gameErrorTests();
         saveTests(scratch.path);
+        characterLibraryTests(scratch.path);
         stealthTests(scratch.path);
         openFileTests(scratch.path);
     }
