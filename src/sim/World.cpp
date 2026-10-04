@@ -91,7 +91,9 @@ void World::newAdventure(uint64_t seed)
     yh::Random random(seed);
     for (const Chapter::PartyMember& member : chapter_->party)
     {
-        creatures_.push_back({*chapter_->compendium.makeCharacter(rules_, member.classId, member.name, random)});
+        yh::CharacterChoices choices = yh::rollChoices(rules_, member.name, member.classId, random);
+        creatures_.push_back({*chapter_->compendium.build(rules_, choices)});
+        creatures_.back().choices = std::move(choices);
         yh::Token token;
         token.name = member.name;
         token.color = member.color;

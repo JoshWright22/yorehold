@@ -425,6 +425,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 32. Death: DC 10 unmodified saves, three successes stable, three failures dead; natural 1 adds two failures and natural 20 heals 1 HP. Unabsorbed damage at zero adds one failure (critical two), and damage to a stable character starts fresh counters. Monsters die immediately unless their file enables saves. Each starting hero carries one resource-backed 2d4+2 potion until consumable inventory is built. A wipe restores the latest checkpoint; optional onWipe cutscene precedes return, and destination supplies one current-chapter cell per hero.
 
+33. Character choices: levels after the first add the class's hit die averaged and rounded up, plus CON (at least 1). Base speed, darkvision, ranks and gear come from the first class until level tables exist. Levels gained from XP go into the latest class until the level-up screen exists. Inventory and coins stay on the saved sheet until the character library (C4) writes them back.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

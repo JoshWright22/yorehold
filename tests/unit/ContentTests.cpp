@@ -680,6 +680,7 @@ void worldTurnTests(const std::function<void(bool, const char*)>& check);
 void worldPositioningTests(const std::function<void(bool, const char*)>& check);
 void worldProficiencyTests(const std::function<void(bool, const char*)>& check);
 void worldDeathTests(const std::function<void(bool, const char*)>& check);
+void worldCharacterTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -694,6 +695,7 @@ int main()
         worldPositioningTests(check);
         worldProficiencyTests(check);
         worldDeathTests(check);
+        worldCharacterTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

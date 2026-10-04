@@ -43,6 +43,7 @@ public:
         bool awake = false;
         int npc = -1; // index into the chapter's NPCs
         std::string creatureId;            // its definition in the compendium ("" for heroes)
+        yh::CharacterChoices choices;      // heroes: what the sheet is rebuilt from on every load
         std::vector<std::string> aiLayers; // the chapter's AI changes for it (JSON; see aiFor)
         bool fleeing = false; // its morale broke this fight: it runs until it gets away or is cornered
         bool fled = false;    // it got away: out of the adventure, and no body is left behind
@@ -314,6 +315,9 @@ protected:
     void setSneaking(size_t hero, bool on);
     void raise(std::string_view event); // tells everyone's conditions: "fightStart", "fightEnd", "rest"
     void fallenConditions();            // Downed or Dead for whoever is at 0 HP, and off again once they are up
+    // A hero whose XP has passed its level: the new levels go into its latest class (until the
+    // level-up screen lets the player choose) and the sheet is rebuilt, gaining the extra HP.
+    void gainLevels(size_t hero);
     void returnFromWipe(const std::string& checkpoint);
 
     void emit(Event event) { events_.push_back(std::move(event)); }

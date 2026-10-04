@@ -154,6 +154,7 @@ void World::endCombat()
         if (!c.sheet.down())
             tokens_.tokens[i].floor = 0;
         c.sheet.addXp(rules_, chapter_->xpPerVictory);
+        gainLevels(i);
     }
     fallenConditions(); // the revived are no longer Downed
     selectOwnHero();

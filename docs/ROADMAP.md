@@ -50,7 +50,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 ## C. Characters
 
-- [ ] **C1. Character files hold choices.** Race, background, scores, per-level picks; the sheet is
+- [x] **C1. Character files hold choices.** Race, background, scores, per-level picks; the sheet is
   rebuilt from them. Migration from the current sheets in saves.
 - [ ] **C2. Races, backgrounds and feats as files.** Human, elf, dwarf, halfling; six backgrounds;
   a first set of feats per kind.

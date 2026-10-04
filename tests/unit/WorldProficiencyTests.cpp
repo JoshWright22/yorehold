@@ -41,10 +41,13 @@ void worldProficiencyTests(const std::function<void(bool, const char*)>& check)
     ana.proficiencyRanks["dc"] = "expert";
     check(world.checksum() != before && ana.difficultyClass(rules) == 26, "Explicit ranks and level affect both DC and the replicated checksum");
 
+    world.sheet(2).proficiencyRanks["dc"] = "expert"; world.sheet(2).dcAbility = "wis";
     const auto saved = world.stateJson();
-    ana.proficiencyRanks["dc"] = "legendary";
-    check(world.restoreState(saved) && world.sheet(0).proficiencyRank(world.rules(), "dc") == "expert"
-        && world.sheet(0).difficultyClass(world.rules()) == 26, "A saved sheet restores rank choices and DC ability");
+    world.sheet(2).proficiencyRanks["dc"] = "legendary";
+    check(world.restoreState(saved) && world.sheet(2).proficiencyRank(world.rules(), "dc") == "expert"
+        && world.sheet(2).dcAbility == "wis", "A saved creature sheet restores rank choices and DC ability");
+    check(world.sheet(0).level == 1 && world.sheet(0).proficiencyRank(world.rules(), "dc") == "trained" && world.sheet(0).dcAbility == "str",
+        "A hero's level, ranks and DC ability are rebuilt from its choices and class on load");
     auto bad = nlohmann::json::parse(saved);
     bad["creatures"][0]["sheet"]["hp"] = 1;
     bad["creatures"][2]["sheet"]["proficiencyRanks"]["weapons"] = "missing";
@@ -57,12 +60,15 @@ void worldProficiencyTests(const std::function<void(bool, const char*)>& check)
     {
         creature["sheet"].erase("proficiencyRanks"); creature["sheet"].erase("dcAbility");
     }
-    check(world.restoreState(old.dump()) && world.sheet(0).proficiencyRanks.empty()
-        && world.sheet(0).proficiencyModifier(world.rules(), "weapons") == 9
-        && world.sheet(0).proficiencyModifier(world.rules(), "dc") == 0,
+    check(world.restoreState(old.dump()) && world.sheet(2).proficiencyRanks.empty()
+        && world.sheet(2).proficiencyModifier(world.rules(), "weapons") == 3
+        && world.sheet(2).proficiencyModifier(world.rules(), "dc") == 0,
         "Sheets without ranks still load, using trained for their legacy proficiency list");
     check(world.restoreState(saved), "The saved expert sheet can be restored again");
-    world.sheet(0).stats.setBase("dex", 2000);
+    auto& restored = world.sheet(0);
+    restored.level = 7; restored.dcAbility = "wis"; restored.stats.setBase("wis", 20);
+    restored.proficiencyRanks["dc"] = "expert";
+    restored.stats.setBase("dex", 2000);
     nlohmann::json positions = nlohmann::json::array();
     for (const auto& token : world.tokens().tokens) positions.push_back({token.position.x, token.position.y});
     check(world.send("fight", {{"group", 0}, {"at", positions}}) && world.currentCreature() == 0,

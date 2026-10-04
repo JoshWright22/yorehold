@@ -44,6 +44,12 @@ std::string World::stateJson() const
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
+        if (i < heroCount_)
+        {
+            yh::CharacterChoices choices = creatures_[i].choices;
+            choices.xp = creatures_[i].sheet.xp;
+            data["choices"].push_back(nlohmann::json::parse(choices.toJson()));
+        }
         data["creatures"].push_back({
             {"sheet", nlohmann::json::parse(creatures_[i].sheet.toJson())},
             {"awake", creatures_[i].awake},
@@ -109,6 +115,11 @@ bool World::restoreState(std::string_view text, std::string* problem)
         auto seats = data.value("seats", seats_);
         if (!seats.empty() && seats.size() != chapter_->party.size())
             throw std::runtime_error("seats don't match the party");
+        // The heroes' choices; saves from before they were kept read them off the saved sheets.
+        const nlohmann::json savedChoices = data.value("choices", nlohmann::json::array());
+        if (!savedChoices.is_array() || (!savedChoices.empty() && savedChoices.size() != heroCount_))
+            throw std::runtime_error("saved characters don't match the party");
+        std::vector<yh::CharacterChoices> choices;
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
         std::vector<bool> awake, fled, surrendered, sneaking;
@@ -123,6 +134,17 @@ bool World::restoreState(std::string_view text, std::string* problem)
                 || (!sheet->death.dead && sheet->death.failures == rules_.death.failures)
                 || (!sheet->death.stable && !sheet->death.dead && sheet->death.successes == rules_.death.successes)))
                 throw std::runtime_error("Saved death counters do not match the ruleset");
+            if (sheets.size() < heroCount_)
+            {
+                std::optional<yh::CharacterChoices> made = savedChoices.empty()
+                    ? std::optional(yh::choicesFromSheet(rules_, *sheet, chapter_->party[sheets.size()].classId))
+                    : yh::CharacterChoices::fromJson(savedChoices.at(sheets.size()).dump(), &error);
+                const std::optional<yh::Character> built = made ? chapter_->compendium.build(rules_, *made, &error) : std::nullopt;
+                if (!built)
+                    throw std::runtime_error("saved character " + sheet->name + ": " + error);
+                sheet->adoptBuild(*built);
+                choices.push_back(std::move(*made));
+            }
             sheets.push_back(std::move(*sheet));
             const yh::Vec2 position{c.at("x").get<float>(), c.at("y").get<float>()};
             if (!std::isfinite(position.x) || !std::isfinite(position.y) || position.x < 0 || position.y < 0
@@ -149,6 +171,8 @@ bool World::restoreState(std::string_view text, std::string* problem)
         for (size_t i = 0; i < creatures_.size(); i++)
         {
             creatures_[i].sheet = std::move(sheets[i]);
+            if (i < heroCount_)
+                creatures_[i].choices = std::move(choices[i]);
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];
@@ -173,6 +197,29 @@ bool World::restoreState(std::string_view text, std::string* problem)
             *problem = e.what();
         return false;
     }
+}
+
+void World::gainLevels(size_t hero)
+{
+    Creature& c = creatures_[hero];
+    if (c.choices.levels.empty() || c.sheet.level <= c.choices.level())
+        return;
+    yh::CharacterChoices choices = c.choices;
+    choices.xp = c.sheet.xp;
+    choices.levels.resize(static_cast<size_t>(c.sheet.level), yh::LevelChoice{choices.levels.back().classId, {}});
+    std::string error;
+    const std::optional<yh::Character> built = chapter_->compendium.build(rules_, choices, &error);
+    if (!built)
+    {
+        say(c.sheet.name + " can't level up: " + error);
+        return;
+    }
+    const int before = c.sheet.maxHp();
+    c.sheet.adoptBuild(*built);
+    if (!c.sheet.down())
+        c.sheet.hp += std::max(0, c.sheet.maxHp() - before);
+    c.choices = std::move(choices);
+    say(c.sheet.name + " reaches level " + std::to_string(c.sheet.level) + ".");
 }
 
 void World::returnFromWipe(const std::string& checkpoint)
