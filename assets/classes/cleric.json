@@ -5,6 +5,8 @@
   "hitDie": 8,
   "bonusHp": 4,
   "speed": 30,
+  "dcAbility": "wis",
+  "proficiencyRanks": { "weapons": "trained", "armor": "trained", "dc": "trained", "wis": "trained", "cha": "trained" },
   "proficiencies": [
     "weapons",
     "armor",

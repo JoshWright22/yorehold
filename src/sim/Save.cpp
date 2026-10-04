@@ -106,7 +106,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
         for (const nlohmann::json& c : saved)
         {
             std::optional<yh::Character> sheet = yh::Character::fromJson(c.at("sheet").dump(), &error);
-            if (!sheet)
+            if (!sheet || !sheet->checkProficiencyRanks(rules_, &error))
                 throw std::runtime_error(error);
             sheets.push_back(std::move(*sheet));
             const yh::Vec2 position{c.at("x").get<float>(), c.at("y").get<float>()};

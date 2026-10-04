@@ -5,6 +5,8 @@
   "hp": 7,
   "armorClass": 13,
   "speed": 30,
+  "dcAbility": "dex",
+  "proficiencyRanks": { "weapons": "trained", "armor": "trained", "dc": "trained" },
   "darkvision": 60,
   "proficiencies": [
     "weapons"

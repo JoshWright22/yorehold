@@ -5,6 +5,8 @@
   "hp": 4,
   "armorClass": 10,
   "speed": 30,
+  "dcAbility": "cha",
+  "proficiencyRanks": { "weapons": "untrained", "armor": "trained", "dc": "untrained" },
   "items": [],
   "token": {
     "color": [

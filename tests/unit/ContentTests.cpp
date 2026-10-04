@@ -122,6 +122,12 @@ void contentTests(const fs::path& scratch)
         renamed.magicItemLimit = modern.magicItemLimit;
         check(renamed.sharedTurns && !modern.sharedTurns, "Yorehold enables shared turns while the prototype remains sequential");
         renamed.sharedTurns = modern.sharedTurns;
+        check(renamed.proficiencyRanks.size() == 5 && renamed.proficiencyBonus(7, "trained") == 9
+            && renamed.proficiencyBonus(20, "legendary") == 28 && renamed.proficiencyBonus(20, "untrained") == 0,
+            "Yorehold uses level plus rank, with no level for untrained checks");
+        renamed.proficiencyRanks = modern.proficiencyRanks;
+        renamed.proficientRank = modern.proficientRank;
+        renamed.untrainedRank = modern.untrainedRank;
         json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
         // Conditions are checked on their own, and a full recovery has no use for a fraction.
         for (json* set : {&mine, &theirs})
@@ -669,6 +675,7 @@ void worldPlayTests(const std::function<void(bool, const char*)>& check); // Wor
 void worldActionTests(const std::function<void(bool, const char*)>& check);
 void worldTurnTests(const std::function<void(bool, const char*)>& check);
 void worldPositioningTests(const std::function<void(bool, const char*)>& check);
+void worldProficiencyTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -681,6 +688,7 @@ int main()
         worldActionTests(check);
         worldTurnTests(check);
         worldPositioningTests(check);
+        worldProficiencyTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

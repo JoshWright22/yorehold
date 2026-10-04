@@ -220,6 +220,7 @@ void World::runActionEffect(size_t me, const yh::ActionDefinition& action, std::
         context.self = static_cast<yh::EffectActor>(me);
         context.targets = {static_cast<yh::EffectActor>(target.value_or(me))};
         context.source = action.id;
+        context.dc = creatures_[me].sheet.difficultyClass(rules_);
         result = action.effect.run(host, context);
         narrate(result);
     }

@@ -429,8 +429,22 @@ uint64_t World::checksum() const
             hash *= 1099511628211ull;
         }
     };
+    auto mixText = [&](std::string_view text) {
+        mix(text.size());
+        for (const char ch : text) mix(static_cast<unsigned char>(ch));
+    };
     for (const Creature& c : creatures_)
+    {
         mix(static_cast<uint64_t>(c.sheet.hp + 1000));
+        mix(c.sheet.level);
+        mixText(c.sheet.dcAbility);
+        mix(c.sheet.proficiencyRanks.size());
+        for (const auto& [target, rank] : c.sheet.proficiencyRanks)
+        {
+            mixText(target);
+            mixText(rank);
+        }
+    }
     for (const std::string& flag : flags_)
         for (const char ch : flag)
             mix(static_cast<unsigned char>(ch));

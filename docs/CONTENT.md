@@ -121,7 +121,10 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `scoreMin`, `scoreMax` | Bounds on ability scores. |
 | `baseArmorClass`, `armorClassAbility`, `initiativeAbility` | Unarmoured AC, and the abilities added to AC and initiative (empty = none). |
 | `passiveBase` | A passive score, such as the passive Perception sneaking is rolled against, is this plus the modifier. |
-| `proficiencyByLevel` | Proficiency bonus at each level, level 1 first. |
+| `proficiencyByLevel` | Legacy proficiency bonus at each level, level 1 first; used when there are no ranks. |
+| `proficiencyRanks` | Optional list of ranks with unique `id`, display `name`, `bonus` (0 to 100) and `addsLevel`. |
+| `proficientRank`, `untrainedRank` | Rank IDs used when a sheet has no explicit choice, according to its old proficiency list. |
+| `baseDc` | Base for a character's action DC before ability and proficiency, 10 by default. |
 | `xpForLevel` | Total XP needed for each level, level 2 first. |
 | `actionsPerTurn`, `bonusActions`, `strikeCostsHands` | Actions in a turn (1 to 10), whether there is a bonus action as well, and whether a Strike costs one action per hand the weapon needs. |
 | `sharedTurns` | Consecutive allies share an active initiative block. True for Yorehold; absent means sequential turns for older rulesets. |
@@ -136,6 +139,32 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.
 
 A package can carry rules of its own as one JSON file or as a folder of the same shape and name it in `chapter.json`. The shipped adventures do not.
+
+## Proficiency ranks
+
+Yorehold uses Untrained/Trained/Expert/Master/Legendary: bonuses 0/2/4/6/8, with level added
+except when untrained. These are entries in `ruleset.json`, so other styles can change both
+the names and the maths. Modern and classic retain their older tables.
+
+Classes, creatures and saved sheets accept `"proficiencyRanks": {"weapons":"trained",
+"armor":"trained","str":"trained","athletics":"expert","dc":"trained"}` and a
+`"dcAbility":"str"`. Skill targets apply to checks, ability targets to saves, weapons to
+attacks, armour to AC and DC to action DCs. Explicit choices take precedence over the legacy
+`proficiencies` list. Missing choices are trained for listed targets and untrained for others.
+Ability checks and initiative keep their existing modifier. Choices are retained but inactive
+in table-based rulesets. Unknown ranks, targets or DC abilities stop loading with a named file;
+invalid saved choices are refused before any adventure state changes.
+
+A DC is `baseDc + ability modifier + DC proficiency + dc stat modifiers`. Effects whose DC is
+`"caster"` use the acting sheet's live DC. An empty `dcAbility` adds no ability modifier.
+Creatures may set `level` (default 1). Their `armorClass` remains the final AC written in their
+stat block, including ability and rank; increasing the sheet's level later increases trained AC.
+Old sheets without these fields still load, using their existing proficiency lists. Saves whose
+chapter content changed report that change instead of applying an incompatible sheet.
+
+The starting classes have trained weapons, armour and DCs, plus two trained saves: Strength and
+Constitution for fighter/barbarian, Wisdom and Charisma for cleric, Dexterity and Intelligence
+for rogue. Existing skill lists remain the fallback. Class level tables will supply later ranks.
 
 ## Conditions
 

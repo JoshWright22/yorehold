@@ -192,6 +192,23 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             throw std::invalid_argument(problem);
         }
 
+        auto checkRanks = [&](const auto& definitions, const char* kind) {
+            for (const auto& [id, definition] : definitions)
+            {
+                yh::Character choices;
+                choices.proficiencyRanks = definition.proficiencyRanks;
+                choices.dcAbility = definition.dcAbility;
+                if (!choices.checkProficiencyRanks(c.rules, &problem))
+                {
+                    where = std::string(kind) + "/" + id + ".json";
+                    if (files.exists(folder + "/" + where)) where = folder + "/" + where;
+                    throw std::invalid_argument(problem);
+                }
+            }
+        };
+        checkRanks(c.compendium.classes, "classes");
+        checkRanks(c.compendium.creatures, "creatures");
+
         where = resolve(files, folder, j.value("map", "map.json"));
         std::optional<GameMap> map = GameMap::fromJson(readOrThrow(files, where), &problem);
         if (!map) throw std::invalid_argument(problem);

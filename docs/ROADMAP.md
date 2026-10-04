@@ -44,7 +44,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   (**default:** opportunity attacks are automatic, a setting turns the prompt on).
 - [x] **B7. Shared turns.** Neighbours in initiative on one side act as a block in any order.
 - [x] **B8. Flanking and cover.** Grid helpers in the framework; numbers in the ruleset.
-- [ ] **B9. Proficiency ranks.** Level plus rank bonus for attacks, saves, skills, AC and DCs.
+- [x] **B9. Proficiency ranks.** Level plus rank bonus for attacks, saves, skills, AC and DCs.
 - [ ] **B10. Downed and death.** Death saves, stable, dead, getting up through Help, healing or a
   potion; wipe returns to the autosave or the chapter's `onWipe`.
 
