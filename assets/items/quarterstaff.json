@@ -1,0 +1,8 @@
+{
+  "id": "quarterstaff",
+  "name": "Quarterstaff",
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "str",
+  "weight": 4
+}

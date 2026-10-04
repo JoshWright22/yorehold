@@ -54,7 +54,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   rebuilt from them. Migration from the current sheets in saves.
 - [x] **C2. Races, backgrounds and feats as files.** Human, elf, dwarf, halfling; six backgrounds;
   a first set of feats per kind.
-- [ ] **C3. Class level tables.** Fighter, rogue, cleric, wizard, levels 1 to 20: HP, features,
+- [x] **C3. Class level tables.** Fighter, rogue, cleric, wizard, levels 1 to 20: HP, features,
   ranks, feats, slots. Level-up from XP, any level into any class. Build the table format and
   levels 1 to 5 first, then fill 6 to 20 in the same format; a unit check builds each class at
   every level.

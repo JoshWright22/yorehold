@@ -137,9 +137,27 @@ void contentTests(const fs::path& scratch)
             made.race = feat.needs.races.empty() ? "human" : feat.needs.races.front();
             for (const auto& ability : chapter->rules.abilities) made.scores[ability.id] = 16;
             const std::string classId = feat.needs.classes.empty() ? "cleric" : feat.needs.classes.front();
-            for (int level = 1; level <= std::max(1, feat.needs.level); level++) made.levels.push_back({classId, {}});
-            made.levels.back().picks["skills"] = feat.needs.proficiencies;
-            if (feat.kind != "race") made.levels.back().picks["feats"] = {featId};
+            // Race feats come with the race; the others go in the first row of the class's table
+            // that offers their kind, with any skill they need trained at a row before it.
+            const std::vector<yh::ClassLevel>& rows = options.classes.at(classId).levels;
+            size_t slot = rows.size();
+            for (size_t row = static_cast<size_t>(std::max(1, feat.needs.level)) - 1; row < rows.size() && slot == rows.size(); row++)
+                if (std::find(rows[row].feats.begin(), rows[row].feats.end(), feat.kind) != rows[row].feats.end()) slot = row;
+            if (feat.kind == "race") slot = 0;
+            if (slot == rows.size())
+            {
+                takeable = false;
+                std::fprintf(stderr, "%s: no %s feat slot in %s\n", featId.c_str(), feat.kind.c_str(), classId.c_str());
+                continue;
+            }
+            made.levels.assign(slot + 1, yh::LevelChoice{classId, {}});
+            if (feat.kind != "race") made.levels[slot].picks["feats"] = {featId};
+            for (size_t row = slot; row-- > 0 && !feat.needs.proficiencies.empty();)
+                if (rows[row].skills >= static_cast<int>(feat.needs.proficiencies.size()))
+                {
+                    made.levels[row].picks["skills"] = feat.needs.proficiencies;
+                    break;
+                }
             if (!options.build(chapter->rules, made, &problem))
             {
                 takeable = false;
@@ -147,6 +165,65 @@ void contentTests(const fs::path& scratch)
             }
         }
         check(takeable, "Every shipped feat can be taken");
+
+        // Level tables: the four launch classes build at every level from 1 to 20.
+        bool tables = true;
+        for (const char* classId : {"fighter", "rogue", "cleric", "wizard"})
+        {
+            const yh::ClassDefinition* definition = options.characterClass(classId);
+            if (!definition || definition->levels.size() != 20)
+            {
+                tables = false;
+                std::fprintf(stderr, "%s: no 20-level table\n", classId);
+                continue;
+            }
+            std::map<std::string, int> offered;
+            for (const yh::ClassLevel& row : definition->levels)
+                for (const std::string& kind : row.feats) offered[kind]++;
+            if (offered["class"] != 5 || offered["skill"] != 3 || offered["general"] != 2)
+            {
+                tables = false;
+                std::fprintf(stderr, "%s: feat slots are off the schedule\n", classId);
+            }
+            yh::CharacterChoices made;
+            made.name = "Test";
+            for (const auto& ability : chapter->rules.abilities) made.scores[ability.id] = 12;
+            int lastHp = 0;
+            for (int level = 1; level <= 20; level++)
+            {
+                made.levels.push_back({classId, {}});
+                const auto sheet = options.build(chapter->rules, made, &problem);
+                if (!sheet || sheet->level != level || sheet->maxHp() <= lastHp)
+                {
+                    tables = false;
+                    std::fprintf(stderr, "%s level %d: %s\n", classId, level, problem.c_str());
+                    break;
+                }
+                lastHp = sheet->maxHp();
+                const bool caster = std::string_view(classId) == "cleric" || std::string_view(classId) == "wizard";
+                if (caster != sheet->resources.contains("slots-1") || (caster && level >= 17) != sheet->resources.contains("slots-9"))
+                {
+                    tables = false;
+                    std::fprintf(stderr, "%s level %d: wrong spell slots\n", classId, level);
+                }
+            }
+        }
+        check(tables, "Fighter, rogue, cleric and wizard build at every level from 1 to 20");
+        {
+            // Any level into any class, and the fighter's ranks rise on schedule.
+            yh::CharacterChoices made;
+            made.name = "Test";
+            for (const auto& ability : chapter->rules.abilities) made.scores[ability.id] = 12;
+            for (int level = 1; level <= 5; level++) made.levels.push_back({"fighter", {}});
+            made.levels.push_back({"wizard", {}});
+            made.levels.push_back({"rogue", {}});
+            const auto mixed = options.build(chapter->rules, made, &problem);
+            check(mixed && mixed->level == 7 && mixed->characterClass == "Fighter / Wizard / Rogue"
+                && mixed->proficiencyRank(chapter->rules, "weapons") == "expert" && mixed->resources.at("slots-1").max == 2
+                && mixed->resources.at("second-wind").max == 1 && mixed->stats.integer("damage") == 1,
+                "Levels mix classes, each bringing its own table's rows");
+            check(chapter->rules.xpForLevel.size() == 19 && chapter->rules.levelForXp(355000) == 20, "XP reaches level 20");
+        }
     }
     {
         const auto shipped = json::parse(*files.readText("rulesets/yorehold/stealth.json"));
@@ -179,6 +256,11 @@ void contentTests(const fs::path& scratch)
         check(renamed.death.enabled && renamed.death.successes == 3 && renamed.death.failures == 3
             && renamed.death.saveDc == 10 && !modern.death.enabled, "Yorehold enables data-defined death saves");
         renamed.death = modern.death;
+        // The keep's levels cost what they did; the file only carries the curve on to level 20.
+        check(renamed.xpForLevel.size() == 19
+            && std::equal(modern.xpForLevel.begin(), modern.xpForLevel.end(), renamed.xpForLevel.begin()),
+            "Yorehold extends the XP curve to level 20 without moving the early levels");
+        renamed.xpForLevel = modern.xpForLevel;
         json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
         // Conditions are checked on their own, and a full recovery has no use for a fraction.
         for (json* set : {&mine, &theirs})
@@ -320,7 +402,7 @@ void libraryTests(const fs::path& scratch)
     auto added = ContentLibrary::install(archive.string(), library, &error);
     check(added && added->adventures.size() == 1 && added->adventures.front().title == "The Goblin Keep"
         && added->adventures.front().folder == "chapters/goblin-keep", "Opening a .yore adds its adventures");
-    check(added && added->classes == 4 && added->items == 10 && added->creatures == 3, "Added files report what they hold");
+    check(added && added->classes == 5 && added->items == 11 && added->creatures == 3, "Added files report what they hold");
     check(added && fs::path(added->path).filename() == "my-keep-2.yore" && fs::exists(added->path) && fs::exists(archive),
         "Files are copied into the library under plain names");
     check(ContentLibrary::install(archive.string(), library, &error) && ContentLibrary::installed(library).size() == 1,
@@ -336,28 +418,28 @@ void libraryTests(const fs::path& scratch)
     const auto defsArchive = scratch / "classes.yore";
     check(yh::FileSystem::packFolder(defs.string(), defsArchive.string()), "Pack definitions without a chapter");
     const auto pack = ContentLibrary::install(defsArchive.string(), library, &error);
-    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 4 && pack->items == 10 && pack->creatures == 0,
+    check(pack && pack->name == "Starter classes" && pack->adventures.empty() && pack->classes == 5 && pack->items == 11 && pack->creatures == 0,
         "Classes and items can be shared without an adventure");
 
     // A pack with one new class: it joins the compendium without touching the installed adventure.
     const auto extra = scratch / "extra";
-    auto wizard = json::parse(std::ifstream(fs::path(YH_GAME_ASSETS) / "classes" / "fighter.json"));
-    wizard["id"] = "wizard";
-    wizard["name"] = "Wizard";
-    wizard["items"] = json::array();
-    write(extra / "classes" / "wizard.json", wizard);
-    write(extra / "content.json", {{"format", "yorehold.content"}, {"version", 1}, {"name", "Wizards"}});
-    check(yh::FileSystem::packFolder(extra.string(), (scratch / "wizards.yore").string())
-        && ContentLibrary::install((scratch / "wizards.yore").string(), library, &error), "Add a pack with one new class");
+    auto warden = json::parse(std::ifstream(fs::path(YH_GAME_ASSETS) / "classes" / "fighter.json"));
+    warden["id"] = "warden";
+    warden["name"] = "Warden";
+    warden["items"] = json::array();
+    write(extra / "classes" / "warden.json", warden);
+    write(extra / "content.json", {{"format", "yorehold.content"}, {"version", 1}, {"name", "Wardens"}});
+    check(yh::FileSystem::packFolder(extra.string(), (scratch / "wardens.yore").string())
+        && ContentLibrary::install((scratch / "wardens.yore").string(), library, &error), "Add a pack with one new class");
     const auto packs = ContentLibrary::installed(library);
     const yh::Compendium all = ContentLibrary::compendium(YH_GAME_ASSETS, packs);
-    check(all.classes.size() == 5 && all.characterClass("wizard") && all.characterClass("fighter") && all.items.size() == 10,
+    check(all.classes.size() == 6 && all.characterClass("warden") && all.characterClass("fighter") && all.items.size() == 11,
         "Added packs extend the compendium used for making things");
     const auto unchanged = ContentLibrary::inspect(added->path, &error);
     yh::FileSystem keepFiles;
     ContentPackage::mount(keepFiles, added->path, "keep");
     const auto keepChapter = Chapter::load(keepFiles, "chapters/goblin-keep", &error);
-    check(unchanged && keepChapter && !keepChapter->compendium.characterClass("wizard"), "Adventures only use what their own file carries");
+    check(unchanged && keepChapter && !keepChapter->compendium.characterClass("warden"), "Adventures only use what their own file carries");
     check(ContentLibrary::remove(packs.back()), "Remove the extra pack");
 
     {
@@ -665,6 +747,8 @@ void stealthTests(const fs::path& scratch)
         std::ifstream file(saveDir / "adventure.json", std::ios::binary);
         saved = json::parse(file);
     }
+    // A new game takes its seed from the clock; a fixed one makes the stealth rolls below repeatable.
+    saved["data"]["seed"] = 7;
     auto place = [&](const std::vector<yh::Cell>& cells, bool sneaking) {
         json edited = saved;
         for (size_t i = 0; i < cells.size(); i++)

@@ -17,5 +17,27 @@
   "items": [
     "shortsword",
     "leather"
+  ],
+  "levels": [
+    { "skills": 2 },
+    { "feats": ["class"], "features": [{ "id": "cunning-action", "name": "Cunning Action", "description": "Slips away when cornered.", "resources": { "cunning-action": 1 } }] },
+    { "skills": 1, "features": [{ "id": "sneak-strike", "name": "Sneak Strike", "description": "Knows where it hurts: +1 weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["skill"] },
+    { "skills": 1, "ranks": { "stealth": "expert" }, "features": [{ "id": "uncanny-dodge", "name": "Uncanny Dodge", "description": "+1 AC.", "modifiers": [{ "stat": "ac", "value": 1 }] }] },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "weapons": "expert", "dex": "expert" }, "features": [{ "id": "sneak-strike-2", "name": "Deeper Cuts", "description": "+1 more weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["general"] },
+    { "skills": 1, "ranks": { "perception": "expert" } },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "dc": "expert" }, "features": [{ "id": "sneak-strike-3", "name": "Vital Strike", "description": "+1 more weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["skill"] },
+    { "skills": 1, "ranks": { "dex": "master", "armor": "expert" } },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "weapons": "master" }, "features": [{ "id": "sneak-strike-4", "name": "Killing Strike", "description": "+1 more weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["general"] },
+    { "skills": 1, "ranks": { "stealth": "master" }, "features": [{ "id": "elusive", "name": "Elusive", "description": "+1 more AC.", "modifiers": [{ "stat": "ac", "value": 1 }] }] },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "dc": "master" }, "features": [{ "id": "sneak-strike-5", "name": "Assassin's Edge", "description": "+1 more weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["skill"], "ranks": { "stealth": "legendary" } }
   ]
 }

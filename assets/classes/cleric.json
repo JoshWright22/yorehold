@@ -18,5 +18,27 @@
     "mace",
     "chain-shirt",
     "shield"
+  ],
+  "levels": [
+    { "slots": { "1": 2 } },
+    { "feats": ["class"], "slots": { "1": 3 }, "features": [{ "id": "channel-divinity", "name": "Channel Divinity", "description": "Once a rest, call on their god directly.", "resources": { "channel-divinity": 1 } }] },
+    { "skills": 1, "slots": { "1": 4, "2": 2 } },
+    { "feats": ["skill"], "slots": { "1": 4, "2": 3 } },
+    { "slots": { "1": 4, "2": 3, "3": 2 }, "ranks": { "perception": "expert" } },
+    { "feats": ["class"], "slots": { "1": 4, "2": 3, "3": 3 }, "features": [{ "id": "channel-divinity-2", "name": "Stronger Channel", "description": "Channel Divinity twice a rest.", "resources": { "channel-divinity": 1 } }] },
+    { "skills": 1, "slots": { "1": 4, "2": 3, "3": 3, "4": 1 }, "ranks": { "dc": "expert" } },
+    { "feats": ["general"], "slots": { "1": 4, "2": 3, "3": 3, "4": 2 }, "features": [{ "id": "potent-prayer", "name": "Potent Prayer", "description": "+1 to the DCs of what they cast.", "modifiers": [{ "stat": "dc", "value": 1 }] }] },
+    { "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 1 }, "ranks": { "wis": "expert" } },
+    { "feats": ["class"], "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2 }, "features": [{ "id": "divine-intervention", "name": "Divine Intervention", "description": "Once a long rest, ask for a miracle.", "resources": { "divine-intervention": 1 } }] },
+    { "skills": 1, "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1 }, "ranks": { "weapons": "expert" } },
+    { "feats": ["skill"], "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1 } },
+    { "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1, "7": 1 }, "ranks": { "armor": "expert" } },
+    { "feats": ["class"], "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1, "7": 1 } },
+    { "skills": 1, "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1, "7": 1, "8": 1 }, "ranks": { "dc": "master" } },
+    { "feats": ["general"], "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1, "7": 1, "8": 1 } },
+    { "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 2, "6": 1, "7": 1, "8": 1, "9": 1 }, "ranks": { "wis": "master" } },
+    { "feats": ["class"], "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 3, "6": 1, "7": 1, "8": 1, "9": 1 }, "features": [{ "id": "channel-divinity-3", "name": "Overflowing Channel", "description": "Channel Divinity three times a rest.", "resources": { "channel-divinity": 1 } }] },
+    { "skills": 1, "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 3, "6": 2, "7": 1, "8": 1, "9": 1 }, "ranks": { "dc": "legendary" } },
+    { "feats": ["skill"], "slots": { "1": 4, "2": 3, "3": 3, "4": 3, "5": 3, "6": 2, "7": 2, "8": 1, "9": 1 } }
   ]
 }
