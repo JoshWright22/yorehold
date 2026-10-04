@@ -61,8 +61,7 @@ welcome where they play better.
 - **Hands must be free.** Something held in the other hand (a shield, a torch, a second weapon)
   limits what can be used (**default**). Changing grip is part of Interact.
 - **Reaction:** one per round (**default**).
-- **Repeated Strikes:** each Strike after the first in a turn takes a penalty, -5 by default, as in
-  Pathfinder. Two one-handed Strikes in a turn (dual wielding) count as repeats (**default**).
+- **Repeated Strikes:** no penalty. Two Strikes in a turn hit as hard as one.
 
 ## Play
 
