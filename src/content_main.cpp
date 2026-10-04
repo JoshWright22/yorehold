@@ -1,5 +1,5 @@
-#include "ContentPackage.h"
-#include "Chapter.h"
+#include "content/ContentPackage.h"
+#include "content/Chapter.h"
 
 #include <yorehold/framework/assets/FileSystem.h>
 

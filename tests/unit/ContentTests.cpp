@@ -1,6 +1,6 @@
-#include "Chapter.h"
-#include "ContentPackage.h"
 #include "YoreholdGame.h"
+#include "content/Chapter.h"
+#include "content/ContentPackage.h"
 
 #include <yorehold/framework/assets/FileSystem.h>
 #include <yorehold/framework/map/Pathfinding.h>

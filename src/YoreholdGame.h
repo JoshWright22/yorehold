@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Chapter.h"
-#include "ContentPackage.h"
-#include "Online.h"
+#include "content/Chapter.h"
+#include "content/ContentPackage.h"
+#include "online/Online.h"
 
 #include <yorehold/framework/Host.h>
 #include <yorehold/framework/animation/Cutscene.h>
