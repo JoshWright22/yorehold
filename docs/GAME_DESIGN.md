@@ -180,6 +180,12 @@ These follow BG3 for now and may be revisited.
 - **Canon:** content that ranks above a threshold in its category also needs 1 to 3 approved users
   (curators; the name isn't settled) to sign off before it becomes canon. Canon content goes into
   the shared ruleset or the featured library.
+- **Thresholds** are set by the project team, per category.
+- **Who approves:**
+  - Approvers belong to a category (classes, spells, maps...).
+  - Only a category's approvers can make someone else an approver there, and only someone who
+    already has content approved in that category.
+  - The project team are the first approvers in every category.
 - **Homebrew is the point:** everything in the game can be made by players, submitted, ranked and
   passed around as files.
 
@@ -203,5 +209,5 @@ These follow BG3 for now and may be revisited.
    a replacement before playing (**default**)?
 3. Supplies: how much food does a long rest cost, and can you rest anywhere or only where the
    adventure allows it (**default:** anywhere outside combat, unless the area forbids it)?
-4. Canon: what decides the threshold, and who picks the curators (**default:** set by the project
-   team per category)?
+4. Approvers: can approvers lose the role, for example through a vote by the other approvers
+   (**default:** yes)?
