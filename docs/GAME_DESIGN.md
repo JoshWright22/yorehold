@@ -30,6 +30,10 @@ welcome where they play better.
 - **One ruleset for the whole game.** Every adventure uses the same rules, so characters move
   between them freely. The ruleset is updated over time based on player feedback and votes.
 - **Players vote on** skills, classes, spells, races and the like. The game ships with a starting set.
+- **Ruleset updates retire old characters.** When a new ruleset version comes out:
+  - Characters built on the old version go to the graveyard. They stay viewable but can't be played.
+  - A new version of each one is made automatically under the new rules, as close to the old build
+    as the new rules allow. The player plays that one from then on.
 - **Abilities:** six.
 - **Skills:** about as many as D&D has. Until the first vote, dialogue checks use the current list;
   the surrender talk's Persuasion check is a stand-in.
@@ -123,6 +127,6 @@ Power grows as in Pathfinder 2e, not 5e:
 
 1. Magic items: does the limit of 3 count only items in use (worn or held), or everything carried
    (**default:** in use, like attunement)?
-2. Votes: on the website, per season (**default**)? What happens to existing characters when a vote
-   removes or changes something they use (**default:** they get a free rebuild)?
+2. Votes: on the website, per season (**default**)? When the conversion can't keep a choice (say a
+   removed class), does the player pick a replacement before playing (**default**)?
 3. Rests: short and long rests as in 5e (**default**)?
