@@ -79,7 +79,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 - [x] **E1. Spell files and casting.** Slots, cantrips, hands as cost, targeting with area
   templates and the ruler, saves, concentration.
-- [ ] **E2. Prepared and spontaneous casters, focus points.**
+- [x] **E2. Prepared and spontaneous casters, focus points.**
 - [ ] **E3. Starter lists.** About eight spells each for cleric and wizard across levels 0 to 3,
   written fresh, each with a unit check.
 - [ ] **E4. AI uses abilities.** The scorer rates every action a creature has.
