@@ -39,6 +39,17 @@ welcome where they play better.
   The built-in "modern" and "classic" rulesets are prototypes. Letting adventures choose a ruleset
   will go away.
 
+## Scaling
+
+Power grows as in Pathfinder 2e, not 5e:
+- **Proficiency:** level plus a training rank (untrained, trained, expert, master, legendary), so
+  numbers rise steadily from 1 to 20 (**default**).
+- **Martial classes** (melee above all) do the most damage: the best weapon ranks, more damage dice
+  as they level, and features that add to their hits.
+- **Casters and skill classes** trade damage for utility: control, healing, buffs, mobility and
+  answers to problems a sword can't solve.
+- Gear adds to the numbers, as Pathfinder's runes do (**default**).
+
 ## Turns
 
 - **Free movement every turn**, up to the character's speed, at any point in the turn.
@@ -107,7 +118,8 @@ welcome where they play better.
 
 ## Open questions (defaults apply until answered)
 
-1. Proficiency: a 5e-style bonus by level (**default**), or Pathfinder's trained/expert/master ranks?
+1. Gear: should magic items scale the numbers as Pathfinder's runes do (**default**), or stay
+   mostly flavour as in 5e?
 2. Spellcasting: spell slots (**default**), or another resource?
 3. Votes: on the website, per season (**default**)? What happens to existing characters when a vote
    removes or changes something they use (**default:** they get a free rebuild)?
