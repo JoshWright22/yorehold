@@ -79,6 +79,16 @@
       "killed": ["tobb_dead"]
     }
   ],
+  "containers": [
+    {
+      "id": "storeroom-chest",
+      "name": "Storeroom chest",
+      "at": [18, 2],
+      "items": ["mace"],
+      "coins": 250,
+      "loot": { "items": [{ "item": "shield", "chance": 0.5 }] }
+    }
+  ],
   "quests": "quests.json",
   "encounters": [
     {

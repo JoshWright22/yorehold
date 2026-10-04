@@ -41,6 +41,7 @@ std::string World::stateJson() const
     data["flags"] = flags_;
     data["rolls"] = rolls_;
     data["fog"] = nlohmann::json::parse(fog_.toJson());
+    data["piles"] = pilesJson();
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
@@ -56,6 +57,7 @@ std::string World::stateJson() const
             {"awake", creatures_[i].awake},
             {"fled", creatures_[i].fled},
             {"surrendered", creatures_[i].surrendered},
+            {"dropped", creatures_[i].dropped},
             {"sneaking", creatures_[i].sneaking()},
             {"team", creatures_[i].team},
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
@@ -124,10 +126,12 @@ bool World::restoreState(std::string_view text, std::string* problem)
         const auto library = data.value("library", std::vector<std::string>(heroCount_));
         if (library.size() != heroCount_)
             throw std::runtime_error("saved characters don't match the party");
+        // What lies on the map. Saves from before loot have none: the containers start full again.
+        const std::optional<std::vector<Pile>> piles = data.contains("piles") ? std::optional(pilesFrom(data.at("piles"))) : std::nullopt;
         std::vector<yh::CharacterChoices> choices;
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
-        std::vector<bool> awake, fled, surrendered, sneaking;
+        std::vector<bool> awake, fled, surrendered, sneaking, dropped;
         std::vector<int> teams;
         for (const nlohmann::json& c : saved)
         {
@@ -158,6 +162,8 @@ bool World::restoreState(std::string_view text, std::string* problem)
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
             fled.push_back(c.value("fled", false) && sheets.back().down());
+            // Without saved piles, enemies already dead leave nothing more (their things stayed on their sheets).
+            dropped.push_back(c.value("dropped", !piles && sheets.back().down()));
             sneaking.push_back(c.value("sneaking", false) && sneaking.size() < heroCount_ && !sheets.back().down()); // older saves have none
             // Only an NPC's side can change (a peaceful one the party attacked), or an enemy's that gave up.
             const int team = c.value("team", creatures_[teams.size()].team);
@@ -169,6 +175,8 @@ bool World::restoreState(std::string_view text, std::string* problem)
         seats_ = std::move(seats);
         newAdventure(seed);
         fog_ = std::move(*fog);
+        if (piles)
+            piles_ = *piles;
         fights_ = fights;
         restsUsed_ = std::move(rests);
         flags_ = std::move(flags);
@@ -185,6 +193,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];
+            creatures_[i].dropped = dropped[i];
             setSneaking(i, sneaking[i]); // also for saves from before sneaking was a condition on the sheet
             creatures_[i].team = teams[i];
             yh::Token& token = tokens_.tokens[i];

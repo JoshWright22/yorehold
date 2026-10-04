@@ -224,6 +224,45 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 return std::nullopt;
             return accepted;
         }
+        if (type == "loot")
+        {
+            // Taking from a pile the hero stands on or beside: one item, the coins, or all of it.
+            const size_t hero = j.at("hero").get<size_t>();
+            const size_t pile = j.at("pile").get<size_t>();
+            if (!calm || talk_ || hero >= heroCount_ || !mayAct(player, hero) || creatures_[hero].sheet.down() || pile >= piles_.size()
+                || piles_[pile].empty())
+                return std::nullopt;
+            const yh::Cell at = cellOf(hero);
+            if (std::abs(piles_[pile].at.x - at.x) > 1 || std::abs(piles_[pile].at.y - at.y) > 1)
+            {
+                reason = creatures_[hero].sheet.name + " is too far from " + piles_[pile].name + ".";
+                return std::nullopt;
+            }
+            if (j.value("all", false))
+                return nlohmann::json{{"hero", hero}, {"pile", pile}, {"all", true}}.dump();
+            if (j.value("coins", false))
+                return piles_[pile].coins > 0 ? std::optional(nlohmann::json{{"hero", hero}, {"pile", pile}, {"coins", true}}.dump()) : std::nullopt;
+            const size_t item = j.at("item").get<size_t>();
+            return item < piles_[pile].items.size() ? std::optional(nlohmann::json{{"hero", hero}, {"pile", pile}, {"item", item}}.dump()) : std::nullopt;
+        }
+        if (type == "give")
+        {
+            // Handing an item or coins to another hero, between fights.
+            const size_t from = j.at("from").get<size_t>();
+            const size_t to = j.at("to").get<size_t>();
+            if (!calm || talk_ || from >= heroCount_ || to >= heroCount_ || from == to || !mayAct(player, from)
+                || creatures_[from].sheet.down() || creatures_[to].sheet.down())
+                return std::nullopt;
+            if (j.contains("coins"))
+            {
+                const int coins = j.at("coins").get<int>();
+                return coins > 0 && coins <= creatures_[from].sheet.coins
+                    ? std::optional(nlohmann::json{{"from", from}, {"to", to}, {"coins", coins}}.dump()) : std::nullopt;
+            }
+            const size_t item = j.at("item").get<size_t>();
+            return item < creatures_[from].sheet.inventory.size()
+                ? std::optional(nlohmann::json{{"from", from}, {"to", to}, {"item", item}}.dump()) : std::nullopt;
+        }
         if (type == "rest")
         {
             const size_t index = j.at("rest").get<size_t>();
@@ -454,6 +493,63 @@ void World::apply(const yh::NetCommand& command)
         }
         sheet.hp = std::min(sheet.hp, sheet.maxHp());
         syncLog();
+    }
+    else if (type == "loot")
+    {
+        yh::Character& sheet = creatures_[j.at("hero").get<size_t>()].sheet;
+        Pile& pile = piles_[j.at("pile").get<size_t>()];
+        const bool all = j.value("all", false);
+        std::string taken;
+        auto note = [&](const std::string& what) { taken += (taken.empty() ? "" : ", ") + what; };
+        if ((all || j.value("coins", false)) && pile.coins > 0)
+        {
+            note(coinText(pile.coins));
+            sheet.coins += pile.coins;
+            pile.coins = 0;
+        }
+        const size_t first = all ? 0 : j.value("item", pile.items.size());
+        for (size_t i = first; i < pile.items.size() && (all || i == first);)
+        {
+            note(pile.items[i].name + (pile.items[i].quantity > 1 ? " x" + std::to_string(pile.items[i].quantity) : ""));
+            addTo(sheet, pile.items[i]);
+            pile.items.erase(pile.items.begin() + static_cast<std::ptrdiff_t>(i));
+            if (!all)
+                break;
+        }
+        if (!taken.empty())
+            say(sheet.name + " takes " + taken + " (" + pile.name + ").");
+    }
+    else if (type == "give")
+    {
+        yh::Character& from = creatures_[j.at("from").get<size_t>()].sheet;
+        yh::Character& to = creatures_[j.at("to").get<size_t>()].sheet;
+        if (j.contains("coins"))
+        {
+            const int coins = j.at("coins").get<int>();
+            from.coins -= coins;
+            to.coins += coins;
+            say(from.name + " gives " + coinText(coins) + " to " + to.name + ".");
+        }
+        else
+        {
+            const size_t index = j.at("item").get<size_t>();
+            from.unequip(index);
+            const yh::Item item = from.inventory[index];
+            // Later items move up a place: take their modifiers off and put them back under their new index.
+            std::vector<bool> worn;
+            for (size_t i = index + 1; i < from.inventory.size(); i++)
+            {
+                worn.push_back(from.inventory[i].equipped);
+                from.unequip(i);
+            }
+            from.inventory.erase(from.inventory.begin() + static_cast<std::ptrdiff_t>(index));
+            for (size_t i = 0; i < worn.size(); i++)
+                if (worn[i])
+                    from.equip(index + i);
+            from.hp = std::min(from.hp, from.maxHp());
+            addTo(to, item);
+            say(from.name + " gives " + item.name + " to " + to.name + ".");
+        }
     }
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);

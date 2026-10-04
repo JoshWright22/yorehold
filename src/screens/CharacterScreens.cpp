@@ -410,7 +410,7 @@ void YoreholdGame::startParty()
         return;
     std::vector<std::optional<PartyPick>> picks;
     for (const std::optional<CharacterLibrary::Entry>& choice : partyChoice_)
-        picks.push_back(choice ? std::optional(PartyPick{choice->choices, choice->inventory, choice->fileName()}) : std::nullopt);
+        picks.push_back(choice ? std::optional(PartyPick{choice->choices, choice->inventory, choice->fileName(), choice->coins}) : std::nullopt);
     releaseCharacters();
     setParty(std::move(picks));
     newAdventure(SDL_GetTicks());

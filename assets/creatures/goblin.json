@@ -14,6 +14,7 @@
   "items": [
     "scimitar"
   ],
+  "loot": { "coins": "2d6" },
   "token": {
     "color": [
       120,

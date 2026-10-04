@@ -91,6 +91,19 @@ struct Chapter
     std::string wipeCutscene; // played before returning to the checkpoint
     std::vector<yh::Cell> wipeDestination; // one cell per hero; empty = checkpoint positions
 
+    // A chest, a sack, a crate: something standing on the map with things in it to take. It holds
+    // its listed items and coins (in copper) plus whatever its loot table gives when the adventure starts.
+    struct Container
+    {
+        std::string id;
+        std::string name = "Chest";
+        yh::Cell at;
+        std::vector<std::string> items;
+        int coins = 0;
+        yh::LootTable loot;
+    };
+    std::vector<Container> containers;
+
     // One seat per hero. Each holds the chapter's own ready-made character until the player brings
     // or makes one; ready-made ones start at `level`, the level the chapter is written for.
     std::vector<PartyMember> party;

@@ -170,6 +170,7 @@ void World::endCombat()
             won.insert(won.end(), chapter_->encounters[group].set.begin(), chapter_->encounters[group].set.end());
     }
     setFlags(won);
+    dropLoot();
 
     if (chapterCleared())
     {

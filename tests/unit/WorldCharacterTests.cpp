@@ -19,10 +19,70 @@ std::map<std::string, std::string> yardFiles(int xpPerVictory)
         "effects":[{"do":"damage","dice":10000,"target":"enemies"}]})"}};
 }
 
+// Containers, what the dead leave, taking and giving.
+void lootTests(const std::function<void(bool, const char*)>& check)
+{
+    auto files = yardFiles(50);
+    nlohmann::json chapter = nlohmann::json::parse(files.at("chapters/choice-yard/chapter.json"));
+    chapter["containers"] = {{{"id", "box"}, {"name", "Box"}, {"at", {2, 2}}, {"items", {"mace"}}, {"coins", 30}}};
+    files["chapters/choice-yard/chapter.json"] = chapter.dump();
+    WorldFixture world;
+    check(world.loadJson("chapters/choice-yard", files, 5), "The yard loads with a container");
+    if (!world.chapter()) return;
+    const auto& rules = world.rules();
+    check(world.piles().size() == 1 && world.piles()[0].name == "Box" && world.piles()[0].coins == 30 && world.piles()[0].items.size() == 1
+        && world.pileNear(0) == std::optional<size_t>(0) && !world.pileNear(1), "A container starts full; only a hero beside it can reach it");
+    check(!world.send("loot", {{"hero", 1}, {"pile", 0}, {"all", true}}) && world.refusal.find("too far") != std::string::npos,
+        "A hero further away is told so");
+    check(world.send("loot", {{"hero", 0}, {"pile", 0}, {"coins", true}}) && world.sheet(0).coins == 30 && world.piles()[0].coins == 0
+        && world.said("Ana takes 3 sp (Box)."), "Coins are taken by themselves");
+    check(world.send("loot", {{"hero", 0}, {"pile", 0}, {"item", 0}}) && world.sheet(0).inventory.back().id == "mace"
+        && !world.sheet(0).inventory.back().equipped && world.piles()[0].empty() && !world.pileNear(0) && !world.send("loot", {{"hero", 0}, {"pile", 0}, {"all", true}}),
+        "Items go into the hero's pack, and an empty container has nothing more");
+
+    // Giving: items and coins change hands; a worn item comes off, and the rest stays as it was.
+    check(world.send("give", {{"from", 0}, {"to", 1}, {"item", world.sheet(0).inventory.size() - 1}}) && world.sheet(1).inventory.back().id == "mace"
+        && world.said("Ana gives Mace to Bo."), "An item can be handed to an ally");
+    check(world.send("give", {{"from", 0}, {"to", 1}, {"coins", 20}}) && world.sheet(0).coins == 10 && world.sheet(1).coins == 20
+        && !world.send("give", {{"from", 0}, {"to", 1}, {"coins", 11}}) && !world.send("give", {{"from", 0}, {"to", 0}, {"coins", 1}}),
+        "Coins can be handed over, but not more than there are");
+    const int ac = world.sheet(0).armorClass(rules);
+    const std::string first = world.sheet(0).inventory[0].id;
+    check(world.sheet(0).inventory[0].equipped && world.send("give", {{"from", 0}, {"to", 1}, {"item", 0}}) && world.sheet(1).inventory.back().id == first
+        && !world.sheet(1).inventory.back().equipped && world.sheet(0).armorClass(rules) == ac && !world.sheet(0).weapon(),
+        "Giving a held weapon away leaves armour and shield as they were");
+    const auto& left = world.sheet(0).inventory;
+    const size_t shield = static_cast<size_t>(std::find_if(left.begin(), left.end(), [](const yh::Item& i) { return i.id == "shield"; }) - left.begin());
+    check(shield < left.size() && world.send("equip", {{"hero", 0}, {"item", shield}, {"on", false}}) && world.sheet(0).armorClass(rules) < ac,
+        "What is still worn can still be put away");
+
+    // The dead leave what they carried and what their loot table gives, where they fell.
+    world.sheet(1).stats.setBase("dex", 2000); // Bo acts first
+    nlohmann::json places = nlohmann::json::array();
+    for (const auto& token : world.tokens().tokens) places.push_back({token.position.x, token.position.y});
+    check(world.send("fight", {{"group", 0}, {"at", places}}) && world.currentCreature() == 1 && world.send("use", {{"action", "finish-test"}}),
+        "The goblin is beaten");
+    check(world.piles().size() == 2 && world.piles()[1].name == "Gik" && world.piles()[1].at == world.cellOf(2) && world.piles()[1].container == -1
+        && world.piles()[1].coins >= 2 && world.piles()[1].coins <= 12 && world.piles()[1].items.size() == 1 && world.piles()[1].items[0].id == "scimitar"
+        && !world.piles()[1].items[0].equipped, "A dead goblin leaves its scimitar and some coins");
+    const int found = world.piles()[1].coins;
+    const auto saved = nlohmann::json::parse(world.stateJson());
+    check(world.restoreState(saved.dump()) && world.piles().size() == 2 && world.piles()[1].coins == found && world.piles()[0].empty()
+        && world.piles()[1].items.size() == 1 && world.sheet(1).coins == 20, "Saves keep what lies around and what everyone carries");
+    const std::string again = world.stateJson();
+    check(world.restoreState(again) && world.stateJson() == again, "A save with loot round trips unchanged");
+    auto older = saved;
+    older.erase("piles");
+    for (auto& creature : older["creatures"]) creature.erase("dropped");
+    check(world.restoreState(older.dump()) && world.piles().size() == 1 && world.piles()[0].coins == 30,
+        "A save from before loot starts the containers full and leaves the dead as they were");
+}
+
 }
 
 void worldCharacterTests(const std::function<void(bool, const char*)>& check)
 {
+    lootTests(check);
     WorldFixture world;
     check(world.loadJson("chapters/choice-yard", yardFiles(50), 5), "The choice yard loads");
     if (!world.chapter()) return;

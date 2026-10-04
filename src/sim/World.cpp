@@ -71,8 +71,10 @@ void World::newAdventure(uint64_t seed)
     pendingStep_.reset();
 
     heroCount_ = 0;
+    piles_.clear();
     if (!chapter_)
         return;
+    fillContainers();
     if (!chapter_->quests.empty())
         if (const std::optional<std::string> text = chapterFiles_.readText(chapter_->quests))
             journal_ = yh::QuestJournal::fromJson(*text); // Chapter::load already checked it
@@ -117,6 +119,7 @@ void World::newAdventure(uint64_t seed)
                 if (worn)
                     brought->equip(brought->inventory.size() - 1);
             }
+            brought->coins = pick->coins;
             creatures_.push_back({std::move(*brought)});
             creatures_.back().choices = pick->choices;
             creatures_.back().library = pick->library;

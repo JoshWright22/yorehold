@@ -50,6 +50,7 @@ public:
         bool fled = false;    // it got away: out of the adventure, and no body is left behind
         std::string breakAs;  // how it reacts now its morale has broken this fight (AiProfile::onBreak); empty = it hasn't
         bool surrendered = false; // gave up: out of the fight, stays where it is and can be talked to
+        bool dropped = false;     // dead, and what it had now lies in a pile
         std::string surrender;    // the dialogue for that (see Chapter::surrender)
         std::string readiedAction; // waiting for a reaction, until the next turn or the fight ends
         float facing = 0;      // radians: where an enemy looks until it notices the party
@@ -118,6 +119,7 @@ public:
         yh::CharacterChoices choices;
         std::vector<yh::Item> inventory;
         std::string library; // its file in the character library
+        int coins = 0;
     };
     void setParty(std::vector<std::optional<PartyPick>> picks) { partyPicks_ = std::move(picks); }
     void say(std::string line);
@@ -209,6 +211,24 @@ public:
     const yh::FogOfWar& fog() const { return fog_; }
     const std::vector<Creature>& creatures() const { return creatures_; }
     size_t heroCount() const { return heroCount_; }
+
+    // Things lying on the map for the party to take (WorldLoot.cpp): the chapter's containers, and
+    // what the enemies of a won fight left where they fell. A hero standing on or beside one can
+    // take from it ("loot"); between fights heroes can hand items and coins to each other ("give").
+    struct Pile
+    {
+        std::string name;
+        yh::Cell at;
+        int coins = 0;
+        std::vector<yh::Item> items;
+        int container = -1; // index into the chapter's containers; -1 = left by a creature
+        bool empty() const { return coins == 0 && items.empty(); }
+    };
+    const std::vector<Pile>& piles() const { return piles_; }
+    // The nearest pile with something in it that `hero` can reach from where they stand.
+    std::optional<size_t> pileNear(size_t hero) const;
+    // Coins as the game counts them: 1234 -> "12 gp 3 sp 4 cp".
+    static std::string coinText(int copper);
     const yh::Encounter* encounter() const { return encounter_.get(); }
     bool fighting() const { return encounter_ && !encounter_->finished(); }
     const yh::DialogueSession* talk() const { return talk_.get(); }
@@ -356,6 +376,12 @@ protected:
     std::vector<Creature> creatures_; // fixed size after newAdventure(): the encounter points into it
     size_t heroCount_ = 0; // the chapter's party; creatures_ lists heroes first
     std::vector<std::optional<PartyPick>> partyPicks_;
+    std::vector<Pile> piles_;
+    void fillContainers(); // newAdventure: each of the chapter's containers becomes a pile
+    void dropLoot();       // after a win: the dead enemies' gear and loot, where they fell
+    nlohmann::json pilesJson() const;
+    std::vector<Pile> pilesFrom(const nlohmann::json& saved) const; // throws for loot that doesn't fit the chapter
+    static void addTo(yh::Character& sheet, yh::Item item); // into an inventory, stacking with the same unworn item
     size_t npcStart_ = 0;
     std::unique_ptr<yh::Encounter> encounter_;
     size_t encounterLogShown_ = 0;

@@ -569,6 +569,7 @@ void YoreholdGame::writeBackCharacters(bool finished)
             entry->choices = hero.choices;
             entry->choices.xp = hero.sheet.xp;
             entry->inventory = hero.sheet.inventory;
+            entry->coins = hero.sheet.coins;
             entry->away = hero.sheet.death.dead ? std::string() : away;
         }
         bool written = entry && CharacterLibrary::write(charactersDir(), *entry, &error);

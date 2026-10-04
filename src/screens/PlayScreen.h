@@ -96,5 +96,7 @@ private:
     bool cameraPlaced_ = false;
     bool journalOpen_ = false;
     bool inventoryOpen_ = false;
+    std::optional<size_t> giving_;  // gear panel: the item being handed to someone
+    std::optional<size_t> looting_; // the pile whose contents are open
     std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

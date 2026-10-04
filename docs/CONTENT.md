@@ -89,7 +89,7 @@ One file per id. Filenames must match `id`, which uses lowercase letters, digits
 |---|---|
 | Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `weight`, `value`, `quantity`, `modifiers` |
 | Class | `id`, `name`, `description`, `hitDie`, `bonusHp`, `speed`, `proficiencies`, starting `items` ids |
-| Creature | `id`, `name`, `description`, `hp`, `armorClass`, `speed`, fixed `abilities`, `proficiencies`, `items`, `token` |
+| Creature | `id`, `name`, `description`, `hp`, `armorClass`, `speed`, fixed `abilities`, `proficiencies`, `items`, `loot`, `token` |
 
 An item's `slot` is where it is worn or held (`mainHand`, `offHand`, `armor`...; none = it can only be carried). Slots ending in `Hand` are held, and `hands` (default 1) is how many of a character's two hands the item takes: a `"hands": 2` weapon can't be held with a shield. Players change gear in the gear panel (I): free between fights, the Interact action's cost on the hero's turn in one.
 
@@ -112,6 +112,8 @@ Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in
 Party members have `name`, `class`, `color` and integer `at` cells. Encounter groups have unique `id`, optional starting `text`, and `creatures` with a `creature` id, optional `name` and `at`. Placements must be on walkable, distinct cells. Party size comes from the file, one to four. Seeing one enemy starts its authored encounter group.
 
 Each party member is a seat with a ready-made hero. Starting the adventure with New adventure lets players put a character from their library (or one made there and then) in any seat; it keeps that seat's `at` and `color`, and the ready-made hero only plays the seats nobody filled. Quick start plays the ready-made party. `level` (1 to 20, default 1) is the level the chapter is written for: ready-made heroes start at it, and a character made for a seat gets the XP to level up to it.
+
+`containers` puts things to open on the map: each has a unique `id`, a `name` (default "Chest"), an `at` cell of its own, and any of `items` (item ids), `coins` (in copper: 10 cp to the sp, 10 sp to the gp) and a `loot` table (FRAMEWORK.md, "Loot tables") rolled when the adventure starts. A hero standing on or beside one opens it with E and takes what they click. Creature files can carry `loot` too: when the party wins a fight, each dead enemy leaves what it carried plus what its table gives in a small sack where it fell. Enemies that got away or gave up leave nothing. In the keep, the storeroom has a chest and goblins carry a few coppers.
 
 A creature placement may set `facing`: the direction it looks until it notices the party, in degrees from -360 to 360, where 0 is east (right on the map), 90 south, 180 west and 270 north. Without it the creature looks toward where the party starts. Facing only matters to sneaking heroes, who are noticed inside the vision cone in front of an enemy and not behind it. In the keep, Gob has `"facing": 180` and watches the door.
 

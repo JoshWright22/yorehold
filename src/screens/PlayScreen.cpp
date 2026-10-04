@@ -90,13 +90,27 @@ bool PlayScreen::handle(const SDL_Event& event)
     {
         inventoryOpen_ = !inventoryOpen_;
         journalOpen_ = false;
+        giving_.reset();
+        looting_.reset();
+        return true;
+    }
+    if (keyDown && event.key.key == SDLK_E && !world_.fighting())
+    {
+        // Beside something to take: open it, then take everything.
+        const size_t hero = world_.leaderIndex();
+        if (looting_)
+            world_.act("loot", nlohmann::json{{"hero", hero}, {"pile", *looting_}, {"all", true}}.dump());
+        else if (!inventoryOpen_ && !journalOpen_)
+            looting_ = world_.pileNear(hero);
         return true;
     }
     if (keyDown && event.key.key == SDLK_ESCAPE)
     {
-        if (!journalOpen_ && !inventoryOpen_)
+        if (!journalOpen_ && !inventoryOpen_ && !looting_)
             return false;
         journalOpen_ = inventoryOpen_ = false;
+        giving_.reset();
+        looting_.reset();
         return true;
     }
     if (keyDown && event.key.key == SDLK_C)
@@ -240,6 +254,8 @@ void PlayScreen::show(World::Event& event)
         cutscene_ = {};
         cutsceneDone_ = false;
         journalOpen_ = inventoryOpen_ = false;
+        giving_.reset();
+        looting_.reset();
         cameraPlaced_ = false;
         break;
     case Kind::Resumed:
@@ -364,6 +380,26 @@ void PlayScreen::drawWorld(yh::Renderer& renderer)
         renderer.fillCircle(token.position, token.radius, creatures[i].team == 0 ? yh::Color{90, 90, 100, 255} : yh::Color{70, 30, 25, 255});
         renderer.drawLine(token.position - yh::Vec2{r, r}, token.position + yh::Vec2{r, r}, {20, 10, 10, 255}, 5);
         renderer.drawLine(token.position + yh::Vec2{-r, r}, token.position + yh::Vec2{r, -r}, {20, 10, 10, 255}, 5);
+    }
+    // Things to take: a chest for a container (dull once emptied), a small sack for what the dead left.
+    for (const World::Pile& pile : world_.piles())
+    {
+        if ((pile.container < 0 && pile.empty()) || world_.fog().state(world_.viewTeam(), 0, pile.at) == yh::FogState::Unexplored)
+            continue;
+        const yh::Vec2 centre{(pile.at.x + 0.5f) * cell, (pile.at.y + 0.5f) * cell};
+        if (pile.container >= 0)
+        {
+            const yh::Rect box{centre.x - cell * 0.3f, centre.y - cell * 0.2f, cell * 0.6f, cell * 0.42f};
+            renderer.fillRect(box, pile.empty() ? yh::Color{70, 60, 50, 255} : yh::Color{140, 95, 45, 255});
+            renderer.drawRect(box, {30, 20, 10, 255}, 2);
+            renderer.fillRect({centre.x - 4, centre.y - 5, 8, 8}, pile.empty() ? yh::Color{50, 45, 40, 255} : yh::Color{235, 200, 90, 255});
+        }
+        else
+        {
+            const yh::Vec2 at = centre + yh::Vec2{cell * 0.28f, cell * 0.28f}; // beside the body's mark
+            renderer.fillCircle(at, cell * 0.14f, {30, 20, 10, 255});
+            renderer.fillCircle(at, cell * 0.11f, {200, 165, 80, 255});
+        }
     }
     tokens.draw(renderer, camera_, grid);
     renderer.pop();
@@ -518,7 +554,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     ui_.begin(renderer, input_);
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
-    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, table.inSession, table.guest};
+    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, table.inSession, table.guest};
 
     if (!table.netStatus.empty())
         ui_.label({screen.w / 2 - 160, screen.h - 58}, table.netStatus, ui_.theme.textDim);
@@ -546,6 +582,8 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
         hud::journalPanel(hud, journalOpen_, title_);
     if (inventoryOpen_ && !world_.talk())
         hud::inventoryPanel(hud);
+    else if (!journalOpen_)
+        hud::lootPanel(hud);
     if (world_.talk())
     {
         hud::dialoguePanel(hud);

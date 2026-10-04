@@ -361,6 +361,33 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             c.npcs.push_back(std::move(npc));
         }
 
+        std::set<std::string> containerIds;
+        const auto containers = j.value("containers", nlohmann::json::array());
+        if (!containers.is_array()) throw std::invalid_argument("containers must be an array");
+        for (const auto& entry : containers)
+        {
+            Container container;
+            container.id = entry.at("id").get<std::string>();
+            container.name = entry.value("name", container.name);
+            container.at = cellFrom(entry.at("at"));
+            container.items = entry.value("items", std::vector<std::string>{});
+            container.coins = entry.value("coins", 0);
+            if (!validId(container.id) || !containerIds.insert(container.id).second)
+                throw std::invalid_argument("container ids must be unique and use a-z, 0-9, - and _");
+            if (container.name.empty() || container.name.size() > 64 || container.coins < 0 || container.coins > 100000000)
+                throw std::invalid_argument("container " + container.id + " needs a name and coins from 0");
+            for (const std::string& item : container.items)
+                if (!c.compendium.item(item)) throw std::invalid_argument("unknown item \"" + item + "\" in container " + container.id);
+            if (entry.contains("loot"))
+            {
+                std::optional<yh::LootTable> loot = yh::LootTable::fromJson(entry.at("loot").dump(), &problem);
+                if (!loot || !c.compendium.checkLoot(*loot, &problem)) throw std::invalid_argument("container " + container.id + ": " + problem);
+                container.loot = std::move(*loot);
+            }
+            place(container.at, container.name);
+            c.containers.push_back(std::move(container));
+        }
+
         if (const std::string quests = j.value("quests", ""); !quests.empty())
         {
             where = c.quests = resolve(files, folder, quests);
