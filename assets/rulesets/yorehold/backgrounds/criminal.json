@@ -1,0 +1,8 @@
+{
+  "id": "criminal",
+  "name": "Criminal",
+  "description": "Lived by locks, lies and back doors.",
+  "abilities": { "dex": 1 },
+  "proficiencies": ["stealth", "deception"],
+  "feats": ["quiet-step"]
+}

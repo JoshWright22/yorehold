@@ -1,0 +1,8 @@
+{
+  "id": "iron-will",
+  "name": "Iron Will",
+  "description": "Hard to frighten or fool: expert in Wisdom saves.",
+  "kind": "general",
+  "requires": { "level": 3, "proficiencies": ["wis"] },
+  "ranks": { "wis": "expert" }
+}

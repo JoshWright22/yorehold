@@ -1,0 +1,8 @@
+{
+  "id": "quick-reflexes",
+  "name": "Quick Reflexes",
+  "description": "Out of the way before the blast lands: trained in Dexterity saves.",
+  "kind": "general",
+  "requires": { "abilities": { "dex": 13 } },
+  "ranks": { "dex": "trained" }
+}

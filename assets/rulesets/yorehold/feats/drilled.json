@@ -1,0 +1,8 @@
+{
+  "id": "drilled",
+  "name": "Drilled",
+  "description": "Years of marching and hauling: expert in Athletics.",
+  "kind": "skill",
+  "requires": { "proficiencies": ["athletics"] },
+  "ranks": { "athletics": "expert" }
+}

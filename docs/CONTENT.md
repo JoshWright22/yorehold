@@ -27,6 +27,9 @@ rulesets/yorehold/             the game's rules (built in; see Rulesets)
   ruleset.json
   stealth.json
   conditions/prone.json        one file per condition
+  races/elf.json               player options: one file each (see Races, backgrounds and feats)
+  backgrounds/sage.json
+  feats/tough.json
 rulesets/my-rules.json         optional custom rules, as one file or a folder like the above
 ui/theme.json                  colors and frame styling
 design/                        optional game/UI design documents
@@ -140,6 +143,12 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.
 
 A package can carry rules of its own as one JSON file or as a folder of the same shape and name it in `chapter.json`. The shipped adventures do not.
+
+## Races, backgrounds and feats
+
+Player options live only in the ruleset folder: `races/`, `backgrounds/` and `feats/`, one file each named after its id, in the framework's format (FRAMEWORK.md, "Races, backgrounds and feats"). A chapter's own folder can't add them. A file with an unknown field, a feat a race or background gives that doesn't exist, or a feat requiring a race or class that doesn't exist stops the chapter loading and names the file.
+
+The game ships human, elf, dwarf and halfling; acolyte, criminal, farmhand, sage, soldier and noble; and a first feat set of each kind: race feats each race gives, skill feats the backgrounds give (expert in one of their skills), and general and class feats for the level slots the class level tables open. A character's `race` and `background` in a save name these ids. The content check builds every race and background with every class and takes every feat once.
 
 ## Proficiency ranks
 

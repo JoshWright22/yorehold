@@ -1,0 +1,8 @@
+{
+  "id": "trailwise",
+  "name": "Trailwise",
+  "description": "Never quite lost: expert in Survival.",
+  "kind": "skill",
+  "requires": { "proficiencies": ["survival"] },
+  "ranks": { "survival": "expert" }
+}

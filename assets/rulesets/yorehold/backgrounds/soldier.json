@@ -1,0 +1,8 @@
+{
+  "id": "soldier",
+  "name": "Soldier",
+  "description": "Served in a company, marched, drilled and kept watch.",
+  "abilities": { "str": 1 },
+  "proficiencies": ["athletics", "perception"],
+  "feats": ["drilled"]
+}

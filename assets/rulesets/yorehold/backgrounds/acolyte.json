@@ -1,0 +1,8 @@
+{
+  "id": "acolyte",
+  "name": "Acolyte",
+  "description": "Raised in a temple, taught to listen before speaking.",
+  "abilities": { "wis": 1 },
+  "proficiencies": ["insight", "persuasion"],
+  "feats": ["read-the-room"]
+}

@@ -191,6 +191,12 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             where = "content";
             throw std::invalid_argument(problem);
         }
+        // Races, backgrounds and feats only come from the ruleset, never from a chapter.
+        if (!c.rulesFolder.empty() && !c.compendium.loadOptions(files, c.rulesFolder, &problem))
+        {
+            where = "player options";
+            throw std::invalid_argument(problem);
+        }
 
         auto checkRanks = [&](const auto& definitions, const char* kind) {
             for (const auto& [id, definition] : definitions)

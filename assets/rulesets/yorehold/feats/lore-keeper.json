@@ -1,0 +1,8 @@
+{
+  "id": "lore-keeper",
+  "name": "Lore Keeper",
+  "description": "Has read about it somewhere: expert in Arcana.",
+  "kind": "skill",
+  "requires": { "proficiencies": ["arcana"] },
+  "ranks": { "arcana": "expert" }
+}

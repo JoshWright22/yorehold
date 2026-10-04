@@ -1,0 +1,8 @@
+{
+  "id": "quiet-step",
+  "name": "Quiet Step",
+  "description": "Moves without a sound: expert in Stealth.",
+  "kind": "skill",
+  "requires": { "proficiencies": ["stealth"] },
+  "ranks": { "stealth": "expert" }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "underfoot",
+  "name": "Underfoot",
+  "description": "Hard to hit for anyone used to fighting bigger folk: +1 AC.",
+  "kind": "race",
+  "requires": { "races": ["halfling"] },
+  "modifiers": [{ "stat": "ac", "value": 1 }]
+}

@@ -101,6 +101,54 @@ void contentTests(const fs::path& scratch)
     check(chapter->stealth.checkEvery == 5 && chapter->encounters[0].creatures[0].facing == 180.0f && !chapter->encounters[0].creatures[1].facing,
         "Stealth rules and where enemies look come from files");
     {
+        // Player options: four races, six backgrounds, feats of every kind; each pairing builds
+        // for every class, and every feat can be taken by someone.
+        const yh::Compendium& options = chapter->compendium;
+        check(options.races.size() == 4 && options.race("human") && options.race("elf") && options.race("dwarf") && options.race("halfling"),
+            "The ruleset ships human, elf, dwarf and halfling");
+        check(options.backgrounds.size() == 6, "The ruleset ships six backgrounds");
+        std::set<std::string> kinds;
+        for (const auto& [id, feat] : options.feats) kinds.insert(feat.kind);
+        check(kinds == std::set<std::string>{"class", "skill", "general", "race"}, "The ruleset ships feats of every kind");
+        bool builds = true;
+        std::string problem;
+        for (const auto& [classId, definition] : options.classes)
+            for (const auto& [raceId, race] : options.races)
+                for (const auto& [backgroundId, background] : options.backgrounds)
+                {
+                    yh::CharacterChoices made;
+                    made.name = "Test";
+                    made.race = raceId;
+                    made.background = backgroundId;
+                    for (const auto& ability : chapter->rules.abilities) made.scores[ability.id] = 14;
+                    made.levels.push_back({classId, {}});
+                    if (!options.build(chapter->rules, made, &problem))
+                    {
+                        builds = false;
+                        std::fprintf(stderr, "%s %s %s: %s\n", classId.c_str(), raceId.c_str(), backgroundId.c_str(), problem.c_str());
+                    }
+                }
+        check(builds, "Every race and background builds with every class");
+        bool takeable = true;
+        for (const auto& [featId, feat] : options.feats)
+        {
+            yh::CharacterChoices made;
+            made.name = "Test";
+            made.race = feat.needs.races.empty() ? "human" : feat.needs.races.front();
+            for (const auto& ability : chapter->rules.abilities) made.scores[ability.id] = 16;
+            const std::string classId = feat.needs.classes.empty() ? "cleric" : feat.needs.classes.front();
+            for (int level = 1; level <= std::max(1, feat.needs.level); level++) made.levels.push_back({classId, {}});
+            made.levels.back().picks["skills"] = feat.needs.proficiencies;
+            if (feat.kind != "race") made.levels.back().picks["feats"] = {featId};
+            if (!options.build(chapter->rules, made, &problem))
+            {
+                takeable = false;
+                std::fprintf(stderr, "%s: %s\n", featId.c_str(), problem.c_str());
+            }
+        }
+        check(takeable, "Every shipped feat can be taken");
+    }
+    {
         const auto shipped = json::parse(*files.readText("rulesets/yorehold/stealth.json"));
         check(shipped.at("checkEvery") == 5 && shipped.at("sneakSpeed") == 0.5 && shipped.at("darkBonus") == 5 && shipped.at("critical") == true,
             "The shipped stealth rules are the designed defaults");

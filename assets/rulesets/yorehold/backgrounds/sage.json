@@ -1,0 +1,8 @@
+{
+  "id": "sage",
+  "name": "Sage",
+  "description": "Spent years among books, old maps and older questions.",
+  "abilities": { "int": 1 },
+  "proficiencies": ["arcana", "investigation"],
+  "feats": ["lore-keeper"]
+}

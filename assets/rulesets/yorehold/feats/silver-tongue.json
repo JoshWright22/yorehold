@@ -1,0 +1,8 @@
+{
+  "id": "silver-tongue",
+  "name": "Silver Tongue",
+  "description": "Makes the ask sound like a favour: expert in Persuasion.",
+  "kind": "skill",
+  "requires": { "proficiencies": ["persuasion"] },
+  "ranks": { "persuasion": "expert" }
+}

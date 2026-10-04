@@ -1,0 +1,8 @@
+{
+  "id": "keen-senses",
+  "name": "Keen Senses",
+  "description": "Sharp eyes and ears: expert in Perception.",
+  "kind": "race",
+  "requires": { "races": ["elf"] },
+  "ranks": { "perception": "expert" }
+}

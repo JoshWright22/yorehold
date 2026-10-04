@@ -1,0 +1,8 @@
+{
+  "id": "weapon-focus",
+  "name": "Weapon Focus",
+  "description": "Hours of practice with a blade: +1 to weapon attacks.",
+  "kind": "class",
+  "requires": { "classes": ["fighter", "barbarian"] },
+  "modifiers": [{ "stat": "attack", "value": 1 }]
+}

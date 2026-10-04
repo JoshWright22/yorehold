@@ -1,0 +1,7 @@
+{
+  "id": "tough",
+  "name": "Tough",
+  "description": "Takes a beating and keeps standing: +4 maximum HP.",
+  "kind": "general",
+  "modifiers": [{ "stat": "maxHp", "value": 4 }]
+}

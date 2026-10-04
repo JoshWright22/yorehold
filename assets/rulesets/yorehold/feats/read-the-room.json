@@ -1,0 +1,8 @@
+{
+  "id": "read-the-room",
+  "name": "Read the Room",
+  "description": "Knows a lie by its shape: expert in Insight.",
+  "kind": "skill",
+  "requires": { "proficiencies": ["insight"] },
+  "ranks": { "insight": "expert" }
+}
