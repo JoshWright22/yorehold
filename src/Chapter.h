@@ -34,6 +34,7 @@ struct Chapter
         std::string name; // empty = the creature's own name
         yh::Cell at;
         std::string ai;   // JSON (a profile name or changes) on top of the creature's and the encounter's; empty = none
+        std::string surrender; // dialogue when it gives up; empty = the encounter's
     };
 
     // The story changing how creatures fight: once every flag in `when` is set, the creatures it
@@ -54,6 +55,7 @@ struct Chapter
         std::vector<Placement> creatures;
         std::vector<std::string> set; // story flags set when the party wins this fight
         std::string ai; // JSON for everyone in it, on top of each creature's own; empty = none
+        std::string surrender; // dialogue for any of them that gives up; empty = the chapter's
     };
 
     // Someone on the map the party can talk to. They only fight if the party attacks them.
@@ -87,6 +89,9 @@ struct Chapter
     std::vector<Npc> npcs;
     std::vector<AiChange> aiChanges;
     std::string quests; // virtual path to a yh::QuestJournal file; empty = no journal
+    // Talking to a creature that surrendered. "do" actions in it: "release" (it leaves), "kill",
+    // "fight" (it takes up arms again), "follow"... see dialogue/README.md. Empty = none.
+    std::string surrender;
     // The chapter is complete once all of these story flags are set. Empty = once every encounter is won.
     std::vector<std::string> completeWhen;
 

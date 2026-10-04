@@ -115,7 +115,7 @@ void contentTests(const fs::path& scratch)
     const auto original = json::parse(*files.readText("chapters/goblin-keep/chapter.json"));
     const auto chapterFile = overrideRoot / "chapters/goblin-keep/chapter.json";
     // How creatures think can be rewritten freely: it isn't part of a save's identity.
-    check(chapter->encounters[0].creatures[1].ai == "\"coward\"" && chapter->aiChanges.size() == 1 && chapter->compendium.ai.contains("coward")
+    check(chapter->encounters[0].creatures[1].ai == "\"lookout\"" && chapter->aiChanges.size() == 1 && chapter->compendium.ai.contains("lookout")
         && chapter->compendium.aiFor(*chapter->compendium.creature("goblin-boss")).leader, "Chapters and creature files set AI by name or by changes");
     auto rethought = original;
     rethought["encounters"][0]["ai"] = "brute";

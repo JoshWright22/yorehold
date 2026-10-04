@@ -141,14 +141,15 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
         }
         if (type == "provoke")
         {
-            // Picking a fight with an NPC. The host adds where everyone stands, as for "fight".
-            const size_t npc = j.at("npc").get<size_t>();
-            if (!calm || talk_ || npc >= chapter_->npcs.size() || !peaceful(npc))
+            // Picking a fight with an NPC or someone who surrendered. The host adds where everyone
+            // stands, as for "fight".
+            const size_t creature = j.at("creature").get<size_t>();
+            if (!calm || talk_ || !talkable(creature))
                 return std::nullopt;
             nlohmann::json at = nlohmann::json::array();
             for (const yh::Token& t : std::span(tokens_.tokens).first(creatures_.size()))
                 at.push_back({t.position.x, t.position.y});
-            return nlohmann::json{{"npc", npc}, {"at", at}}.dump();
+            return nlohmann::json{{"creature", creature}, {"at", at}}.dump();
         }
         if (type == "step")
         {
@@ -175,9 +176,20 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
         }
         if (type == "end")
             return acting ? std::optional(accepted) : std::nullopt;
-        // Only the creatures the game plays lose their nerve; "escape" takes one out of the fight for good.
-        if (type == "flee" || type == "escape")
+        // Only the creatures the game plays lose their nerve; "escape" takes one out of the fight for
+        // good, "surrender" leaves it standing; "alarm" brings in a group it ran to.
+        if (type == "flee")
+        {
+            const std::string as = j.value("as", "flee");
+            return acting && *current >= heroCount_ && (as == "flee" || as == "alarm") ? std::optional(accepted) : std::nullopt;
+        }
+        if (type == "escape" || type == "surrender")
             return acting && *current >= heroCount_ ? std::optional(accepted) : std::nullopt;
+        if (type == "alarm")
+        {
+            const int group = j.at("group").get<int>();
+            return acting && *current >= heroCount_ && sleepingGroupNear(*current, 3) == group ? std::optional(accepted) : std::nullopt;
+        }
         if (type == "rest")
         {
             const size_t index = j.at("rest").get<size_t>();
@@ -187,8 +199,8 @@ std::optional<std::string> YoreholdGame::validate(yh::PlayerId player, std::stri
         }
         if (type == "talk")
         {
-            const size_t npc = j.at("npc").get<size_t>();
-            return calm && !talk_ && npc < chapter_->npcs.size() && peaceful(npc) ? std::optional(accepted) : std::nullopt;
+            const size_t creature = j.at("creature").get<size_t>();
+            return calm && !talk_ && talkable(creature) ? std::optional(accepted) : std::nullopt;
         }
         if (type == "reply")
         {
@@ -249,14 +261,7 @@ void YoreholdGame::apply(const yh::NetCommand& command)
             startCombat(j.at("group").get<int>());
             return;
         }
-        // The NPC turns on the party and fights alone.
-        const size_t npc = j.at("npc").get<size_t>();
-        Creature& them = creatures_[npcToken(npc)];
-        them.team = 1;
-        tokens_.tokens[npcToken(npc)].owner = enemyOwner;
-        say(them.sheet.name + " fights back!");
-        setFlags(chapter_->npcs[npc].attacked);
-        startCombat(them.group);
+        turnHostile(j.at("creature").get<size_t>());
     }
     else if (type == "step" && current)
     {
@@ -289,8 +294,50 @@ void YoreholdGame::apply(const yh::NetCommand& command)
         endTurn();
     else if (type == "flee" && current)
     {
-        creatures_[*current].fleeing = true;
-        say(creatures_[*current].sheet.name + " turns and runs!");
+        Creature& runner = creatures_[*current];
+        runner.fleeing = true;
+        runner.breakAs = j.value("as", "flee");
+        say(runner.sheet.name + (runner.breakAs == "alarm" ? " runs for help!" : " turns and runs!"));
+    }
+    else if (type == "surrender" && current)
+    {
+        Creature& yielded = creatures_[*current];
+        yh::Token& token = tokens_.tokens[*current];
+        if (!token.path.empty())
+            token.position = token.path.back();
+        token.path.clear();
+        yielded.surrendered = true;
+        yielded.fleeing = false;
+        yielded.team = 2;
+        say(yielded.sheet.name + " throws down their weapon and surrenders!");
+        encounter_->withdraw(*orderIndex(*current), "surrenders");
+        syncLog();
+        if (encounter_->finished())
+            endCombat();
+        else
+            endTurn();
+    }
+    else if (type == "alarm" && current)
+    {
+        // Everyone asleep in that group joins the fight where they stand.
+        const int group = j.at("group").get<int>();
+        Creature& runner = creatures_[*current];
+        say(runner.sheet.name + " raises the alarm!");
+        runner.fleeing = false;
+        runner.breakAs = "fight"; // with friends at its side it fights on
+        for (size_t i = heroCount_; i < creatures_.size(); i++)
+        {
+            Creature& c = creatures_[i];
+            if (c.group != group || c.team != 1 || c.awake || c.sheet.down())
+                continue;
+            c.awake = true;
+            encounter_->join(c.sheet, 1);
+            sideAtStart_[1]++;
+            hadLeader_[1] |= aiFor(i).leader;
+        }
+        if (group < static_cast<int>(chapter_->encounters.size()) && !chapter_->encounters[group].text.empty())
+            say(chapter_->encounters[group].text);
+        syncLog();
     }
     else if (type == "escape" && current)
     {
@@ -311,7 +358,7 @@ void YoreholdGame::apply(const yh::NetCommand& command)
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);
     else if (type == "talk")
-        startTalk(j.at("npc").get<size_t>());
+        startTalk(j.at("creature").get<size_t>());
     else if (type == "reply")
         chooseReply(j.at("choice").get<size_t>(), j.at("hero").get<size_t>());
     else if (type == "leave")

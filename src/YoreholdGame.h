@@ -56,6 +56,9 @@ private:
         std::vector<std::string> aiLayers; // the chapter's AI changes for it (JSON; see aiFor)
         bool fleeing = false; // its morale broke this fight: it runs until it gets away or is cornered
         bool fled = false;    // it got away: out of the adventure, and no body is left behind
+        std::string breakAs;  // how it reacts now its morale has broken this fight (AiProfile::onBreak); empty = it hasn't
+        bool surrendered = false; // gave up: out of the fight, stays where it is and can be talked to
+        std::string surrender;    // the dialogue for that (see Chapter::surrender)
     };
 
     // Damage numbers and "Miss!" that float up from a token.
@@ -72,6 +75,8 @@ private:
     // What a creature's AI sees on its turn (see yh::decide). `who` maps the view's units back to creatures_.
     yh::TacticalView tacticalView(size_t me, std::vector<size_t>& who);
     yh::CellCosts distanceToFoes(int team) const;
+    yh::CellCosts distanceFrom(const std::vector<yh::Cell>& cells) const; // walking distance to the nearest of them
+    std::optional<int> sleepingGroupNear(size_t creature, float squares) const; // allies not yet fighting, within reach
     // How a creature thinks right now: its file, the chapter, the story so far and the server, in that order.
     yh::AiProfile aiFor(size_t creature) const;
     void applyServerAi(const nlohmann::json& config);
@@ -96,7 +101,9 @@ private:
     GameMap::Time timeOfDay() const;
     int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
     void revealWalls(int team);
-    void startCombat(int group);
+    // Wakes `group` (or only `only` of it) and starts a fight with the party.
+    void startCombat(int group, std::optional<size_t> only = std::nullopt);
+    void turnHostile(size_t creature); // an NPC or a creature that surrendered attacks the party
     void endCombat();
     void beginTurn();
     void endTurn();
@@ -108,16 +115,20 @@ private:
     bool chapterCleared() const;
     void autoExplore();
 
-    // Talking to (or attacking) the chapter's NPCs. They come last in creatures_.
+    // Talking to (or attacking) the chapter's NPCs, who come last in creatures_, and enemies who
+    // surrendered. Everything here takes creature indices.
     size_t npcStart_ = 0;
     size_t npcToken(size_t npc) const { return npcStart_ + npc; }
-    bool peaceful(size_t npc) const; // standing and not fighting the party
-    std::optional<size_t> hoveredNpc() const;
+    bool peaceful(size_t npc) const { return talkable(npcToken(npc)); }
+    bool talkable(size_t creature) const; // standing, not fighting the party, and has something to say
+    std::string dialogueFor(size_t creature) const;
+    std::optional<size_t> hoveredTalker() const;
     size_t leaderIndex() const; // the selected hero, else the first one standing
-    std::optional<size_t> npcAt(yh::Cell cell) const;
-    void walkToTalk(size_t npc);
-    void startTalk(size_t npc);
+    std::optional<size_t> talkerAt(yh::Cell cell) const;
+    void walkToTalk(size_t creature);
+    void startTalk(size_t creature);
     void chooseReply(size_t index, size_t hero);
+    void dialogueActions(); // carries out the conversation's "do" actions
     void drawDialogue(yh::Renderer& renderer);
 
     // Story flags: set by dialogue and won fights; the quest journal and chapter completion read them.
@@ -290,8 +301,8 @@ private:
     std::optional<yh::QuestJournal> journal_; // the chapter's, if it has one
     bool journalOpen_ = false;
     std::unique_ptr<yh::DialogueSession> talk_; // the conversation on screen, if any
-    size_t talkNpc_ = 0;
-    std::optional<size_t> pendingTalk_; // walking over to this NPC
+    size_t talkWith_ = 0; // creature index
+    std::optional<size_t> pendingTalk_; // walking over to talk to this creature
     uint64_t rolls_ = 0; // rests, recoveries and dialogue checks so far; seeds each one's dice
 
     // Co-op. The host is player 0 and owns the enemies; seats_ says who plays each hero.

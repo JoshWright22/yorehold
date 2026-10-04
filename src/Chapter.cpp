@@ -186,6 +186,25 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         }
         where = folder + "/chapter.json";
 
+        // Surrender conversations: checked once each, and part of the signature like NPC dialogue.
+        std::set<std::string> dialogues;
+        auto dialogueFrom = [&](const nlohmann::json& entry, const std::string& fallback) {
+            if (!entry.contains("surrender"))
+                return fallback;
+            const std::string path = resolve(files, folder, entry.at("surrender").get<std::string>());
+            if (dialogues.insert(path).second)
+            {
+                where = path;
+                const std::string text = readOrThrow(files, where);
+                if (!yh::Dialogue::fromJson(text, &problem)) throw std::invalid_argument(problem);
+                include(nlohmann::json::parse(text).dump());
+                where = folder + "/chapter.json";
+            }
+            return path;
+        };
+        c.surrender = j.contains("surrender") ? dialogueFrom(j, "")
+            : files.exists("dialogue/surrender.json") ? dialogueFrom(nlohmann::json{{"surrender", "dialogue/surrender.json"}}, "") : "";
+
         std::set<std::pair<int, int>> taken;
         auto place = [&](yh::Cell at, const std::string& who) {
             if (!c.map.walkable(at)) throw std::invalid_argument(who + " starts on a cell you can't stand on");
@@ -216,12 +235,14 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                 if (!c.compendium.creature(placement.creatureId))
                     throw std::invalid_argument("unknown creature \"" + placement.creatureId + "\" in " + encounter.id);
                 placement.ai = aiFrom(p, c.compendium);
+                placement.surrender = dialogueFrom(p, "");
                 place(placement.at, placement.name.empty() ? placement.creatureId : placement.name);
                 encounter.creatures.push_back(std::move(placement));
             }
             if (encounter.creatures.empty()) throw std::invalid_argument(encounter.id + " has no creatures");
             encounter.set = flagsFrom(e, "set");
             encounter.ai = aiFrom(e, c.compendium);
+            encounter.surrender = dialogueFrom(e, "");
             c.encounters.push_back(std::move(encounter));
         }
 

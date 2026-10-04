@@ -1,0 +1,7 @@
+{
+  "id": "yielder",
+  "description": "Fights until it's hurt, then throws down its weapon and begs. Hirelings, conscripts, the outnumbered.",
+  "base": "cunning",
+  "fleeHp": 0.5,
+  "onBreak": "surrender"
+}

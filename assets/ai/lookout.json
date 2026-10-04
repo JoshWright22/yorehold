@@ -1,0 +1,6 @@
+{
+  "id": "lookout",
+  "description": "Runs the moment a fight starts to warn the nearest friends, then fights beside them. Sentries, scouts.",
+  "base": "coward",
+  "onBreak": "alarm"
+}

@@ -487,6 +487,8 @@ void YoreholdGame::newAdventure(uint64_t seed)
                 static_cast<int>(group)});
             creatures_.back().creatureId = placement.creatureId;
             creatures_.back().aiLayers = {chapter_->encounters[group].ai, placement.ai};
+            creatures_.back().surrender = !placement.surrender.empty() ? placement.surrender
+                : !chapter_->encounters[group].surrender.empty() ? chapter_->encounters[group].surrender : chapter_->surrender;
             yh::Token token;
             token.name = creatures_.back().sheet.name;
             token.owner = enemyOwner;
@@ -508,6 +510,7 @@ void YoreholdGame::newAdventure(uint64_t seed)
         creature.npc = static_cast<int>(i);
         creature.creatureId = npc.creature;
         creature.aiLayers = {npc.ai};
+        creature.surrender = chapter_->surrender;
         creatures_.push_back(std::move(creature));
         yh::Token token;
         token.name = npc.name;
@@ -666,7 +669,8 @@ std::string YoreholdGame::describe() const
     if (encounter_ && !encounter_->finished())
         return "screen: combat round " + std::to_string(encounter_->round());
     if (talk_ && talk_->current())
-        return "screen: talking " + chapter_->npcs[talkNpc_].id + " at " + talk_->current()->id;
+        return "screen: talking " + (creatures_[talkWith_].npc >= 0 ? chapter_->npcs[creatures_[talkWith_].npc].id : creatures_[talkWith_].sheet.name)
+            + " at " + talk_->current()->id;
     return "screen: exploring";
 }
 
@@ -748,34 +752,34 @@ void YoreholdGame::update(double deltaSeconds)
 
     // Clicking someone to talk to walks the leader over; the conversation opens on arrival.
     if (tokensListen && (input_.clicked(yh::actions::moveTo) || input_.clicked(yh::actions::select)))
-        if (const std::optional<size_t> npc = hoveredNpc())
-            walkToTalk(*npc);
+        if (const std::optional<size_t> who = hoveredTalker())
+            walkToTalk(*who);
     if (pendingTalk_ && !fighting)
     {
         const size_t leader = leaderIndex();
         if (tokens_.tokens[leader].path.empty())
         {
-            const size_t npc = *pendingTalk_;
+            const size_t who = *pendingTalk_;
             pendingTalk_.reset();
-            if (peaceful(npc) && grid_.distance(cellOf(leader), cellOf(npcToken(npc))) <= 1.5f)
-                act("talk", nlohmann::json{{"npc", npc}}.dump());
+            if (talkable(who) && grid_.distance(cellOf(leader), cellOf(who)) <= 1.5f)
+                act("talk", nlohmann::json{{"creature", who}}.dump());
             else
-                say("Can't reach " + chapter_->npcs[npc].name + " from here.");
+                say("Can't reach " + creatures_[who].sheet.name + " from here.");
         }
     }
 
-    // Right-click menu. On a peaceful NPC: Talk walks over, Attack picks a fight with them.
-    const std::optional<size_t> menuNpc = tokens_.contextChoice && tokens_.contextChoice->first < creatures_.size()
-            && creatures_[tokens_.contextChoice->first].npc >= 0 && creatures_[tokens_.contextChoice->first].team == 2
-        ? std::optional<size_t>(creatures_[tokens_.contextChoice->first].npc) : std::nullopt;
-    if (menuNpc && tokens_.contextChoice->second != "Inspect")
+    // Right-click menu. On an NPC or someone who surrendered: Talk walks over, Attack picks a fight with them.
+    const std::optional<size_t> menuTalker = tokens_.contextChoice && tokens_.contextChoice->first < creatures_.size()
+            && talkable(tokens_.contextChoice->first)
+        ? std::optional<size_t>(tokens_.contextChoice->first) : std::nullopt;
+    if (menuTalker && tokens_.contextChoice->second != "Inspect")
     {
         if (fighting)
             say("Not in the middle of a fight.");
         else if (tokens_.contextChoice->second == "Attack")
-            act("provoke", nlohmann::json{{"npc", *menuNpc}}.dump());
+            act("provoke", nlohmann::json{{"creature", *menuTalker}}.dump());
         else
-            walkToTalk(*menuNpc);
+            walkToTalk(*menuTalker);
     }
     else if (tokens_.contextChoice && tokens_.contextChoice->first < creatures_.size())
     {
@@ -941,7 +945,7 @@ void YoreholdGame::updateVisibility()
     }
 }
 
-void YoreholdGame::startCombat(int group)
+void YoreholdGame::startCombat(int group, std::optional<size_t> only)
 {
     // Everyone stops on a square of their own.
     std::vector<yh::Cell> taken;
@@ -980,11 +984,12 @@ void YoreholdGame::startCombat(int group)
     {
         Creature& c = creatures_[i];
         c.fleeing = false;
+        c.breakAs.clear();
         if (c.sheet.down())
             continue;
         if (c.team == 0)
             encounter_->add(c.sheet, 0);
-        else if (c.group == group && c.team == 1)
+        else if (c.group == group && c.team == 1 && (!only || *only == i))
         {
             c.awake = true;
             encounter_->add(c.sheet, 1);
@@ -1047,7 +1052,7 @@ void YoreholdGame::endCombat()
     for (size_t group = 0; group < chapter_->encounters.size(); group++)
     {
         const bool beaten = std::none_of(creatures_.begin() + heroCount_, creatures_.end(),
-            [&](const Creature& c) { return c.group == static_cast<int>(group) && !c.sheet.down(); });
+            [&](const Creature& c) { return c.group == static_cast<int>(group) && !c.sheet.down() && !c.surrendered; });
         if (beaten)
             won.insert(won.end(), chapter_->encounters[group].set.begin(), chapter_->encounters[group].set.end());
     }
@@ -1128,7 +1133,7 @@ bool YoreholdGame::chapterCleared() const
         return std::all_of(chapter_->completeWhen.begin(), chapter_->completeWhen.end(), [this](const std::string& f) { return flags_.contains(f); });
     // Every authored enemy is down (NPCs the party picked a fight with don't count).
     return !chapter_->encounters.empty()
-        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return c.npc < 0 && !c.sheet.down(); });
+        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return c.npc < 0 && !c.sheet.down() && !c.surrendered; });
 }
 
 // ---------------------------------------------------------------- story, NPCs and quests
@@ -1187,44 +1192,54 @@ size_t YoreholdGame::leaderIndex() const
     return 0;
 }
 
-std::optional<size_t> YoreholdGame::npcAt(yh::Cell c) const
+std::optional<size_t> YoreholdGame::talkerAt(yh::Cell c) const
 {
     if (!chapter_)
         return std::nullopt;
-    for (size_t i = 0; i < chapter_->npcs.size(); i++)
-        if (peaceful(i) && cellOf(npcToken(i)) == c)
+    for (size_t i = heroCount_; i < creatures_.size(); i++)
+        if (talkable(i) && cellOf(i) == c)
             return i;
     return std::nullopt;
 }
 
-bool YoreholdGame::peaceful(size_t npc) const
+bool YoreholdGame::talkable(size_t creature) const
 {
-    const size_t i = npcToken(npc);
-    return i < creatures_.size() && creatures_[i].team == 2 && !creatures_[i].sheet.down();
+    if (creature >= creatures_.size() || creature < heroCount_)
+        return false;
+    const Creature& c = creatures_[creature];
+    return c.team == 2 && !c.sheet.down() && (c.npc >= 0 || c.surrendered);
 }
 
-std::optional<size_t> YoreholdGame::hoveredNpc() const
+std::string YoreholdGame::dialogueFor(size_t creature) const
+{
+    const Creature& c = creatures_[creature];
+    if (c.surrendered)
+        return c.surrender;
+    return c.npc >= 0 ? chapter_->npcs[c.npc].dialogue : std::string();
+}
+
+std::optional<size_t> YoreholdGame::hoveredTalker() const
 {
     if (!chapter_)
         return std::nullopt;
     const yh::Vec2 world = camera_.screenToWorld(input_.mouse());
-    for (size_t i = 0; i < chapter_->npcs.size(); i++)
+    for (size_t i = heroCount_; i < creatures_.size(); i++)
     {
-        const yh::Token& token = tokens_.tokens[npcToken(i)];
-        if (peaceful(i) && token.floor == 0 && distance(world, token.position) <= token.radius)
+        const yh::Token& token = tokens_.tokens[i];
+        if (talkable(i) && token.floor == 0 && distance(world, token.position) <= token.radius)
             return i;
     }
     return std::nullopt;
 }
 
-void YoreholdGame::walkToTalk(size_t npc)
+void YoreholdGame::walkToTalk(size_t creature)
 {
     const size_t leader = leaderIndex();
     if (creatures_[leader].sheet.down())
         return;
     yh::Token& token = tokens_.tokens[leader];
     const yh::Cell from = cellOf(leader);
-    const yh::Cell goal = cellOf(npcToken(npc));
+    const yh::Cell goal = cellOf(creature);
     token.path.clear();
     if (grid_.distance(from, goal) > 1.5f)
     {
@@ -1244,23 +1259,29 @@ void YoreholdGame::walkToTalk(size_t npc)
         for (size_t i = 1; i < best.size(); i++)
             token.path.push_back(grid_.center(best[i]));
     }
-    pendingTalk_ = npc;
+    pendingTalk_ = creature;
 }
 
-void YoreholdGame::startTalk(size_t npc)
+void YoreholdGame::startTalk(size_t creature)
 {
-    const Chapter::Npc& who = chapter_->npcs[npc];
+    const std::string name = creatures_[creature].sheet.name;
+    const std::string path = dialogueFor(creature);
+    if (path.empty())
+    {
+        say(name + " has nothing to say.");
+        return;
+    }
     std::string error = "not found";
-    const std::optional<std::string> text = files_.readText(who.dialogue);
+    const std::optional<std::string> text = files_.readText(path);
     std::optional<yh::Dialogue> dialogue = text ? yh::Dialogue::fromJson(*text, &error) : std::nullopt;
     if (!dialogue)
     {
-        say(who.name + "'s dialogue " + who.dialogue + ": " + error);
+        say(name + "'s dialogue " + path + ": " + error);
         return;
     }
     for (yh::Token& token : tokens_.tokens)
         token.path.clear();
-    talkNpc_ = npc;
+    talkWith_ = creature;
     talk_ = std::make_unique<yh::DialogueSession>(std::move(*dialogue), flags_);
     journalOpen_ = false;
     // Node entry effects of the first line count too.
@@ -1270,6 +1291,61 @@ void YoreholdGame::startTalk(size_t npc)
         flags_ = talk_->flags();
         flagsChanged(before);
     }
+    dialogueActions();
+}
+
+// What a conversation can make happen beyond story flags ("do" in the dialogue file):
+//   release  they leave for good (no body)
+//   kill     they die where they stand
+//   fight    they attack the party (again)
+void YoreholdGame::dialogueActions()
+{
+    if (!talk_)
+        return;
+    const size_t who = talkWith_;
+    Creature& c = creatures_[who];
+    yh::Token& token = tokens_.tokens[who];
+    for (const std::string& action : talk_->takeActions())
+    {
+        if (c.sheet.down())
+            break;
+        if (action == "release")
+        {
+            say(c.sheet.name + " leaves.");
+            c.sheet.hp = 0;
+            c.fled = true;
+            token.floor = dead;
+        }
+        else if (action == "kill")
+        {
+            say(c.sheet.name + " is killed.");
+            c.sheet.hp = 0;
+            token.floor = dead;
+            if (c.npc >= 0)
+                setFlags(chapter_->npcs[c.npc].killed);
+        }
+        else if (action == "fight")
+        {
+            turnHostile(who);
+            return;
+        }
+    }
+}
+
+void YoreholdGame::turnHostile(size_t creature)
+{
+    Creature& them = creatures_[creature];
+    say(them.sheet.name + (them.surrendered ? " takes up arms again!" : " fights back!"));
+    them.team = 1;
+    them.surrendered = false;
+    tokens_.tokens[creature].owner = enemyOwner;
+    if (them.npc >= 0)
+        setFlags(chapter_->npcs[them.npc].attacked);
+    talk_.reset();
+    pendingTalk_.reset();
+    // Only them: the rest of their group is down, gone, or will wake when they're seen.
+    them.awake = false;
+    startCombat(them.group, creature);
 }
 
 void YoreholdGame::chooseReply(size_t index, size_t hero)
@@ -1305,6 +1381,9 @@ void YoreholdGame::chooseReply(size_t index, size_t hero)
     flags_ = talk_->flags();
     if (flags_ != before)
         flagsChanged(before);
+    dialogueActions();
+    if (!talk_)
+        return; // it ended in a fight
     if (talk_->finished() && !talk_->current())
     {
         talk_.reset();
@@ -1498,28 +1577,43 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
             return;
         // Score everything it could do and take the best (heroes run this too in auto-play).
         std::vector<size_t> who;
-        const yh::TacticalView view = tacticalView(me, who);
         yh::Random random(seed_ ^ (static_cast<uint64_t>(fights_) << 40) ^ (static_cast<uint64_t>(encounter_->round()) << 20) ^ me);
-        std::vector<yh::TacticalChoice> considered;
         const yh::AiProfile profile = aiFor(me);
+        // The first time its nerve goes, it settles how it reacts for the rest of the fight.
+        if (creatures_[me].breakAs.empty())
+        {
+            std::vector<size_t> ignored;
+            if (yh::wantsToFlee(profile, tacticalView(me, ignored)))
+                creatures_[me].breakAs = yh::pickBreak(profile, random);
+        }
+        const yh::TacticalView view = tacticalView(me, who);
+        std::vector<yh::TacticalChoice> considered;
         const yh::TacticalChoice choice = yh::decide(profile, view, grid_, random, &considered);
         using Kind = yh::TacticalChoice::Kind;
         if (aiNotes_)
         {
-            const char* names[] = {"holds", "attacks", "advances", "flees"};
             char score[32];
             std::snprintf(score, sizeof score, "%.1f", choice.score);
-            say("[AI " + profile.base + "] " + creatures_[me].sheet.name + " " + names[static_cast<int>(choice.kind)]
+            std::string line = "[AI " + profile.base + (profile.model != "utility" ? "/" + profile.model : std::string()) + "] "
+                + creatures_[me].sheet.name + ": " + yh::kindName(choice.kind)
                 + (choice.kind == Kind::Attack ? " " + creatures_[who[choice.target]].sheet.name : std::string())
-                + " (" + score + ", best of " + std::to_string(considered.size()) + ")");
+                + " (" + score + ", best of " + std::to_string(considered.size()) + ")";
+            if (!creatures_[me].breakAs.empty())
+                line += ", broken: " + creatures_[me].breakAs;
+            say(line);
         }
 
         enemyTimer_ = 0;
         enemyTarget_.reset();
+        if (choice.kind == Kind::Surrender)
+        {
+            act("surrender");
+            return;
+        }
         if (choice.kind == Kind::Attack)
             enemyTarget_ = who[choice.target];
-        if (choice.kind == Kind::Flee && !creatures_[me].fleeing)
-            act("flee");
+        if ((choice.kind == Kind::Flee || choice.kind == Kind::Alarm) && !creatures_[me].fleeing)
+            act("flee", nlohmann::json{{"as", choice.kind == Kind::Alarm ? "alarm" : "flee"}}.dump());
         if (choice.dash)
             act("dash"); // recomputes reach_
         if (choice.cell != standing_)
@@ -1543,9 +1637,19 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
     case EnemyStep::Wait:
         if (enemyTimer_ < 0.6)
             return;
+        // Running for help and close enough to shout: the allies it reached join the fight.
+        if (creatures_[me].fleeing && creatures_[me].breakAs == "alarm")
+        {
+            if (const std::optional<int> group = sleepingGroupNear(me, 3))
+            {
+                act("alarm", nlohmann::json{{"group", *group}}.dump());
+                act("end");
+                return;
+            }
+        }
         // Running, far enough from everyone and out of their sight (or walled off from them): it's gone.
         // While the party can still see it they get a chance to chase it down.
-        if (creatures_[me].fleeing)
+        if (creatures_[me].fleeing && !(creatures_[me].breakAs == "alarm" && sleepingGroupNear(me, 1e6f)))
         {
             const yh::CellCosts away = distanceToFoes(creatures_[me].team);
             const auto distance = away.find(cellOf(me));
@@ -1676,19 +1780,55 @@ void YoreholdGame::reloadAi()
     say("AI profiles reloaded.");
 }
 
-// Walking distance from every cell to the nearest standing foe of `team`, through other creatures.
+// Walking distance from every cell to the nearest standing foe of `team`.
 yh::CellCosts YoreholdGame::distanceToFoes(int team) const
+{
+    std::vector<yh::Cell> foes;
+    for (size_t i = 0; i < creatures_.size(); i++)
+        if (creatures_[i].team != team && creatures_[i].team != 2 && !creatures_[i].sheet.down() && orderIndex(i))
+            foes.push_back(cellOf(i));
+    return distanceFrom(foes);
+}
+
+// Enemies not yet in the fight near `creature` (walking squares): the group it could bring in.
+std::optional<int> YoreholdGame::sleepingGroupNear(size_t creature, float squares) const
+{
+    std::vector<yh::Cell> cells;
+    std::vector<int> groups;
+    for (size_t i = heroCount_; i < creatures_.size(); i++)
+    {
+        const Creature& c = creatures_[i];
+        if (c.team == creatures_[creature].team && !c.awake && !c.sheet.down() && !orderIndex(i) && c.npc < 0)
+        {
+            cells.push_back(cellOf(i));
+            groups.push_back(c.group);
+        }
+    }
+    if (cells.empty())
+        return std::nullopt;
+    const yh::CellCosts distance = distanceFrom(cells);
+    const auto here = distance.find(cellOf(creature));
+    if (here == distance.end() || here->second > squares)
+        return std::nullopt;
+    // The group of whoever is nearest in a straight line.
+    size_t nearest = 0;
+    for (size_t i = 1; i < cells.size(); i++)
+        if (grid_.distance(cells[i], cellOf(creature)) < grid_.distance(cells[nearest], cellOf(creature)))
+            nearest = i;
+    return groups[nearest];
+}
+
+// Walking distance from every cell to the nearest of `cells`, around walls and other creatures.
+yh::CellCosts YoreholdGame::distanceFrom(const std::vector<yh::Cell>& cells) const
 {
     yh::CellCosts distance;
     using Entry = std::pair<float, yh::Cell>;
     auto later = [](const Entry& a, const Entry& b) { return a.first > b.first; };
     std::priority_queue<Entry, std::vector<Entry>, decltype(later)> queue(later);
-    for (size_t i = 0; i < creatures_.size(); i++)
+    for (const yh::Cell c : cells)
     {
-        if (creatures_[i].team == team || creatures_[i].sheet.down() || !orderIndex(i))
-            continue;
-        distance[cellOf(i)] = 0;
-        queue.push({0.0f, cellOf(i)});
+        distance[c] = 0;
+        queue.push({0.0f, c});
     }
     std::vector<yh::Cell> neighbours;
     while (!queue.empty())
@@ -1721,7 +1861,7 @@ yh::TacticalView YoreholdGame::tacticalView(size_t me, std::vector<size_t>& who)
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const Creature& c = creatures_[i];
-        if (c.sheet.down() || !orderIndex(i))
+        if (c.sheet.down() || !orderIndex(i) || c.surrendered)
             continue;
         if (i == me)
             view.self = who.size();
@@ -1752,6 +1892,16 @@ yh::TacticalView YoreholdGame::tacticalView(size_t me, std::vector<size_t>& who)
     view.sideAtStart = sideAtStart_[team == 0 ? 0 : 1];
     view.hadLeader = hadLeader_[team == 0 ? 0 : 1];
     view.fleeing = creatures_[me].fleeing;
+    view.breakAs = creatures_[me].breakAs;
+    if (view.breakAs == "alarm")
+    {
+        std::vector<yh::Cell> help;
+        for (size_t i = heroCount_; i < creatures_.size(); i++)
+            if (creatures_[i].team == team && !creatures_[i].awake && !creatures_[i].sheet.down() && !orderIndex(i) && creatures_[i].npc < 0)
+                help.push_back(cellOf(i));
+        if (!help.empty())
+            view.allyDistance = distanceFrom(help);
+    }
     return view;
 }
 
@@ -1942,6 +2092,7 @@ std::string YoreholdGame::stateJson() const
             {"sheet", nlohmann::json::parse(creatures_[i].sheet.toJson())},
             {"awake", creatures_[i].awake},
             {"fled", creatures_[i].fled},
+            {"surrendered", creatures_[i].surrendered},
             {"team", creatures_[i].team},
             {"x", token.path.empty() ? token.position.x : token.path.back().x},
             {"y", token.path.empty() ? token.position.y : token.path.back().y},
@@ -2002,7 +2153,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             throw std::runtime_error("seats don't match the party");
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
-        std::vector<bool> awake, fled;
+        std::vector<bool> awake, fled, surrendered;
         std::vector<int> teams;
         for (const nlohmann::json& c : saved)
         {
@@ -2017,9 +2168,10 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
             fled.push_back(c.value("fled", false) && sheets.back().down());
-            // Only an NPC's side can change (a peaceful one the party attacked).
+            // Only an NPC's side can change (a peaceful one the party attacked), or an enemy's that gave up.
             const int team = c.value("team", creatures_[teams.size()].team);
-            if (team != creatures_[teams.size()].team && !(creatures_[teams.size()].npc >= 0 && (team == 1 || team == 2)))
+            surrendered.push_back(c.value("surrendered", false) && team == 2 && teams.size() >= heroCount_);
+            if (team != creatures_[teams.size()].team && !(creatures_[teams.size()].npc >= 0 && (team == 1 || team == 2)) && !surrendered.back())
                 throw std::runtime_error("saved creature is on the wrong side");
             teams.push_back(team);
         }
@@ -2035,6 +2187,7 @@ bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
             creatures_[i].sheet = std::move(sheets[i]);
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];
+            creatures_[i].surrendered = surrendered[i];
             creatures_[i].team = teams[i];
             yh::Token& token = tokens_.tokens[i];
             if (creatures_[i].npc >= 0)
@@ -2115,7 +2268,7 @@ bool YoreholdGame::occupied(yh::Cell c, size_t except) const
 
 bool YoreholdGame::walkable(yh::Cell c) const
 {
-    return map().walkable(c) && !npcAt(c);
+    return map().walkable(c) && !talkerAt(c);
 }
 
 std::optional<size_t> YoreholdGame::orderIndex(size_t creature) const
@@ -2850,7 +3003,7 @@ void YoreholdGame::drawDialogue(yh::Renderer& renderer)
     uiRects_.push_back(area);
 
     float y = area.y + 12;
-    const std::string speaker = node->speaker.empty() ? chapter_->npcs[talkNpc_].name : node->speaker;
+    const std::string speaker = node->speaker.empty() ? creatures_[talkWith_].sheet.name : node->speaker;
     ui_.label({area.x + 16, y}, speaker, ui_.theme.accent);
     y += line;
     for (const std::string& text : lines)
