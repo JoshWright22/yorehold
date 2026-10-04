@@ -141,9 +141,65 @@ void keepVictory(const Check& check)
         "No enemy is left standing");
 }
 
+// A chapter written in the test: a fighter and a cleric, one goblin round a wall, no ending file.
+void chapterFromStrings(const Check& check)
+{
+    const nlohmann::json chapter{
+        {"id", "fixture-yard"},
+        {"title", "The Yard"},
+        {"ruleset", "modern"},
+        {"map", "map.json"},
+        {"intro", {"A goblin waits in the yard."}},
+        {"xpPerVictory", 10},
+        {"party", {{{"name", "Ana"}, {"class", "fighter"}, {"color", {220, 90, 80}}, {"at", {1, 1}}},
+                      {{"name", "Bo"}, {"class", "cleric"}, {"color", {90, 160, 230}}, {"at", {1, 2}}}}},
+        {"encounters", {{{"id", "yard"}, {"set", {"yard_clear"}}, {"text", "A goblin!"},
+                           {"creatures", {{{"creature", "goblin"}, {"name", "Gik"}, {"at", {8, 4}}}}}}}},
+        {"victoryText", "Won ({xp} XP)."},
+        {"defeatText", "Lost."},
+        {"resumeText", "Back."},
+        {"clearedText", "The yard is clear."},
+    };
+    const nlohmann::json map{
+        {"name", "Yard"},
+        {"tiles", {{"grass", {{"art", "grass"}}}, {"wall", {{"art", "wall"}, {"walkable", false}, {"blocksSight", true}}}}},
+        {"legend", {{".", "grass"}, {"#", "wall"}}},
+        {"layers", {{{"name", "ground"}, {"rows", {
+            "##########",
+            "#........#",
+            "#........#",
+            "#####....#",
+            "#........#",
+            "##########",
+        }}}}},
+    };
+    WorldFixture world;
+    std::string error;
+    const bool loaded = world.loadJson("chapters/fixture-yard",
+        {{"chapters/fixture-yard/chapter.json", chapter.dump()}, {"chapters/fixture-yard/map.json", map.dump()}}, 5, &error);
+    check(loaded, "The fixture loads a chapter written as JSON strings");
+    if (!loaded)
+    {
+        std::fprintf(stderr, "%s\n", error.c_str());
+        return;
+    }
+    check(world.heroCount() == 2 && world.creatures().size() == 3 && world.said("A goblin waits"), "The JSON chapter has its party, goblin and intro");
+    check(!world.send("go", {{"hero", 0}, {"at", {0, 0}}}), "Walking into a wall is refused");
+    check(world.send("go", {{"hero", 0}, {"at", {7, 4}}}), "A hero is sent across the yard");
+    check(world.stepUntil([&] { return world.fighting(); }, 30) && world.said("A goblin!"), "Seeing the goblin starts its fight");
+    const bool done = world.stepUntil([&] {
+        playParty(world);
+        return !world.fighting();
+    }, 300);
+    check(done && !world.partyDown() && world.chapterCleared() && world.flags().contains("yard_clear"), "The fight is won and sets its flag");
+    check(world.said("Won (10 XP).") && world.said("The yard is clear.") && !world.ended,
+        "Without an ending file, clearing the chapter says its text instead");
+}
+
 }
 
 void worldPlayTests(const Check& check)
 {
     keepVictory(check);
+    chapterFromStrings(check);
 }

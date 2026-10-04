@@ -4,7 +4,9 @@
 
 #include <yorehold/framework/assets/FileSystem.h>
 
+#include <filesystem>
 #include <functional>
+#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,9 +24,14 @@ class WorldFixture : private WorldFixtureFiles, public World
 public:
     // Mounts the framework's and the game's files, as the game does.
     WorldFixture();
+    ~WorldFixture() override;
 
     // Loads the chapter in `folder` of those files and starts it with `seed`.
     bool load(const std::string& folder, uint64_t seed, std::string* error = nullptr);
+    // A chapter written in the test itself: `contents` maps paths (like "chapters/t/chapter.json")
+    // to their text. They go in a scratch folder mounted over the game's files, so a test chapter
+    // can use the game's creatures, classes and art.
+    bool loadJson(const std::string& folder, const std::map<std::string, std::string>& contents, uint64_t seed, std::string* error = nullptr);
 
     // Sends an intent as player 0, the way a click or a key would. False if the world refused it
     // (`refusal` then says why, when the world gives a reason).
@@ -43,4 +50,5 @@ public:
 
 private:
     void takeEventsIntoLog();
+    std::filesystem::path scratch_; // loadJson's files
 };

@@ -1,12 +1,54 @@
 #include "WorldFixture.h"
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <fstream>
 
 WorldFixture::WorldFixture() : World(files)
 {
     files.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
     files.mountFolder(YH_GAME_ASSETS, "game");
     saves_ = false;
+}
+
+WorldFixture::~WorldFixture()
+{
+    files.unmount("fixture");
+    std::error_code ignored;
+    if (!scratch_.empty())
+        std::filesystem::remove_all(scratch_, ignored);
+}
+
+bool WorldFixture::loadJson(const std::string& folder, const std::map<std::string, std::string>& contents, uint64_t seed, std::string* error)
+{
+    static std::atomic<int> made = 0;
+    files.unmount("fixture");
+    std::error_code problem;
+    if (!scratch_.empty())
+        std::filesystem::remove_all(scratch_, problem);
+    scratch_ = std::filesystem::temp_directory_path() / ("yorehold-world-fixture-"
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-" + std::to_string(++made));
+    for (const auto& [path, text] : contents)
+    {
+        const std::filesystem::path file = scratch_ / path;
+        std::filesystem::create_directories(file.parent_path(), problem);
+        std::ofstream out(file, std::ios::binary);
+        out << text;
+        if (!out)
+        {
+            if (error)
+                *error = "couldn't write " + file.string();
+            return false;
+        }
+    }
+    if (!files.mountFolder(scratch_.string(), "fixture"))
+    {
+        if (error)
+            *error = "couldn't mount " + scratch_.string();
+        return false;
+    }
+    return load(folder, seed, error);
 }
 
 bool WorldFixture::load(const std::string& folder, uint64_t seed, std::string* error)
