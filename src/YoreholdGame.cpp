@@ -1,5 +1,6 @@
 #include "YoreholdGame.h"
 
+#include <yorehold/framework/assets/Skin.h>
 #include <yorehold/framework/graphics/Renderer.h>
 #include <yorehold/framework/debug/Profiler.h>
 #include <yorehold/framework/map/Pathfinding.h>
@@ -11,6 +12,7 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_keycode.h>
+#include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_timer.h>
 
@@ -20,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <queue>
 #include <random>
 
@@ -89,6 +92,12 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     if (!testRun_)
         loadSettings();
     applySettings();
+    // YOREHOLD_SKIN picks a skin for a test run (which doesn't read the settings file).
+    if (const char* skin = SDL_getenv("YOREHOLD_SKIN"))
+        settings_.skin = skin;
+    else if (!testRun_)
+        prepareSkinsFolder();
+    refreshSkins();
 
     refreshLibrary();
     // Start on the adventure picked last time, if it's still installed.
@@ -207,6 +216,7 @@ bool YoreholdGame::openAdventure(size_t index)
 {
     // Art and fonts are cached by path, and two packages can use the same paths.
     releaseAssets();
+    files_.unmount("skin");
     files_.unmount("import");
     chapter_.reset();
     themePath_.clear();
@@ -240,6 +250,7 @@ bool YoreholdGame::openAdventure(size_t index)
     }
     else
         std::fprintf(stderr, "Chapter failed to load: %s\n", chapterError_.c_str());
+    mountSkin(); // on top of the adventure's own art
     hasSave_ = !testRun_ && chapter_ && saveFormat().readFile(savePath()).has_value();
     newAdventure(SDL_GetTicks());
     return chapter_ != nullptr;
@@ -314,9 +325,90 @@ void YoreholdGame::unload()
     releaseAssets();
 }
 
+// ---------------------------------------------------------------- skins
+
+// A skin is a folder (or a .yoreskin zip of one) in the skins folder, laid out like the game's
+// own assets: ui/button.png, ui/theme.json, fonts/... It only needs the files it changes;
+// everything else comes from the defaults underneath.
+std::string YoreholdGame::skinsDir() const
+{
+    const std::string dir = stateDir();
+    return dir.empty() ? std::string() : dir + "skins";
+}
+
+void YoreholdGame::refreshSkins()
+{
+    skins_.clear();
+    std::error_code error;
+    const std::filesystem::path dir(skinsDir());
+    if (skinsDir().empty() || !std::filesystem::is_directory(dir, error))
+        return;
+    for (const auto& entry : std::filesystem::directory_iterator(dir, error))
+    {
+        if (entry.is_directory(error) || entry.path().extension() == ".yoreskin")
+            skins_.push_back(entry.path().filename().string());
+    }
+    std::sort(skins_.begin(), skins_.end());
+}
+
+// Puts the selected skin on top of everything else mounted, and drops cached art so it shows.
+void YoreholdGame::mountSkin()
+{
+    releaseAssets();
+    files_.unmount("skin");
+    if (settings_.skin.empty() || skinsDir().empty())
+        return;
+    const std::filesystem::path path = std::filesystem::path(skinsDir()) / settings_.skin;
+    std::error_code error;
+    const bool mounted = std::filesystem::is_directory(path, error) ? files_.mountFolder(path.string(), "skin")
+                       : std::filesystem::is_regular_file(path, error) && files_.mountZip(path.string(), "skin");
+    if (!mounted)
+        std::fprintf(stderr, "Skin \"%s\" couldn't be opened; using the default.\n", settings_.skin.c_str());
+    // Looks and sounds only: a skin can't replace chapters, creatures or rules.
+    files_.restrict("skin", {"ui", "fonts", "tokens", "particles", "sounds", "music"});
+}
+
+// The first time, the skins folder gets a copy of the default UI to start a skin from.
+void YoreholdGame::prepareSkinsFolder()
+{
+    std::error_code error;
+    const std::filesystem::path dir(skinsDir());
+    if (skinsDir().empty() || std::filesystem::exists(dir, error))
+        return;
+    const std::filesystem::path copy = dir / "Default copy" / "ui";
+    std::filesystem::create_directories(copy, error);
+    for (const std::string& file : files_.list("ui"))
+    {
+        const auto bytes = files_.read(file);
+        std::ofstream out(copy / std::filesystem::path(file).filename(), std::ios::binary);
+        if (bytes && out)
+            out.write(reinterpret_cast<const char*>(bytes->data()), static_cast<std::streamsize>(bytes->size()));
+    }
+    yh::writeFileAtomically((dir / "readme.txt").string(),
+        "Yorehold skins\n"
+        "==============\n\n"
+        "Each folder in here is a skin (a .yoreskin file, which is a zip of such a folder, works too).\n"
+        "Pick one in Settings > Skin. A skin only needs the files it changes; anything missing comes\n"
+        "from the default look.\n\n"
+        "\"Default copy\" is the default UI to start from: copy the folder, rename it, and edit the images.\n"
+        "Changes show in the game as soon as you save a file.\n\n"
+        "ui/panel.png                 panels and windows\n"
+        "ui/button.png                buttons, plus -hover, -pressed and -disabled\n"
+        "ui/button-selected.png       drawn over the chosen option in a row of options\n"
+        "ui/checkbox-off.png, -on     the tick box at the left of a setting\n"
+        "ui/textbox.png, -focus       text fields\n"
+        "ui/bar-back.png, bar-fill    health bars and sliders (the fill is tinted, so draw it in white and greys)\n"
+        "ui/slider-knob.png           the slider handle\n"
+        "ui/theme.json                text colours, the drop shadow, and \"slice\": how many pixels at each\n"
+        "                             image's edge are corners that don't stretch\n"
+        "fonts/                       replace a font by giving a file the same name as the game's\n",
+        false);
+}
+
 void YoreholdGame::releaseAssets()
 {
     ui_.theme.font = nullptr;
+    ui_.theme.images = {};
     title_ = nullptr;
     tokens_.initialFont = nullptr;
     tokens_.labelFont = nullptr;
@@ -585,6 +677,19 @@ std::string YoreholdGame::describe() const
 void YoreholdGame::update(double deltaSeconds)
 {
     time_ += deltaSeconds;
+    // Edited skin or art files show up straight away: everything reloads on the next draw.
+    reloadTimer_ -= deltaSeconds;
+    if (skinChanged_)
+    {
+        skinChanged_ = false;
+        mountSkin();
+    }
+    else if (reloadTimer_ <= 0)
+    {
+        reloadTimer_ = 0.5;
+        if (!files_.pollChanges().empty())
+            releaseAssets();
+    }
     updateSession(deltaSeconds);
     online_.update();
     if (online_.status() != onlineStatus_)
@@ -1623,6 +1728,7 @@ void YoreholdGame::saveSettings() const
         {"joinAddress", settings_.joinAddress},
         {"lastPackage", settings_.lastPackage},
         {"lastFolder", settings_.lastFolder},
+        {"skin", settings_.skin},
         {"server", settings_.server},
         {"serverKey", settings_.serverKey},
         {"deviceId", settings_.deviceId},
@@ -1658,6 +1764,7 @@ void YoreholdGame::loadSettings()
         s.joinAddress = j.value("joinAddress", s.joinAddress).substr(0, 253);
         s.lastPackage = j.value("lastPackage", s.lastPackage);
         s.lastFolder = j.value("lastFolder", s.lastFolder);
+        s.skin = j.value("skin", s.skin).substr(0, 200);
         s.server = j.value("server", s.server).substr(0, 253);
         s.serverKey = j.value("serverKey", s.serverKey).substr(0, 128);
         s.deviceId = j.value("deviceId", s.deviceId).substr(0, 128);
@@ -1947,6 +2054,8 @@ void YoreholdGame::draw(yh::Renderer& renderer)
             else
                 std::fprintf(stderr, "UI theme %s: %s\n", themePath_.c_str(), error.c_str());
         }
+        // Every widget image comes from ui/, where the selected skin's files sit on top of the defaults.
+        yh::loadUiImages(ui_.theme, *assets_, "ui");
         ui_.theme.font = assets_->font("fonts/AtkinsonHyperlegible-Bold.ttf", 18);
         title_ = assets_->font("fonts/Cinzel.ttf", 54);
         tokens_.initialFont = assets_->font("fonts/Cinzel.ttf", 34);
@@ -2367,8 +2476,8 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     }
     case Menu::Settings:
         y = screen.h * 0.25f + 20;
-        drawSettings({screen.w / 2 - 260, y, 520, 410});
-        y += 410 + gap;
+        drawSettings({screen.w / 2 - 260, y, 520, 454});
+        y += 454 + gap;
         if (button("Back (Esc)"))
             openMenu(settingsBack_);
         break;
@@ -2442,6 +2551,22 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
     for (int i = 0; i < 4; i++)
         if (ui_.toggle({x + 120 + i * (quarter + 10), y, quarter, h}, times[i], settings_.timeOfDay == i))
             settings_.timeOfDay = i;
+    y += h + 8;
+    // Skins: click to step through the ones in the skins folder.
+    ui_.label({x, y + 10}, "Skin", ui_.theme.textDim);
+    const float folderWidth = 110;
+    if (ui_.button({x + 120, y, w - 120 - folderWidth - 10, h}, settings_.skin.empty() ? std::string("Default") : settings_.skin))
+    {
+        refreshSkins();
+        const auto current = std::find(skins_.begin(), skins_.end(), settings_.skin);
+        settings_.skin = settings_.skin.empty() ? (skins_.empty() ? std::string() : skins_.front())
+                       : current == skins_.end() || current + 1 == skins_.end() ? std::string() : *(current + 1);
+    }
+    if (ui_.button({x + w - folderWidth, y, folderWidth, h}, "Folder", !skinsDir().empty()))
+    {
+        prepareSkinsFolder();
+        SDL_OpenURL(("file:///" + std::filesystem::path(skinsDir()).generic_string()).c_str());
+    }
     y += h + 14;
     char text[48];
     std::snprintf(text, sizeof(text), "Pan speed  %.0f", settings_.panSpeed);
@@ -2452,7 +2577,9 @@ void YoreholdGame::drawSettings(const yh::Rect& area)
         || before.edgeScroll != settings_.edgeScroll || before.cameraFollows != settings_.cameraFollows
         || before.fullscreen != settings_.fullscreen || before.panSpeed != settings_.panSpeed
         || before.lighting != settings_.lighting || before.sharedFog != settings_.sharedFog
-        || before.timeOfDay != settings_.timeOfDay;
+        || before.timeOfDay != settings_.timeOfDay || before.skin != settings_.skin;
+    if (before.skin != settings_.skin)
+        skinChanged_ = true; // swapped at the next update, once this frame's text has been drawn
     if (changed)
     {
         applySettings();

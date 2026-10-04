@@ -12,5 +12,13 @@
   "bad": [214, 72, 60, 255],
   "border": 3,
   "bevel": 2,
-  "shadow": 4
+  "shadow": 4,
+  "slice": {
+    "default": 6,
+    "button-selected": 4,
+    "textbox": 2,
+    "textbox-focus": 2,
+    "bar-back": 3,
+    "bar-fill": 0
+  }
 }

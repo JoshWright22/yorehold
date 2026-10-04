@@ -167,7 +167,8 @@ private:
         std::string joinAddress = "127.0.0.1"; // the last co-op host joined
         std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)
         std::string lastFolder;
-        std::string server;    // the account server, like http://127.0.0.1:7350 ("" = play offline)
+        std::string skin; // a name in the skins folder ("" = the default look)
+        std::string server;   // the account server, like http://127.0.0.1:7350 ("" = play offline)
         std::string serverKey;
         std::string deviceId;  // names this install to the server; made up on first use
     };
@@ -186,6 +187,15 @@ private:
     void addContent(const std::string& file);
     bool installedAdventure() const;
     void releaseAssets();
+
+    // Skins: folders (or .yoreskin zips) in the skins folder whose files replace the default look.
+    std::string skinsDir() const;
+    void refreshSkins();
+    void mountSkin();
+    void prepareSkinsFolder();
+    std::vector<std::string> skins_; // folder and file names in skinsDir()
+    double reloadTimer_ = 0;         // until the next check for edited skin files
+    bool skinChanged_ = false;
     void applySettings();
     void saveSettings() const;
     void loadSettings();
