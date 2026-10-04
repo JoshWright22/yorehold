@@ -1,5 +1,7 @@
 #include "YoreholdGame.h"
 
+#include "sim/Save.h"
+
 #include <yorehold/framework/assets/Skin.h>
 #include <yorehold/framework/graphics/Renderer.h>
 #include <yorehold/framework/debug/Profiler.h>
@@ -31,25 +33,6 @@ namespace
 
 constexpr float cell = GameMap::cellSize;
 
-const yh::SaveFormat& saveFormat()
-{
-    static const yh::SaveFormat format = [] {
-        yh::SaveFormat f("yorehold.adventure", 3);
-        // v1 counted short rests left (2 per adventure); v2 counts uses per rest id.
-        f.migrate(1, [](nlohmann::json& data) {
-            const int left = data.at("restsLeft").get<int>();
-            data.erase("restsLeft");
-            data["restsUsed"] = {{"short", std::max(0, 2 - left)}};
-        });
-        // Earlier saves always belonged to the original keep, whose placements haven't changed.
-        f.migrate(2, [](nlohmann::json& data) {
-            data["chapterId"] = "goblin-keep";
-            data["chapterFolder"] = "chapters/goblin-keep";
-        });
-        return f;
-    }();
-    return format;
-}
 
 float distance(yh::Vec2 a, yh::Vec2 b)
 {
@@ -67,7 +50,7 @@ std::string fillXp(std::string text, int xp)
 
 }
 
-YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
+YoreholdGame::YoreholdGame(std::vector<std::string> openFiles) : World(files_)
 {
     files_.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
     files_.mountFolder(YH_GAME_ASSETS, "game");
@@ -85,6 +68,7 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     // Test runs skip the title screen and never touch the player's save, settings or library.
     const char* seed = SDL_getenv("YOREHOLD_SEED");
     testRun_ = seed != nullptr;
+    saves_ = !testRun_;
     aiNotes_ = SDL_getenv("YOREHOLD_AI_NOTES") != nullptr;
     // YOREHOLD_TIME=day|dusk|night overrides the map's time of day (test runs don't read the settings file).
     if (const char* time = SDL_getenv("YOREHOLD_TIME"); time && testRun_)
@@ -133,6 +117,7 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles)
     for (const std::string& file : openFiles)
         addContent(file);
     connectOnline();
+    drainEvents();
 }
 
 // The account server comes from YOREHOLD_SERVER + YOREHOLD_SERVER_KEY (the dev script sets them
@@ -252,7 +237,7 @@ bool YoreholdGame::openAdventure(size_t index)
         std::fprintf(stderr, "Chapter failed to load: %s\n", chapterError_.c_str());
     mountSkin(); // on top of the adventure's own art
     applyServerAi(online_.config().value("ai", nlohmann::json::object()));
-    hasSave_ = !testRun_ && chapter_ && saveFormat().readFile(savePath()).has_value();
+    hasSave_ = !testRun_ && chapter_ && Save::format().readFile(savePath()).has_value();
     newAdventure(SDL_GetTicks());
     return chapter_ != nullptr;
 }
@@ -277,6 +262,7 @@ void YoreholdGame::addContent(const std::string& file)
     }
     if (!onTitle())
         saveAdventure();
+    drainEvents();
     autoPlay_ = false;
 
     // What was selected, to come back to it if the file adds nothing playable.
@@ -417,127 +403,6 @@ void YoreholdGame::releaseAssets()
     assets_.reset();
 }
 
-void YoreholdGame::newAdventure(uint64_t seed)
-{
-    seed_ = seed;
-    fights_ = 0;
-    restsUsed_.clear();
-    restRandom_ = yh::Random(seed ^ 0x5eedull);
-    encounter_.reset();
-    reach_.clear();
-    pendingAttack_.reset();
-    floaters_.clear();
-    log_.clear();
-    fog_.reset(0);
-    tokens_.clearLinks();
-    tokens_.tokens.clear();
-    tokens_.settings.inCombat = false;
-    tokens_.settings.activeTurn.reset();
-    creatures_.clear();
-    cutscene_ = {};
-    cutsceneDone_ = false;
-    autoExploreStuck_ = 0;
-    flags_.clear();
-    journal_.reset();
-    journalOpen_ = false;
-    talk_.reset();
-    pendingTalk_.reset();
-    rolls_ = 0;
-    pendingStep_.reset();
-
-    heroCount_ = 0;
-    if (!chapter_)
-        return;
-    if (!chapter_->quests.empty())
-        if (const std::optional<std::string> text = files_.readText(chapter_->quests))
-            journal_ = yh::QuestJournal::fromJson(*text); // Chapter::load already checked it
-    fog_ = yh::FogOfWar(map().width(), map().height(), GameMap::cellSize);
-    lightLevels_ = yh::LightLevels(map().width(), map().height(), GameMap::cellSize);
-    lightLevels_.ambient = map().lighting().ambient;
-    lightLevels_.brightFraction = map().lighting().brightFraction;
-    {
-        std::vector<yh::Light> fixed;
-        for (const GameMap::Light& l : map().lights())
-            fixed.push_back({l.position, l.radius, l.color});
-        lightLevels_.setFixed(fixed, map().walls());
-    }
-
-    // Everything below comes from the chapter's files; Chapter::load already checked the ids.
-    yh::Random random(seed);
-    for (const Chapter::PartyMember& member : chapter_->party)
-    {
-        creatures_.push_back({*chapter_->compendium.makeCharacter(rules_, member.classId, member.name, random)});
-        yh::Token token;
-        token.name = member.name;
-        token.color = member.color;
-        token.radius = cell * 0.4f;
-        token.position = grid_.center(member.at);
-        token.owner = tokens_.tokens.size() < seats_.size() ? seats_[tokens_.tokens.size()] : 0;
-        tokens_.tokens.push_back(token);
-
-    }
-    heroCount_ = creatures_.size();
-    selectOwnHero();
-    for (size_t group = 0; group < chapter_->encounters.size(); group++)
-    {
-        for (const Chapter::Placement& placement : chapter_->encounters[group].creatures)
-        {
-            const yh::CreatureDefinition& definition = *chapter_->compendium.creature(placement.creatureId);
-            creatures_.push_back({*chapter_->compendium.makeCreature(rules_, placement.creatureId, placement.name, random), 1,
-                static_cast<int>(group)});
-            creatures_.back().creatureId = placement.creatureId;
-            creatures_.back().aiLayers = {chapter_->encounters[group].ai, placement.ai};
-            creatures_.back().surrender = !placement.surrender.empty() ? placement.surrender
-                : !chapter_->encounters[group].surrender.empty() ? chapter_->encounters[group].surrender : chapter_->surrender;
-            yh::Token token;
-            token.name = creatures_.back().sheet.name;
-            token.owner = enemyOwner;
-            token.color = definition.token.color;
-            token.image = definition.token.image;
-            token.radius = cell * definition.token.size;
-            token.position = grid_.center(placement.at);
-            token.floor = hidden;
-            tokens_.tokens.push_back(token);
-            creatures_.back().facing = chapter_->facingOf(placement);
-        }
-    }
-    {
-        sneak_.assign(heroCount_, yh::StealthTracker(chapter_->stealthOnMap()));
-        lastAt_.clear();
-        for (size_t i = 0; i < heroCount_; i++)
-            lastAt_.push_back(tokens_.tokens[i].position);
-        stealthRandom_ = yh::Random(seed ^ 0x57ea1ull);
-    }
-    npcStart_ = creatures_.size();
-    for (size_t i = 0; i < chapter_->npcs.size(); i++)
-    {
-        const Chapter::Npc& npc = chapter_->npcs[i];
-        const yh::CreatureDefinition& definition = *chapter_->compendium.creature(npc.creature);
-        Creature creature{*chapter_->compendium.makeCreature(rules_, npc.creature, npc.name, random), 2,
-            static_cast<int>(chapter_->encounters.size() + i)};
-        creature.npc = static_cast<int>(i);
-        creature.creatureId = npc.creature;
-        creature.aiLayers = {npc.ai};
-        creature.surrender = chapter_->surrender;
-        creatures_.push_back(std::move(creature));
-        yh::Token token;
-        token.name = npc.name;
-        token.owner = npcOwner;
-        token.color = npc.color;
-        token.radius = cell * definition.token.size;
-        token.position = grid_.center(npc.at);
-        token.floor = hidden;
-        tokens_.tokens.push_back(token);
-    }
-    for (size_t i = 1; i < heroCount_; i++)
-        tokens_.link(i, i - 1);
-
-    cameraPlaced_ = false;
-    for (const std::string& line : chapter_->intro)
-        say(line);
-    banner_ = chapter_->title;
-    bannerTime_ = 3;
-}
 
 void YoreholdGame::applyScheme(yh::ControlPreset preset)
 {
@@ -546,14 +411,64 @@ void YoreholdGame::applyScheme(yh::ControlPreset preset)
     controls_.settings.edgeScroll = scheme_.edgeScroll;
 }
 
-void YoreholdGame::say(std::string line)
+void YoreholdGame::drainEvents()
 {
     static const bool printLog = SDL_getenv("YOREHOLD_PRINT_LOG") != nullptr;
-    if (autoPlay_ || printLog) // headless runs read the story from stdout
-        std::printf("log: %s\n", line.c_str());
-    log_.push_back(std::move(line));
-    if (log_.size() > 200)
-        log_.erase(log_.begin(), log_.begin() + 50);
+    using Kind = World::Event::Kind;
+    // Handling one can add more (a save that fails says so).
+    for (std::vector<World::Event> events = takeEvents(); !events.empty(); events = takeEvents())
+    {
+        for (World::Event& event : events)
+        {
+            switch (event.kind)
+            {
+            case Kind::Reset:
+                floaters_.clear();
+                log_.clear();
+                cutscene_ = {};
+                cutsceneDone_ = false;
+                journalOpen_ = false;
+                cameraPlaced_ = false;
+                break;
+            case Kind::Resumed:
+                log_.clear();
+                bannerTime_ = 0;
+                break;
+            case Kind::Log:
+                if (autoPlay_ || printLog) // headless runs read the story from stdout
+                    std::printf("log: %s\n", event.text.c_str());
+                log_.push_back(std::move(event.text));
+                if (log_.size() > 200)
+                    log_.erase(log_.begin(), log_.begin() + 50);
+                break;
+            case Kind::Floater:
+            {
+                using Float = World::FloatKind;
+                const yh::Color color = event.floater == Float::Miss ? yh::Color{200, 200, 210, 255}
+                    : event.floater == Float::Hit ? yh::Color{255, 90, 70, 255}
+                    : event.floater == Float::Critical ? yh::Color{255, 200, 60, 255}
+                    : event.floater == Float::Heal ? ui_.theme.good : yh::Color{150, 200, 255, 255};
+                floaters_.push_back({event.at, std::move(event.text), color});
+                break;
+            }
+            case Kind::Banner:
+                banner_ = std::move(event.text);
+                bannerTime_ = event.seconds;
+                break;
+            case Kind::Camera:
+                camera_.moveTo(event.at);
+                break;
+            case Kind::Follow:
+                controls_.resumeFollowing();
+                break;
+            case Kind::Ending:
+                break;
+            case Kind::Save:
+                writeSave(event.text);
+                break;
+            }
+        }
+    }
 }
 
 void YoreholdGame::syncLog()
@@ -566,6 +481,13 @@ void YoreholdGame::syncLog()
 }
 
 bool YoreholdGame::handleEvent(const SDL_Event& event)
+{
+    const bool handled = handle(event);
+    drainEvents();
+    return handled;
+}
+
+bool YoreholdGame::handle(const SDL_Event& event)
 {
     const bool keyDown = event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat;
     if (event.type == SDL_EVENT_DROP_FILE && event.drop.data)
@@ -607,6 +529,7 @@ bool YoreholdGame::handleEvent(const SDL_Event& event)
         if (onTitle())
             startNew();
         menu_ = Menu::None;
+        drainEvents(); // what was said so far is printed (or not) by the old setting
         autoPlay_ = !autoPlay_;
         say(autoPlay_ ? "Auto-play on (F9): the party explores and fights by itself." : "Auto-play off.");
         return true;
@@ -691,6 +614,12 @@ std::string YoreholdGame::describe() const
 
 void YoreholdGame::update(double deltaSeconds)
 {
+    step(deltaSeconds);
+    drainEvents();
+}
+
+void YoreholdGame::step(double deltaSeconds)
+{
     time_ += deltaSeconds;
     // Edited skin or art files show up straight away: everything reloads on the next draw.
     reloadTimer_ -= deltaSeconds;
@@ -729,6 +658,7 @@ void YoreholdGame::update(double deltaSeconds)
     online_.update();
     if (online_.status() != onlineStatus_)
     {
+        drainEvents(); // keeps printed lines in the order they happened
         onlineStatus_ = online_.status();
         if (SDL_getenv("YOREHOLD_PRINT_LOG"))
             std::printf("[online] %s\n", onlineStatus_.c_str());
@@ -1207,10 +1137,12 @@ void YoreholdGame::playEnding()
     bannerTime_ = 0;
     controls_.resumeFollowing();
     cutscene_.start();
+    inCutscene_ = true;
 }
 
 void YoreholdGame::finishAdventure()
 {
+    inCutscene_ = false;
     // In co-op the host starts the next run for everyone; joined players wait for it.
     if (client_)
     {
@@ -1233,63 +1165,12 @@ void YoreholdGame::finishAdventure()
         return;
     }
     cutscene_ = {};
+    drainEvents();
     autoPlay_ = false;
     newAdventure(SDL_GetTicks());
     menu_ = testRun_ ? Menu::None : Menu::Main;
 }
 
-bool YoreholdGame::chapterCleared() const
-{
-    if (!chapter_)
-        return false;
-    if (!chapter_->completeWhen.empty())
-        return std::all_of(chapter_->completeWhen.begin(), chapter_->completeWhen.end(), [this](const std::string& f) { return flags_.contains(f); });
-    // Every authored enemy is down (NPCs the party picked a fight with don't count).
-    return !chapter_->encounters.empty()
-        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return c.npc < 0 && !c.sheet.down() && !c.surrendered; });
-}
-
-// ---------------------------------------------------------------- story, NPCs and quests
-
-void YoreholdGame::setFlags(const std::vector<std::string>& flags)
-{
-    const std::set<std::string> before = flags_;
-    flags_.insert(flags.begin(), flags.end());
-    if (flags_ != before)
-        flagsChanged(before);
-}
-
-// Tells the party what changed in the journal.
-void YoreholdGame::flagsChanged(const std::set<std::string>& before)
-{
-    if (!journal_)
-        return;
-    for (const yh::Quest& quest : journal_->quests)
-    {
-        const yh::QuestProgress was = quest.progress(before);
-        const yh::QuestProgress now = quest.progress(flags_);
-        if (now.status == yh::QuestStatus::Hidden)
-            continue;
-        if (was.status == yh::QuestStatus::Hidden)
-            say("New quest: " + quest.title + " (J: journal)");
-        for (size_t i = 0; i < quest.objectives.size(); i++)
-            if (now.objectiveComplete[i] && !was.objectiveComplete[i] && now.status != yh::QuestStatus::Failed)
-                say("Done: " + quest.objectives[i].text);
-        if (now.status != was.status && now.status == yh::QuestStatus::Completed)
-        {
-            say("Quest complete: " + quest.title);
-            banner_ = quest.title;
-            bannerTime_ = 2.5;
-        }
-        else if (now.status != was.status && now.status == yh::QuestStatus::Failed)
-            say("Quest failed: " + quest.title);
-    }
-}
-
-yh::Random YoreholdGame::nextRandom(uint64_t salt)
-{
-    return yh::Random(seed_ ^ salt ^ (++rolls_ * 0x9e3779b97f4a7c15ull));
-}
 
 size_t YoreholdGame::leaderIndex() const
 {
@@ -1305,23 +1186,6 @@ size_t YoreholdGame::leaderIndex() const
     return 0;
 }
 
-std::optional<size_t> YoreholdGame::talkerAt(yh::Cell c) const
-{
-    if (!chapter_)
-        return std::nullopt;
-    for (size_t i = heroCount_; i < creatures_.size(); i++)
-        if (talkable(i) && cellOf(i) == c)
-            return i;
-    return std::nullopt;
-}
-
-bool YoreholdGame::talkable(size_t creature) const
-{
-    if (creature >= creatures_.size() || creature < heroCount_)
-        return false;
-    const Creature& c = creatures_[creature];
-    return c.team == 2 && !c.sheet.down() && (c.npc >= 0 || c.surrendered);
-}
 
 std::string YoreholdGame::dialogueFor(size_t creature) const
 {
@@ -1507,13 +1371,6 @@ void YoreholdGame::chooseReply(size_t index, size_t hero)
     }
 }
 
-int YoreholdGame::restsLeft(const yh::RestDefinition& rest) const
-{
-    if (rest.perAdventure == 0)
-        return -1; // unlimited
-    const auto used = restsUsed_.find(rest.id);
-    return std::max(0, rest.perAdventure - (used == restsUsed_.end() ? 0 : used->second));
-}
 
 void YoreholdGame::rest(const yh::RestDefinition& rest)
 {
@@ -2180,52 +2037,26 @@ void YoreholdGame::loadSettings()
 
 void YoreholdGame::saveAdventure()
 {
-    // Only between fights: the encounter points into creatures_ and isn't saved. A joined player's
-    // game belongs to the host, who keeps the save.
-    if (!chapter_ || testRun_ || client_ || (encounter_ && !encounter_->finished()) || partyDown() || chapterCleared() || cutscene_.running())
-        return;
+    if (!testRun_ && canSave())
+        writeSave(stateJson());
+}
+
+void YoreholdGame::writeSave(const std::string& state)
+{
     std::string error;
-    if (saveFormat().writeFile(savePath(), stateJson(), &error))
+    if (Save::format().writeFile(savePath(), state, &error))
         hasSave_ = true;
     else
         say("Couldn't save: " + error);
 }
 
-std::string YoreholdGame::stateJson() const
-{
-    nlohmann::json data;
-    data["chapterId"] = chapter_->id;
-    data["chapterFolder"] = chapter_->folder;
-    data["chapterSignature"] = chapter_->signature;
-    data["seed"] = seed_;
-    data["fights"] = fights_;
-    data["restsUsed"] = restsUsed_;
-    data["flags"] = flags_;
-    data["rolls"] = rolls_;
-    data["fog"] = nlohmann::json::parse(fog_.toJson());
-    for (size_t i = 0; i < creatures_.size(); i++)
-    {
-        const yh::Token& token = tokens_.tokens[i];
-        data["creatures"].push_back({
-            {"sheet", nlohmann::json::parse(creatures_[i].sheet.toJson())},
-            {"awake", creatures_[i].awake},
-            {"fled", creatures_[i].fled},
-            {"surrendered", creatures_[i].surrendered},
-            {"sneaking", creatures_[i].sneaking},
-            {"team", creatures_[i].team},
-            {"x", token.path.empty() ? token.position.x : token.path.back().x},
-            {"y", token.path.empty() ? token.position.y : token.path.back().y},
-        });
-    }
-    return data.dump();
-}
 
 bool YoreholdGame::loadAdventure()
 {
     if (!chapter_)
         return false;
     std::string error;
-    const std::optional<std::string> text = saveFormat().readFile(savePath(), &error);
+    const std::optional<std::string> text = Save::format().readFile(savePath(), &error);
     if (!text)
         return false;
     if (restoreState(*text, &error))
@@ -2238,104 +2069,6 @@ bool YoreholdGame::loadAdventure()
     return false;
 }
 
-bool YoreholdGame::restoreState(std::string_view text, std::string* problem)
-{
-    if (!chapter_)
-        return false;
-    std::string error;
-    try
-    {
-        const nlohmann::json data = nlohmann::json::parse(text);
-        if (data.at("chapterId") != chapter_->id || data.at("chapterFolder") != chapter_->folder)
-            throw std::runtime_error("this save belongs to another chapter");
-        if (data.contains("chapterSignature") && data.at("chapterSignature") != chapter_->signature)
-            throw std::runtime_error("the chapter's content has changed since this save");
-        const nlohmann::json& saved = data.at("creatures");
-        const auto& fogData = data.at("fog");
-        if (fogData.at("width") != map().width() || fogData.at("height") != map().height()
-            || fogData.at("cellSize") != GameMap::cellSize)
-            throw std::runtime_error("the map has changed since this save");
-        std::optional<yh::FogOfWar> fog = yh::FogOfWar::fromJson(data.at("fog").dump(), &error);
-        if (!fog || !saved.is_array() || saved.size() != creatures_.size())
-            throw std::runtime_error(fog ? "the map has changed since this save" : error);
-        // Check all state before applying any of it, including positions and recovery counters.
-        const auto seed = data.at("seed").get<uint64_t>();
-        const int fights = data.at("fights").get<int>();
-        auto rests = data.at("restsUsed").get<std::map<std::string, int>>();
-        if (fights < 0 || std::any_of(rests.begin(), rests.end(), [](const auto& entry) { return entry.second < 0; }))
-            throw std::runtime_error("invalid adventure counters");
-        auto flags = data.value("flags", std::set<std::string>{});
-        const auto rolls = data.value("rolls", uint64_t{0});
-        // Only in a co-op snapshot: who plays which hero.
-        auto seats = data.value("seats", seats_);
-        if (!seats.empty() && seats.size() != chapter_->party.size())
-            throw std::runtime_error("seats don't match the party");
-        std::vector<yh::Character> sheets;
-        std::vector<yh::Vec2> positions;
-        std::vector<bool> awake, fled, surrendered, sneaking;
-        std::vector<int> teams;
-        for (const nlohmann::json& c : saved)
-        {
-            std::optional<yh::Character> sheet = yh::Character::fromJson(c.at("sheet").dump(), &error);
-            if (!sheet)
-                throw std::runtime_error(error);
-            sheets.push_back(std::move(*sheet));
-            const yh::Vec2 position{c.at("x").get<float>(), c.at("y").get<float>()};
-            if (!std::isfinite(position.x) || !std::isfinite(position.y) || position.x < 0 || position.y < 0
-                || position.x >= map().width() * GameMap::cellSize || position.y >= map().height() * GameMap::cellSize)
-                throw std::runtime_error("saved token is outside the map");
-            positions.push_back(position);
-            awake.push_back(c.at("awake").get<bool>());
-            fled.push_back(c.value("fled", false) && sheets.back().down());
-            sneaking.push_back(c.value("sneaking", false) && sneaking.size() < heroCount_ && !sheets.back().down()); // older saves have none
-            // Only an NPC's side can change (a peaceful one the party attacked), or an enemy's that gave up.
-            const int team = c.value("team", creatures_[teams.size()].team);
-            surrendered.push_back(c.value("surrendered", false) && team == 2 && teams.size() >= heroCount_);
-            if (team != creatures_[teams.size()].team && !(creatures_[teams.size()].npc >= 0 && (team == 1 || team == 2)) && !surrendered.back())
-                throw std::runtime_error("saved creature is on the wrong side");
-            teams.push_back(team);
-        }
-        seats_ = std::move(seats);
-        newAdventure(seed);
-        fog_ = std::move(*fog);
-        fights_ = fights;
-        restsUsed_ = std::move(rests);
-        flags_ = std::move(flags);
-        rolls_ = rolls;
-        for (size_t i = 0; i < creatures_.size(); i++)
-        {
-            creatures_[i].sheet = std::move(sheets[i]);
-            creatures_[i].awake = awake[i];
-            creatures_[i].fled = fled[i];
-            creatures_[i].surrendered = surrendered[i];
-            creatures_[i].sneaking = sneaking[i];
-            creatures_[i].team = teams[i];
-            yh::Token& token = tokens_.tokens[i];
-            if (creatures_[i].npc >= 0)
-                token.owner = teams[i] == 1 ? enemyOwner : npcOwner;
-            token.position = positions[i];
-            token.path.clear();
-            if (creatures_[i].sheet.down())
-                token.floor = dead;
-        }
-        log_.clear();
-        bannerTime_ = 0;
-        return true;
-    }
-    catch (const std::exception& e)
-    {
-        if (problem)
-            *problem = e.what();
-        return false;
-    }
-}
-
-bool YoreholdGame::partyDown() const
-{
-    return heroCount_ > 0 && std::all_of(creatures_.begin(), creatures_.begin() + heroCount_, [](const Creature& c) { return c.sheet.down(); });
-}
-
-// ---------------------------------------------------------------- grid helpers
 
 void YoreholdGame::computeReach(size_t mover, int extra)
 {
@@ -2377,57 +2110,6 @@ void YoreholdGame::computeReach(size_t mover, int extra)
     }
 }
 
-bool YoreholdGame::occupied(yh::Cell c, size_t except) const
-{
-    for (size_t i = 0; i < creatures_.size(); i++)
-    {
-        if (i != except && tokens_.tokens[i].floor != dead && cellOf(i) == c)
-            return true;
-    }
-    return false;
-}
-
-bool YoreholdGame::walkable(yh::Cell c) const
-{
-    return map().walkable(c) && !talkerAt(c);
-}
-
-std::optional<size_t> YoreholdGame::orderIndex(size_t creature) const
-{
-    if (!encounter_)
-        return std::nullopt;
-    const auto& order = encounter_->order();
-    for (size_t i = 0; i < order.size(); i++)
-    {
-        if (order[i].character == &creatures_[creature].sheet)
-            return i;
-    }
-    return std::nullopt;
-}
-
-std::optional<size_t> YoreholdGame::currentCreature() const
-{
-    if (!encounter_ || !encounter_->started() || encounter_->finished())
-        return std::nullopt;
-    const yh::Character* current = encounter_->order()[encounter_->currentIndex()].character;
-    for (size_t i = 0; i < creatures_.size(); i++)
-    {
-        if (&creatures_[i].sheet == current)
-            return i;
-    }
-    return std::nullopt;
-}
-
-yh::Cell YoreholdGame::cellOf(size_t creature) const
-{
-    const yh::Token& token = tokens_.tokens[creature];
-    return grid_.cellAt(token.path.empty() ? token.position : token.path.back());
-}
-
-bool YoreholdGame::adjacent(size_t a, size_t b) const
-{
-    return grid_.distance(cellOf(a), cellOf(b)) <= 1.01f;
-}
 
 std::optional<size_t> YoreholdGame::hoveredCreature() const
 {
@@ -2449,6 +2131,12 @@ bool YoreholdGame::overUi(yh::Vec2 screen) const
 // ---------------------------------------------------------------- drawing
 
 void YoreholdGame::draw(yh::Renderer& renderer)
+{
+    render(renderer);
+    drainEvents();
+}
+
+void YoreholdGame::render(yh::Renderer& renderer)
 {
     if (!assets_)
     {

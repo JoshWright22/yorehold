@@ -36,38 +36,6 @@ int YoreholdGame::coopPort()
     return 47310;
 }
 
-bool YoreholdGame::mine(size_t creature) const
-{
-    if (creature < heroCount_)
-        return tokens_.tokens[creature].owner == self_;
-    return !client_; // the host plays the enemies
-}
-
-bool YoreholdGame::mayAct(yh::PlayerId player, size_t creature) const
-{
-    if (creature < heroCount_)
-        return tokens_.tokens[creature].owner == player || (player == 0 && autoPlay_);
-    return player == 0;
-}
-
-void YoreholdGame::selectOwnHero()
-{
-    std::optional<size_t> pick;
-    for (size_t i = 0; i < heroCount_; i++)
-        if (mine(i) && !creatures_[i].sheet.down() && (!pick || tokens_.tokens[i].selected))
-            pick = i;
-    for (size_t i = 0; i < heroCount_; i++)
-        tokens_.tokens[i].selected = pick && i == *pick;
-}
-
-std::string YoreholdGame::seatName(size_t hero) const
-{
-    const int owner = hero < heroCount_ ? tokens_.tokens[hero].owner : 0;
-    const auto name = playerNames_.find(owner);
-    return name != playerNames_.end() ? name->second : "Player " + std::to_string(owner + 1);
-}
-
-// ---------------------------------------------------------------- commands
 
 void YoreholdGame::act(std::string_view type, const std::string& data)
 {
@@ -472,16 +440,6 @@ uint64_t YoreholdGame::checksum() const
     return hash;
 }
 
-std::string YoreholdGame::snapshot() const
-{
-    nlohmann::json j = nlohmann::json::parse(stateJson());
-    j["seats"] = seats_;
-    for (const auto& [id, name] : playerNames_)
-        j["names"][std::to_string(id)] = name;
-    return j.dump();
-}
-
-// ---------------------------------------------------------------- hosting and joining
 
 void YoreholdGame::hostSession()
 {
@@ -585,6 +543,7 @@ void YoreholdGame::joinSession(const std::string& address)
     handlers.disconnected = [this](std::string_view reason) { sessionEnded_ = reason.empty() ? "Disconnected." : std::string(reason); };
     handlers.checksum = [this] { return checksum(); };
     client_ = std::make_unique<yh::SessionClient>(std::move(transport), gameName, chapter_->signature, settings_.playerName, std::move(handlers));
+    remote_ = true;
 }
 
 void YoreholdGame::endSession(const std::string& reason)
@@ -595,6 +554,7 @@ void YoreholdGame::endSession(const std::string& reason)
         client_->leave();
     client_.reset();
     host_.reset();
+    remote_ = false;
     seats_.clear();
     playerNames_.clear();
     self_ = 0;

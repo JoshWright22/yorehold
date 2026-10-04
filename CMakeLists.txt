@@ -20,6 +20,8 @@ add_library(yorehold-game STATIC
     src/content/ContentPackage.cpp
     src/content/GameMap.cpp
     src/online/Online.cpp
+    src/sim/Save.cpp
+    src/sim/World.cpp
     src/Coop.cpp
     src/FileAssociation.cpp
     src/YoreholdGame.cpp

@@ -1,6 +1,7 @@
 #include "YoreholdGame.h"
 #include "content/Chapter.h"
 #include "content/ContentPackage.h"
+#include "sim/World.h"
 
 #include <yorehold/framework/assets/FileSystem.h>
 #include <yorehold/framework/map/Pathfinding.h>
@@ -40,6 +41,38 @@ void write(const fs::path& path, const json& data)
     std::ofstream file(path, std::ios::binary);
     file << data.dump(2);
     if (!file) throw std::runtime_error("couldn't write fixture " + path.string());
+}
+
+void worldSaveTests()
+{
+    yh::FileSystem files;
+    files.mountFolder(YH_GAME_ASSETS, "game");
+    struct TestWorld : World
+    {
+        using World::World;
+        bool load()
+        {
+            auto chapter = Chapter::load(chapterFiles_, "chapters/goblin-keep");
+            if (!chapter) return false;
+            chapter_ = std::make_unique<Chapter>(std::move(*chapter));
+            rules_ = chapter_->rules;
+            newAdventure(7);
+            return true;
+        }
+    };
+    TestWorld world(files);
+    check(world.load(), "A world starts the keep without a window");
+    const json before = json::parse(world.stateJson());
+    world.setFlags({"test-flag"});
+    std::string error;
+    check(world.restoreState(before.dump(), &error), "A world restores its own saved state");
+    check(json::parse(world.stateJson()) == before, "World save round trips preserve every field");
+    json broken = before;
+    broken["creatures"][0]["x"] = -1;
+    check(!world.restoreState(broken.dump(), &error) && error == "saved token is outside the map",
+        "A world rejects invalid saved positions with a clear error");
+    check(json::parse(world.stateJson()) == before, "A rejected save leaves the world intact");
+    check(!world.takeEvents().empty() && world.takeEvents().empty(), "World events are consumed once");
 }
 
 struct Scratch
@@ -610,6 +643,7 @@ int main()
     {
         Scratch scratch;
         contentTests(scratch.path);
+        worldSaveTests();
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();
