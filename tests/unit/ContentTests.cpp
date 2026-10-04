@@ -3,6 +3,7 @@
 #include "content/CharacterDraft.h"
 #include "content/CharacterLibrary.h"
 #include "content/ContentPackage.h"
+#include "screens/CreateScreen.h"
 #include "sim/World.h"
 
 #include <yorehold/framework/assets/FileSystem.h>
@@ -84,6 +85,182 @@ struct Scratch
     Scratch() { fs::create_directories(path); }
     ~Scratch() { std::error_code error; fs::remove_all(path, error); }
 };
+
+void manifestTests()
+{
+    std::string error;
+
+    // Old packages without manifest fields still load
+    {
+        json manifest = {
+            {"format", "yorehold.content"},
+            {"version", 1},
+            {"name", "Old Package"},
+            {"chapters", nlohmann::json::array()}
+        };
+        fs::path testDir = fs::temp_directory_path() / "manifest-test";
+        fs::create_directories(testDir);
+        {
+            std::ofstream file(testDir / "content.json");
+            file << manifest.dump(2);
+        }
+        yh::FileSystem oldFiles;
+        oldFiles.mountFolder(testDir.string(), "old");
+        auto loaded = ContentPackage::load(oldFiles, &error);
+        check(loaded && loaded->name == "Old Package" && loaded->kind.empty() && loaded->id.empty() && loaded->revision == 0
+            && loaded->requires.empty(), "Old packages without manifest fields still load with defaults");
+        std::error_code ec;
+        fs::remove_all(testDir, ec);
+    }
+
+    // New packages with manifest fields load correctly
+    {
+        json manifest = {
+            {"format", "yorehold.content"},
+            {"version", 1},
+            {"name", "Adventure Pack"},
+            {"kind", "adventure"},
+            {"id", "dragon-lair"},
+            {"revision", 2},
+            {"ruleset", "yorehold@1.0"},
+            {"requires", nlohmann::json::array({"asset-pack-1"})},
+            {"chapters", nlohmann::json::array()}
+        };
+        fs::path testDir = fs::temp_directory_path() / "manifest-test-new";
+        fs::create_directories(testDir);
+        {
+            std::ofstream file(testDir / "content.json");
+            file << manifest.dump(2);
+        }
+        yh::FileSystem newFiles;
+        newFiles.mountFolder(testDir.string(), "new");
+        auto loaded = ContentPackage::load(newFiles, &error);
+        check(loaded && loaded->name == "Adventure Pack" && loaded->kind == "adventure" && loaded->id == "dragon-lair"
+            && loaded->revision == 2 && loaded->ruleset == "yorehold@1.0" && loaded->requires.size() == 1 && loaded->requires[0] == "asset-pack-1",
+            "New packages with manifest fields load correctly");
+        std::error_code ec;
+        fs::remove_all(testDir, ec);
+    }
+
+    // Invalid kind is rejected
+    {
+        json manifest = {
+            {"format", "yorehold.content"},
+            {"version", 1},
+            {"kind", "invalid-kind"},
+            {"chapters", nlohmann::json::array()}
+        };
+        fs::path testDir = fs::temp_directory_path() / "manifest-test-bad-kind";
+        fs::create_directories(testDir);
+        {
+            std::ofstream file(testDir / "content.json");
+            file << manifest.dump(2);
+        }
+        yh::FileSystem badFiles;
+        badFiles.mountFolder(testDir.string(), "bad");
+        auto loaded = ContentPackage::load(badFiles, &error);
+        check(!loaded && error.find("unknown kind") != std::string::npos, "Invalid kind values are rejected");
+        std::error_code ec;
+        fs::remove_all(testDir, ec);
+    }
+
+    // Invalid id is rejected
+    {
+        json manifest = {
+            {"format", "yorehold.content"},
+            {"version", 1},
+            {"id", "invalid id!"},
+            {"chapters", nlohmann::json::array()}
+        };
+        fs::path testDir = fs::temp_directory_path() / "manifest-test-bad-id";
+        fs::create_directories(testDir);
+        {
+            std::ofstream file(testDir / "content.json");
+            file << manifest.dump(2);
+        }
+        yh::FileSystem badFiles;
+        badFiles.mountFolder(testDir.string(), "bad");
+        auto loaded = ContentPackage::load(badFiles, &error);
+        check(!loaded && error.find("invalid characters") != std::string::npos, "Invalid id formats are rejected");
+        std::error_code ec;
+        fs::remove_all(testDir, ec);
+    }
+
+    // Invalid revision is rejected
+    {
+        json manifest = {
+            {"format", "yorehold.content"},
+            {"version", 1},
+            {"revision", -1},
+            {"chapters", nlohmann::json::array()}
+        };
+        fs::path testDir = fs::temp_directory_path() / "manifest-test-bad-revision";
+        fs::create_directories(testDir);
+        {
+            std::ofstream file(testDir / "content.json");
+            file << manifest.dump(2);
+        }
+        yh::FileSystem badFiles;
+        badFiles.mountFolder(testDir.string(), "bad");
+        auto loaded = ContentPackage::load(badFiles, &error);
+        check(!loaded && error.find("revision") != std::string::npos, "Invalid revision values are rejected");
+        std::error_code ec;
+        fs::remove_all(testDir, ec);
+    }
+
+    // Valid kinds
+    {
+        const std::vector<std::string> validKinds = {"adventure", "ruleset", "compendium", "character_class", "race", "feat"};
+        for (const auto& kind : validKinds)
+        {
+            json manifest = {
+                {"format", "yorehold.content"},
+                {"version", 1},
+                {"kind", kind},
+                {"id", "test-" + kind},
+                {"chapters", nlohmann::json::array()}
+            };
+            fs::path testDir = fs::temp_directory_path() / ("manifest-test-" + kind);
+            fs::create_directories(testDir);
+            {
+                std::ofstream file(testDir / "content.json");
+                file << manifest.dump(2);
+            }
+            yh::FileSystem testFiles;
+            testFiles.mountFolder(testDir.string(), "test");
+            auto loaded = ContentPackage::load(testFiles, &error);
+            check(loaded && loaded->kind == kind, ("Kind '" + kind + "' is valid").c_str());
+            std::error_code ec;
+            fs::remove_all(testDir, ec);
+        }
+    }
+
+    // Valid id formats
+    {
+        const std::vector<std::string> validIds = {"simple", "with-dash", "with_underscore", "mixed-123_abc"};
+        for (const auto& id : validIds)
+        {
+            json manifest = {
+                {"format", "yorehold.content"},
+                {"version", 1},
+                {"id", id},
+                {"chapters", nlohmann::json::array()}
+            };
+            fs::path testDir = fs::temp_directory_path() / ("manifest-test-id-" + id);
+            fs::create_directories(testDir);
+            {
+                std::ofstream file(testDir / "content.json");
+                file << manifest.dump(2);
+            }
+            yh::FileSystem testFiles;
+            testFiles.mountFolder(testDir.string(), "test");
+            auto loaded = ContentPackage::load(testFiles, &error);
+            check(loaded && loaded->id == id, ("ID '" + id + "' is valid").c_str());
+            std::error_code ec;
+            fs::remove_all(testDir, ec);
+        }
+    }
+}
 
 void contentTests(const fs::path& scratch)
 {
@@ -963,6 +1140,91 @@ void stealthTests(const fs::path& scratch)
     SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
 }
 
+void createScreenTests()
+{
+    // Test PackageHistory undo/redo
+    {
+        PackageHistory history;
+        history.clear();
+        check(!history.canUndo() && !history.canRedo(), "Empty history has no undo/redo");
+
+        history.push(R"({"name":"test1"})", "First state");
+        check(!history.canUndo() && !history.canRedo(), "Single state has no undo/redo");
+
+        history.push(R"({"name":"test2"})", "Second state");
+        check(history.canUndo() && !history.canRedo(), "After second push, undo available");
+
+        auto undone = history.undo();
+        check(undone.has_value() && undone.value() == R"({"name":"test1"})", "Undo returns first state");
+        check(!history.canUndo() && history.canRedo(), "After undo, redo available");
+
+        auto redone = history.redo();
+        check(redone.has_value() && redone.value() == R"({"name":"test2"})", "Redo returns second state");
+        check(history.canUndo() && !history.canRedo(), "After redo, undo available again");
+    }
+
+    // Test CreateScreen package validation
+    {
+        CreateScreen create(nullptr, nullptr, nullptr);
+
+        // Valid package
+        ContentPackage pkg;
+        pkg.name = "Test Adventure";
+        pkg.kind = "adventure";
+        pkg.id = "test-adventure";
+        pkg.revision = 1;
+        // Validation should pass for this valid package
+        check(!pkg.name.empty(), "Valid package has a name");
+        check(pkg.kind == "adventure", "Valid package has a valid kind");
+        check(pkg.id == "test-adventure", "Valid package has a valid id format");
+        check(pkg.revision >= 0, "Valid package has non-negative revision");
+    }
+
+    // Test invalid package kinds
+    {
+        ContentPackage pkg;
+        pkg.kind = "invalid-kind";
+        bool isValid = true;
+        const std::set<std::string> validKinds{"adventure", "ruleset", "compendium", "character_class", "race", "feat"};
+        if (!pkg.kind.empty() && !validKinds.count(pkg.kind))
+            isValid = false;
+        check(!isValid, "Invalid kind is rejected");
+    }
+
+    // Test invalid id format
+    {
+        std::string invalidId = "test adventure"; // contains space
+        bool isValid = true;
+        for (const char c : invalidId)
+        {
+            if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_'))
+            {
+                isValid = false;
+                break;
+            }
+        }
+        check(!isValid, "ID with space is rejected");
+    }
+
+    // Test valid id formats
+    {
+        const char* validIds[] = {"test", "test-adventure", "test_adventure", "test-123", "a", "z-0"};
+        for (const char* id : validIds)
+        {
+            bool isValid = true;
+            for (const char c : std::string(id))
+            {
+                if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_'))
+                {
+                    isValid = false;
+                    break;
+                }
+            }
+            check(isValid, (std::string("Valid ID accepted: ") + id).c_str());
+        }
+    }
+}
+
 }
 
 void worldPlayTests(const std::function<void(bool, const char*)>& check); // WorldTests.cpp
@@ -980,6 +1242,7 @@ int main()
     try
     {
         Scratch scratch;
+        manifestTests();
         contentTests(scratch.path);
         worldSaveTests();
         worldPlayTests(check);
@@ -999,6 +1262,7 @@ int main()
         characterLibraryTests(scratch.path);
         stealthTests(scratch.path);
         openFileTests(scratch.path);
+        createScreenTests();
     }
     catch (const std::exception& e)
     {

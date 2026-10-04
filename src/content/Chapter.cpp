@@ -379,6 +379,9 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                     [&](std::string_view id) { return c.compendium.item(id); }, &problem);
                 if (!npc.merchant) throw std::invalid_argument("merchant " + npc.id + ": " + problem);
             }
+            // Companion data
+            npc.approvalStart = n.value("approvalStart", 0);
+            npc.approvalJoinThreshold = n.value("approvalJoinThreshold", 0);
             if (!validId(npc.id) || !npcIds.insert(npc.id).second) throw std::invalid_argument("npc ids must be unique and use a-z, 0-9, - and _");
             if (!c.compendium.creature(npc.creature))
                 throw std::invalid_argument("unknown creature \"" + npc.creature + "\" for " + npc.name);
@@ -475,6 +478,57 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                 if (!yh::Cutscene::fromJson(text, &problem)) throw std::invalid_argument(problem);
                 include(nlohmann::json::parse(text).dump());
             }
+        }
+
+        // Triggers: dialogue and cutscenes that fire on chapter events (onEnter, onFlag, onWipe, onComplete).
+        const auto triggers = j.value("triggers", nlohmann::json::array());
+        if (!triggers.is_array()) throw std::invalid_argument("triggers must be an array");
+        for (const auto& trigger : triggers)
+        {
+            Trigger t{trigger.at("id").get<std::string>(), flagsFrom(trigger, "when"), {}, {}, false};
+            if (!validId(t.id)) throw std::invalid_argument("trigger ids must use a-z, 0-9, - and _");
+            if (trigger.contains("dialogue"))
+            {
+                where = t.dialogue = resolve(files, folder, trigger.at("dialogue").get<std::string>());
+                const std::string text = readOrThrow(files, where);
+                if (!yh::Dialogue::fromJson(text, &problem)) throw std::invalid_argument(problem);
+                include(nlohmann::json::parse(text).dump());
+            }
+            if (trigger.contains("cutscene"))
+            {
+                where = t.cutscene = resolve(files, folder, trigger.at("cutscene").get<std::string>());
+                const std::string text = readOrThrow(files, where);
+                if (!yh::Cutscene::fromJson(text, &problem)) throw std::invalid_argument(problem);
+                include(nlohmann::json::parse(text).dump());
+            }
+            if (t.dialogue.empty() && t.cutscene.empty())
+                throw std::invalid_argument("trigger " + t.id + " needs dialogue or cutscene");
+            where = folder + "/chapter.json";
+            c.triggers.push_back(std::move(t));
+        }
+
+        // Non-combat win condition: chapter completes when all flags are set, optionally playing dialogue/cutscene.
+        if (j.contains("winCondition"))
+        {
+            const auto& win = j.at("winCondition");
+            if (!win.is_object()) throw std::invalid_argument("winCondition must be an object");
+            c.winCondition = WinCondition{flagsFrom(win, "when"), {}, {}};
+            if (c.winCondition->when.empty()) throw std::invalid_argument("winCondition needs at least one flag in 'when'");
+            if (win.contains("dialogue"))
+            {
+                where = c.winCondition->dialogue = resolve(files, folder, win.at("dialogue").get<std::string>());
+                const std::string text = readOrThrow(files, where);
+                if (!yh::Dialogue::fromJson(text, &problem)) throw std::invalid_argument(problem);
+                include(nlohmann::json::parse(text).dump());
+            }
+            if (win.contains("cutscene"))
+            {
+                where = c.winCondition->cutscene = resolve(files, folder, win.at("cutscene").get<std::string>());
+                const std::string text = readOrThrow(files, where);
+                if (!yh::Cutscene::fromJson(text, &problem)) throw std::invalid_argument(problem);
+                include(nlohmann::json::parse(text).dump());
+            }
+            where = folder + "/chapter.json";
         }
         c.signature = std::to_string(signature);
         return c;

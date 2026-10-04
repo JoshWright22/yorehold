@@ -1,0 +1,45 @@
+{
+  "id": "chapter-one",
+  "title": "The First Chapter",
+  "map": "map.json",
+  "level": 1,
+  "intro": [
+    "You enter the first area.",
+    "Explore and find the exit marker."
+  ],
+  "xpPerVictory": 100,
+  "victoryText": "You've cleared the first chapter!",
+  "party": [
+    {
+      "name": "Alice",
+      "class": "fighter",
+      "color": [220, 90, 80],
+      "at": [5, 5]
+    },
+    {
+      "name": "Bob",
+      "class": "rogue",
+      "color": [150, 110, 220],
+      "at": [6, 5]
+    },
+    {
+      "name": "Carol",
+      "class": "cleric",
+      "color": [90, 160, 230],
+      "at": [7, 5]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "entry",
+      "text": "Enemies appear!",
+      "creatures": [
+        {
+          "creature": "goblin",
+          "name": "Goblin 1",
+          "at": [10, 10]
+        }
+      ]
+    }
+  ]
+}

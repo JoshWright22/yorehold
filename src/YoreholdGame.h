@@ -5,6 +5,7 @@
 #include "content/CharacterLibrary.h"
 #include "content/ContentPackage.h"
 #include "online/Online.h"
+#include "screens/CreateScreen.h"
 #include "screens/PlayScreen.h"
 #include "sim/World.h"
 
@@ -98,6 +99,7 @@ private:
         std::string joinAddress = "127.0.0.1"; // the last co-op host joined
         std::string lastPackage; // the adventure picked last time: installed file name ("" = built in)
         std::string lastFolder;
+        std::string lastCreatePackage; // the content package opened last time in Create mode
         std::string skin; // a name in the skins folder ("" = the default look)
         std::string server;   // the account server, like http://127.0.0.1:7350 ("" = play offline)
         std::string serverKey;
@@ -175,12 +177,19 @@ private:
     size_t adventurePage_ = 0;
     std::string notice_; // result of the last added file, shown on the title menus
     bool noticeBad_ = false;
+    // Create screen: edit content packages (CreateScreen.cpp)
+    void openCreateScreen();
+    void closeCreateScreen();
+    void playtestPackage();
+    void exportPackage(const std::string& path);
+
     yh::ControlScheme scheme_;
     yh::Input input_;
     yh::Ui ui_;
     std::unique_ptr<yh::Assets> assets_;
     yh::Font* title_ = nullptr;
     PlayScreen play_{*this, ui_, input_, title_};
+    CreateScreen create_{ui_, input_, title_};
 
     // Co-op. The host is player 0 and owns the enemies; seats_ says who plays each hero.
     std::unique_ptr<yh::SessionHost> host_;

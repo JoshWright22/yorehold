@@ -179,19 +179,37 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     }
     case Menu::Create:
     {
-        const yh::Rect panel{screen.w / 2 - 300, y, 600, 200};
-        ui_.panel(panel);
-        ui_.label({panel.x + 20, panel.y + 18}, "Create: design, build, playtest and share", ui_.theme.accent);
-        ui_.label({panel.x + 20, panel.y + 50}, "Plan the game and UI before building its editing tools.");
-        ui_.label({panel.x + 20, panel.y + 76}, "Maps, walls, lights, tokens, encounters and dialogue.");
-        ui_.label({panel.x + 20, panel.y + 102}, "Chapter writers own placement, story and cutscenes.");
-        ui_.label({panel.x + 20, panel.y + 134}, "The visual editor is planned; content files work now.", ui_.theme.textDim);
-        ui_.label({panel.x + 20, panel.y + 164}, "Compendium: " + std::to_string(compendium_.classes.size()) + " classes, "
-            + std::to_string(compendium_.items.size()) + " items, " + std::to_string(compendium_.creatures.size())
-            + " creatures (add more by opening .yore files)", ui_.theme.textDim);
-        y += panel.h + gap;
-        if (button("Back (Esc)"))
-            openMenu(Menu::Main);
+        if (create_.isOpen())
+        {
+            // Show the CreateScreen with its full UI
+            create_.draw(renderer);
+        }
+        else
+        {
+            // Show the Create menu with options to open or create
+            const yh::Rect panel{screen.w / 2 - 300, y, 600, 240};
+            ui_.panel(panel);
+            ui_.label({panel.x + 20, panel.y + 18}, "Create: design, build, playtest and share", ui_.theme.accent);
+            ui_.label({panel.x + 20, panel.y + 50}, "Plan the game and UI before building its editing tools.");
+            ui_.label({panel.x + 20, panel.y + 76}, "Maps, walls, lights, tokens, encounters and dialogue.");
+            ui_.label({panel.x + 20, panel.y + 102}, "Chapter writers own placement, story and cutscenes.");
+            ui_.label({panel.x + 20, panel.y + 134}, "The visual editor is planned; content files work now.", ui_.theme.textDim);
+            ui_.label({panel.x + 20, panel.y + 164}, "Compendium: " + std::to_string(compendium_.classes.size()) + " classes, "
+                + std::to_string(compendium_.items.size()) + " items, " + std::to_string(compendium_.creatures.size())
+                + " creatures (add more by opening .yore files)", ui_.theme.textDim);
+            y += panel.h + gap;
+            if (button("New"))
+                openCreateScreen();
+            if (button("Open (last: " + (settings_.lastCreatePackage.empty() ? "none" : settings_.lastCreatePackage) + ")"))
+            {
+                if (!settings_.lastCreatePackage.empty())
+                {
+                    openCreateScreen();
+                }
+            }
+            if (button("Back (Esc)"))
+                openMenu(Menu::Main);
+        }
         break;
     }
     case Menu::Characters:

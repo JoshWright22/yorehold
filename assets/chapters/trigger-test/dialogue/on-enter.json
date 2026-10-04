@@ -1,0 +1,10 @@
+{
+  "id": "on-enter",
+  "start": "greeting",
+  "nodes": [
+    {
+      "id": "greeting",
+      "text": "Welcome to the trigger test chapter!"
+    }
+  ]
+}

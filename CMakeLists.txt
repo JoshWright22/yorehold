@@ -31,6 +31,7 @@ add_library(yorehold-game STATIC
     src/hud/SpellPanel.cpp
     src/online/Online.cpp
     src/screens/CharacterScreens.cpp
+    src/screens/CreateScreen.cpp
     src/screens/Menus.cpp
     src/screens/PlayScreen.cpp
     src/sim/Save.cpp

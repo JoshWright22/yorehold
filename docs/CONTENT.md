@@ -53,6 +53,11 @@ The manifest lists each playable chapter and its default:
   "format": "yorehold.content",
   "version": 1,
   "name": "The Goblin Keep",
+  "kind": "adventure",
+  "id": "goblin-keep",
+  "revision": 1,
+  "ruleset": "yorehold@1.0",
+  "requires": [],
   "defaultChapter": "chapters/goblin-keep",
   "chapters": ["chapters/goblin-keep"],
   "theme": "ui/theme.json",
@@ -61,7 +66,15 @@ The manifest lists each playable chapter and its default:
 }
 ```
 
-`name` (optional, up to 80 characters) is what the library shows; without it the file name is used. `chapters` and `defaultChapter` are left out of a definitions-only file. `theme`, `dialogues` and `cutscenes` are optional. Chapter endings are validated automatically, so they need not also appear in `cutscenes`. Declared dialogue files use the framework's `Dialogue` JSON format. They transfer and validate today; interactive chapter dialogue is still to be wired into gameplay.
+Manifest fields:
+- `name` (optional, up to 80 characters) is what the library shows; without it the file name is used.
+- `kind` (optional) categorizes the package: `adventure`, `ruleset`, `compendium`, `character_class`, `race`, or `feat`. Empty means the kind is inferred from the structure (if it has chapters, it is an adventure; otherwise definitions).
+- `id` (optional) is a unique identifier for this package across versions, using lowercase letters, digits, hyphens and underscores.
+- `revision` (optional, default 0) is a version number that goes up with each publish.
+- `ruleset` (optional) names the ruleset version this adventure requires, e.g. `"yorehold@1.0"`. Empty means the game's own ruleset.
+- `requires` (optional) is an array of package ids/revisions this content depends on (e.g. asset packs or shared definitions).
+
+Old packages without manifest fields still load, with empty defaults for all new fields. `chapters` and `defaultChapter` are left out of a definitions-only file. `theme`, `dialogues` and `cutscenes` are optional. Chapter endings are validated automatically, so they need not also appear in `cutscenes`. Declared dialogue files use the framework's `Dialogue` JSON format. They transfer and validate today; interactive chapter dialogue is still to be wired into gameplay.
 
 ## Validate, export and load
 
@@ -112,6 +125,12 @@ Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in
 Party members have `name`, `class`, `color` and integer `at` cells. Encounter groups have unique `id`, optional starting `text`, and `creatures` with a `creature` id, optional `name` and `at`. Placements must be on walkable, distinct cells. Party size comes from the file, one to four. Seeing one enemy starts its authored encounter group.
 
 Each party member is a seat with a ready-made hero. Starting the adventure with New adventure lets players put a character from their library (or one made there and then) in any seat; it keeps that seat's `at` and `color`, and the ready-made hero only plays the seats nobody filled. Quick start plays the ready-made party. `level` (1 to 20, default 1) is the level the chapter is written for: ready-made heroes start at it, and a character made for a seat gets the XP to level up to it.
+
+Companions are NPCs who can join the party through dialogue and approval. The chapter limits the party to 4 player characters plus 2 companion NPCs (6 total). Each NPC may optionally have:
+- `approvalStart`: the starting approval score for this NPC (default 0)
+- `approvalJoinThreshold`: approval score needed to recruit them (default 0, meaning always recruiteable)
+
+NPCs track approval throughout the adventure and are placed in the party when recruited through dialogue.
 
 `containers` puts things to open on the map: each has a unique `id`, a `name` (default "Chest"), an `at` cell of its own, and any of `items` (item ids), `coins` (in copper: 10 cp to the sp, 10 sp to the gp) and a `loot` table (FRAMEWORK.md, "Loot tables") rolled when the adventure starts. A hero standing on or beside one opens it with E and takes what they click. Creature files can carry `loot` too: when the party wins a fight, each dead enemy leaves what it carried plus what its table gives in a small sack where it fell. Enemies that got away or gave up leave nothing. In the keep, the storeroom has a chest and goblins carry a few coppers.
 
@@ -226,6 +245,59 @@ placements. An occupied destination at the checkpoint falls back to its saved po
 Otherwise an absent destination keeps the checkpoint positions. Starting a chapter or loading
 a save establishes its checkpoint, including in test runs where disk writes are disabled.
 Snapshots carry that checkpoint so co-op return uses the host's state.
+
+## Triggers
+
+Triggers fire dialogue or cutscenes in response to chapter events. A chapter may have any number:
+
+```json
+"triggers": [
+  {
+    "id": "treasure-found",
+    "when": ["treasure-discovered"],
+    "dialogue": "dialogue/found-treasure.json"
+  },
+  {
+    "id": "greeting",
+    "dialogue": "dialogue/welcome.json"
+  },
+  {
+    "id": "betrayal",
+    "when": ["betrayed-party"],
+    "cutscene": "cutscenes/betrayal.json"
+  }
+]
+```
+
+- `id`: unique trigger id, uses a-z, 0-9, - and _; required.
+- `when`: optional list of story flags. Empty or absent = fire when the chapter starts (onEnter);
+  non-empty = fire once all listed flags are set (onFlag). A trigger fires only once.
+- `dialogue`: optional virtual path to a yh::Dialogue JSON file.
+- `cutscene`: optional virtual path to a yh::Cutscene JSON file.
+- At least one of `dialogue` or `cutscene` must be present.
+
+Trigger state is saved with the adventure: each trigger fires only once per playthrough.
+
+## Non-combat chapter completion
+
+A chapter may define a non-combat win condition with `winCondition`:
+
+```json
+"winCondition": {
+  "when": ["treasure-delivered", "party-escaped"],
+  "dialogue": "dialogue/safe-arrival.json",
+  "cutscene": "cutscenes/end-credits.json"
+}
+```
+
+- `when`: list of story flags that must all be set; required and non-empty.
+- `dialogue`: optional virtual path to fire when the condition is met.
+- `cutscene`: optional virtual path to fire when the condition is met.
+
+When the last flag in `when` is set (outside of combat), the chapter completes, bypassing the
+normal encounter-based completion. If `completeWhen` is also set, both must be satisfied; if
+only `winCondition` is set, the chapter ignores encounters. The dialogue and cutscene are
+optional; without them, chapter completion shows the standard banner and proceeds.
 
 ## Conditions
 

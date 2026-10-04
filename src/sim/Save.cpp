@@ -39,11 +39,14 @@ std::string World::stateJson() const
     data["fights"] = fights_;
     data["restsUsed"] = restsUsed_;
     data["flags"] = flags_;
+    data["firedTriggers"] = std::vector<std::string>(firedTriggers_.begin(), firedTriggers_.end());
     data["rolls"] = rolls_;
     data["fog"] = nlohmann::json::parse(fog_.toJson());
     data["piles"] = pilesJson();
     data["surfaces"] = surfacesJson();
     data["merchants"] = merchantsJson();
+    data["companionApproval"] = companionApproval_;
+    data["companionParty"] = std::vector<std::string>(companionParty_.begin(), companionParty_.end());
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
@@ -204,7 +207,27 @@ bool World::restoreState(std::string_view text, std::string* problem)
         fights_ = fights;
         restsUsed_ = std::move(rests);
         flags_ = std::move(flags);
+        // Restore which triggers have already fired (older saves: none)
+        if (data.contains("firedTriggers"))
+        {
+            const auto fired = data.at("firedTriggers").get<std::vector<std::string>>();
+            firedTriggers_.insert(fired.begin(), fired.end());
+        }
         rolls_ = rolls;
+        // Restore companion data (newer saves) or reinitialize (older saves)
+        if (data.contains("companionApproval"))
+            companionApproval_ = data.at("companionApproval").get<std::map<std::string, int>>();
+        else
+            companionApproval_.clear();
+        if (data.contains("companionParty"))
+        {
+            const auto party = data.at("companionParty").get<std::vector<std::string>>();
+            companionParty_.clear();
+            for (const auto& id : party)
+                companionParty_.insert(id);
+        }
+        else
+            companionParty_.clear();
         for (size_t i = 0; i < creatures_.size(); i++)
         {
             creatures_[i].sheet = std::move(sheets[i]);

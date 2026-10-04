@@ -378,14 +378,27 @@ bool YoreholdGame::handle(const SDL_Event& event)
         }
         if (keyDown && event.key.key == SDLK_ESCAPE)
         {
-            openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None
-                    : menu_ == Menu::Adventures || menu_ == Menu::Join || menu_ == Menu::Characters || menu_ == Menu::Party ? Menu::Play
-                    : menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp ? draftBack_ : Menu::Main);
-            if (menu_ != Menu::NewCharacter && menu_ != Menu::LevelUp)
-                draft_.reset();
+            if (menu_ == Menu::Create && create_.isOpen())
+                closeCreateScreen();
+            else
+            {
+                openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None
+                        : menu_ == Menu::Adventures || menu_ == Menu::Join || menu_ == Menu::Characters || menu_ == Menu::Party ? Menu::Play
+                        : menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp ? draftBack_ : Menu::Main);
+                if (menu_ != Menu::NewCharacter && menu_ != Menu::LevelUp)
+                    draft_.reset();
+            }
             return true;
         }
-        input_.handle(event); // the menus' buttons read the mouse
+        if (menu_ == Menu::Create && create_.isOpen())
+        {
+            create_.handle(event); // the Create screen reads the mouse and keyboard
+            input_.handle(event); // UI widgets also read the mouse
+        }
+        else
+        {
+            input_.handle(event); // the menus' buttons read the mouse
+        }
         return true;
     }
     if (!play_.handle(event))
@@ -419,6 +432,12 @@ void YoreholdGame::update(double deltaSeconds)
 
 void YoreholdGame::step(double deltaSeconds)
 {
+    // Update the Create screen if it's open
+    if (menu_ == Menu::Create && create_.isOpen())
+    {
+        create_.update(deltaSeconds);
+    }
+
     play_.tick(deltaSeconds);
     // Edited skin or art files show up straight away: everything reloads on the next draw.
     reloadTimer_ -= deltaSeconds;
@@ -606,6 +625,48 @@ bool YoreholdGame::loadAdventure()
     newAdventure(SDL_GetTicks());
     say("Couldn't load the save (" + error + "). Starting fresh.");
     return false;
+}
+
+// ---------------------------------------------------------------- Create screen
+
+void YoreholdGame::openCreateScreen()
+{
+    // Set up callbacks for the Create screen
+    create_.table.stateDir = stateDir();
+    create_.table.playtest = [this] { playtestPackage(); };
+    create_.table.export_package = [this](const std::string& path) { exportPackage(path); };
+
+    // Open the last package if available, otherwise create a new one
+    if (!settings_.lastCreatePackage.empty())
+    {
+        create_.openPackage(settings_.lastCreatePackage);
+    }
+    else
+    {
+        create_.newPackage();
+    }
+}
+
+void YoreholdGame::closeCreateScreen()
+{
+    // Save the current package path before closing
+    if (create_.isOpen())
+    {
+        // TODO: Save package path to settings if it was saved
+    }
+    menu_ = Menu::Main;
+}
+
+void YoreholdGame::playtestPackage()
+{
+    // TODO: Load the package into a playable state and start a chapter
+    say("Playtest not yet implemented");
+}
+
+void YoreholdGame::exportPackage(const std::string& path)
+{
+    // TODO: Export the package to a .yore file or update the existing one
+    say("Export not yet implemented");
 }
 
 // ---------------------------------------------------------------- drawing

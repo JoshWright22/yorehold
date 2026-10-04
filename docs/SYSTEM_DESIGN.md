@@ -65,12 +65,24 @@ Client source layout (planned screens in brackets):
 src/main.cpp, YoreholdGame, Coop, Settings
 src/content/   ContentPackage, Adventure, Chapter, GameMap
 src/sim/       World, WorldCombat, WorldAi, WorldExplore, WorldStealth, WorldNet (validate/apply), Save
-src/screens/   PlayScreen, Menus (title, pause, settings) [Library, Character, Camp, Create]
+src/screens/   PlayScreen, Menus (title, pause, settings), CreateScreen [Library, Character, Camp]
 src/hud/       PartyCards, ActionBar, InitiativeStrip, JournalPanel, DialoguePanel [InventoryPanel]
 src/online/    Online (accounts, storage, registry)
-src/create/    [the editor modes]
 tests/unit/    WorldFixture: load a chapter, send intents, step time, read state
 ```
+
+### Create screen (G1)
+
+The Create screen lets authors design and build content packages (adventures, rulesets, item collections). It sits at `src/screens/CreateScreen.h/cpp` and includes:
+
+- **Package management**: Open an existing package folder or .yore file, or create a new one. The last opened package path is saved to `settings.lastCreatePackage` and reopened on the next session.
+- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story (placeholder UI; full editors come in G2-G7).
+- **Shared undo/redo**: One history for the whole package, managed by `PackageHistory`. Pressing Ctrl+Z/Ctrl+Y (future) undoes/redoes all changes.
+- **Validation list**: Real-time validation of the package manifest and file structure. Errors are highlighted; warnings are dimmed. Invalid packages cannot be playtested or exported.
+- **Playtest**: Loads the package and plays a chapter in-game to test rules, encounters, and dialogue (G1 is placeholder; actual playtest hooks come in later steps).
+- **Export**: Saves the package as a .yore file or folder for sharing. Only valid packages can be exported.
+
+Validation runs automatically every 2 seconds and also when a file is loaded or created. Old package files (without new manifest fields) still load and play with empty defaults; the manifest structure is backward-compatible.
 
 ## 3. Data
 
@@ -482,6 +494,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 43. Consumables: healing potions restore 2d4+2 HP (50 gp); ward scrolls grant 1d6+2 temporary HP (25 gp); ember scrolls deal 2d6 fire with a DC 12 Dexterity save for half (50 gp). Each starting hero carries one potion. Using one spends one inventory unit, costs its authored actions in combat, and is free between fights; hostile scrolls require combat. Scrolls need no class or spell slots, and consumables count toward the magic item limit only when marked magic. All prices, targets, saves and effects are item data; legacy potion resources remain usable on older sheets.
 
 44. Spells: hands must be free to cast (a shield or weapon in them is in the way) and a spell costs one action per hand; cantrips spend no slot and a spell spends the lowest slot of its level or above; a long rest restores slots. Concentration breaks on a new concentration spell, a failed CON save against 10 or half the damage, dropping to 0 HP, the fight ending or a rest. Spells that harm wait for a fight; helpful ones can be cast between fights. All of it is `spellcasting.json` and spell files.
+
+45. Package manifest fields: `kind` categorizes a package (adventure, ruleset, compendium, character_class, race, feat; inferred from structure if empty), `id` is a stable identifier across versions, `revision` is a publish counter, `ruleset` names a ruleset version requirement, `requires` lists dependent packages. Old packages without manifest fields still load with empty defaults. Dependency checking and version matching happen at the library level when loading installed packages.
 
 ### Structure choices made in this document
 

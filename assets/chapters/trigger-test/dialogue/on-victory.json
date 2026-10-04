@@ -1,0 +1,10 @@
+{
+  "id": "on-victory",
+  "start": "victory",
+  "nodes": [
+    {
+      "id": "victory",
+      "text": "You have defeated the enemy! This trigger fired when the enemy-defeated flag was set."
+    }
+  ]
+}

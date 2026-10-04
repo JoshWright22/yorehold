@@ -1,0 +1,48 @@
+{
+  "id": "trigger-test",
+  "title": "Trigger Test",
+  "map": "map.json",
+  "level": 1,
+  "intro": [
+    "A chapter designed to test the trigger system."
+  ],
+  "xpPerVictory": 100,
+  "victoryText": "Victory!",
+  "party": [
+    {
+      "name": "Alice",
+      "class": "fighter",
+      "color": [220, 90, 80],
+      "at": [5, 5]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "test-enemy",
+      "text": "An enemy appears.",
+      "creatures": [
+        {
+          "creature": "goblin",
+          "name": "Test Goblin",
+          "at": [10, 10]
+        }
+      ],
+      "set": ["enemy-defeated"]
+    }
+  ],
+  "triggers": [
+    {
+      "id": "on-start",
+      "dialogue": "dialogue/on-enter.json"
+    },
+    {
+      "id": "on-victory",
+      "when": ["enemy-defeated"],
+      "dialogue": "dialogue/on-victory.json"
+    }
+  ],
+  "winCondition": {
+    "when": ["enemy-defeated"],
+    "dialogue": "dialogue/chapter-complete.json"
+  }
+}

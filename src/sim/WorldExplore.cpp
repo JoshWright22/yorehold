@@ -207,6 +207,19 @@ void World::dialogueActions()
             turnHostile(who);
             return;
         }
+        else if (action == "recruit" && c.npc >= 0)
+        {
+            // Recruit an NPC companion if they pass the approval check
+            if (canRecruitCompanion(static_cast<size_t>(c.npc)))
+            {
+                companionParty_.insert(chapter_->npcs[c.npc].id);
+                say(c.sheet.name + " joins the party.");
+            }
+            else
+            {
+                say(c.sheet.name + " is not ready to join yet.");
+            }
+        }
     }
     fallenConditions();
 }

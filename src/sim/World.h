@@ -148,6 +148,18 @@ public:
     bool chapterCleared() const;
     int restsLeft(const yh::RestDefinition& rest) const;
 
+    // Companions: party management
+    // Maximum party members: 4 player characters + 2 companions
+    static constexpr int maxPartyMembers = 6;
+    static constexpr int maxPlayerCharacters = 4;
+    int partyMemberCount() const; // player characters + joined companions
+    int companionCount() const; // number of joined companions currently in the party
+    bool canRecruitCompanion(size_t npcIndex) const; // checks approval and party cap
+    bool isCompanionInParty(size_t npcIndex) const; // is this NPC a companion in the current party
+    void setCompanionApproval(size_t npcIndex, int approval); // set approval for an NPC
+    void modifyCompanionApproval(size_t npcIndex, int delta); // change approval by delta
+    int getCompanionApproval(size_t npcIndex) const; // get current approval
+
     // The adventure between fights as JSON: the save file, and what a joining player receives.
     std::string stateJson() const;
     bool restoreState(std::string_view text, std::string* error = nullptr);
@@ -408,6 +420,7 @@ protected:
     void emit(Event event) { events_.push_back(std::move(event)); }
     void flagsChanged(const std::set<std::string>& before);
     yh::Random nextRandom(uint64_t salt); // fresh dice for the next roll, the same on every machine
+    void checkTriggers(bool onEnterOnly = false); // fire triggers whose conditions are met
 
     const yh::FileSystem& chapterFiles_;
     std::vector<Event> events_;
@@ -486,6 +499,7 @@ protected:
 
     std::map<std::string, int> restsUsed_; // by rest id
     std::set<std::string> flags_;
+    std::set<std::string> firedTriggers_; // trigger ids that have already fired in this adventure
     std::optional<yh::QuestJournal> journal_; // the chapter's, if it has one
     std::unique_ptr<yh::DialogueSession> talk_; // the conversation going on, if any
     size_t talkWith_ = 0; // creature index
@@ -497,6 +511,10 @@ protected:
     bool wipeRequested_ = false;
     std::string checkpoint_;
     bool saves_ = true;       // autosave points send their state out (off for test runs)
+
+    // Companions: approval scores and party membership
+    std::map<std::string, int> companionApproval_; // by NPC id
+    std::set<std::string> companionParty_; // NPC ids that have joined the party (moved to creatures_)
 
     std::vector<yh::StealthTracker> sneak_; // per hero
     std::vector<yh::Vec2> lastAt_;          // per hero: where they stood last frame

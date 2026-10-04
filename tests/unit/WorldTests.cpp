@@ -347,9 +347,80 @@ void conditionsInPlay(const Check& check)
 
 }
 
+// Companion approval and recruitment.
+void companionApproval(const Check& check)
+{
+    const nlohmann::json chapter{
+        {"id", "companion-yard"},
+        {"title", "Companion Yard"},
+        {"ruleset", "modern"},
+        {"map", "map.json"},
+        {"intro", {"A fighter and a helpful NPC."}},
+        {"party", {{{"name", "Ana"}, {"class", "fighter"}, {"color", {220, 90, 80}}, {"at", {1, 1}}}}},
+        {"npcs", {{{"id", "helper"}, {"name", "Helper"}, {"color", {100, 200, 100}}, {"at", {5, 5}},
+                   {"dialogue", "dialogue.json"}, {"creature", "commoner"}, {"approvalStart", 0}, {"approvalJoinThreshold", 10}}}},
+        {"encounters", {}},
+        {"victoryText", "Done."},
+        {"defeatText", "Lost."},
+        {"resumeText", "Back."},
+        {"clearedText", "Done."},
+    };
+    const nlohmann::json map{
+        {"name", "Yard"},
+        {"tiles", {{"grass", {{"art", "grass"}}}}},
+        {"legend", {{".", "grass"}}},
+        {"layers", {{{"name", "ground"}, {"rows", {".......", ".......", "......."}}}}}
+    };
+    const nlohmann::json dialogue{
+        {"id", "helper-talk"},
+        {"start", "greet"},
+        {"nodes", {{{"id", "greet"}, {"speaker", "Helper"}, {"text", "Hello there."},
+                    {"choices", {{{"id", "hire"}, {"text", "Join us?"}, {"next", "joined"}}}}}},
+                   {{"id", "joined"}, {"speaker", "Helper"}, {"text", "Yes, let's go."}}}}
+    };
+    WorldFixture world;
+    std::string error;
+    const bool loaded = world.loadJson("chapters/companion-yard",
+        {{"chapters/companion-yard/chapter.json", chapter.dump()},
+         {"chapters/companion-yard/map.json", map.dump()},
+         {"chapters/companion-yard/dialogue.json", dialogue.dump()}}, 5, &error);
+    check(loaded, "The companion test chapter loads");
+    if (!loaded)
+        return;
+
+    check(world.companionCount() == 0, "No companions in the party initially");
+    check(world.partyMemberCount() == 1, "Party has 1 member (the fighter)");
+
+    // Test NPC index 0 is the helper
+    check(world.chapter()->npcs[0].id == "helper", "Helper NPC is at index 0");
+
+    // Test approval checking
+    check(world.getCompanionApproval(0) == 0, "Helper starts with 0 approval");
+    check(!world.canRecruitCompanion(0), "Helper cannot be recruited at 0 approval (threshold is 10)");
+
+    // Test approval modification
+    world.modifyCompanionApproval(0, 5);
+    check(world.getCompanionApproval(0) == 5, "Approval increased by 5");
+    check(!world.canRecruitCompanion(0), "Still cannot recruit at 5 approval");
+
+    world.modifyCompanionApproval(0, 5);
+    check(world.getCompanionApproval(0) == 10, "Approval reached threshold");
+    check(world.canRecruitCompanion(0), "Can now recruit at 10 approval");
+
+    // Test setting approval directly
+    world.setCompanionApproval(0, 20);
+    check(world.getCompanionApproval(0) == 20, "Approval set to 20");
+
+    // Test party cap
+    check(!world.isCompanionInParty(0), "Helper not in party yet");
+    check(world.maxPartyMembers == 6, "Max party size is 6");
+    check(world.maxPlayerCharacters == 4, "Max player characters is 4");
+}
+
 void worldPlayTests(const Check& check)
 {
     keepVictory(check);
     chapterFromStrings(check);
     conditionsInPlay(check);
+    companionApproval(check);
 }

@@ -94,14 +94,17 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   flags, level range. A two-chapter test adventure (test content, not shipped as story).
 - [ ] **F3. Camp, supplies and long rests.** A camp map, the stash, rest costs, revival at camp.
 - [ ] **F4. Companions.** Joining through dialogue, approval, the party cap.
-- [ ] **F5. Triggers.** `onEnter`, `onFlag`, `onWipe` for cutscenes and dialogue; non-combat
+- [x] **F5. Triggers.** `onEnter`, `onFlag`, `onWipe` for cutscenes and dialogue; non-combat
   completion.
-- [ ] **F6. Package manifest fields.** `kind`, `id`, `revision`, `ruleset`, `requires`; the
+- [x] **F6. Package manifest fields.** `kind`, `id`, `revision`, `ruleset`, `requires`; the
   compendium and library read them; old packages still load.
+  Done when: unit checks cover manifest loading, dependency checking, and version mismatch handling;
+  CONTENT.md describes manifest fields; ContentPackage reads and validates them;
+  the Compendium can be extended to index packages by kind and check requirements.
 
 ## G. Create
 
-- [ ] **G1. The shell.** Create screen with mode tabs, open/new package, shared undo, validation
+- [x] **G1. The shell.** Create screen with mode tabs, open/new package, shared undo, validation
   list, Playtest and export.
 - [ ] **G2. Map mode.** Tiles by layer and floor, walls, lights, markers, kits.
 - [ ] **G3. Encounters mode.** Creatures, groups, facing, AI, XP, loot.

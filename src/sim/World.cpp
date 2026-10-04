@@ -1,5 +1,7 @@
 #include "World.h"
 
+#include <yorehold/framework/animation/Cutscene.h>
+
 #include <algorithm>
 
 namespace
@@ -64,6 +66,7 @@ void World::newAdventure(uint64_t seed)
     checkpoint_.clear();
     autoExploreStuck_ = 0;
     flags_.clear();
+    firedTriggers_.clear();
     journal_.reset();
     talk_.reset();
     pendingTalk_.reset();
@@ -139,6 +142,16 @@ void World::newAdventure(uint64_t seed)
     }
     heroCount_ = creatures_.size();
     selectOwnHero();
+
+    // Initialize companion approval scores
+    companionApproval_.clear();
+    companionParty_.clear();
+    for (size_t i = 0; i < chapter_->npcs.size(); i++)
+    {
+        const Chapter::Npc& npc = chapter_->npcs[i];
+        companionApproval_[npc.id] = npc.approvalStart;
+    }
+
     for (size_t group = 0; group < chapter_->encounters.size(); group++)
     {
         for (const Chapter::Placement& placement : chapter_->encounters[group].creatures)
@@ -199,6 +212,7 @@ void World::newAdventure(uint64_t seed)
         say(line);
     emit({Event::Kind::Banner, chapter_->title, {}, FloatKind::Miss, 3});
     checkpoint_ = stateJson();
+    checkTriggers(true); // fire onEnter triggers
 }
 
 bool World::partyDown() const
@@ -210,6 +224,11 @@ bool World::chapterCleared() const
 {
     if (!chapter_)
         return false;
+    // Non-combat win condition takes precedence if set
+    if (chapter_->winCondition)
+        return std::all_of(chapter_->winCondition->when.begin(), chapter_->winCondition->when.end(),
+            [this](const std::string& f) { return flags_.contains(f); });
+    // Otherwise check the normal completion flags
     if (!chapter_->completeWhen.empty())
         return std::all_of(chapter_->completeWhen.begin(), chapter_->completeWhen.end(), [this](const std::string& f) { return flags_.contains(f); });
     // Every authored enemy is down (NPCs the party picked a fight with don't count).
@@ -230,6 +249,77 @@ bool World::canSave() const
     // Only between fights: the encounter points into creatures_ and isn't saved. A joined player's
     // game belongs to the host, who keeps the save.
     return chapter_ && !remote_ && !(encounter_ && !encounter_->finished()) && !partyDown() && !chapterCleared() && !inCutscene_;
+}
+
+int World::partyMemberCount() const
+{
+    return static_cast<int>(heroCount_) + companionCount();
+}
+
+int World::companionCount() const
+{
+    return static_cast<int>(companionParty_.size());
+}
+
+bool World::canRecruitCompanion(size_t npcIndex) const
+{
+    if (!chapter_ || npcIndex >= chapter_->npcs.size())
+        return false;
+
+    const Chapter::Npc& npc = chapter_->npcs[npcIndex];
+
+    // Check if already in party
+    if (companionParty_.count(npc.id) > 0)
+        return false;
+
+    // Check party cap
+    if (partyMemberCount() >= maxPartyMembers)
+        return false;
+
+    // Check approval threshold
+    int approval = getCompanionApproval(npcIndex);
+    if (approval < npc.approvalJoinThreshold)
+        return false;
+
+    return true;
+}
+
+bool World::isCompanionInParty(size_t npcIndex) const
+{
+    if (!chapter_ || npcIndex >= chapter_->npcs.size())
+        return false;
+
+    return companionParty_.count(chapter_->npcs[npcIndex].id) > 0;
+}
+
+void World::setCompanionApproval(size_t npcIndex, int approval)
+{
+    if (!chapter_ || npcIndex >= chapter_->npcs.size())
+        return;
+
+    companionApproval_[chapter_->npcs[npcIndex].id] = approval;
+}
+
+void World::modifyCompanionApproval(size_t npcIndex, int delta)
+{
+    if (!chapter_ || npcIndex >= chapter_->npcs.size())
+        return;
+
+    const std::string& npcId = chapter_->npcs[npcIndex].id;
+    companionApproval_[npcId] += delta;
+}
+
+int World::getCompanionApproval(size_t npcIndex) const
+{
+    if (!chapter_ || npcIndex >= chapter_->npcs.size())
+        return 0;
+
+    const std::string& npcId = chapter_->npcs[npcIndex].id;
+    auto it = companionApproval_.find(npcId);
+    if (it != companionApproval_.end())
+        return it->second;
+
+    return chapter_->npcs[npcIndex].approvalStart;
 }
 
 void World::requestSave()
@@ -280,6 +370,7 @@ void World::flagsChanged(const std::set<std::string>& before)
         else if (now.status != was.status && now.status == yh::QuestStatus::Failed)
             say("Quest failed: " + quest.title);
     }
+    checkTriggers(false); // fire onFlag triggers
 }
 
 // ---------------------------------------------------------------- who plays what
@@ -385,4 +476,106 @@ yh::Cell World::cellOf(size_t creature) const
 bool World::adjacent(size_t a, size_t b) const
 {
     return grid_.distance(cellOf(a), cellOf(b)) <= 1.01f;
+}
+
+void World::checkTriggers(bool onEnterOnly)
+{
+    if (!chapter_)
+        return;
+
+    // Fire triggers whose conditions are met and haven't fired yet.
+    for (const Chapter::Trigger& trigger : chapter_->triggers)
+    {
+        // Skip if already fired
+        if (firedTriggers_.contains(trigger.id))
+            continue;
+
+        // Check if conditions are met
+        const bool isOnEnter = trigger.when.empty();
+        const bool conditionMet = isOnEnter || std::all_of(trigger.when.begin(), trigger.when.end(),
+            [this](const std::string& flag) { return flags_.contains(flag); });
+
+        // Skip unless we match what we're checking for
+        if (onEnterOnly && !isOnEnter)
+            continue;
+        if (!onEnterOnly && isOnEnter)
+            continue;
+
+        if (!conditionMet)
+            continue;
+
+        // Mark as fired
+        firedTriggers_.insert(trigger.id);
+
+        std::string error;
+        // Fire dialogue if present (validates but doesn't start it yet - that happens in the screen)
+        if (!trigger.dialogue.empty())
+        {
+            if (const auto text = chapterFiles_.readText(trigger.dialogue))
+            {
+                if (yh::Dialogue::fromJson(*text, &error))
+                {
+                    // Emit the dialogue event for the screen to handle starting it
+                    emit({Event::Kind::Talk, trigger.dialogue});
+                }
+                else say("Trigger dialogue " + trigger.dialogue + ": " + error);
+            }
+        }
+
+        // Fire cutscene if present
+        if (!trigger.cutscene.empty())
+        {
+            if (const auto text = chapterFiles_.readText(trigger.cutscene))
+            {
+                if (yh::Cutscene::fromJson(*text, &error))
+                {
+                    emit({Event::Kind::Ending, *text});
+                    inCutscene_ = true;
+                }
+                else say("Trigger cutscene " + trigger.cutscene + ": " + error);
+            }
+        }
+    }
+
+    // Check for non-combat win condition
+    if (chapter_->winCondition && !chapterCleared() && !fighting() && !inCutscene_)
+    {
+        const bool won = std::all_of(chapter_->winCondition->when.begin(), chapter_->winCondition->when.end(),
+            [this](const std::string& flag) { return flags_.contains(flag); });
+
+        if (won)
+        {
+            // Mark chapter as cleared and play winning sequence
+            say(chapter_->clearedText);
+            emit({Event::Kind::Banner, chapter_->clearedText, {}, FloatKind::Miss, 3});
+
+            std::string error;
+            // Fire optional dialogue
+            if (!chapter_->winCondition->dialogue.empty())
+            {
+                if (const auto text = chapterFiles_.readText(chapter_->winCondition->dialogue))
+                {
+                    if (yh::Dialogue::fromJson(*text, &error))
+                    {
+                        emit({Event::Kind::Talk, chapter_->winCondition->dialogue});
+                    }
+                    else say("Win condition dialogue " + chapter_->winCondition->dialogue + ": " + error);
+                }
+            }
+
+            // Fire optional cutscene
+            if (!chapter_->winCondition->cutscene.empty())
+            {
+                if (const auto text = chapterFiles_.readText(chapter_->winCondition->cutscene))
+                {
+                    if (yh::Cutscene::fromJson(*text, &error))
+                    {
+                        emit({Event::Kind::Ending, *text});
+                        inCutscene_ = true;
+                    }
+                    else say("Win condition cutscene " + chapter_->winCondition->cutscene + ": " + error);
+                }
+            }
+        }
+    }
 }

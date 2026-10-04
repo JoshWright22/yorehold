@@ -16,6 +16,11 @@ struct Ruleset;
 struct ContentPackage
 {
     std::string name; // shown in the library; empty = the file's name
+    std::string kind; // "adventure", "ruleset", "compendium", "character_class", "race", "feat"; empty = inferred from structure
+    std::string id; // unique identifier across versions; empty for built-in or unnamed packages
+    int revision = 0; // version number for updates; 0 = not versioned
+    std::string ruleset; // for adventures: which ruleset version this requires; empty = game's own ruleset
+    std::vector<std::string> requires; // package ids/revisions this depends on
     std::string defaultChapter; // empty when the package has no chapters (classes, items... only)
     std::string theme;
     std::vector<std::string> chapters;

@@ -1,6 +1,12 @@
 {
   "format": "yorehold.content",
   "version": 1,
+  "name": "Yorehold",
+  "kind": "adventure",
+  "id": "yorehold-builtin",
+  "revision": 1,
+  "ruleset": "yorehold@1.0",
+  "requires": [],
   "defaultChapter": "chapters/goblin-keep",
   "chapters": ["chapters/goblin-keep"],
   "theme": "ui/theme.json"

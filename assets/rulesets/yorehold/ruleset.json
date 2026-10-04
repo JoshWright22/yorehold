@@ -68,8 +68,8 @@
   "magicItemLimit": 3,
 
   "rests": [
-    { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 }, "restores": ["focus"] },
-    { "id": "long", "name": "Long rest", "perAdventure": 1, "recovery": { "kind": "full", "reviveDowned": true }, "restores": ["slots-*", "focus"] }
+    { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 }, "restores": ["focus"], "supplyCost": 0 },
+    { "id": "long", "name": "Long rest", "perAdventure": 1, "recovery": { "kind": "full", "reviveDowned": true }, "restores": ["slots-*", "focus"], "supplyCost": 40, "reviveDead": true }
   ],
   "afterVictory": { "kind": "none" },
   "reviveAfterVictory": 1,

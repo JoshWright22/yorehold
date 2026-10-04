@@ -54,6 +54,25 @@ struct Chapter
         std::string ai; // JSON, as above
     };
 
+    // Triggers fire dialogue or cutscenes in response to chapter events: entering, setting flags,
+    // being wiped, or completing. A trigger fires its action once per adventure.
+    struct Trigger
+    {
+        std::string id;
+        std::vector<std::string> when;  // empty = fires at chapter start (onEnter); non-empty = when all flags are set (onFlag)
+        std::string dialogue;           // virtual path to a yh::Dialogue file; empty = none
+        std::string cutscene;           // virtual path to a cutscene JSON; empty = none
+        bool fired = false;             // has already fired in this adventure (for save/load)
+    };
+
+    // Non-combat chapter completion: win condition separate from encounters. Fires onComplete when met.
+    struct WinCondition
+    {
+        std::vector<std::string> when;  // all flags must be set to trigger completion
+        std::string dialogue;           // virtual path; empty = none
+        std::string cutscene;           // virtual path; empty = none
+    };
+
     // Creatures that wake up and fight together once any of them is seen.
     struct Encounter
     {
@@ -78,6 +97,10 @@ struct Chapter
         std::vector<std::string> killed;   // and when they die
         std::string ai; // JSON on top of their creature's, for when they're attacked; empty = none
         std::optional<yh::Merchant> merchant; // stock, purse and price multipliers; absent = no trading
+
+        // Companion fields: if present, this NPC can join the party
+        int approvalStart = 0; // starting approval score for this NPC
+        int approvalJoinThreshold = 0; // approval needed to recruit (0 = always recruiteable)
     };
 
     std::string id;
@@ -120,6 +143,14 @@ struct Chapter
     std::string surrender;
     // The chapter is complete once all of these story flags are set. Empty = once every encounter is won.
     std::vector<std::string> completeWhen;
+
+    // Triggers that fire dialogue or cutscenes on chapter events: onEnter (at start),
+    // onFlag (when flags change), onWipe (defeat), onComplete (chapter completion).
+    std::vector<Trigger> triggers;
+
+    // Non-combat win condition: if set, chapter completes when all `when` flags are set,
+    // independent of encounters. The contained dialogue/cutscene replaces default completion.
+    std::optional<WinCondition> winCondition;
 
     // The game's own rules, used by every chapter that doesn't name another set.
     static constexpr const char* defaultRuleset = "rulesets/yorehold";

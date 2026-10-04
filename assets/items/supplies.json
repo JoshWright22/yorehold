@@ -1,0 +1,10 @@
+{
+  "id": "supplies",
+  "name": "Supplies",
+  "description": "One unit of camp supplies: rations, water, fuel and bedding.",
+  "slot": "none",
+  "hands": 0,
+  "weight": 1,
+  "value": 10,
+  "quantity": 40
+}

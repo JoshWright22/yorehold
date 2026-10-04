@@ -41,6 +41,11 @@ std::optional<ContentPackage> ContentPackage::load(const yh::FileSystem& files, 
             throw std::invalid_argument("unsupported format or version");
         ContentPackage p;
         p.name = j.value("name", "");
+        p.kind = j.value("kind", "");
+        p.id = j.value("id", "");
+        p.revision = j.value("revision", 0);
+        p.ruleset = j.value("ruleset", "");
+        p.requires = j.value("requires", std::vector<std::string>{});
         p.chapters = j.value("chapters", std::vector<std::string>{});
         // Packages of definitions only (classes, items, creatures, rulesets) have no chapters.
         p.defaultChapter = p.chapters.empty() ? j.value("defaultChapter", "") : j.at("defaultChapter").get<std::string>();
@@ -48,6 +53,21 @@ std::optional<ContentPackage> ContentPackage::load(const yh::FileSystem& files, 
         p.dialogues = j.value("dialogues", std::vector<std::string>{});
         p.cutscenes = j.value("cutscenes", std::vector<std::string>{});
         if (p.name.size() > 80) throw std::invalid_argument("name is longer than 80 characters");
+        if (p.revision < 0) throw std::invalid_argument("revision must be >= 0");
+        // Validate kind if present
+        if (!p.kind.empty())
+        {
+            const std::set<std::string> validKinds{"adventure", "ruleset", "compendium", "character_class", "race", "feat"};
+            if (!validKinds.contains(p.kind))
+                throw std::invalid_argument("unknown kind: " + p.kind);
+        }
+        // Validate id format if present
+        if (!p.id.empty())
+        {
+            for (const char c : p.id)
+                if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_'))
+                    throw std::invalid_argument("id contains invalid characters: " + p.id);
+        }
         if (!p.chapters.empty() || !p.defaultChapter.empty()) checkPath(p.defaultChapter);
         std::set<std::string> seen;
         for (const auto& path : p.chapters)
