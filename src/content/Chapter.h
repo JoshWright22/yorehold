@@ -2,6 +2,7 @@
 
 #include "GameMap.h"
 
+#include <yorehold/framework/rpg/Action.h>
 #include <yorehold/framework/rpg/Compendium.h>
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/rpg/Stealth.h>
@@ -103,6 +104,9 @@ struct Chapter
     yh::Ruleset rules;
     std::string rulesFolder;  // virtual path of the ruleset's folder; empty for a built-in set or a single file
     yh::StealthRules stealth; // the ruleset folder's stealth.json, if it has one; checkEvery is in metres
+    // What creatures can do on their turns, in the order the action bar lists them: the ruleset
+    // folder's actions/, over the framework's basic three.
+    std::vector<yh::ActionDefinition> actions;
     yh::Compendium compendium;
     GameMap map;
 

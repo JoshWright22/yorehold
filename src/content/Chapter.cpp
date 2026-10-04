@@ -147,6 +147,14 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                 throw std::invalid_argument(problem);
             }
         }
+        // Actions: the three any fight has, then the ruleset folder's own, one to a file, which
+        // may replace them.
+        c.actions = yh::basicActions(c.rules);
+        if (std::string problem; !c.rulesFolder.empty() && !yh::loadActions(files, c.rulesFolder + "/actions", c.rules, c.actions, &problem))
+        {
+            where = "actions";
+            throw std::invalid_argument(problem);
+        }
 
         // How sneaking works: the ruleset folder's file, then the content's own from before
         // rulesets were folders, which still wins so older packages play as they did.
@@ -191,6 +199,7 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         include(nlohmann::json::parse(readOrThrow(files, where)).dump());
         include(c.rules.toJson());
         include(c.stealth.toJson());
+        for (const yh::ActionDefinition& action : c.actions) include(action.json);
         for (const auto& [id, item] : c.compendium.items) include(yh::Compendium::itemToJson(item));
         for (const auto& [id, definition] : c.compendium.classes) include(yh::Compendium::classToJson(definition));
         for (auto& [id, definition] : c.compendium.creatures)

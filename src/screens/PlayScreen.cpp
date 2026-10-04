@@ -161,7 +161,7 @@ void PlayScreen::contextMenu(bool fighting, std::optional<size_t> current)
     {
         const auto [index, action] = *choice;
         if (action == "Attack" && fighting && heroTurn && creatures[index].team == 1 && world_.mine(*current))
-            world_.tryAttack(index);
+            attackWithArmed(*current, index);
         else if (action == "Attack" && !fighting && creatures[index].team == 1 && !creatures[index].awake && world_.sneakingMine())
             world_.act("ambush", nlohmann::json{{"creature", index}}.dump());
         else if (action == "Inspect" || action == "Attack")
@@ -181,7 +181,7 @@ void PlayScreen::heroInput()
     if (!overUi(input_.mouse()) && (walkClick || selectClick))
     {
         if (const std::optional<size_t> target = hoveredCreature(); target && world_.creatures()[*target].team == 1)
-            world_.tryAttack(*target);
+            attackWithArmed(me, *target);
         else if (walkClick && token.path.empty())
         {
             // Only onto squares its movement reaches.
@@ -192,7 +192,13 @@ void PlayScreen::heroInput()
         return;
     }
     if (input_.keyPressed(SDLK_SPACE) && token.path.empty())
-        world_.act("end");
+        world_.use(World::endTurnAction);
+}
+
+void PlayScreen::attackWithArmed(size_t hero, size_t target)
+{
+    const yh::ActionDefinition* armed = hud::armedAction(world_, hero, armed_);
+    world_.tryAttack(target, armed ? armed->id : World::strikeAction);
 }
 
 void PlayScreen::updateCamera(double deltaSeconds)
@@ -478,7 +484,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     ui_.begin(renderer, input_);
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
-    Hud hud{world_, renderer, ui_, input_, uiRects_, table.inSession, table.guest};
+    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, table.inSession, table.guest};
 
     if (!table.netStatus.empty())
         ui_.label({screen.w / 2 - 160, screen.h - 58}, table.netStatus, ui_.theme.textDim);

@@ -142,18 +142,21 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             }
             return accepted;
         }
-        if (type == "dash")
-            return acting && encounter_->canAct() ? std::optional(accepted) : std::nullopt;
-        if (type == "attack")
+        if (type == "use")
         {
-            const size_t target = j.at("target").get<size_t>();
-            if (!acting || target >= creatures_.size() || !encounter_->canStrike() || creatures_[target].sheet.down()
-                || creatures_[target].team == creatures_[*current].team || !orderIndex(target) || !adjacent(*current, target))
+            // One of the acting creature's actions (the ruleset's actions/ files): it must have it,
+            // be able to pay for it, and aim it at someone it may be aimed at.
+            const std::string id = j.at("action").get<std::string>();
+            const yh::ActionDefinition* action = acting ? findAction(id) : nullptr;
+            if (!action || !canUse(*current, *action))
                 return std::nullopt;
-            return accepted;
+            if (action->target != yh::ActionDefinition::Target::Creature)
+                return nlohmann::json{{"action", id}}.dump();
+            const size_t target = j.at("target").get<size_t>();
+            if (!validTarget(*current, *action, target))
+                return std::nullopt;
+            return nlohmann::json{{"action", id}, {"target", target}}.dump();
         }
-        if (type == "end")
-            return acting ? std::optional(accepted) : std::nullopt;
         // Only the creatures the game plays lose their nerve; "escape" takes one out of the fight for
         // good, "surrender" leaves it standing; "alarm" brings in a group it ran to.
         if (type == "flee")
@@ -284,16 +287,11 @@ void World::apply(const yh::NetCommand& command)
         encounter_->spendMovement(std::min(squares, encounter_->current().budget.movementLeft));
         computeReach(*current);
     }
-    else if (type == "dash" && current)
+    else if (type == "use" && current)
     {
-        encounter_->dash();
-        syncLog();
-        computeReach(*current);
+        if (const yh::ActionDefinition* action = findAction(j.at("action").get<std::string>()))
+            perform(*action, j.contains("target") ? std::optional(j.at("target").get<size_t>()) : std::nullopt);
     }
-    else if (type == "attack")
-        attack(j.at("target").get<size_t>());
-    else if (type == "end")
-        endTurn();
     else if (type == "flee" && current)
     {
         Creature& runner = creatures_[*current];

@@ -5,6 +5,21 @@
 #include <algorithm>
 #include <cstdio>
 
+const yh::ActionDefinition* hud::armedAction(const World& world, size_t creature, const std::string& armed)
+{
+    const yh::ActionDefinition* first = nullptr;
+    for (const yh::ActionDefinition* action : world.actionsOf(creature))
+    {
+        if (action->target != yh::ActionDefinition::Target::Creature || action->side == yh::ActionDefinition::Side::Ally)
+            continue;
+        if (action->id == armed)
+            return action;
+        if (!first)
+            first = action;
+    }
+    return first;
+}
+
 void hud::combatBar(Hud& hud)
 {
     World& world = hud.world;
@@ -14,13 +29,38 @@ void hud::combatBar(Hud& hud)
         return;
     const yh::Encounter& encounter = *world.encounter();
     const yh::Rect screen = hud.renderer.bounds();
-    const yh::Rect bar{10, screen.h - 76, std::min(660.0f, screen.w - 490), 66};
+    const bool heroTurn = world.creatures()[*current].team == 0;
+    const bool listing = heroTurn && world.mine(*current);
+
+    // One button for each action the acting creature has, in rows filled from the bottom right,
+    // clear of the text on the left. The bar grows upward when one row is not enough.
+    const std::vector<const yh::ActionDefinition*> actions = listing ? world.actionsOf(*current) : std::vector<const yh::ActionDefinition*>{};
+    const float barWidth = std::min(660.0f, screen.w - 490);
+    const float space = std::max(128.0f, barWidth - 312), gap = 10, rowHeight = 46;
+    auto widthOf = [](const yh::ActionDefinition& action) { return action.endsTurn ? 128.0f : 100.0f; };
+    std::vector<std::pair<int, float>> places(actions.size()); // row (0 = bottom) and distance of the right edge from the bar's
+    int row = 0;
+    float used = 0;
+    for (size_t i = actions.size(); i-- > 0;)
+    {
+        const float width = widthOf(*actions[i]);
+        if (used > 0 && used + gap + width > space)
+        {
+            row++;
+            used = 0;
+        }
+        used += (used > 0 ? gap : 0) + width;
+        places[i] = {row, used};
+    }
+
+    const float height = 66 + rowHeight * static_cast<float>(row);
+    const yh::Rect bar{10, screen.h - 10 - height, barWidth, height};
     ui.panel(bar);
     hud.panels.push_back(bar);
 
     const yh::Combatant& c = encounter.order()[encounter.currentIndex()];
     char text[160];
-    if (world.creatures()[*current].team != 0)
+    if (!heroTurn)
     {
         std::snprintf(text, sizeof(text), "%s is taking their turn...", c.character->name.c_str());
         ui.label({bar.x + 16, bar.y + 22}, text, ui.theme.bad);
@@ -30,19 +70,34 @@ void hud::combatBar(Hud& hud)
     std::snprintf(text, sizeof(text), "%s: move %d sq   actions %d", c.character->name.c_str(), c.budget.movementLeft,
         c.budget.actions);
     ui.label({bar.x + 16, bar.y + 8}, text, ui.theme.accent);
-    if (!world.mine(*current))
+    if (!listing)
     {
         ui.label({bar.x + 16, bar.y + 36}, world.seatName(*current) + " is taking this turn.", ui.theme.textDim);
         return;
     }
-    ui.label({bar.x + 16, bar.y + 36}, encounter.canStrike() ? "Click an enemy to attack." : "Move on, or end your turn.",
+    // Clicking an enemy uses the armed action: the one picked on the bar, else the first that can be aimed.
+    const yh::ActionDefinition* armed = armedAction(world, *current, hud.armed);
+    ui.label({bar.x + 16, bar.y + 36}, armed && world.canUse(*current, *armed) ? armed->name + ": click an enemy." : "Move on, or end your turn.",
         ui.theme.textDim);
 
     const bool walking = !world.tokens().tokens[*current].path.empty();
-    if (ui.button({bar.x + bar.w - 250, bar.y + 13, 100, 40}, "Dash", encounter.canAct() && !walking))
-        world.act("dash");
-    if (ui.button({bar.x + bar.w - 140, bar.y + 13, 128, 40}, "End turn", !walking))
-        world.act("end");
+    for (size_t i = 0; i < actions.size(); i++)
+    {
+        const yh::ActionDefinition& action = *actions[i];
+        const yh::Rect button{bar.x + bar.w - 12 - places[i].second, bar.y + bar.h - 53 - rowHeight * static_cast<float>(places[i].first),
+            widthOf(action), 40};
+        const bool usable = world.canUse(*current, action);
+        if (action.target == yh::ActionDefinition::Target::Creature)
+        {
+            // Aimed actions wait for a click on the map; the button picks which one that click uses.
+            if (!usable)
+                ui.button(button, action.name, false);
+            else if (ui.toggle(button, action.name, &action == armed))
+                hud.armed = action.id;
+        }
+        else if (ui.button(button, action.name, usable && !walking))
+            world.use(action.id);
+    }
 }
 
 void hud::exploreBar(Hud& hud)

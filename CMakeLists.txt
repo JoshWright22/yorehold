@@ -29,6 +29,7 @@ add_library(yorehold-game STATIC
     src/screens/PlayScreen.cpp
     src/sim/Save.cpp
     src/sim/World.cpp
+    src/sim/WorldActions.cpp
     src/sim/WorldAi.cpp
     src/sim/WorldCombat.cpp
     src/sim/WorldExplore.cpp

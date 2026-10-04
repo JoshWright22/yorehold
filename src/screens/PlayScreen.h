@@ -68,6 +68,7 @@ private:
     };
 
     void heroInput(); // the player's own hero's turn in a fight: clicks and keys
+    void attackWithArmed(size_t hero, size_t target); // a click on an enemy: the armed action, walking into range first
     void contextMenu(bool fighting, std::optional<size_t> current);
     std::optional<size_t> hoveredCreature() const;
     std::optional<size_t> hoveredTalker() const;
@@ -94,4 +95,5 @@ private:
     double time_ = 0;
     bool cameraPlaced_ = false;
     bool journalOpen_ = false;
+    std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

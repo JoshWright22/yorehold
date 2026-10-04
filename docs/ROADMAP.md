@@ -34,7 +34,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [x] **B3. Effects.** `yh::Effect`: the step list from SYSTEM_DESIGN section 3, parsed and
   validated from JSON, run against a small host interface. Unit checks for each step, `when`,
   `scale`, saves and half damage.
-- [ ] **B4. Actions as files.** `actions/*.json` with cost, requirements, targeting and effects.
+- [x] **B4. Actions as files.** `actions/*.json` with cost, requirements, targeting and effects.
   Strike, Stride and End turn move onto it with no change in play. The action bar lists whatever
   the acting creature has.
 - [ ] **B5. The other generic actions.** Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready.

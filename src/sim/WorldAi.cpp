@@ -219,7 +219,8 @@ yh::TacticalView World::tacticalView(size_t me, std::vector<size_t>& who)
     }
     const int team = creatures_[me].team;
     view.actions = encounter_->current().budget.actions;
-    view.strikeCost = encounter_->strikeCost();
+    const yh::ActionDefinition* strike = findAction(strikeAction);
+    view.strikeCost = strike ? actionCost(me, *strike) : encounter_->strikeCost();
     if (view.actions >= 1)
     {
         computeReach(me, creatures_[me].sheet.speedSquares(rules_));

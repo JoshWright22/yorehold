@@ -269,27 +269,29 @@ void World::endTurn()
         beginTurn();
 }
 
-void World::tryAttack(size_t target)
+void World::tryAttack(size_t target, std::string_view with)
 {
     const size_t me = *currentCreature();
-    if (!encounter_->canStrike())
+    const yh::ActionDefinition* action = findAction(with);
+    if (!action || !canUse(me, *action))
     {
         say(creatures_[me].sheet.name + " doesn't have the actions left to attack. End the turn (Space).");
         return;
     }
-    if (adjacent(me, target))
+    if (inRange(me, *action, target))
     {
-        act("attack", nlohmann::json{{"target", target}}.dump());
+        use(with, target);
         return;
     }
 
-    // Walk to the cheapest reachable square next to the target, then swing.
+    // Walk to the cheapest reachable square the action reaches the target from, then swing.
     const yh::Cell goal = cellOf(target);
+    const float range = static_cast<float>(action->range) + 0.01f;
     std::optional<yh::Cell> best;
     float bestCost = 0;
     for (const auto& [c, cost] : reach_)
     {
-        if (grid_.distance(c, goal) <= 1.01f && (!best || cost < bestCost))
+        if (grid_.distance(c, goal) <= range && (!best || cost < bestCost))
         {
             best = c;
             bestCost = cost;
@@ -301,6 +303,7 @@ void World::tryAttack(size_t target)
         return;
     }
     pendingAttack_ = target;
+    pendingAction_ = std::string(with);
     pendingStep_ = *best;
     act("step", nlohmann::json{{"at", {best->x, best->y}}}.dump());
 }
@@ -320,37 +323,9 @@ void World::swingIfReady()
     const size_t target = *pendingAttack_;
     pendingAttack_.reset();
     pendingStep_.reset();
-    if (adjacent(me, target))
-        act("attack", nlohmann::json{{"target", target}}.dump());
-}
-
-void World::attack(size_t target)
-{
-    const std::optional<size_t> targetIndex = orderIndex(target);
-    if (!targetIndex)
-        return;
-    const yh::AttackResult result = encounter_->attack(*targetIndex);
-    syncLog();
-    fallenConditions();
-
-    const yh::Vec2 at = tokens_.tokens[target].position;
-    if (!result.hit)
-        emit({Event::Kind::Floater, "Miss", at, FloatKind::Miss});
-    else
-        emit({Event::Kind::Floater, (result.critical ? "Critical! " : "") + std::to_string(result.damageRoll.total), at,
-            result.critical ? FloatKind::Critical : FloatKind::Hit});
-
-    if (creatures_[target].sheet.down())
-    {
-        yh::Token& token = tokens_.tokens[target];
-        token.floor = dead;
-        token.selected = false;
-        token.path.clear();
-        if (creatures_[target].npc >= 0)
-            setFlags(chapter_->npcs[creatures_[target].npc].killed);
-    }
-    if (encounter_->finished())
-        endCombat();
+    const yh::ActionDefinition* action = findAction(pendingAction_);
+    if (action && inRange(me, *action, target))
+        use(pendingAction_, target);
 }
 
 void World::updateEnemyTurn(double deltaSeconds)
@@ -405,7 +380,7 @@ void World::updateEnemyTurn(double deltaSeconds)
         if ((choice.kind == Kind::Flee || choice.kind == Kind::Alarm) && !creatures_[me].fleeing)
             act("flee", nlohmann::json{{"as", choice.kind == Kind::Alarm ? "alarm" : "flee"}}.dump());
         if (choice.dash)
-            act("dash"); // recomputes reach_
+            use(strideAction); // recomputes reach_
         if (choice.cell != standing_)
             act("step", nlohmann::json{{"at", {choice.cell.x, choice.cell.y}}}.dump());
         enemyStep_ = EnemyStep::Walk;
@@ -415,16 +390,16 @@ void World::updateEnemyTurn(double deltaSeconds)
         if (!token.path.empty())
             return;
         enemyTimer_ = 0;
-        enemyStep_ = enemyTarget_ && adjacent(me, *enemyTarget_) && encounter_->canStrike() ? EnemyStep::Strike : EnemyStep::Wait;
+        enemyStep_ = enemyTarget_ && adjacent(me, *enemyTarget_) && canUse(me, strikeAction) ? EnemyStep::Strike : EnemyStep::Wait;
         return;
     case EnemyStep::Strike:
         if (enemyTimer_ < 0.25)
             return;
         enemyTimer_ = 0;
         enemyStep_ = EnemyStep::Wait;
-        act("attack", nlohmann::json{{"target", *enemyTarget_}}.dump());
+        use(strikeAction, *enemyTarget_);
         // Actions to spare and the target still up: hit it again.
-        if (encounter_ && !encounter_->finished() && currentCreature() == me && encounter_->canStrike()
+        if (encounter_ && !encounter_->finished() && currentCreature() == me && canUse(me, strikeAction)
             && !creatures_[*enemyTarget_].sheet.down() && orderIndex(*enemyTarget_))
             enemyStep_ = EnemyStep::Strike;
         return;
@@ -437,7 +412,7 @@ void World::updateEnemyTurn(double deltaSeconds)
             if (const std::optional<int> group = sleepingGroupNear(me, aiFor(me).alarmReach))
             {
                 act("alarm", nlohmann::json{{"group", *group}}.dump());
-                act("end");
+                use(endTurnAction);
                 return;
             }
         }
@@ -454,7 +429,7 @@ void World::updateEnemyTurn(double deltaSeconds)
                 return;
             }
         }
-        act("end");
+        use(endTurnAction);
         return;
     }
 }

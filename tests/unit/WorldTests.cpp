@@ -70,11 +70,11 @@ void playParty(WorldFixture& world)
     const std::optional<size_t> me = world.currentCreature();
     if (!me || world.creatures()[*me].team != 0 || walking(world))
         return;
-    const yh::Encounter& fight = *world.encounter();
     const std::optional<size_t> enemy = nearestEnemy(world, *me);
     if (!enemy)
         return;
-    if (fight.canStrike() && world.adjacent(*me, *enemy) && world.send("attack", {{"target", *enemy}}))
+    if (world.canUse(*me, World::strikeAction) && world.adjacent(*me, *enemy)
+        && world.send("use", {{"action", World::strikeAction}, {"target", *enemy}}))
         return;
     // The reachable square nearest the enemy, cheapest first among equals.
     const yh::Cell goal = world.cellOf(*enemy);
@@ -92,7 +92,7 @@ void playParty(WorldFixture& world)
     }
     if (best && *best != world.standing() && world.send("step", {{"at", {best->x, best->y}}}))
         return;
-    world.send("end");
+    world.send("use", {{"action", World::endTurnAction}});
 }
 
 // With this seed the plain script above wins (with others the dice can go against it, which is
@@ -109,8 +109,11 @@ void keepVictory(const Check& check)
     }
     check(world.said("Goblins have taken it."), "The chapter's intro is in the log");
     check(world.rules().id == "yorehold", "The keep plays by the game's own ruleset");
-    check(!world.send("attack", {{"target", world.heroCount()}}), "An attack while exploring is refused");
-    check(!world.send("end"), "Ending a turn outside a fight is refused");
+    check(!world.send("use", {{"action", World::strikeAction}, {"target", world.heroCount()}}), "An attack while exploring is refused");
+    check(!world.send("use", {{"action", World::endTurnAction}}), "Ending a turn outside a fight is refused");
+    check(world.findAction(World::strikeAction) && world.findAction(World::strideAction) && world.findAction(World::endTurnAction)
+            && world.actionsOf(0).size() >= 3 && world.actionsOf(0).front()->id == World::strikeAction,
+        "The keep's ruleset has Strike, Dash and End turn, Strike first on the bar");
 
     int fights = 0;
     bool wasFighting = false;

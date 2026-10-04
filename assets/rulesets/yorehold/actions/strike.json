@@ -1,0 +1,13 @@
+{
+  "id": "strike",
+  "name": "Strike",
+  "description": "Attack a creature next to you with the weapon in hand. A weapon that needs two hands takes two actions.",
+  "order": 10,
+  "cost": "hands",
+  "target": { "kind": "creature", "side": "enemy", "range": 1 },
+  "effects": [
+    { "do": "roll", "kind": "attack", "steps": [
+      { "do": "damage", "dice": "weapon", "when": "hit", "minimum": 1 }
+    ] }
+  ]
+}

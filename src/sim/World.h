@@ -58,6 +58,13 @@ public:
     static constexpr const char* downedCondition = "downed"; // a hero at 0 HP
     static constexpr const char* deadCondition = "dead";     // anyone else at 0 HP
 
+    // The ruleset's actions the game itself reaches for (rulesets/yorehold/actions/): clicking an
+    // enemy strikes, Space ends the turn, and the creatures the game plays strike and stride.
+    // Every ruleset has them, from its own files or the framework's basic three.
+    static constexpr const char* strikeAction = "strike";
+    static constexpr const char* strideAction = "stride";
+    static constexpr const char* endTurnAction = "end-turn";
+
     // What a number or word floating up from a token is about; the screen picks the colour.
     enum class FloatKind { Miss, Hit, Critical, Heal, Unseen };
 
@@ -198,8 +205,23 @@ public:
     size_t leaderIndex() const; // the selected hero, else the first one standing
     // Walks the leader next to `creature`; the conversation opens on arrival.
     void walkToTalk(size_t creature);
-    // Strikes `target`, walking next to it first if the current creature's movement reaches.
-    void tryAttack(size_t target);
+    // Uses an action on `target` (a Strike unless another is named), walking into range first if
+    // the current creature's movement reaches.
+    void tryAttack(size_t target, std::string_view with = strikeAction);
+
+    // Actions (WorldActions.cpp): what the ruleset's files let a creature do on its turn.
+    const yh::ActionDefinition* findAction(std::string_view id) const;
+    // The ones this creature has, in the order the action bar shows them.
+    std::vector<const yh::ActionDefinition*> actionsOf(size_t creature) const;
+    int actionCost(size_t creature, const yh::ActionDefinition& action) const;
+    // It is this creature's turn, and it has the action, the actions left and whatever else it asks for.
+    bool canUse(size_t creature, const yh::ActionDefinition& action, std::string* why = nullptr) const;
+    bool canUse(size_t creature, std::string_view action) const;
+    bool inRange(size_t creature, const yh::ActionDefinition& action, size_t target) const;
+    // `target` is someone the action may be aimed at from where `creature` stands.
+    bool validTarget(size_t creature, const yh::ActionDefinition& action, size_t target) const;
+    // Sends the "use" intent for the creature whose turn it is.
+    void use(std::string_view action, std::optional<size_t> target = std::nullopt);
 
     // What the party sees, and sneaking (WorldStealth.cpp).
     GameMap::LightingMode lightingMode() const;
@@ -237,7 +259,10 @@ protected:
     void beginTurn();
     void endTurn();
     void syncLog(); // the encounter's new lines into the adventure log
-    void attack(size_t target);
+    // The current creature does `action`: pays for it, runs its effects and shows what happened.
+    void perform(const yh::ActionDefinition& action, std::optional<size_t> target);
+    void narrate(const yh::EffectResult& result); // an effect's events as log lines and floating numbers
+    class EffectsHost;                            // what effects ask of the world (WorldActions.cpp)
     bool swingReady() const; // tryAttack's walk has landed
     void swingIfReady();
     void updateEnemyTurn(double deltaSeconds);
@@ -293,6 +318,7 @@ protected:
     std::unordered_map<yh::Cell, float, yh::CellHash> reach_;
     yh::Cell standing_; // where the current creature stood when reach_ was computed
     std::optional<size_t> pendingAttack_; // walk next to this creature, then hit it
+    std::string pendingAction_;           // with this action
     std::optional<yh::Cell> pendingStep_; // pendingAttack_ swings once the hero stands here
     EnemyStep enemyStep_ = EnemyStep::Think;
     double enemyTimer_ = 0;

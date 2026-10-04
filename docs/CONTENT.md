@@ -175,6 +175,40 @@ A file with an unknown event or stacking, a save with an ability the ruleset lac
 
 The game puts three of them on by itself. A sneaking hero is `hidden`. A hero at 0 HP is `downed` until healed; any other creature at 0 HP is `dead`, unless it got away or was let go. The rest are for actions, spells and items to apply.
 
+## Actions
+
+What a creature can do on its turn is a file in the ruleset folder, `actions/<id>.json`, named after its `id`. The action bar lists the ones the acting creature has, in `order`. The game ships Strike, Dash (`stride`) and End turn; a ruleset without an `actions` folder gets the same three built in.
+
+```json
+{
+  "id": "strike",
+  "name": "Strike",
+  "description": "Attack a creature next to you with the weapon in hand.",
+  "order": 10,
+  "cost": "hands",
+  "target": { "kind": "creature", "side": "enemy", "range": 1 },
+  "effects": [
+    { "do": "roll", "kind": "attack", "steps": [
+      { "do": "damage", "dice": "weapon", "when": "hit", "minimum": 1 }
+    ] }
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `id`, `name`, `description` | `id` must match the file name. `name` and `description` are what players read. |
+| `order` | Where it sits on the action bar, lowest first. |
+| `cost` | Actions it takes (0 to 10, default 1), or `"hands"`: one per hand the weapon needs. |
+| `endsTurn` | `true` ends the turn once it is done. |
+| `general` | `true` (default): every creature has it. `false`: only creatures something grants it to. |
+| `requires` | `{ "flags": [...], "without": [...], "resources": { "name": 1 } }`: condition flags needed, flags that bar it, and resources it uses. |
+| `target` | `kind` `self` (default) or `creature`; a creature target has `side` (`enemy`, `ally`, `any`) and `range` in squares. |
+| `log` | A line for the log when it is done; `{name}` is whoever does it. |
+| `effects`, `save` | What it does, in the effect steps the framework reads (see FRAMEWORK.md, Effects). Movement left this turn is the resource `movement`. |
+
+Three ids are ones the game itself uses: clicking an enemy uses `strike`, Space uses `end-turn`, and enemies use `stride` to dash. A ruleset may change them but should keep them. A file with a bad field, an unknown condition or a step the effects do not know stops the chapter from loading and is named in the error.
+
 ## Stealth rules
 
 `stealth.json` in the ruleset's folder sets the numbers sneaking runs on. Content made before rulesets were folders keeps working: a `rules/stealth.json` at the content root is still read, and wins. Every field is optional, and so is the file; these are the defaults:
