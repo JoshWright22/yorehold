@@ -13,6 +13,7 @@ combine them. People play them alone or together.
 - Players make the campaigns. There is no overworld outside adventures, but an adventure can have
   its own overworld.
 - Choice over prescription: difficulty and table rules are options, with sensible defaults.
+- **2D top-down on a grid**, like a virtual tabletop (Foundry). Combat and movement use squares.
 - **Everything is community content.** Classes, spells, races, items, maps and adventures can all be
   made by players, shared as files, voted on and ranked (see Community).
 
@@ -27,7 +28,11 @@ combine them. People play them alone or together.
 - **Feats** at set levels, PF2e style (class, skill, general and race feats). There are fewer of
   them than in Pathfinder, and each one should be interesting rather than a small number bump.
 - **Multiclassing** as in BG3: any level can go into any class.
-- **Party:** up to 4 characters for now. One player can run several.
+- **Party:** up to 4 player characters for now. One player can run several.
+- **Companions:** an adventure can include NPCs who join the party, with their own approval and
+  story as in BG3. They can take the party past 4.
+- **Launch content:** 4 classes and 4 races is the starting goal. The full SRD set (12 classes,
+  9 races) comes after.
 - **Loot comes along.** Characters keep everything between adventures, whatever the level range.
   Matching gear to an adventure is up to the players: they can agree to bring the right gear, or
   make a character for that game.
@@ -45,6 +50,8 @@ welcome where they play better.
   - Characters built on the old version go to the graveyard. They stay viewable but can't be played.
   - A new version of each one is made automatically under the new rules, as close to the old build
     as the new rules allow. The player plays that one from then on.
+  - Where the new rules can't keep a choice (a removed class, say), the player picks a replacement
+    before playing.
 - **Abilities:** six.
 - **Skills:** about as many as D&D has. Until the first vote, dialogue checks use the current list;
   the surrender talk's Persuasion check is a stand-in.
@@ -63,8 +70,11 @@ Power grows as in Pathfinder 2e, not 5e:
   as they level, and features that add to their hits.
 - **Casters and skill classes** trade damage for utility: control, healing, buffs, mobility and
   answers to problems a sword can't solve.
-- **Magic items:** each character can have at most 3. The limit is a number in the ruleset and can
-  change. A fourth can't be picked up or used until one is given up.
+- **Magic items:** each character can have at most 3, counting everything in their inventory, not
+  just what is worn or held. The limit is a number in the ruleset and can change. A fourth can't be
+  picked up until one is given up.
+- **Magic items are rare and special.** Most upgrades are not magical: a better sword or better
+  armour is just better gear and doesn't count toward the limit.
 
 ## Magic
 
@@ -116,7 +126,10 @@ Power grows as in Pathfinder 2e, not 5e:
 ## Play
 
 - Combat, talking and exploration are balanced as in 5e or Pathfinder 2e adventures.
-- Looting, an economy (gp, sp, cp) and crafting follow those games as well.
+- Looting and an economy (gp, sp, cp) follow those games as well.
+- **No crafting for now**, as in BG3. It may come later.
+- **Encumbrance:** the more weight a character carries, the slower they move, so nobody picks up
+  everything. Coins weigh nothing.
 - **Inventory as in BG3:**
   - Each character has their own inventory, and the camp has a shared stash.
   - A player manages the characters they control.
@@ -144,12 +157,21 @@ These follow BG3 for now and may be revisited.
 - **Short rests:** 2 between long rests. They heal some HP and restore short-rest abilities.
 - **Long rests** happen at camp and use up camp supplies. Supplies are a resource: food found and
   bought while adventuring. A long rest restores HP, spell slots and daily abilities.
+  - The party can rest anywhere outside combat, unless the area forbids it.
+  - The cost is a number in the ruleset (**default:** 40 supplies, as in BG3).
 - **Going down:** a character at 0 HP is downed and makes death saving throws. Allies can get them
   up with Help, healing or a potion.
 - **Death isn't permanent.** The dead are revived with a scroll of revivify (found or bought), a
   spell, or at camp for a price. Scrolls save the trip back.
-- **Party wipe:** reload the last save (**default**). An adventure can choose something else, such as
-  waking up captured.
+- **Party wipe:** go back to the last autosave (**default**). An adventure can choose something
+  else, such as waking up captured.
+
+## Saving
+
+- **Autosave only.** Players never have to save or manage files.
+- **Saves go to every player's account**, not just the host's, so anyone in the group can carry the
+  game on.
+- Not decided: letting players load back to each major encounter. It is probably a bad idea.
 
 ## Multiplayer
 
@@ -171,6 +193,8 @@ These follow BG3 for now and may be revisited.
   - XP for enemies and encounters
   - dialogue and quest steps
   Every suggestion is a starting point the writer edits freely.
+- **Difficulty:** an adventure has one difficulty by default. A writer can add more if they want;
+  the editor may suggest them but never pushes.
 - Everything an adventure uses is files, so it can be shared, combined and packaged (see
   CONTENT.md).
 
@@ -186,6 +210,10 @@ These follow BG3 for now and may be revisited.
   - Only a category's approvers can make someone else an approver there, and only someone who
     already has content approved in that category.
   - The project team are the first approvers in every category.
+  - An approver loses the role by a vote of the category's other approvers, or after a year of
+    inactivity.
+- **Price:** everything is free for now. Selling adventures or taking tips may be added later if
+  creators want it.
 - **Homebrew is the point:** everything in the game can be made by players, submitted, ranked and
   passed around as files.
 
@@ -205,11 +233,9 @@ These follow BG3 for now and may be revisited.
 
 ## Open questions (defaults apply until answered)
 
-1. Magic items: does the limit of 3 count only items in use (worn or held), or everything carried
-   (**default:** in use, like attunement)?
-2. Votes: when a ruleset conversion can't keep a choice (say a removed class), does the player pick
-   a replacement before playing (**default**)?
-3. Supplies: how much food does a long rest cost, and can you rest anywhere or only where the
-   adventure allows it (**default:** anywhere outside combat, unless the area forbids it)?
-4. Approvers: can approvers lose the role, for example through a vote by the other approvers
-   (**default:** yes)?
+1. Saving: can players load back to the start of each major encounter (**default:** no, only the
+   latest autosave)?
+2. Companions: is there a cap on party size once companions join (**default:** 4 player characters
+   plus up to 2 companions)?
+3. Encumbrance: how much can a character carry before slowing down (**default:** as in BG3, from
+   Strength)?
