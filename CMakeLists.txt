@@ -24,6 +24,7 @@ add_library(yorehold-game STATIC
     src/hud/ActionBar.cpp
     src/hud/DialoguePanel.cpp
     src/hud/InitiativeStrip.cpp
+    src/hud/InventoryPanel.cpp
     src/hud/JournalPanel.cpp
     src/hud/PartyCards.cpp
     src/online/Online.cpp

@@ -69,6 +69,8 @@ public:
     static constexpr const char* strikeAction = "strike";
     static constexpr const char* strideAction = "stride";
     static constexpr const char* endTurnAction = "end-turn";
+    // Changing what is worn or held in a fight costs what this action costs (1 without it).
+    static constexpr const char* interactAction = "interact";
 
     // What a number or word floating up from a token is about; the screen picks the colour.
     enum class FloatKind { Miss, Hit, Critical, Heal, Unseen };
@@ -236,6 +238,8 @@ public:
     // The ones this creature has, in the order the action bar shows them.
     std::vector<const yh::ActionDefinition*> actionsOf(size_t creature) const;
     int actionCost(size_t creature, const yh::ActionDefinition& action) const;
+    // Actions it costs a creature to change what it wears or holds during a fight ("equip").
+    int equipCost(size_t creature) const;
     // It is this creature's turn, and it has the action, the actions left and whatever else it asks for.
     bool canUse(size_t creature, const yh::ActionDefinition& action, std::string* why = nullptr) const;
     bool canUse(size_t creature, std::string_view action) const;

@@ -32,5 +32,6 @@ void exploreBar(Hud& hud);      // under the cards between fights: rests and sne
 void dialoguePanel(Hud& hud);   // the conversation going on, with its replies
 // The active quests (top right), or with `open` the whole journal.
 void journalPanel(Hud& hud, bool open, yh::Font* title);
+void inventoryPanel(Hud& hud);  // I: what the selected (or acting) hero carries, to put on or away
 
 }

@@ -95,5 +95,6 @@ private:
     double time_ = 0;
     bool cameraPlaced_ = false;
     bool journalOpen_ = false;
+    bool inventoryOpen_ = false;
     std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

@@ -68,7 +68,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 ## D. Items and economy
 
-- [ ] **D1. Inventory panel and hands.** Per character, equip and swap grips through Interact.
+- [x] **D1. Inventory panel and hands.** Per character, equip and swap grips through Interact.
 - [ ] **D2. Loot and containers.** Creature drops, loot tables, chests as map objects, give to an
   ally, coins.
 - [ ] **D3. Weight and the magic item limit.**

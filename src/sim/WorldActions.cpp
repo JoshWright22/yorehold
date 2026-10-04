@@ -127,6 +127,12 @@ int World::actionCost(size_t creature, const yh::ActionDefinition& action) const
     return action.costFor(creatures_[creature].sheet, rules_);
 }
 
+int World::equipCost(size_t creature) const
+{
+    const yh::ActionDefinition* interact = findAction(interactAction);
+    return interact ? actionCost(creature, *interact) : 1;
+}
+
 bool World::canUse(size_t creature, const yh::ActionDefinition& action, std::string* why) const
 {
     if (why)

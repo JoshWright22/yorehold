@@ -83,13 +83,20 @@ bool PlayScreen::handle(const SDL_Event& event)
     if (keyDown && event.key.key == SDLK_J && world_.journal())
     {
         journalOpen_ = !journalOpen_;
+        inventoryOpen_ = false;
+        return true;
+    }
+    if (keyDown && event.key.key == SDLK_I)
+    {
+        inventoryOpen_ = !inventoryOpen_;
+        journalOpen_ = false;
         return true;
     }
     if (keyDown && event.key.key == SDLK_ESCAPE)
     {
-        if (!journalOpen_)
+        if (!journalOpen_ && !inventoryOpen_)
             return false;
-        journalOpen_ = false;
+        journalOpen_ = inventoryOpen_ = false;
         return true;
     }
     if (keyDown && event.key.key == SDLK_C)
@@ -232,7 +239,7 @@ void PlayScreen::show(World::Event& event)
         log_.clear();
         cutscene_ = {};
         cutsceneDone_ = false;
-        journalOpen_ = false;
+        journalOpen_ = inventoryOpen_ = false;
         cameraPlaced_ = false;
         break;
     case Kind::Resumed:
@@ -274,7 +281,7 @@ void PlayScreen::show(World::Event& event)
         }
         break;
     case Kind::Talk:
-        journalOpen_ = false;
+        journalOpen_ = inventoryOpen_ = false;
         break;
     case Kind::Save:
         break; // the game keeps the saves
@@ -537,6 +544,8 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
 
     if (world_.journal())
         hud::journalPanel(hud, journalOpen_, title_);
+    if (inventoryOpen_ && !world_.talk())
+        hud::inventoryPanel(hud);
     if (world_.talk())
     {
         hud::dialoguePanel(hud);
@@ -547,7 +556,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
         std::string hint = table.controls == yh::ControlPreset::BG3
             ? "Left-click: walk / select / talk   Drag: box-select   WASD / edges: pan   Wheel: zoom   F6: Foundry controls"
             : "Right-click: walk / talk   Left: select / drag   Right-drag: pan   Wheel: zoom   F6: BG3 controls";
-        hint += "   C: sneak";
+        hint += "   C: sneak   I: gear";
         if (world_.journal())
             hint += "   J: journal";
         ui_.label({12, screen.h - 30}, hint, ui_.theme.textDim);

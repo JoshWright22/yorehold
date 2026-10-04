@@ -118,4 +118,33 @@ void worldCharacterTests(const std::function<void(bool, const char*)>& check)
     brought.setParty({ada});
     brought.newAdventure(5);
     check(brought.sheet(0).name == "Ana" && brought.creatures()[0].library.empty(), "A character the chapter can't build leaves the seat to its own hero");
+
+    // Gear: free to change between fights, an Interact on the hero's own turn in one.
+    WorldFixture gear;
+    check(gear.loadJson("chapters/choice-yard", yardFiles(50), 5), "The yard loads for changing gear");
+    if (!gear.chapter()) return;
+    auto find = [&](const char* id) {
+        const auto& inventory = gear.sheet(0).inventory;
+        return static_cast<size_t>(std::find_if(inventory.begin(), inventory.end(), [&](const yh::Item& i) { return i.id == id; }) - inventory.begin());
+    };
+    const size_t shield = find("shield");
+    const int ac = gear.sheet(0).armorClass(gear.rules());
+    check(shield < gear.sheet(0).inventory.size() && gear.send("equip", {{"hero", 0}, {"item", shield}, {"on", false}})
+        && gear.sheet(0).armorClass(gear.rules()) < ac && gear.said("Ana puts away Shield."), "A shield can be put away between fights");
+    check(!gear.send("equip", {{"hero", 0}, {"item", shield}, {"on", false}}) && !gear.send("equip", {{"hero", 0}, {"item", 99}, {"on", true}}),
+        "Nothing happens for an item already away or not there");
+    check(gear.send("equip", {{"hero", 0}, {"item", shield}, {"on", true}}) && gear.sheet(0).armorClass(gear.rules()) == ac, "And taken up again");
+    gear.sheet(0).inventory.push_back(*gear.chapter()->compendium.item("greataxe"));
+    check(gear.send("equip", {{"hero", 0}, {"item", find("greataxe")}, {"on", true}}) && gear.sheet(0).weapon()->id == "greataxe"
+        && !gear.sheet(0).inventory[shield].equipped && gear.sheet(0).handsInUse() == 2 && gear.said("Ana takes up Greataxe, putting away Longsword, Shield."),
+        "A two-handed weapon takes both hands: the sword and shield are put away");
+    gear.sheet(0).stats.setBase("dex", 2000); // acts first
+    nlohmann::json places = nlohmann::json::array();
+    for (const auto& token : gear.tokens().tokens) places.push_back({token.position.x, token.position.y});
+    check(gear.send("fight", {{"group", 0}, {"at", places}}) && gear.currentCreature() == 0, "The gear fight starts on Ana's turn");
+    auto actionsLeft = [&] { return gear.encounter()->order()[gear.encounter()->currentIndex()].budget.actions; };
+    const int actions = actionsLeft();
+    check(!gear.send("equip", {{"hero", 1}, {"item", 0}, {"on", false}}), "Gear can't be changed on someone else's turn");
+    check(gear.send("equip", {{"hero", 0}, {"item", find("longsword")}, {"on", true}}) && actionsLeft() == actions - 1
+        && gear.sheet(0).weapon()->id == "longsword", "In a fight, changing gear costs an action");
 }

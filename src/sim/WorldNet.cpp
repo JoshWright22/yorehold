@@ -198,6 +198,32 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             const int group = j.at("group").get<int>();
             return acting && *current >= heroCount_ && sleepingGroupNear(*current, aiFor(*current).alarmReach) == group ? std::optional(accepted) : std::nullopt;
         }
+        if (type == "equip")
+        {
+            // Putting an item on or away: free between fights, an Interact on the hero's own turn in one.
+            const size_t hero = j.at("hero").get<size_t>();
+            const size_t item = j.at("item").get<size_t>();
+            if (hero >= heroCount_ || !mayAct(player, hero) || creatures_[hero].sheet.down() || !j.at("on").is_boolean()
+                || item >= creatures_[hero].sheet.inventory.size() || creatures_[hero].sheet.inventory[item].slot.empty()
+                || creatures_[hero].sheet.inventory[item].equipped == j.at("on").get<bool>())
+                return std::nullopt;
+            if (fighting)
+            {
+                if (!acting || *current != hero)
+                {
+                    reason = "Gear can only be changed on " + creatures_[hero].sheet.name + "'s own turn.";
+                    return std::nullopt;
+                }
+                if (!encounter_->canAct(equipCost(hero)))
+                {
+                    reason = "Not enough actions left to change gear.";
+                    return std::nullopt;
+                }
+            }
+            else if (!calm || talk_)
+                return std::nullopt;
+            return accepted;
+        }
         if (type == "rest")
         {
             const size_t index = j.at("rest").get<size_t>();
@@ -399,6 +425,35 @@ void World::apply(const yh::NetCommand& command)
             endCombat();
         else
             endTurn();
+    }
+    else if (type == "equip")
+    {
+        const size_t hero = j.at("hero").get<size_t>();
+        const size_t index = j.at("item").get<size_t>();
+        yh::Character& sheet = creatures_[hero].sheet;
+        if (encounter_ && !encounter_->finished())
+            encounter_->spendActions(equipCost(hero));
+        if (j.at("on").get<bool>())
+        {
+            // Whatever it pushed out of a slot or a hand is named too.
+            std::vector<bool> before;
+            for (const yh::Item& item : sheet.inventory)
+                before.push_back(item.equipped);
+            sheet.equip(index);
+            std::string away;
+            for (size_t i = 0; i < sheet.inventory.size(); i++)
+                if (before[i] && !sheet.inventory[i].equipped)
+                    away += (away.empty() ? "" : ", ") + sheet.inventory[i].name;
+            say(sheet.name + (yh::Character::held(sheet.inventory[index]) ? " takes up " : " puts on ") + sheet.inventory[index].name
+                + (away.empty() ? "." : ", putting away " + away + "."));
+        }
+        else
+        {
+            sheet.unequip(index);
+            say(sheet.name + (yh::Character::held(sheet.inventory[index]) ? " puts away " : " takes off ") + sheet.inventory[index].name + ".");
+        }
+        sheet.hp = std::min(sheet.hp, sheet.maxHp());
+        syncLog();
     }
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);
