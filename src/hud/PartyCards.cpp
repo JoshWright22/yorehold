@@ -18,6 +18,8 @@ void hud::partyCards(Hud& hud)
         ui.panel(area);
         if (current && *current == i)
             hud.renderer.drawRect(area, ui.theme.accent, 3);
+        else if (fighting && world.canChooseTurn(i))
+            hud.renderer.drawRect(area, ui.theme.good, 2);
         else if (world.tokens().tokens[i].selected)
             hud.renderer.drawRect(area, {200, 180, 140, 255}, 3);
         // Portrait slot: a dark square with the hero's colour inside.
@@ -33,6 +35,8 @@ void hud::partyCards(Hud& hud)
         std::snprintf(text, sizeof(text), c.down() ? "Down" : "%d/%d  AC %d", c.hp, c.maxHp(), c.armorClass(world.rules()));
         ui.label({area.x + 176, area.y + 30}, text, ui.theme.textDim);
 
+        if (fighting && world.mine(i) && world.canChooseTurn(i) && ui.hovered(area) && hud.input.buttonClicked(yh::MouseButton::Left))
+            world.act("turn", nlohmann::json{{"creature", i}}.dump());
         // Clicking a portrait while exploring makes that hero the leader.
         if (!fighting && !c.down() && world.mine(i) && ui.hovered(area) && hud.input.buttonClicked(yh::MouseButton::Left))
         {

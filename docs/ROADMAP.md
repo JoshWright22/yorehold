@@ -42,7 +42,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [x] **B6. Reactions.** Triggers and a reaction budget; opportunity attacks when leaving reach
   (free movement included); Ready. Players get a short prompt with a default of "take it"
   (**default:** opportunity attacks are automatic, a setting turns the prompt on).
-- [ ] **B7. Shared turns.** Neighbours in initiative on one side act as a block in any order.
+- [x] **B7. Shared turns.** Neighbours in initiative on one side act as a block in any order.
 - [ ] **B8. Flanking and cover.** Grid helpers in the framework; numbers in the ruleset.
 - [ ] **B9. Proficiency ranks.** Level plus rank bonus for attacks, saves, skills, AC and DCs.
 - [ ] **B10. Downed and death.** Death saves, stable, dead, getting up through Help, healing or a

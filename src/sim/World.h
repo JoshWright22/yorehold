@@ -153,6 +153,7 @@ public:
     bool walkable(yh::Cell cell) const;
     std::optional<size_t> orderIndex(size_t creature) const;
     std::optional<size_t> currentCreature() const;
+    bool canChooseTurn(size_t creature) const; // an unfinished member of the active block, while no action is moving
     yh::Cell cellOf(size_t creature) const;
     bool adjacent(size_t a, size_t b) const;
 
@@ -330,6 +331,7 @@ protected:
     size_t npcStart_ = 0;
     std::unique_ptr<yh::Encounter> encounter_;
     size_t encounterLogShown_ = 0;
+    uint64_t turnBlockShown_ = 0;
     uint64_t seed_ = 0;
     int fights_ = 0;
 

@@ -124,6 +124,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `proficiencyByLevel` | Proficiency bonus at each level, level 1 first. |
 | `xpForLevel` | Total XP needed for each level, level 2 first. |
 | `actionsPerTurn`, `bonusActions`, `strikeCostsHands` | Actions in a turn (1 to 10), whether there is a bonus action as well, and whether a Strike costs one action per hand the weapon needs. |
+| `sharedTurns` | Consecutive allies share an active initiative block. True for Yorehold; absent means sequential turns for older rulesets. |
 | `feetPerSquare` | Size of a map square. |
 | `carryPerStrength` | Pounds carried per point of the first ability. |
 | `magicItemLimit` | Magic items one character may carry (0 = no limit). Held here until inventory rules use it. |
@@ -213,6 +214,22 @@ Three ids are ones the game itself uses: clicking an enemy uses `strike`, Space 
 Each effect step accepts `ifFlag` to apply only to targets carrying that condition flag. Help heals only `downed` allies; its `aided` condition grants advantage until the next attack or the ally's turn ends. Hidden grants attack advantage and ends on attacking, taking damage or moving in combat. Hide checks against each standing enemy's passive Perception; all checks must pass. Seek checks one enemy's passive Stealth. Shove and Grapple check passive Athletics. A push stops at a wall or occupied square and spends no movement from its target.
 
 Interact currently stands up from prone; equipment and map objects extend it in D1 and F1. Ready records a Strike and ends the turn. The next enemy entering reach triggers it, spending the creature's reaction.
+
+## Shared turns
+
+With `sharedTurns: true`, adjacent entries on the same side in initiative share a block, for heroes
+and enemies alike. Click an unfinished hero's party card or initiative card to switch actors. Green
+borders mark available members; the current one has the accent border. Each player may select only
+creatures they own. Actions, free movement and reactions remain separate per creature and refresh
+together at block start. Switching preserves spent budgets and conditions; End turn finishes only
+that member. The block ends when every standing member finishes. Enemy turns default to initiative
+order, but the host can choose another member.
+
+Movement, an attack queued after movement and reaction prompts must resolve before switching.
+Surprise skips the first block; a member down when its block starts waits until next round even if
+healed. Initiative entries still separate blocks when down or withdrawn. Reinforcements roll into
+the list immediately and first act next round. Saves continue to be made between fights. The test
+browser's **Shared turns** scene begins with one hero's action spent and another hero selected.
 
 ## Reactions
 

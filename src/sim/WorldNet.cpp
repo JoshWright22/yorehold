@@ -65,6 +65,13 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
         if (pendingMovement_ && type != "seats")
             return std::nullopt;
 
+        if (type == "turn")
+        {
+            const size_t creature = j.at("creature").get<size_t>();
+            if (!canChooseTurn(creature) || !mayAct(player, creature)) return std::nullopt;
+            return nlohmann::json{{"creature", creature}}.dump();
+        }
+
         if (type == "walk")
         {
             if (fighting || !j.at("heroes").is_array())
@@ -305,6 +312,14 @@ void World::apply(const yh::NetCommand& command)
         resolveReaction(j.at("take").get<bool>());
         continueMovement();
     }
+    else if (type == "turn")
+    {
+        if (const auto index = orderIndex(j.at("creature").get<size_t>()); index && encounter_->selectTurn(*index))
+        {
+            syncLog();
+            beginTurn();
+        }
+    }
     else if (type == "use" && current)
     {
         if (const yh::ActionDefinition* action = findAction(j.at("action").get<std::string>()))
@@ -424,7 +439,16 @@ uint64_t World::checksum() const
     {
         mix(encounter_->currentIndex());
         mix(static_cast<uint64_t>(encounter_->round()));
-        mix(static_cast<uint64_t>(encounter_->order()[encounter_->currentIndex()].budget.movementLeft + 100));
+        mix(encounter_->blockFirst());
+        mix(encounter_->blockEnd());
+        for (const yh::Combatant& c : encounter_->order())
+        {
+            mix(c.turnDone);
+            mix(c.budget.actions);
+            mix(c.budget.movementLeft);
+            mix(c.budget.bonusAction);
+            mix(c.budget.reaction);
+        }
         for (size_t i = 0; i < creatures_.size(); i++)
         {
             const yh::Cell c = cellOf(i);

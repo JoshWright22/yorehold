@@ -417,6 +417,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 28. Reactions: everyone can Strike when a foe leaves reach; Ready fires on a foe entering reach. Both spend one reaction regardless of weapon hands. Free movement and Dash provoke; pushes do not. Each crossed square is checked, lethal reactions stop the move, and planned movement is paid up front. Reactions are automatic; the host's optional prompt defaults to Take after 2 seconds (`promptSeconds` in each reaction file).
 
+29. Shared turns: `sharedTurns: true` enables blocks of consecutive allies. Budgets and turn-start conditions refresh together; switching preserves them, and End turn finishes one member. Blocks follow the full initiative list, including down or withdrawn entries. Reinforcements first act next round. Movement and reaction decisions finish before switching; enemies default to initiative order.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

@@ -69,6 +69,7 @@ void World::startCombat(int group, std::optional<size_t> only, bool surprise)
 
     encounter_ = std::make_unique<yh::Encounter>(rules_, seed_ * 7919 + static_cast<uint64_t>(++fights_));
     encounterLogShown_ = 0;
+    turnBlockShown_ = 0;
     sideAtStart_[0] = sideAtStart_[1] = 0;
     hadLeader_[0] = hadLeader_[1] = false;
     for (size_t i = 0; i < creatures_.size(); i++)
@@ -238,7 +239,14 @@ void World::beginTurn()
     const std::optional<size_t> current = currentCreature();
     if (!current)
         return;
-    creatures_[*current].readiedAction.clear();
+    if (turnBlockShown_ != encounter_->blockSerial())
+    {
+        turnBlockShown_ = encounter_->blockSerial();
+        for (size_t i = encounter_->blockFirst(); i < encounter_->blockEnd(); i++)
+            for (Creature& c : creatures_)
+                if (&c.sheet == encounter_->order()[i].character && !encounter_->order()[i].turnDone)
+                    c.readiedAction.clear();
+    }
     tokens_.settings.activeTurn = *current;
     pendingAttack_.reset();
     enemyStep_ = EnemyStep::Think;
@@ -253,6 +261,14 @@ void World::beginTurn()
     else
         reach_.clear();
     emit({Event::Kind::Camera, {}, tokens_.tokens[*current].position});
+}
+
+bool World::canChooseTurn(size_t creature) const
+{
+    const auto index = orderIndex(creature);
+    const auto current = currentCreature();
+    return index && current && !inCutscene_ && !pendingMovement_ && !pendingAttack_
+        && tokens_.tokens[*current].path.empty() && encounter_->canSelectTurn(*index);
 }
 
 void World::endTurn()

@@ -37,6 +37,7 @@
   "actionsPerTurn": 2,
   "bonusActions": false,
   "strikeCostsHands": true,
+  "sharedTurns": true,
   "feetPerSquare": 5,
 
   "carryPerStrength": 15,

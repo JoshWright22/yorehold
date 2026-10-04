@@ -306,7 +306,7 @@ bool World::walkable(yh::Cell c) const
 
 std::optional<size_t> World::orderIndex(size_t creature) const
 {
-    if (!encounter_)
+    if (!encounter_ || creature >= creatures_.size())
         return std::nullopt;
     const auto& order = encounter_->order();
     for (size_t i = 0; i < order.size(); i++)

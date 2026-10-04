@@ -120,6 +120,8 @@ void contentTests(const fs::path& scratch)
         renamed.id = modern.id;
         renamed.name = modern.name;
         renamed.magicItemLimit = modern.magicItemLimit;
+        check(renamed.sharedTurns && !modern.sharedTurns, "Yorehold enables shared turns while the prototype remains sequential");
+        renamed.sharedTurns = modern.sharedTurns;
         json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
         // Conditions are checked on their own, and a full recovery has no use for a fraction.
         for (json* set : {&mine, &theirs})
@@ -665,6 +667,7 @@ void stealthTests(const fs::path& scratch)
 
 void worldPlayTests(const std::function<void(bool, const char*)>& check); // WorldTests.cpp
 void worldActionTests(const std::function<void(bool, const char*)>& check);
+void worldTurnTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -675,6 +678,7 @@ int main()
         worldSaveTests();
         worldPlayTests(check);
         worldActionTests(check);
+        worldTurnTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

@@ -72,11 +72,44 @@ private:
     ReactionGame game_;
 };
 
+class SharedTurnGame : public YoreholdGame
+{
+public:
+    void prepare()
+    {
+        load();
+        SDL_Event enter{};
+        enter.type = SDL_EVENT_KEY_DOWN;
+        enter.key.key = SDLK_RETURN;
+        handleEvent(enter); handleEvent(enter);
+        newAdventure(7);
+        if (!chapter_ || heroCount_ < 2 || heroCount_ >= creatures_.size()) return;
+        for (size_t i = 0; i < creatures_.size(); i++)
+            creatures_[i].sheet.stats.setBase("dex", i < heroCount_ ? 1000.0f - static_cast<float>(i) * 100.0f : 10.0f);
+        startCombat(creatures_[heroCount_].group);
+        World::act("use", R"({"action":"defend"})");
+        World::act("turn", R"({"creature":1})");
+        update(2); // let the combat banner clear while the heroes wait for input
+    }
+};
+
+class TestSceneSharedTurns : public yh::TestScene
+{
+public:
+    TestSceneSharedTurns() { game_.prepare(); }
+    void update(double seconds) override { game_.update(seconds); }
+    void draw(yh::Renderer& renderer) override { game_.draw(renderer); }
+    bool handleEvent(const SDL_Event& event) override { return game_.handleEvent(event); }
+private:
+    SharedTurnGame game_;
+};
+
 int main(int argc, char** argv)
 {
     yh::TestBrowser browser;
     browser.add<TestSceneGame>("Game");
     browser.add<TestSceneReactionPrompt>("Reaction prompt");
+    browser.add<TestSceneSharedTurns>("Shared turns");
 
     yh::HostSettings settings;
     settings.title = "yorehold tests";
