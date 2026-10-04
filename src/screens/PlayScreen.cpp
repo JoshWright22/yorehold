@@ -84,6 +84,7 @@ bool PlayScreen::handle(const SDL_Event& event)
     {
         journalOpen_ = !journalOpen_;
         inventoryOpen_ = false;
+        trading_.reset();
         return true;
     }
     if (keyDown && event.key.key == SDLK_I)
@@ -92,6 +93,7 @@ bool PlayScreen::handle(const SDL_Event& event)
         journalOpen_ = false;
         giving_.reset();
         looting_.reset();
+        trading_.reset();
         return true;
     }
     if (keyDown && event.key.key == SDLK_E && !world_.fighting())
@@ -100,17 +102,25 @@ bool PlayScreen::handle(const SDL_Event& event)
         const size_t hero = world_.leaderIndex();
         if (looting_)
             world_.act("loot", nlohmann::json{{"hero", hero}, {"pile", *looting_}, {"all", true}}.dump());
-        else if (!inventoryOpen_ && !journalOpen_)
+        else if (!inventoryOpen_ && !journalOpen_ && !trading_)
+        {
             looting_ = world_.pileNear(hero);
+            if (!looting_)
+            {
+                trading_ = world_.merchantNear(hero);
+                tradePage_ = 0;
+            }
+        }
         return true;
     }
     if (keyDown && event.key.key == SDLK_ESCAPE)
     {
-        if (!journalOpen_ && !inventoryOpen_ && !looting_)
+        if (!journalOpen_ && !inventoryOpen_ && !looting_ && !trading_)
             return false;
         journalOpen_ = inventoryOpen_ = false;
         giving_.reset();
         looting_.reset();
+        trading_.reset();
         return true;
     }
     if (keyDown && event.key.key == SDLK_C)
@@ -257,6 +267,8 @@ void PlayScreen::show(World::Event& event)
         giving_.reset();
         looting_.reset();
         cameraPlaced_ = false;
+        trading_.reset();
+        tradePage_ = 0;
         break;
     case Kind::Resumed:
         log_.clear();
@@ -554,7 +566,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     ui_.begin(renderer, input_);
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
-    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, table.inSession, table.guest};
+    Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, trading_, tradePage_, table.inSession, table.guest};
 
     if (!table.netStatus.empty())
         ui_.label({screen.w / 2 - 160, screen.h - 58}, table.netStatus, ui_.theme.textDim);
@@ -566,6 +578,14 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
         title_->drawCentered(renderer, area, banner_, {255, 214, 140, static_cast<uint8_t>(255 * alpha)});
     }
 
+    // The shop covers the normal cards and bars; clicks belong only to its own controls.
+    if (trading_)
+    {
+        hud::merchantPanel(hud);
+        if (!log_.empty())
+            ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
+        return;
+    }
     hud::partyCards(hud);
     if (world_.fighting())
     {
@@ -583,7 +603,11 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     if (inventoryOpen_ && !world_.talk())
         hud::inventoryPanel(hud);
     else if (!journalOpen_)
-        hud::lootPanel(hud);
+    {
+        hud::merchantPanel(hud);
+        if (!trading_)
+            hud::lootPanel(hud);
+    }
     if (world_.talk())
     {
         hud::dialoguePanel(hud);

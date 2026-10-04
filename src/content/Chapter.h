@@ -5,6 +5,7 @@
 #include <yorehold/framework/rpg/Action.h>
 #include <yorehold/framework/rpg/Reaction.h>
 #include <yorehold/framework/rpg/Compendium.h>
+#include <yorehold/framework/rpg/Merchant.h>
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/rpg/Stealth.h>
 #include <yorehold/framework/rpg/PositioningRules.h>
@@ -75,6 +76,7 @@ struct Chapter
         std::vector<std::string> attacked; // story flags set when the party attacks them
         std::vector<std::string> killed;   // and when they die
         std::string ai; // JSON on top of their creature's, for when they're attacked; empty = none
+        std::optional<yh::Merchant> merchant; // stock, purse and price multipliers; absent = no trading
     };
 
     std::string id;

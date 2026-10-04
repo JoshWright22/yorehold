@@ -1,6 +1,7 @@
 {
   "id": "longsword",
   "name": "Longsword",
+  "value": 1500,
   "slot": "mainHand",
   "damage": "1d8",
   "attackAbility": "str",

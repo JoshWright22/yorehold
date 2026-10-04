@@ -183,6 +183,36 @@ private:
     DeathGame game_;
 };
 
+class MerchantGame : public YoreholdGame
+{
+public:
+    void prepare()
+    {
+        load();
+        SDL_Event key{};
+        key.type = SDL_EVENT_KEY_DOWN; key.key.key = SDLK_RETURN;
+        handleEvent(key); handleEvent(key); newAdventure(7);
+        if (!chapter_ || chapter_->npcs.empty()) return;
+        const yh::Cell at = chapter_->npcs[0].at;
+        tokens_.tokens[0].position = grid_.center({at.x - 1, at.y});
+        creatures_[0].sheet.coins = 2000;
+        update(0);
+        key.key.key = SDLK_E;
+        handleEvent(key);
+    }
+};
+
+class TestSceneMerchant : public yh::TestScene
+{
+public:
+    TestSceneMerchant() { game_.prepare(); }
+    void update(double) override { game_.update(0); }
+    void draw(yh::Renderer& renderer) override { game_.draw(renderer); }
+    bool handleEvent(const SDL_Event& event) override { return game_.handleEvent(event); }
+private:
+    MerchantGame game_;
+};
+
 int main(int argc, char** argv)
 {
     yh::TestBrowser browser;
@@ -191,6 +221,7 @@ int main(int argc, char** argv)
     browser.add<TestSceneSharedTurns>("Shared turns");
     browser.add<TestScenePositioning>("Flanking/cover");
     browser.add<TestSceneDeath>("Death saves");
+    browser.add<TestSceneMerchant>("Merchants");
 
     yh::HostSettings settings;
     settings.title = "yorehold tests";

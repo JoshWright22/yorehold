@@ -1,6 +1,7 @@
 {
   "id": "greataxe",
   "name": "Greataxe",
+  "value": 3000,
   "slot": "mainHand",
   "damage": "1d12",
   "attackAbility": "str",

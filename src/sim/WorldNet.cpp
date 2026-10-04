@@ -284,6 +284,22 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 return std::nullopt;
             return accepted;
         }
+        if (type == "buy" || type == "sell")
+        {
+            const size_t hero = j.at("hero").get<size_t>();
+            const size_t npc = j.at("npc").get<size_t>();
+            const size_t item = j.at("item").get<size_t>();
+            if (!calm || !canTrade(hero, npc) || !mayAct(player, hero))
+            {
+                reason = "Stand beside a peaceful merchant to trade.";
+                return std::nullopt;
+            }
+            const yh::Merchant& shop = *merchant(npc);
+            const yh::Character& sheet = creatures_[hero].sheet;
+            if (!(type == "buy" ? shop.canBuy(sheet, item, rules_, &reason) : shop.canSell(sheet, item, &reason)))
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"npc", npc}, {"item", item}}.dump();
+        }
         if (type == "talk")
         {
             const size_t creature = j.at("creature").get<size_t>();
@@ -577,6 +593,21 @@ void World::apply(const yh::NetCommand& command)
     }
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);
+    else if (type == "buy" || type == "sell")
+    {
+        const size_t npc = j.at("npc").get<size_t>(), item = j.at("item").get<size_t>();
+        yh::Merchant& shop = *merchants_[npc];
+        yh::Character& sheet = creatures_[j.at("hero").get<size_t>()].sheet;
+        const bool buying = type == "buy";
+        const yh::Item traded = buying ? shop.inventory[item] : sheet.inventory[item];
+        const int cost = buying ? shop.buyPrice(traded) : shop.sellPrice(traded);
+        if (buying ? shop.buy(sheet, item, rules_) : shop.sell(sheet, item))
+        {
+            say(sheet.name + (buying ? " buys " : " sells ") + traded.name + " for " + coinText(cost)
+                + (buying ? " from " : " to ") + chapter_->npcs[npc].name + ".");
+            requestSave();
+        }
+    }
     else if (type == "talk")
         startTalk(j.at("creature").get<size_t>());
     else if (type == "reply")
@@ -621,6 +652,13 @@ uint64_t World::checksum() const
     };
     for (const Creature& c : creatures_)
     {
+        mix(c.sheet.coins);
+        mix(c.sheet.inventory.size());
+        for (const yh::Item& item : c.sheet.inventory)
+        {
+            mixText(yh::Compendium::itemToJson(item));
+            mix(item.equipped);
+        }
         mix(static_cast<uint64_t>(c.sheet.hp + 1000));
         mix(c.sheet.level);
         mix(c.sheet.death.saves); mix(c.sheet.death.successes); mix(c.sheet.death.failures);
@@ -637,6 +675,7 @@ uint64_t World::checksum() const
         for (const char ch : flag)
             mix(static_cast<unsigned char>(ch));
     mix(rolls_);
+    mixText(merchantsJson().dump());
     if (encounter_ && !encounter_->finished() && encounter_->started())
     {
         mix(encounter_->currentIndex());

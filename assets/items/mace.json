@@ -1,6 +1,7 @@
 {
   "id": "mace",
   "name": "Mace",
+  "value": 500,
   "slot": "mainHand",
   "damage": "1d6",
   "attackAbility": "str",

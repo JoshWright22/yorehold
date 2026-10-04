@@ -68,6 +68,15 @@
       "color": [120, 170, 110],
       "at": [7, 12],
       "dialogue": "dialogue/wren.json",
+      "merchant": {
+        "coins": 10000,
+        "buyMultiplier": 1,
+        "sellMultiplier": 0.5,
+        "stock": [
+          { "item": "mace", "quantity": 2, "value": 500 },
+          { "item": "shield", "quantity": 2, "value": 1000 }
+        ]
+      },
       "killed": ["wren_dead"]
     },
     {

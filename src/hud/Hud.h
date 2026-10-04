@@ -20,6 +20,8 @@ struct Hud
     std::string& armed;            // the aimed action a click on an enemy uses; empty = the first the creature has
     std::optional<size_t>& giving; // gear panel: the item waiting for someone to be handed to
     std::optional<size_t>& looting; // the pile whose contents are shown
+    std::optional<size_t>& trading; // the NPC whose shop is open
+    size_t& tradePage;
     bool inSession = false;        // co-op: cards show who plays each hero
     bool guest = false;            // joined someone else's game: only the host can start it again
 };
@@ -39,5 +41,6 @@ void journalPanel(Hud& hud, bool open, yh::Font* title);
 void inventoryPanel(Hud& hud);  // I: what the selected (or acting) hero carries, to put on, put away or hand over
 // Between fights, beside something to take: a button to open it (E), or its contents once open.
 void lootPanel(Hud& hud);
+void merchantPanel(Hud& hud);
 
 }

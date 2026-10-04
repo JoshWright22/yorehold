@@ -1,6 +1,7 @@
 {
   "id": "hide",
   "name": "Hide armour",
+  "value": 1000,
   "slot": "armor",
   "weight": 15,
   "modifiers": [

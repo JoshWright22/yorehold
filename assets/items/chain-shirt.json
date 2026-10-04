@@ -1,6 +1,7 @@
 {
   "id": "chain-shirt",
   "name": "Chain shirt",
+  "value": 5000,
   "slot": "armor",
   "weight": 15,
   "modifiers": [

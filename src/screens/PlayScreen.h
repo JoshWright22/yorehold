@@ -98,5 +98,7 @@ private:
     bool inventoryOpen_ = false;
     std::optional<size_t> giving_;  // gear panel: the item being handed to someone
     std::optional<size_t> looting_; // the pile whose contents are open
+    std::optional<size_t> trading_; // NPC index, only while beside a peaceful merchant
+    size_t tradePage_ = 0;
     std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

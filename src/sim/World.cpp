@@ -170,9 +170,11 @@ void World::newAdventure(uint64_t seed)
         stealthRandom_ = yh::Random(seed ^ 0x57ea1ull);
     }
     npcStart_ = creatures_.size();
+    merchants_.clear();
     for (size_t i = 0; i < chapter_->npcs.size(); i++)
     {
         const Chapter::Npc& npc = chapter_->npcs[i];
+        merchants_.push_back(npc.merchant);
         const yh::CreatureDefinition& definition = *chapter_->compendium.creature(npc.creature);
         Creature creature{*chapter_->compendium.makeCreature(rules_, npc.creature, npc.name, random), 2,
             static_cast<int>(chapter_->encounters.size() + i)};

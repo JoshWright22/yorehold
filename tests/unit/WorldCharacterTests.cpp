@@ -19,6 +19,63 @@ std::map<std::string, std::string> yardFiles(int xpPerVictory)
         "effects":[{"do":"damage","dice":10000,"target":"enemies"}]})"}};
 }
 
+// Trade is checked through the same intents used by the panel and co-op clients.
+void tradeTests(const std::function<void(bool, const char*)>& check)
+{
+    auto files = yardFiles(0);
+    auto chapter = nlohmann::json::parse(files.at("chapters/choice-yard/chapter.json"));
+    chapter["npcs"] = {{{"id", "trader"}, {"name", "Trader"}, {"at", {2, 3}}, {"dialogue", "dialogue/trader.json"},
+        {"merchant", {{"coins", 1000}, {"buyMultiplier", 1}, {"sellMultiplier", 0.5}, {"stock", {
+            {{"item", "mace"}, {"quantity", 2}, {"value", 100}},
+            {{"item", "warding-ring"}, {"value", 100}}}}}}}};
+    files["chapters/choice-yard/chapter.json"] = chapter.dump();
+    files["dialogue/trader.json"] = R"({"id":"trader","start":"greeting","nodes":[{"id":"greeting","text":"Trade test."}]})";
+    WorldFixture world;
+    std::string error;
+    check(world.loadJson("chapters/choice-yard", files, 5, &error), "A chapter loads a merchant's stock and prices");
+    if (!world.chapter()) return;
+    check(world.merchantNear(0) == 0 && world.merchant(0)->inventory[0].quantity == 2, "An adjacent merchant can trade");
+    world.tokens().tokens[0].path = {world.grid().center({3, 2})};
+    check(!world.canTrade(0, 0), "A hero walking toward the shop must arrive before trading");
+    world.tokens().tokens[0].path.clear();
+    const auto buying = nlohmann::json{{"hero", 0}, {"npc", 0}, {"item", 0}, {"price", 1}};
+    check(!world.send("buy", buying) && world.refusal == "Not enough coins.", "Buying requires the hero's own coins");
+    world.sheet(0).coins = 300;
+    check(!world.validate(1, "buy", buying.dump(), error), "Another player cannot spend the hero's coins");
+    const auto command = world.validate(0, "buy", buying.dump(), error);
+    check(command && !nlohmann::json::parse(*command).contains("price"), "A peer cannot set a trade's price");
+    check(world.send("buy", buying) && world.sheet(0).coins == 200 && world.merchant(0)->coins == 1100
+        && world.merchant(0)->inventory[0].quantity == 1 && world.sheet(0).inventory.back().id == "mace"
+        && world.sheet(0).inventory.back().quantity == 1 && !world.sheet(0).inventory.back().equipped, "Buying moves one stock unit into the pack");
+    check(world.send("buy", buying) && world.merchant(0)->inventory.size() == 1 && world.merchant(0)->inventory[0].id == "warding-ring",
+        "Buying the last unit removes that stock entry");
+    check(world.send("sell", {{"hero", 0}, {"npc", 0}, {"item", world.sheet(0).inventory.size() - 1}})
+        && world.sheet(0).coins == 150 && world.merchant(0)->coins == 1150 && world.merchant(0)->inventory.back().id == "mace",
+        "Selling moves one item to the merchant for half its value");
+    check(!world.send("sell", {{"hero", 0}, {"npc", 0}, {"item", 0}}) && world.refusal.find("Put that item away") != std::string::npos,
+        "Equipped gear must be put away before it can be sold");
+    for (int i = 0; i < 3; i++) world.sheet(0).inventory.push_back(*world.chapter()->compendium.item("warding-ring"));
+    check(!world.send("buy", buying) && world.refusal.find("magic item") != std::string::npos, "Buying respects the magic item limit");
+    const std::string saved = world.stateJson();
+    WorldFixture peer;
+    check(peer.loadJson("chapters/choice-yard", files, 5) && peer.restoreState(world.snapshot()) && peer.stateJson() == saved,
+        "A joining peer receives exactly the same stock, prices and purses");
+    check(peer.checksum() == world.checksum(), "The peers agree on their economy checksum");
+    peer.sheet(0).coins++;
+    check(peer.checksum() != world.checksum(), "Different purses are detected as a desync");
+    auto broken = nlohmann::json::parse(saved);
+    broken["merchants"][0]["coins"] = -1;
+    check(!world.restoreState(broken.dump(), &error) && world.stateJson() == saved, "Malformed merchant saves fail without changing the world");
+    auto older = nlohmann::json::parse(saved);
+    older.erase("merchants");
+    check(world.restoreState(older.dump()) && world.merchant(0)->coins == 1000 && world.merchant(0)->inventory[0].quantity == 2,
+        "Saves without merchant state load the authored stock");
+    world.tokens().tokens[0].position = world.grid().center({6, 6});
+    check(!world.send("buy", buying) && !world.merchantNear(0), "Walking away ends trading");
+    world.tokens().tokens[0].position = world.grid().center({3, 3});
+    check(world.send("provoke", {{"creature", world.npcToken(0)}}) && !world.send("buy", buying), "A hostile merchant cannot trade");
+}
+
 // Containers, what the dead leave, taking and giving.
 void lootTests(const std::function<void(bool, const char*)>& check)
 {
@@ -117,6 +174,7 @@ void lootTests(const std::function<void(bool, const char*)>& check)
 void worldCharacterTests(const std::function<void(bool, const char*)>& check)
 {
     lootTests(check);
+    tradeTests(check);
     WorldFixture world;
     check(world.loadJson("chapters/choice-yard", yardFiles(50), 5), "The choice yard loads");
     if (!world.chapter()) return;

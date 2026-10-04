@@ -25,6 +25,7 @@ add_library(yorehold-game STATIC
     src/hud/DialoguePanel.cpp
     src/hud/InitiativeStrip.cpp
     src/hud/InventoryPanel.cpp
+    src/hud/MerchantPanel.cpp
     src/hud/JournalPanel.cpp
     src/hud/PartyCards.cpp
     src/online/Online.cpp
@@ -38,6 +39,7 @@ add_library(yorehold-game STATIC
     src/sim/WorldCombat.cpp
     src/sim/WorldExplore.cpp
     src/sim/WorldLoot.cpp
+    src/sim/WorldTrade.cpp
     src/sim/WorldNet.cpp
     src/sim/WorldReactions.cpp
     src/sim/WorldPositioning.cpp

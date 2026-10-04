@@ -385,6 +385,24 @@ Writer-owned text includes `intro` lines, encounter `text`, `victoryText` (suppo
 
 ## NPCs, dialogue, quests and story flags
 
+An NPC may have a `merchant` object. Example:
+
+```json
+"merchant": {
+  "coins": 10000, "buyMultiplier": 1, "sellMultiplier": 0.5,
+  "stock": [{ "item": "mace", "quantity": 2, "value": 500 }]
+}
+```
+
+Stock uses known item ids; `quantity` defaults to the item's quantity and optional `value`
+overrides its unit value in copper. Prices are the unit value times the multiplier, rounded
+up to buy and down to sell. Both stock and purse are finite and saved. Between fights, stand
+beside the peaceful NPC and use Trade or E to open the shop. A click buys or sells one unit;
+I opens Gear to put a worn item away before selling. The selected hero spends and receives
+the coins; the magic item limit still applies. Sold items join the merchant's stock with
+their saved properties. An item with no positive price has no offer. Wren carries two maces
+and two shields; all shipped gear has a provisional copper value in its item file.
+
 `npcs` lists people the party can talk to: unique `id`, `name`, optional `color`, an integer `at` cell (walkable, not shared with anyone) and a `dialogue` file in the framework's dialogue format (see the framework's DIALOGUE.md). Clicking an NPC walks the selected hero over and opens the conversation; replies are buttons or keys 1-9, Esc walks away. Skill checks roll for the selected hero. NPCs have a sheet too: optional `creature` names a compendium creature (default `commoner`). Right-click > Attack picks a fight with that NPC alone; they can't be talked to after that. Optional `attacked` and `killed` flag lists are set when that happens (the keep's quest fails if Tobb dies). Fights with NPCs don't count toward clearing the chapter. The keep's `dialogue/wren.json` and `dialogue/tobb.json` are working examples.
 
 Story flags are the chapter's memory. Dialogue sets and clears them, and an encounter's optional `set` list is applied when that group is beaten. `quests` names a journal file in the framework's quest format (QUESTS.md); quests and objectives follow the flags, and the party is told when one appears, progresses, completes or fails. J opens the journal. Flags are saved with the adventure.

@@ -42,6 +42,7 @@ std::string World::stateJson() const
     data["rolls"] = rolls_;
     data["fog"] = nlohmann::json::parse(fog_.toJson());
     data["piles"] = pilesJson();
+    data["merchants"] = merchantsJson();
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
@@ -128,6 +129,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             throw std::runtime_error("saved characters don't match the party");
         // What lies on the map. Saves from before loot have none: the containers start full again.
         const std::optional<std::vector<Pile>> piles = data.contains("piles") ? std::optional(pilesFrom(data.at("piles"))) : std::nullopt;
+        const auto merchants = data.contains("merchants") ? std::optional(merchantsFrom(data.at("merchants"))) : std::nullopt;
         std::vector<yh::CharacterChoices> choices;
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
@@ -177,6 +179,8 @@ bool World::restoreState(std::string_view text, std::string* problem)
         fog_ = std::move(*fog);
         if (piles)
             piles_ = *piles;
+        if (merchants)
+            merchants_ = *merchants;
         fights_ = fights;
         restsUsed_ = std::move(rests);
         flags_ = std::move(flags);

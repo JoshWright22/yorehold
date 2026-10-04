@@ -229,6 +229,9 @@ public:
     std::optional<size_t> pileNear(size_t hero) const;
     // Coins as the game counts them: 1234 -> "12 gp 3 sp 4 cp".
     static std::string coinText(int copper);
+    const yh::Merchant* merchant(size_t npc) const;
+    bool canTrade(size_t hero, size_t npc) const;
+    std::optional<size_t> merchantNear(size_t hero) const;
     const yh::Encounter* encounter() const { return encounter_.get(); }
     bool fighting() const { return encounter_ && !encounter_->finished(); }
     const yh::DialogueSession* talk() const { return talk_.get(); }
@@ -377,6 +380,9 @@ protected:
     size_t heroCount_ = 0; // the chapter's party; creatures_ lists heroes first
     std::vector<std::optional<PartyPick>> partyPicks_;
     std::vector<Pile> piles_;
+    std::vector<std::optional<yh::Merchant>> merchants_; // one entry per chapter NPC
+    nlohmann::json merchantsJson() const;
+    std::vector<std::optional<yh::Merchant>> merchantsFrom(const nlohmann::json& saved) const;
     void fillContainers(); // newAdventure: each of the chapter's containers becomes a pile
     void dropLoot();       // after a win: the dead enemies' gear and loot, where they fell
     nlohmann::json pilesJson() const;

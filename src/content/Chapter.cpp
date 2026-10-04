@@ -349,6 +349,12 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             npc.attacked = flagsFrom(n, "attacked");
             npc.killed = flagsFrom(n, "killed");
             npc.ai = aiFrom(n, c.compendium);
+            if (n.contains("merchant"))
+            {
+                npc.merchant = yh::Merchant::fromJson(n.at("merchant").dump(),
+                    [&](std::string_view id) { return c.compendium.item(id); }, &problem);
+                if (!npc.merchant) throw std::invalid_argument("merchant " + npc.id + ": " + problem);
+            }
             if (!validId(npc.id) || !npcIds.insert(npc.id).second) throw std::invalid_argument("npc ids must be unique and use a-z, 0-9, - and _");
             if (!c.compendium.creature(npc.creature))
                 throw std::invalid_argument("unknown creature \"" + npc.creature + "\" for " + npc.name);
