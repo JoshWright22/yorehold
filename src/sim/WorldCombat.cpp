@@ -107,6 +107,8 @@ void World::startCombat(int group, std::optional<size_t> only, bool surprise)
 
 void World::endCombat()
 {
+    for (Creature& creature : creatures_)
+        creature.readiedAction.clear();
     tokens_.settings.inCombat = false;
     tokens_.settings.activeTurn.reset();
     reach_.clear();
@@ -236,6 +238,7 @@ void World::beginTurn()
     const std::optional<size_t> current = currentCreature();
     if (!current)
         return;
+    creatures_[*current].readiedAction.clear();
     tokens_.settings.activeTurn = *current;
     pendingAttack_.reset();
     enemyStep_ = EnemyStep::Think;
@@ -438,6 +441,11 @@ void World::computeReach(size_t mover, int extra)
 {
     reach_.clear();
     standing_ = cellOf(mover);
+    if (creatures_[mover].sheet.hasFlag(rules_, "cantMove"))
+    {
+        reach_[standing_] = 0;
+        return;
+    }
     const float budget = static_cast<float>(encounter_->current().budget.movementLeft + extra) + 0.01f;
     auto open = [&](yh::Cell c) { return walkable(c) && !occupied(c, mover); };
 

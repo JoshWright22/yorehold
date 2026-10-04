@@ -177,7 +177,7 @@ The game puts three of them on by itself. A sneaking hero is `hidden`. A hero at
 
 ## Actions
 
-What a creature can do on its turn is a file in the ruleset folder, `actions/<id>.json`, named after its `id`. The action bar lists the ones the acting creature has, in `order`. The game ships Strike, Dash (`stride`) and End turn; a ruleset without an `actions` folder gets the same three built in.
+What a creature can do on its turn is a file in the ruleset folder, `actions/<id>.json`, named after its `id`. The action bar lists the ones the acting creature has, in `order`. The game ships Strike, Dash (`stride`), Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready and End turn; a ruleset without an `actions` folder gets Strike, Dash and End turn built in.
 
 ```json
 {
@@ -203,11 +203,16 @@ What a creature can do on its turn is a file in the ruleset folder, `actions/<id
 | `endsTurn` | `true` ends the turn once it is done. |
 | `general` | `true` (default): every creature has it. `false`: only creatures something grants it to. |
 | `requires` | `{ "flags": [...], "without": [...], "resources": { "name": 1 } }`: condition flags needed, flags that bar it, and resources it uses. |
-| `target` | `kind` `self` (default) or `creature`; a creature target has `side` (`enemy`, `ally`, `any`) and `range` in squares. |
+| `target` | `kind` `self` (default) or `creature`; a creature target has `side` (`enemy`, `ally`, `any`), `range` in squares, and `downed` (default false) to allow unconscious targets. Dead or withdrawn creatures cannot be targeted. Ranged creature actions need a clear line of sight. |
+| `readies` | Records this action id for a reaction, until the creature's next turn or the fight ends. It must name an existing action that neither readies another nor ends the turn. |
 | `log` | A line for the log when it is done; `{name}` is whoever does it. |
 | `effects`, `save` | What it does, in the effect steps the framework reads (see FRAMEWORK.md, Effects). Movement left this turn is the resource `movement`. |
 
 Three ids are ones the game itself uses: clicking an enemy uses `strike`, Space uses `end-turn`, and enemies use `stride` to dash. A ruleset may change them but should keep them. A file with a bad field, an unknown condition or a step the effects do not know stops the chapter from loading and is named in the error.
+
+Each effect step accepts `ifFlag` to apply only to targets carrying that condition flag. Help heals only `downed` allies; its `aided` condition grants advantage until the next attack or the ally's turn ends. Hidden grants attack advantage and ends on attacking, taking damage or moving in combat. Hide checks against each standing enemy's passive Perception; all checks must pass. Seek checks one enemy's passive Stealth. Shove and Grapple check passive Athletics. A push stops at a wall or occupied square and spends no movement from its target.
+
+Interact currently stands up from prone; equipment and map objects extend it in D1 and F1. Ready records a Strike and ends the turn; its reaction trigger is added in B6.
 
 ## Stealth rules
 

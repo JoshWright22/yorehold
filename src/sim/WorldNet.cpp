@@ -285,6 +285,7 @@ void World::apply(const yh::NetCommand& command)
         for (size_t i = 1; i < path.size(); i++)
             token.path.push_back(grid_.center(path[i]));
         encounter_->spendMovement(std::min(squares, encounter_->current().budget.movementLeft));
+        creatures_[*current].sheet.conditionEvent(rules_, "move");
         computeReach(*current);
     }
     else if (type == "use" && current)

@@ -47,6 +47,7 @@ public:
         std::string breakAs;  // how it reacts now its morale has broken this fight (AiProfile::onBreak); empty = it hasn't
         bool surrendered = false; // gave up: out of the fight, stays where it is and can be talked to
         std::string surrender;    // the dialogue for that (see Chapter::surrender)
+        std::string readiedAction; // waiting for a reaction, until the next turn or the fight ends
         float facing = 0;      // radians: where an enemy looks until it notices the party
         // A hero moving quietly (the Hidden condition): slower, lights covered, only noticed inside a vision cone.
         bool sneaking() const { return sheet.hasCondition(hiddenCondition); }

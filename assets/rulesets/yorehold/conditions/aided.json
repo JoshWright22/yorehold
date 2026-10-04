@@ -1,0 +1,7 @@
+{
+  "id": "aided",
+  "name": "Aided",
+  "description": "An ally's help gives advantage on the next attack before this turn ends.",
+  "advantageOnAttacks": true,
+  "ends": ["attack", "turnEnd", "fightEnd"]
+}

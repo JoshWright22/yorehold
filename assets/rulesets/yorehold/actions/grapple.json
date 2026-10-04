@@ -1,0 +1,11 @@
+{
+  "id": "grapple",
+  "name": "Grapple",
+  "description": "Try Athletics against an adjacent enemy's passive Athletics. On success, hold it in place and make it off-guard until the fight ends.",
+  "order": 80,
+  "cost": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 1 },
+  "effects": [{ "do": "roll", "kind": "check", "ability": "athletics", "against": "athletics", "steps": [
+    { "do": "condition", "id": "grabbed", "when": "success" }
+  ] }]
+}

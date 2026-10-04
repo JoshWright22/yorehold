@@ -1,0 +1,10 @@
+{
+  "id": "ready",
+  "name": "Ready",
+  "description": "Spend both actions and end your turn with a Strike readied until your next turn.",
+  "order": 100,
+  "cost": 2,
+  "endsTurn": true,
+  "readies": "strike",
+  "log": "{name} readies a Strike."
+}

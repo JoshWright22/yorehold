@@ -1,0 +1,11 @@
+{
+  "id": "shove",
+  "name": "Shove",
+  "description": "Try Athletics against an adjacent enemy's passive Athletics. On success, push it one square, stopping at walls and occupied squares.",
+  "order": 70,
+  "cost": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 1 },
+  "effects": [{ "do": "roll", "kind": "check", "ability": "athletics", "against": "athletics", "steps": [
+    { "do": "move", "how": "push", "distance": 1, "when": "success" }
+  ] }]
+}

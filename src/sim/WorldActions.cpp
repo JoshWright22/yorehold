@@ -3,6 +3,7 @@
 #include "World.h"
 
 #include <algorithm>
+#include <yorehold/framework/graphics/Lighting.h>
 
 // What effects ask of the world. Sheets are the creatures' own; movement left this turn is a
 // resource of the fight, and story flags are the chapter's.
@@ -53,6 +54,36 @@ public:
         else if (const std::set<std::string> before = world_.flags_; world_.flags_.erase(std::string(name)) > 0)
             world_.flagsChanged(before);
         return true;
+    }
+
+    bool move(yh::EffectActor who, std::string_view how, int squares, const yh::EffectContext& context) override
+    {
+        if (!sheet(who) || !sheet(context.self) || (how != "push" && how != "pull") || who == context.self)
+            return false;
+        const size_t creature = static_cast<size_t>(who);
+        const yh::Cell from = world_.cellOf(static_cast<size_t>(context.self));
+        yh::Cell at = world_.cellOf(creature);
+        auto sign = [](int n) { return (n > 0) - (n < 0); };
+        const int direction = how == "push" ? 1 : -1;
+        const yh::Cell delta{sign(at.x - from.x) * direction, sign(at.y - from.y) * direction};
+        bool moved = false;
+        for (int i = 0; i < squares; i++)
+        {
+            const yh::Cell to{at.x + delta.x, at.y + delta.y};
+            if (to == from || !world_.walkable(to) || world_.occupied(to, creature)
+                || !yh::lineOfSight(world_.grid_.center(at), world_.grid_.center(to), world_.map().walls()))
+                break;
+            at = to;
+            moved = true;
+        }
+        if (moved)
+        {
+            yh::Token& token = world_.tokens_.tokens[creature];
+            token.position = world_.grid_.center(at);
+            token.path.clear();
+            sheet(who)->conditionEvent(world_.rules_, "move");
+        }
+        return moved;
     }
 
 private:
@@ -110,12 +141,14 @@ bool World::validTarget(size_t creature, const yh::ActionDefinition& action, siz
     if (action.target != yh::ActionDefinition::Target::Creature || creature >= creatures_.size() || target >= creatures_.size())
         return false;
     const std::optional<size_t> index = orderIndex(target);
-    if (creatures_[target].sheet.down() || !index || !encounter_->order()[*index].standing())
+    if (!index || encounter_->order()[*index].out || creatures_[target].sheet.hasFlag(rules_, "dead")
+        || (creatures_[target].sheet.down() && !action.allowsDowned))
         return false;
     const bool sameSide = creatures_[target].team == creatures_[creature].team;
     if ((action.side == yh::ActionDefinition::Side::Enemy && sameSide) || (action.side == yh::ActionDefinition::Side::Ally && !sameSide))
         return false;
-    return inRange(creature, action, target);
+    return inRange(creature, action, target)
+        && (action.range <= 1 || yh::lineOfSight(grid_.center(cellOf(creature)), grid_.center(cellOf(target)), map().walls()));
 }
 
 bool World::inRange(size_t creature, const yh::ActionDefinition& action, size_t target) const
@@ -138,6 +171,7 @@ void World::perform(const yh::ActionDefinition& action, std::optional<size_t> ta
     if (!current)
         return;
     const size_t me = *current;
+    creatures_[me].readiedAction = action.readies;
     encounter_->spendActions(actionCost(me, action));
     syncLog();
     if (!action.log.empty())
@@ -162,6 +196,10 @@ void World::perform(const yh::ActionDefinition& action, std::optional<size_t> ta
         narrate(result);
     }
     fallenConditions();
+    // Healing can bring an ally back into the same encounter.
+    for (size_t i = 0; i < creatures_.size(); i++)
+        if (!creatures_[i].sheet.down() && tokens_.tokens[i].floor == dead)
+            tokens_.tokens[i].floor = 0;
     for (const yh::EffectEvent& event : result.events)
     {
         // Whoever it dropped lies where they fell.

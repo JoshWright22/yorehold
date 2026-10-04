@@ -37,7 +37,8 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [x] **B4. Actions as files.** `actions/*.json` with cost, requirements, targeting and effects.
   Strike, Stride and End turn move onto it with no change in play. The action bar lists whatever
   the acting creature has.
-- [ ] **B5. The other generic actions.** Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready.
+- [x] **B5. The other generic actions.** Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready.
+  Ready records a Strike; its trigger follows in B6. Interact stands up; equipment and objects follow in D1 and F1.
 - [ ] **B6. Reactions.** Triggers and a reaction budget; opportunity attacks when leaving reach
   (free movement included); Ready. Players get a short prompt with a default of "take it"
   (**default:** opportunity attacks are automatic, a setting turns the prompt on).

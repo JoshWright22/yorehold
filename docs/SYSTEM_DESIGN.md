@@ -413,6 +413,8 @@ These were open; each is the provisional answer and is data or a small switch wh
     add up; a step that waits for an event (`"when": "turnStart"`) only runs when the effect is run
     for that event.
 
+27. Generic actions: Defend uses Shielded; Help revives a downed ally at 1 HP or aids the next attack. Hide must beat every standing enemy's passive Perception; Seek beats passive Stealth within 6 squares; Shove and Grapple beat passive Athletics. Shove moves one square; Grapple lasts through the fight. Interact first stands up from prone (equipment in D1, objects in F1). Ready costs 2 actions, ends the turn and records a Strike until the next turn; triggers come in B6. All numbers and conditions are action files.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

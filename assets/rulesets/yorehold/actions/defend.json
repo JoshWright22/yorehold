@@ -1,0 +1,9 @@
+{
+  "id": "defend",
+  "name": "Defend",
+  "description": "Brace for blows: +2 AC until your next turn starts.",
+  "order": 30,
+  "cost": 1,
+  "log": "{name} defends.",
+  "effects": [{ "do": "condition", "id": "shielded", "target": "self" }]
+}

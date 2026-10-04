@@ -180,7 +180,10 @@ void PlayScreen::heroInput()
     const bool walkClick = input_.clicked(yh::actions::moveTo), selectClick = input_.clicked(yh::actions::select);
     if (!overUi(input_.mouse()) && (walkClick || selectClick))
     {
-        if (const std::optional<size_t> target = hoveredCreature(); target && world_.creatures()[*target].team == 1)
+        const yh::ActionDefinition* armed = hud::armedAction(world_, me, armed_);
+        if (const std::optional<size_t> target = hoveredCreature(); target && armed
+            && (armed->side == yh::ActionDefinition::Side::Any
+                || (world_.creatures()[*target].team == world_.creatures()[me].team) == (armed->side == yh::ActionDefinition::Side::Ally)))
             attackWithArmed(me, *target);
         else if (walkClick && token.path.empty())
         {
@@ -278,7 +281,8 @@ std::optional<size_t> PlayScreen::hoveredCreature() const
     for (size_t i = world_.creatures().size(); i-- > 0;)
     {
         const yh::Token& token = world_.tokens().tokens[i];
-        if (token.floor == 0 && distance(world, token.position) <= token.radius)
+        if ((token.floor == 0 || (token.floor == World::dead && world_.creatures()[i].team == 0))
+            && distance(world, token.position) <= token.radius)
             return i;
     }
     return std::nullopt;

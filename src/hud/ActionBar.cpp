@@ -10,7 +10,7 @@ const yh::ActionDefinition* hud::armedAction(const World& world, size_t creature
     const yh::ActionDefinition* first = nullptr;
     for (const yh::ActionDefinition* action : world.actionsOf(creature))
     {
-        if (action->target != yh::ActionDefinition::Target::Creature || action->side == yh::ActionDefinition::Side::Ally)
+        if (action->target != yh::ActionDefinition::Target::Creature)
             continue;
         if (action->id == armed)
             return action;
@@ -77,7 +77,9 @@ void hud::combatBar(Hud& hud)
     }
     // Clicking an enemy uses the armed action: the one picked on the bar, else the first that can be aimed.
     const yh::ActionDefinition* armed = armedAction(world, *current, hud.armed);
-    ui.label({bar.x + 16, bar.y + 36}, armed && world.canUse(*current, *armed) ? armed->name + ": click an enemy." : "Move on, or end your turn.",
+    const std::string aim = armed && armed->side == yh::ActionDefinition::Side::Ally ? ": click an ally."
+        : armed && armed->side == yh::ActionDefinition::Side::Any ? ": click a creature." : ": click an enemy.";
+    ui.label({bar.x + 16, bar.y + 36}, armed && world.canUse(*current, *armed) ? armed->name + aim : "Move on, or end your turn.",
         ui.theme.textDim);
 
     const bool walking = !world.tokens().tokens[*current].path.empty();
