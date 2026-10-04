@@ -141,7 +141,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `feetPerSquare` | Size of a map square. |
 | `carryPerStrength` | Pounds carried per point of the first ability. |
 | `magicItemLimit` | Magic items one character may carry (0 = no limit). Held here until inventory rules use it. |
-| `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited), a `recovery` and optional `restores`, the resources it refills (`"slots-*"` for every spell slot). The first is the one R takes. The long rest restores spell slots. |
+| `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited), a `recovery` and optional `restores`, the resources it refills (`"slots-*"` for every spell slot). The first is the one R takes. The long rest restores spell slots; both rests restore `focus`. |
 | `afterVictory`, `reviveAfterVictory` | A `recovery` for the winners of a fight, and the HP downed winners get back up with (0 = they stay down). |
 | `defaultHitDie`, `hitDieByClass`, `hitDieAbility` | Sides of the hit die, by class name, and the ability added per die. |
 | `conditions` | Optional list of conditions written inline; a ruleset folder keeps them as files instead (see Conditions). |
@@ -412,15 +412,19 @@ use inventory instead. Older adventure saves whose content signature changed rep
 Spells live only in the ruleset folder, `spells/<id>.json`, in the framework's spell format
 (FRAMEWORK.md, "Spells"): an action with `level` (0 = cantrip), `hands` and `concentration`.
 A spell costs one action per hand unless it gives a `cost`, and may not share an id with an action.
-Class files list them by level, `"spells": {"0": ["spark"], "1": ["flame-fan", "mire"]}`; a hero
-knows every listed cantrip and every listed spell of a level it has slots for, rebuilt from its
-choices on every load. Effects are checked against the ruleset when the chapter loads; a bad
+Class files list them by level, `"spells": {"0": ["spark"], "1": ["flame-fan", "mire"]}`, and say
+how the class casts with `"casting"`: `known` (the default: every listed spell of a level it has
+slots for), `prepared` (it chooses that many of them, its level rows' `"spells": N`) or
+`spontaneous` (a fixed repertoire of N, from the character's `"spells"` picks, else the list's
+first). Listed cantrips are always known, and so are listed focus spells once the hero has a focus
+pool. All of it is rebuilt from the hero's choices on every load; prepared spells are kept.
+Effects are checked against the ruleset when the chapter loads; a bad
 field, an unknown condition or a spell listed under the wrong level names the file.
 
 `spellcasting.json` beside `ruleset.json` says how the ruleset casts (every field optional):
 
 ```json
-{ "hands": "free", "slotPrefix": "slots-", "upcast": true,
+{ "hands": "free", "slotPrefix": "slots-", "upcast": true, "prepareAfter": ["long"],
   "concentration": { "onDamage": "save", "ability": "con", "minimumDc": 10, "damageShare": 0.5, "endsWhenDown": true } }
 ```
 
@@ -432,6 +436,18 @@ first; damage asks for a save against the larger of `minimumDc` and `damageShare
 (`onDamage` may be `breaks` or `ignored`); dropping to 0 HP, the end of the fight and a rest end
 it, and so does everything it left running out. Ending it takes off the conditions and modifiers
 the spell put on creatures. Concentration and spent slots are saved.
+
+Preparing: the cleric and wizard are `prepared` casters. They prepare 2 spells at level 1, 3 at
+level 3, 4 at 5, 5 at 7 and 6 from level 9; a new hero starts with the first ones on its list. In
+the spell panel (K) each spell of the list has a Prepare or Unprepare button while the hero may
+choose: before its first fight and after a rest named in `prepareAfter` (the long rest), until the
+next fight starts. The choice and whether it is still open are saved; saves from before keep
+loading with the first spells of the list prepared.
+
+Focus spells: a spell with `"spends": {"focus": 1}` spends a focus point instead of a slot, and is
+known by a class listing it once the hero has a `focus` resource. Both casters get one point at
+level 1 (a "Focus Pool" feature in their level table); the short and long rests restore `focus`
+(`restores` in ruleset.json). The spell panel shows the pool beside the slots.
 
 In a fight a hero's spells are on the action bar. A creature target is clicked like Strike; a
 point target is aimed at a square: the burst, cone, line or square is drawn on the map with the
@@ -445,8 +461,11 @@ The sample spells (the full lists are a later step): `spark` (cantrip, one hand,
 Dexterity save negates, +1d6 every four levels), `flame-fan` (level 1, two hands, a three-square
 cone, 2d6 fire, Dexterity save for half, +1d6 per higher slot), `mire` (level 1, concentration,
 a one-square burst within 6 squares slowing enemies who fail a Strength save) for the wizard, and
-`mend` (level 1, touch, 1d8+2 healing, gets a downed ally up) for the cleric. The **Spell
-targeting** test scene arms Mire on a caster's turn with the pointer on a goblin.
+`mend` (level 1, touch, 1d8+2 healing, gets a downed ally up) for the cleric. Focus spells:
+`arcane-dart` (wizard, one enemy within 12 squares, 2d4+1 force, no save, +1d4 every four levels)
+and `shield-of-faith` (cleric, an ally within 6 squares gains 1d8+2 temporary HP, +1d8 every four
+levels). The **Spell targeting** test scene arms Mire on a caster's turn with the pointer on a
+goblin; **Preparing spells** opens the spell panel of the first preparing hero before any fight.
 
 ## NPCs, dialogue, quests and story flags
 

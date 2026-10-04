@@ -74,12 +74,13 @@ void betweenFights(const Check& check)
     SpellWorld world, peer;
     check(world.loadJson("chapters/spell-hall", hallFiles(), 5) && peer.loadJson("chapters/spell-hall", hallFiles(), 5), "The spell hall loads");
     if (!world.chapter() || !peer.chapter()) return;
-    check(world.sheet(0).spells == std::vector<std::string>{"spark", "flame-fan", "mire"} && world.sheet(1).spells == std::vector<std::string>{"mend"}
+    check(world.sheet(0).spells == std::vector<std::string>{"spark", "arcane-dart", "flame-fan", "mire"}
+        && world.sheet(1).spells == std::vector<std::string>{"shield-of-faith", "mend"}
         && world.sheet(2).spells.empty() && world.sheet(0).resources.at("slots-1").max == 2, "Casters start with their class's spells and slots");
     const auto has = world.actionsOf(0);
     check(world.findSpell("mire") && world.findAction("mire") == &world.findSpell("mire")->action
         && std::find(has.begin(), has.end(), world.findAction("spark")) != has.end()
-        && has.back()->id == World::endTurnAction && world.actionsOf(2).size() + 3 == has.size(), "A caster's spells are listed with its actions");
+        && has.back()->id == World::endTurnAction && world.actionsOf(2).size() + 4 == has.size(), "A caster's spells are listed with its actions");
 
     world.sheet(2).hp = 1; peer.sheet(2).hp = 1;
     const nlohmann::json mend{{"hero", 1}, {"spell", "mend"}, {"target", 2}, {"healing", 1000}, {"slot", 0}};
@@ -230,6 +231,55 @@ void concentration(const Check& check)
         "A caster who drops lets the spell go");
 }
 
+void preparing(const Check& check)
+{
+    SpellWorld world, peer;
+    check(world.loadJson("chapters/spell-hall", hallFiles(), 13) && peer.loadJson("chapters/spell-hall", hallFiles(), 13), "The hall loads for preparing");
+    if (!world.chapter() || !peer.chapter()) return;
+    const yh::Character& wizard = world.sheet(0);
+    check(wizard.preparable == std::vector<std::string>{"flame-fan", "mire"} && wizard.prepareLimit == 2 && wizard.prepared == wizard.preparable
+        && world.creatures()[0].mayPrepare, "A new wizard has its first spells prepared and may choose again before the first fight");
+
+    // Choosing: from its own list, within its limit, by its own player.
+    const nlohmann::json justMire{{"hero", 0}, {"spells", {"mire"}}};
+    std::string reason;
+    check(!world.validate(1, "prepare", justMire.dump(), reason), "A peer cannot prepare another player's spells");
+    check(!world.send("prepare", {{"hero", 0}, {"spells", {"mire", "mend"}}}) && !world.send("prepare", {{"hero", 0}, {"spells", nlohmann::json::array()}})
+        && !world.send("prepare", {{"hero", 2}, {"spells", {"mire"}}}) && wizard.prepared.size() == 2, "Only spells from its list, and at least one");
+    check(world.send("prepare", justMire) && peer.send("prepare", justMire) && wizard.prepared == std::vector<std::string>{"mire"}
+        && std::find(wizard.spells.begin(), wizard.spells.end(), "flame-fan") == wizard.spells.end() && world.said("prepares Mire")
+        && world.checksum() == peer.checksum(), "Preparing swaps what the wizard can cast");
+    check(peer.restoreState(world.snapshot()) && peer.sheet(0).prepared == std::vector<std::string>{"mire"} && peer.creatures()[0].mayPrepare,
+        "Prepared spells and the chance to change them are in the save");
+
+    // Once a fight has started, only the long rest opens it again.
+    world.creatures_[0].mayPrepare = false;
+    check(!world.send("prepare", {{"hero", 0}, {"spells", {"flame-fan", "mire"}}}) && world.refusal.find("long rest") != std::string::npos,
+        "The choice waits for a long rest");
+    check(world.send("rest", {{"rest", 0}}) && !world.creatures()[0].mayPrepare, "A short rest does not open it");
+    check(world.send("rest", {{"rest", 1}}) && world.creatures()[0].mayPrepare && world.said("may prepare spells again")
+        && world.send("prepare", {{"hero", 0}, {"spells", {"flame-fan", "mire"}}}) && wizard.prepared.size() == 2, "After a long rest the wizard chooses again");
+    SpellWorld fight;
+    if (!fight.loadJson("chapters/spell-hall", hallFiles(), 9)) return;
+    prepare(fight);
+    check(startFight(fight) && !fight.creatures()[0].mayPrepare && !fight.send("prepare", justMire), "A fight closes it");
+}
+
+void focusSpells(const Check& check)
+{
+    SpellWorld world;
+    check(world.loadJson("chapters/spell-hall", hallFiles(), 15), "The hall loads for focus spells");
+    if (!world.chapter()) return;
+    emptyHands(world.sheet(1));
+    const nlohmann::json ward{{"hero", 1}, {"spell", "shield-of-faith"}, {"target", 2}};
+    check(world.sheet(1).resources.at("focus").max == 1 && world.send("cast", ward) && world.sheet(2).tempHp >= 3
+        && world.sheet(1).resources.at("focus").current == 0 && world.sheet(1).resources.at("slots-1").current == 2,
+        "A focus spell spends a focus point and no slot");
+    check(!world.send("cast", ward) && world.refusal.find("needs 1 focus") != std::string::npos, "An empty pool refuses it");
+    check(world.send("rest", {{"rest", 0}}) && world.sheet(1).resources.at("focus").current == 1 && world.send("cast", ward),
+        "A short rest refills the pool");
+}
+
 void badFiles(const Check& check)
 {
     auto broken = hallFiles();
@@ -263,5 +313,7 @@ void worldSpellTests(const Check& check)
     betweenFights(check);
     aiming(check);
     concentration(check);
+    preparing(check);
+    focusSpells(check);
     badFiles(check);
 }

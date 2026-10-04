@@ -2,6 +2,7 @@
   "hands": "free",
   "slotPrefix": "slots-",
   "upcast": true,
+  "prepareAfter": ["long"],
   "concentration": {
     "onDamage": "save",
     "ability": "con",

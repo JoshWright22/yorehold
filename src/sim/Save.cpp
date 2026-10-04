@@ -66,6 +66,8 @@ std::string World::stateJson() const
         });
         if (creatures_[i].concentration.active())
             data["creatures"].back()["concentration"] = nlohmann::json::parse(creatures_[i].concentration.toJson());
+        if (!creatures_[i].sheet.preparable.empty())
+            data["creatures"].back()["mayPrepare"] = creatures_[i].mayPrepare;
     }
     return data.dump();
 }
@@ -136,6 +138,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
         std::vector<bool> awake, fled, surrendered, sneaking, dropped;
+        std::vector<bool> mayPrepare; // older saves: a prepared caster may choose until the next fight
         std::vector<int> teams;
         std::vector<yh::Concentration> concentrating; // older saves have none
         for (const nlohmann::json& c : saved)
@@ -175,6 +178,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
                 throw std::runtime_error("saved token is outside the map");
             positions.push_back(position);
             awake.push_back(c.at("awake").get<bool>());
+            mayPrepare.push_back(c.value("mayPrepare", true));
             fled.push_back(c.value("fled", false) && sheets.back().down());
             // Without saved piles, enemies already dead leave nothing more (their things stayed on their sheets).
             dropped.push_back(c.value("dropped", !piles && sheets.back().down()));
@@ -208,6 +212,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             }
             creatures_[i].concentration = std::move(concentrating[i]);
             creatures_[i].awake = awake[i];
+            creatures_[i].mayPrepare = mayPrepare[i];
             creatures_[i].fled = fled[i];
             creatures_[i].surrendered = surrendered[i];
             creatures_[i].dropped = dropped[i];

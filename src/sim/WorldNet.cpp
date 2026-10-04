@@ -222,6 +222,15 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 return std::nullopt;
             return nlohmann::json{{"hero", hero}, {"spell", id}, {"target", target}, {"slot", *slot}}.dump();
         }
+        if (type == "prepare")
+        {
+            // A prepared caster's spells for the day, between fights after the right rest.
+            const size_t hero = j.at("hero").get<size_t>();
+            const auto spells = j.at("spells").get<std::vector<std::string>>();
+            if (!canPrepare(hero, spells, &reason) || !mayAct(player, hero))
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"spells", spells}}.dump();
+        }
         // Only the creatures the game plays lose their nerve; "escape" takes one out of the fight for
         // good, "surrender" leaves it standing; "alarm" brings in a group it ran to.
         if (type == "flee")
@@ -484,6 +493,21 @@ void World::apply(const yh::NetCommand& command)
         if (const yh::SpellDefinition* spell = findSpell(j.at("spell").get<std::string>()))
         {
             castSpell(hero, *spell, j.at("target").get<size_t>(), std::nullopt, j.value("slot", 0));
+            requestSave();
+        }
+    }
+    else if (type == "prepare")
+    {
+        yh::Character& sheet = creatures_[j.at("hero").get<size_t>()].sheet;
+        if (sheet.prepare(j.at("spells").get<std::vector<std::string>>()))
+        {
+            std::string names;
+            for (const std::string& id : sheet.prepared)
+            {
+                const yh::SpellDefinition* spell = findSpell(id);
+                names += (names.empty() ? "" : ", ") + (spell ? spell->name() : id);
+            }
+            say(sheet.name + " prepares " + names + ".");
             requestSave();
         }
     }

@@ -54,6 +54,7 @@ public:
         std::string surrender;    // the dialogue for that (see Chapter::surrender)
         std::string readiedAction; // waiting for a reaction, until the next turn or the fight ends
         yh::Concentration concentration; // the spell it is holding in place, if any
+        bool mayPrepare = true;          // a prepared caster may choose its spells: after a rest that allows it, until a fight
         float facing = 0;      // radians: where an enemy looks until it notices the party
         // A hero moving quietly (the Hidden condition): slower, lights covered, only noticed inside a vision cone.
         bool sneaking() const { return sheet.hasCondition(hiddenCondition); }
@@ -288,6 +289,9 @@ public:
     bool validAim(size_t creature, const yh::ActionDefinition& action, yh::Cell at, std::string* why = nullptr) const;
     // Between fights: `hero` may cast `spell` on `target` (itself for a self target).
     bool canCast(size_t hero, std::string_view spell, size_t target, std::string* why = nullptr) const;
+    // Between fights, after a rest the spellcasting file names: `hero` may make `spells` its
+    // prepared ones ("prepare" intent).
+    bool canPrepare(size_t hero, const std::vector<std::string>& spells, std::string* why = nullptr) const;
 
     struct ReactionPrompt
     {

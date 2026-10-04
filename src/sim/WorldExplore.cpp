@@ -271,6 +271,14 @@ void World::rest(const yh::RestDefinition& rest)
         // Spell slots and whatever else the rest's file names come back, to the living.
         if (!c.death.dead && c.restoreResources(rest.restores) > 0)
             say(c.name + " is ready to cast again.");
+        // Prepared casters may choose their spells again (K) until the next fight.
+        const std::vector<std::string>& after = spellRules().prepareAfter;
+        if (!c.death.dead && !c.preparable.empty() && std::find(after.begin(), after.end(), rest.id) != after.end())
+        {
+            if (!creatures_[i].mayPrepare)
+                say(c.name + " may prepare spells again (K).");
+            creatures_[i].mayPrepare = true;
+        }
         if (c.hp >= c.maxHp())
             continue;
         std::string detail;

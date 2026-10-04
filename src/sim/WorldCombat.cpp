@@ -77,6 +77,7 @@ void World::startCombat(int group, std::optional<size_t> only, bool surprise)
         Creature& c = creatures_[i];
         c.fleeing = false;
         c.breakAs.clear();
+        c.mayPrepare = false; // spells are chosen after a rest, not in the middle of things
         c.sheet.syncDeath(rules_);
         if (c.sheet.down() && !(rules_.death.enabled && c.sheet.death.saves && !c.sheet.death.dead))
             continue;

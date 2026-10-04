@@ -208,6 +208,13 @@ void contentTests(const fs::path& scratch)
                     tables = false;
                     std::fprintf(stderr, "%s level %d: wrong spell slots\n", classId, level);
                 }
+                // Both casters prepare: two spells at first, more every other level to 9, and a focus point.
+                const int prepares = caster ? std::min(6, 2 + (level - 1) / 2) : 0;
+                if (sheet->prepareLimit != prepares || caster != sheet->resources.contains("focus"))
+                {
+                    tables = false;
+                    std::fprintf(stderr, "%s level %d: prepares %d, not %d\n", classId, level, sheet->prepareLimit, prepares);
+                }
             }
         }
         check(tables, "Fighter, rogue, cleric and wizard build at every level from 1 to 20");
@@ -265,9 +272,9 @@ void contentTests(const fs::path& scratch)
         renamed.xpForLevel = modern.xpForLevel;
         json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
         // Conditions are checked on their own, and a full recovery has no use for a fraction.
-        // Spell slots coming back on a long rest are new with spells; the keep had no casting.
-        check(renamed.rests.size() == 2 && renamed.rests[1].restores == std::vector<std::string>{"slots-*"},
-            "A long rest restores spell slots");
+        // Spell slots and focus points coming back on rests are new with spells; the keep had no casting.
+        check(renamed.rests.size() == 2 && renamed.rests[1].restores == std::vector<std::string>{"slots-*", "focus"}
+            && renamed.rests[0].restores == std::vector<std::string>{"focus"}, "A long rest restores spell slots; both rests restore focus");
         for (json* set : {&mine, &theirs})
         {
             set->erase("conditions");

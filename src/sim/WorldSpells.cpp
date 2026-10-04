@@ -5,6 +5,7 @@
 #include <yorehold/framework/graphics/Lighting.h>
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 
 const yh::SpellDefinition* World::findSpell(std::string_view id) const
@@ -109,11 +110,41 @@ bool World::canCast(size_t hero, std::string_view id, size_t target, std::string
     return true;
 }
 
+bool World::canPrepare(size_t hero, const std::vector<std::string>& spells, std::string* why) const
+{
+    if (why) why->clear();
+    auto refuse = [&](const char* text) { if (why) *why = text; return false; };
+    if (hero >= heroCount_ || fighting() || talk_ || inCutscene_)
+        return refuse("Spells are prepared between fights.");
+    const Creature& c = creatures_[hero];
+    if (c.sheet.preparable.empty())
+        return refuse("They do not prepare spells.");
+    if (c.sheet.death.dead)
+        return refuse("They cannot prepare spells now.");
+    if (!c.mayPrepare)
+    {
+        const std::vector<std::string>& after = spellRules().prepareAfter;
+        const yh::RestDefinition* rest = after.empty() ? nullptr : rules_.rest(after.front());
+        std::string name = rest ? (rest->name.empty() ? rest->id : rest->name) : std::string();
+        std::transform(name.begin(), name.end(), name.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        if (why) *why = rest ? "Spells can be chosen again after a " + name + "." : "Spells can't be chosen again in this adventure.";
+        return false;
+    }
+    yh::Character trial = c.sheet;
+    std::string reason;
+    if (!trial.prepare(spells, &reason))
+    {
+        if (why) *why = c.sheet.name + " " + reason + ".";
+        return false;
+    }
+    return true;
+}
+
 void World::castSpell(size_t caster, const yh::SpellDefinition& spell, std::optional<size_t> target, std::optional<yh::Cell> at, int slot)
 {
-    yh::spendSlot(creatures_[caster].sheet, spellRules(), slot);
+    yh::spendCasting(creatures_[caster].sheet, spell, spellRules(), slot);
     say(creatures_[caster].sheet.name + " casts " + spell.name()
-        + (slot > spell.level ? " from a level " + std::to_string(slot) + " slot." : "."));
+        + (spell.spends.empty() && slot > spell.level ? " from a level " + std::to_string(slot) + " slot." : "."));
     // One spell at a time: a new one that needs concentration ends the old.
     if (spell.concentration)
         endConcentration(caster, "to cast another");

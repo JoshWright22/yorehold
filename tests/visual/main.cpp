@@ -5,6 +5,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#include <algorithm>
+
 // Runs the whole game inside the browser, so client screens can be checked next to future gameplay scenes.
 class TestSceneGame : public yh::TestScene
 {
@@ -327,6 +329,47 @@ private:
     bool moved_ = false;
 };
 
+// The spell panel (K) of the first hero who prepares spells, before the first fight: prepared and
+// unprepared spells with their Prepare buttons, the focus pool beside the slots, a focus spell.
+class PreparingGame : public YoreholdGame
+{
+public:
+    void prepare()
+    {
+        load();
+        SDL_Event key{};
+        key.type = SDL_EVENT_KEY_DOWN; key.key.key = SDLK_RETURN;
+        handleEvent(key); handleEvent(key); newAdventure(7);
+        if (!chapter_) return;
+        size_t caster = heroCount_;
+        for (size_t i = 0; i < heroCount_ && caster == heroCount_; i++)
+            if (!creatures_[i].sheet.preparable.empty())
+                caster = i;
+        if (caster == heroCount_) return;
+        for (size_t i = 0; i < heroCount_; i++)
+            tokens_.tokens[i].selected = i == caster;
+        // Something to choose between: the wizard's list beside the hero's own.
+        yh::Character& sheet = creatures_[caster].sheet;
+        for (const char* id : {"flame-fan", "mire"})
+            if (findSpell(id) && std::find(sheet.preparable.begin(), sheet.preparable.end(), id) == sheet.preparable.end())
+                sheet.preparable.push_back(id);
+        update(0);
+        key.key.key = SDLK_K;
+        handleEvent(key);
+    }
+};
+
+class TestScenePreparing : public yh::TestScene
+{
+public:
+    TestScenePreparing() { game_.prepare(); }
+    void update(double) override { game_.update(0); }
+    void draw(yh::Renderer& renderer) override { game_.draw(renderer); }
+    bool handleEvent(const SDL_Event& event) override { return game_.handleEvent(event); }
+private:
+    PreparingGame game_;
+};
+
 int main(int argc, char** argv)
 {
     yh::TestBrowser browser;
@@ -338,6 +381,7 @@ int main(int argc, char** argv)
     browser.add<TestSceneMerchant>("Merchants");
     browser.add<TestSceneConsumables>("Consumables");
     browser.add<TestSceneSpellTargeting>("Spell targeting");
+    browser.add<TestScenePreparing>("Preparing spells");
 
     yh::HostSettings settings;
     settings.title = "yorehold tests";
