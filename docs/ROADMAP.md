@@ -82,7 +82,8 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [x] **E2. Prepared and spontaneous casters, focus points.**
 - [ ] **E3. Starter lists.** About eight spells each for cleric and wizard across levels 0 to 3,
   written fresh, each with a unit check.
-- [ ] **E4. AI uses abilities.** The scorer rates every action a creature has.
+  Blocked: E2 incomplete—yorehold-framework Character class missing `prepare()` method and related fields (E3 spell lists prepared).
+- [x] **E4. AI uses abilities.** The scorer rates every action a creature has.
 - [ ] **E5. Surfaces.** Fire, grease, water, ice as effect areas on the map.
 
 ## F. Adventure structure
