@@ -33,6 +33,17 @@ struct Chapter
         std::string creatureId;
         std::string name; // empty = the creature's own name
         yh::Cell at;
+        std::string ai;   // JSON (a profile name or changes) on top of the creature's and the encounter's; empty = none
+    };
+
+    // The story changing how creatures fight: once every flag in `when` is set, the creatures it
+    // matches (any of creature id, encounter id or placed name; empty matches all) get `ai` on
+    // top of what they had. Later entries apply after earlier ones.
+    struct AiChange
+    {
+        std::vector<std::string> when;
+        std::string creature, encounter, name;
+        std::string ai; // JSON, as above
     };
 
     // Creatures that wake up and fight together once any of them is seen.
@@ -42,6 +53,7 @@ struct Chapter
         std::string text; // shown when the fight starts
         std::vector<Placement> creatures;
         std::vector<std::string> set; // story flags set when the party wins this fight
+        std::string ai; // JSON for everyone in it, on top of each creature's own; empty = none
     };
 
     // Someone on the map the party can talk to. They only fight if the party attacks them.
@@ -55,6 +67,7 @@ struct Chapter
         std::string creature = "commoner"; // their sheet, from the compendium
         std::vector<std::string> attacked; // story flags set when the party attacks them
         std::vector<std::string> killed;   // and when they die
+        std::string ai; // JSON on top of their creature's, for when they're attacked; empty = none
     };
 
     std::string id;
@@ -72,6 +85,7 @@ struct Chapter
     std::vector<PartyMember> party;
     std::vector<Encounter> encounters;
     std::vector<Npc> npcs;
+    std::vector<AiChange> aiChanges;
     std::string quests; // virtual path to a yh::QuestJournal file; empty = no journal
     // The chapter is complete once all of these story flags are set. Empty = once every encounter is won.
     std::vector<std::string> completeWhen;

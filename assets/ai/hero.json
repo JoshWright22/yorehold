@@ -1,0 +1,8 @@
+{
+  "id": "hero",
+  "description": "What the party's heroes use in auto-play: like cunning, but they never run.",
+  "base": "cunning",
+  "fleeHp": 0,
+  "fleeLosses": 2,
+  "fleeLeaderless": false
+}

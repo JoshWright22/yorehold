@@ -1,0 +1,13 @@
+{
+  "id": "animal",
+  "description": "Hunts the hurt and the alone, with the pack. Runs when badly hurt. Wolves, bears.",
+  "damage": 1,
+  "finish": 1,
+  "weak": 1.5,
+  "isolated": 1,
+  "pack": 1,
+  "nearby": 0.5,
+  "danger": 0.2,
+  "random": 0.6,
+  "fleeHp": 0.35
+}

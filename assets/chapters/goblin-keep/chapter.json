@@ -101,7 +101,8 @@
           "at": [
             28,
             17
-          ]
+          ],
+          "ai": "coward"
         }
       ]
     },
@@ -166,6 +167,14 @@
           ]
         }
       ]
+    }
+  ],
+  "aiChanges": [
+    {
+      "when": ["entry_hall_clear", "storeroom_clear"],
+      "encounter": "chiefs-hall",
+      "creature": "goblin",
+      "ai": { "fleeHp": 0.6 }
     }
   ],
   "victoryText": "Victory! Everyone gains {xp} XP.",

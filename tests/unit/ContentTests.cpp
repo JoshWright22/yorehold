@@ -114,9 +114,24 @@ void contentTests(const fs::path& scratch)
     check(files.mountFolder(overrideRoot.string(), "overrides"), "Mount author overrides");
     const auto original = json::parse(*files.readText("chapters/goblin-keep/chapter.json"));
     const auto chapterFile = overrideRoot / "chapters/goblin-keep/chapter.json";
+    // How creatures think can be rewritten freely: it isn't part of a save's identity.
+    check(chapter->encounters[0].creatures[1].ai == "\"coward\"" && chapter->aiChanges.size() == 1 && chapter->compendium.ai.contains("coward")
+        && chapter->compendium.aiFor(*chapter->compendium.creature("goblin-boss")).leader, "Chapters and creature files set AI by name or by changes");
+    auto rethought = original;
+    rethought["encounters"][0]["ai"] = "brute";
+    rethought["encounters"][0]["creatures"][0]["ai"] = {{"fleeHp", 0.9}};
+    rethought["aiChanges"] = json::array();
+    write(chapterFile, rethought);
+    auto same = Chapter::load(files, content->defaultChapter, &error);
+    check(same && same->encounters[0].ai == "\"brute\"" && same->aiChanges.empty() && same->signature == chapter->signature, "AI edits keep old saves valid");
+    rethought["encounters"][0]["ai"] = "genius";
+    write(chapterFile, rethought);
+    check(!Chapter::load(files, content->defaultChapter, &error) && error.find("genius") != std::string::npos, "Unknown AI names report the chapter file");
+
     auto data = original;
     data["party"] = json::array({original["party"][0]});
     data["encounters"] = json::array();
+    data.erase("aiChanges"); // they name encounters this version no longer has
     data["endings"] = json::object();
     data["intro"] = json::array({"The author's introduction."});
     data["clearedText"] = "The author's ending.";

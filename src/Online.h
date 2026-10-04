@@ -30,6 +30,12 @@ public:
     const std::string& status() const { return status_; }
     const std::string& userId() const { return userId_; }
 
+    // Settings the server hands every player ({"ai": {...}}), so behaviour can be tuned without
+    // an update. Empty until signed in; configVersion() goes up each time it changes.
+    const nlohmann::json& config() const { return config_; }
+    int configVersion() const { return configVersion_; }
+    void refreshConfig();
+
     using Answer = std::function<void(std::optional<nlohmann::json>)>;
     // Calls one of the server's functions as the signed-in player. Nothing = it failed.
     void rpc(std::string_view id, const nlohmann::json& payload, Answer answer);
@@ -43,4 +49,6 @@ private:
     std::string status_;
     std::string server_, serverKey_, device_;
     std::string token_, userId_;
+    nlohmann::json config_ = nlohmann::json::object();
+    int configVersion_ = 0;
 };

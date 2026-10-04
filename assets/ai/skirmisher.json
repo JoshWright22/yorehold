@@ -1,0 +1,8 @@
+{
+  "id": "skirmisher",
+  "description": "Picks off whoever stands alone and won't stay where it can be surrounded. Scouts, skulkers.",
+  "base": "cunning",
+  "isolated": 2,
+  "pack": 0.3,
+  "danger": 1.5
+}

@@ -55,6 +55,33 @@ std::vector<std::string> flagsFrom(const nlohmann::json& j, const char* key)
     return flags;
 }
 
+// An optional "ai" entry, kept as JSON text: a profile name or an object of changes.
+std::string aiFrom(const nlohmann::json& j, const yh::Compendium& compendium)
+{
+    if (!j.contains("ai"))
+        return {};
+    const nlohmann::json& ai = j.at("ai");
+    if (!ai.is_string() && !ai.is_object()) throw std::invalid_argument("ai is a profile name or an object");
+    std::string problem;
+    if (!yh::AiProfile::fromJson(ai.dump(), &problem, compendium.aiLookup(), yh::AiProfile::preset("cunning")))
+        throw std::invalid_argument(problem);
+    return ai.dump();
+}
+
+// The chapter file without anything that only says how creatures think, for the save signature.
+nlohmann::json withoutAi(nlohmann::json j)
+{
+    if (j.is_object())
+    {
+        j.erase("ai");
+        j.erase("aiChanges");
+    }
+    for (auto& child : j)
+        if (child.is_structured())
+            child = withoutAi(child);
+    return j;
+}
+
 std::string readOrThrow(const yh::FileSystem& files, const std::string& path)
 {
     std::optional<std::string> text = files.readText(path);
@@ -131,7 +158,9 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             signature ^= 0xff;
             signature *= 1099511628211ull;
         };
-        include(j.dump());
+        // How creatures think is left out everywhere: it can change (a patch, the server, a writer's
+        // tweak) without making old saves or a co-op partner's copy count as a different chapter.
+        include(withoutAi(j).dump());
         include(nlohmann::json::parse(readOrThrow(files, where)).dump());
         include(c.rules.toJson());
         for (const auto& [id, item] : c.compendium.items) include(yh::Compendium::itemToJson(item));
@@ -144,7 +173,9 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                 if (!files.exists(where)) throw std::invalid_argument("missing token image");
                 definition.token.image = where;
             }
-            include(yh::Compendium::creatureToJson(definition));
+            yh::CreatureDefinition sheet = definition;
+            sheet.ai = yh::CreatureDefinition{}.ai;
+            include(yh::Compendium::creatureToJson(sheet));
         }
         if (!c.clearedCutscene.empty())
         {
@@ -181,14 +212,16 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             if (!e.at("creatures").is_array()) throw std::invalid_argument("encounter creatures must be an array");
             for (const auto& p : e.at("creatures"))
             {
-                Placement placement{p.at("creature").get<std::string>(), p.value("name", ""), cellFrom(p.at("at"))};
+                Placement placement{p.at("creature").get<std::string>(), p.value("name", ""), cellFrom(p.at("at")), {}};
                 if (!c.compendium.creature(placement.creatureId))
                     throw std::invalid_argument("unknown creature \"" + placement.creatureId + "\" in " + encounter.id);
+                placement.ai = aiFrom(p, c.compendium);
                 place(placement.at, placement.name.empty() ? placement.creatureId : placement.name);
                 encounter.creatures.push_back(std::move(placement));
             }
             if (encounter.creatures.empty()) throw std::invalid_argument(encounter.id + " has no creatures");
             encounter.set = flagsFrom(e, "set");
+            encounter.ai = aiFrom(e, c.compendium);
             c.encounters.push_back(std::move(encounter));
         }
 
@@ -203,6 +236,7 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             npc.creature = n.value("creature", npc.creature);
             npc.attacked = flagsFrom(n, "attacked");
             npc.killed = flagsFrom(n, "killed");
+            npc.ai = aiFrom(n, c.compendium);
             if (!validId(npc.id) || !npcIds.insert(npc.id).second) throw std::invalid_argument("npc ids must be unique and use a-z, 0-9, - and _");
             if (!c.compendium.creature(npc.creature))
                 throw std::invalid_argument("unknown creature \"" + npc.creature + "\" for " + npc.name);
@@ -222,6 +256,19 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             if (!yh::QuestJournal::fromJson(text, &problem)) throw std::invalid_argument(problem);
             include(nlohmann::json::parse(text).dump());
             where = folder + "/chapter.json";
+        }
+        const auto changes = j.value("aiChanges", nlohmann::json::array());
+        if (!changes.is_array()) throw std::invalid_argument("aiChanges must be an array");
+        for (const auto& change : changes)
+        {
+            AiChange entry{flagsFrom(change, "when"), change.value("creature", ""), change.value("encounter", ""), change.value("name", ""),
+                aiFrom(change, c.compendium)};
+            if (entry.ai.empty()) throw std::invalid_argument("each aiChanges entry needs an ai");
+            if (!entry.creature.empty() && !c.compendium.creature(entry.creature))
+                throw std::invalid_argument("aiChanges: unknown creature \"" + entry.creature + "\"");
+            if (!entry.encounter.empty() && !encounterIds.contains(entry.encounter))
+                throw std::invalid_argument("aiChanges: unknown encounter \"" + entry.encounter + "\"");
+            c.aiChanges.push_back(std::move(entry));
         }
         c.completeWhen = flagsFrom(j, "completeWhen");
         c.signature = std::to_string(signature);

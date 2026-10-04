@@ -77,6 +77,7 @@ void Online::signIn()
             {
                 state_ = State::SignedIn;
                 status_ = "Online (server " + version + ")";
+                refreshConfig();
             }
         });
         yh::HttpRequest account;
@@ -88,6 +89,17 @@ void Online::signIn()
             if (answer.ok() && me.is_object() && me.contains("user") && me["user"].is_object())
                 userId_ = me["user"].value("id", std::string());
         });
+    });
+}
+
+void Online::refreshConfig()
+{
+    rpc("config", "", [this](std::optional<nlohmann::json> config) {
+        // A failed fetch keeps the settings already in use.
+        if (!config || !config->is_object() || *config == config_)
+            return;
+        config_ = std::move(*config);
+        configVersion_++;
     });
 }
 

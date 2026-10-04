@@ -52,7 +52,8 @@ private:
         int group = -1; // index into the chapter's encounters (enemies that wake up together); NPCs fight alone
         bool awake = false;
         int npc = -1; // index into the chapter's NPCs
-        yh::AiProfile ai;     // how it fights when the game plays it
+        std::string creatureId;            // its definition in the compendium ("" for heroes)
+        std::vector<std::string> aiLayers; // the chapter's AI changes for it (JSON; see aiFor)
         bool fleeing = false; // its morale broke this fight: it runs until it gets away or is cornered
         bool fled = false;    // it got away: out of the adventure, and no body is left behind
     };
@@ -71,6 +72,14 @@ private:
     // What a creature's AI sees on its turn (see yh::decide). `who` maps the view's units back to creatures_.
     yh::TacticalView tacticalView(size_t me, std::vector<size_t>& who);
     yh::CellCosts distanceToFoes(int team) const;
+    // How a creature thinks right now: its file, the chapter, the story so far and the server, in that order.
+    yh::AiProfile aiFor(size_t creature) const;
+    void applyServerAi(const nlohmann::json& config);
+    void reloadAi();
+    std::map<std::string, yh::AiProfile, std::less<>> serverProfiles_;
+    std::map<std::string, std::string> serverCreatureAi_; // creature id -> JSON layer
+    int configSeen_ = 0;
+    double configTimer_ = 0;
 
     size_t heroCount_ = 0; // the chapter's party; creatures_ lists heroes first
     static constexpr int dead = -1;   // token floor for fallen creatures (the controller ignores them)

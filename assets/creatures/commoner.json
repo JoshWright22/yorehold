@@ -14,5 +14,5 @@
     ],
     "size": 0.4
   },
-  "ai": { "base": "cunning", "fleeHp": 1 }
+  "ai": "coward"
 }

@@ -1,0 +1,8 @@
+{
+  "id": "brute",
+  "description": "Goes for the biggest hit it can land and doesn't care what it costs. Never runs. Ogres, berserkers.",
+  "damage": 2,
+  "finish": 1,
+  "nearby": 0.5,
+  "random": 0.3
+}

@@ -251,6 +251,7 @@ bool YoreholdGame::openAdventure(size_t index)
     else
         std::fprintf(stderr, "Chapter failed to load: %s\n", chapterError_.c_str());
     mountSkin(); // on top of the adventure's own art
+    applyServerAi(online_.config().value("ai", nlohmann::json::object()));
     hasSave_ = !testRun_ && chapter_ && saveFormat().readFile(savePath()).has_value();
     newAdventure(SDL_GetTicks());
     return chapter_ != nullptr;
@@ -473,12 +474,7 @@ void YoreholdGame::newAdventure(uint64_t seed)
         token.position = grid_.center(member.at);
         token.owner = tokens_.tokens.size() < seats_.size() ? seats_[tokens_.tokens.size()] : 0;
         tokens_.tokens.push_back(token);
-        // In auto-play heroes fight like goblins that never run.
-        yh::AiProfile& ai = creatures_.back().ai;
-        ai = *yh::AiProfile::preset("cunning");
-        ai.fleeHp = 0;
-        ai.fleeLosses = 2;
-        ai.fleeLeaderless = false;
+
     }
     heroCount_ = creatures_.size();
     selectOwnHero();
@@ -489,7 +485,8 @@ void YoreholdGame::newAdventure(uint64_t seed)
             const yh::CreatureDefinition& definition = *chapter_->compendium.creature(placement.creatureId);
             creatures_.push_back({*chapter_->compendium.makeCreature(rules_, placement.creatureId, placement.name, random), 1,
                 static_cast<int>(group)});
-            creatures_.back().ai = definition.ai;
+            creatures_.back().creatureId = placement.creatureId;
+            creatures_.back().aiLayers = {chapter_->encounters[group].ai, placement.ai};
             yh::Token token;
             token.name = creatures_.back().sheet.name;
             token.owner = enemyOwner;
@@ -509,7 +506,8 @@ void YoreholdGame::newAdventure(uint64_t seed)
         Creature creature{*chapter_->compendium.makeCreature(rules_, npc.creature, npc.name, random), 2,
             static_cast<int>(chapter_->encounters.size() + i)};
         creature.npc = static_cast<int>(i);
-        creature.ai = definition.ai;
+        creature.creatureId = npc.creature;
+        creature.aiLayers = {npc.ai};
         creatures_.push_back(std::move(creature));
         yh::Token token;
         token.name = npc.name;
@@ -687,8 +685,28 @@ void YoreholdGame::update(double deltaSeconds)
     else if (reloadTimer_ <= 0)
     {
         reloadTimer_ = 0.5;
-        if (!files_.pollChanges().empty())
+        const std::vector<std::string> changed = files_.pollChanges();
+        if (!changed.empty())
             releaseAssets();
+        if (std::any_of(changed.begin(), changed.end(), [](const std::string& path) {
+                return path.starts_with("ai/") || path.find("/ai/") != std::string::npos || path.starts_with("creatures/") || path.find("/creatures/") != std::string::npos;
+            }))
+            reloadAi();
+    }
+    // The server's settings are read at sign-in and again every minute, so a change there reaches
+    // a running game without a restart.
+    configTimer_ -= deltaSeconds;
+    if (configTimer_ <= 0 && online_.state() == Online::State::SignedIn)
+    {
+        configTimer_ = 60;
+        online_.refreshConfig();
+    }
+    if (online_.configVersion() != configSeen_)
+    {
+        configSeen_ = online_.configVersion();
+        applyServerAi(online_.config().value("ai", nlohmann::json::object()));
+        if (aiNotes_)
+            say("AI settings from the server: " + std::to_string(serverProfiles_.size()) + " profiles, " + std::to_string(serverCreatureAi_.size()) + " creatures.");
     }
     updateSession(deltaSeconds);
     online_.update();
@@ -974,7 +992,7 @@ void YoreholdGame::startCombat(int group)
         else
             continue;
         sideAtStart_[c.team]++;
-        hadLeader_[c.team] |= c.ai.leader;
+        hadLeader_[c.team] |= aiFor(i).leader;
     }
 
     if (group < static_cast<int>(chapter_->encounters.size()) && !chapter_->encounters[group].text.empty())
@@ -1483,14 +1501,15 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         const yh::TacticalView view = tacticalView(me, who);
         yh::Random random(seed_ ^ (static_cast<uint64_t>(fights_) << 40) ^ (static_cast<uint64_t>(encounter_->round()) << 20) ^ me);
         std::vector<yh::TacticalChoice> considered;
-        const yh::TacticalChoice choice = yh::decide(creatures_[me].ai, view, grid_, random, &considered);
+        const yh::AiProfile profile = aiFor(me);
+        const yh::TacticalChoice choice = yh::decide(profile, view, grid_, random, &considered);
         using Kind = yh::TacticalChoice::Kind;
         if (aiNotes_)
         {
             const char* names[] = {"holds", "attacks", "advances", "flees"};
             char score[32];
             std::snprintf(score, sizeof score, "%.1f", choice.score);
-            say("[AI " + creatures_[me].ai.base + "] " + creatures_[me].sheet.name + " " + names[static_cast<int>(choice.kind)]
+            say("[AI " + profile.base + "] " + creatures_[me].sheet.name + " " + names[static_cast<int>(choice.kind)]
                 + (choice.kind == Kind::Attack ? " " + creatures_[who[choice.target]].sheet.name : std::string())
                 + " (" + score + ", best of " + std::to_string(considered.size()) + ")");
         }
@@ -1531,7 +1550,7 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
             const yh::CellCosts away = distanceToFoes(creatures_[me].team);
             const auto distance = away.find(cellOf(me));
             const bool watched = creatures_[me].team != 0 && fog_.state(0, 0, cellOf(me)) == yh::FogState::Visible;
-            if (distance == away.end() || (distance->second >= creatures_[me].ai.escapeAt && !watched))
+            if (distance == away.end() || (distance->second >= aiFor(me).escapeAt && !watched))
             {
                 act("escape");
                 return;
@@ -1540,6 +1559,121 @@ void YoreholdGame::updateEnemyTurn(double deltaSeconds)
         act("end");
         return;
     }
+}
+
+// ---------------------------------------------------------------- who thinks how
+
+// A creature's AI is worked out fresh each turn from layers, each on top of the last, so any of
+// them can change mid-adventure:
+//   1. the creature's file           creatures/goblin.json  "ai"
+//   2. the encounter it belongs to   chapter.json           encounters[].ai
+//   3. where it was placed           chapter.json           encounters[].creatures[].ai, npcs[].ai
+//   4. the story                     chapter.json           aiChanges, once their flags are set
+//   5. the server                    its "ai" config        creatures.<id>
+// Names in any layer are AI profiles: ai/<name>.json, or the server's "profiles", which win.
+yh::AiProfile YoreholdGame::aiFor(size_t index) const
+{
+    const Creature& c = creatures_[index];
+    const yh::AiProfile::Lookup lookup = [this](std::string_view name) -> const yh::AiProfile* {
+        if (const auto found = serverProfiles_.find(name); found != serverProfiles_.end())
+            return &found->second;
+        const auto found = chapter_->compendium.ai.find(name);
+        return found == chapter_->compendium.ai.end() ? nullptr : &found->second;
+    };
+    yh::AiProfile profile = *yh::AiProfile::preset("cunning");
+    // A layer that no longer makes sense (a profile the server removed) is skipped, not fatal.
+    auto layer = [&](const std::string& json) {
+        if (json.empty())
+            return;
+        if (std::optional<yh::AiProfile> next = yh::AiProfile::fromJson(json, nullptr, lookup, &profile))
+            profile = std::move(*next);
+    };
+
+    if (index < heroCount_)
+    {
+        // Auto-play: heroes use the "hero" profile, or fight like goblins that never run.
+        if (const yh::AiProfile* hero = lookup("hero"))
+            return *hero;
+        profile.fleeHp = 0;
+        profile.fleeLosses = 2;
+        profile.fleeLeaderless = false;
+        return profile;
+    }
+
+    if (const yh::CreatureDefinition* definition = chapter_->compendium.creature(c.creatureId))
+        layer(definition->ai);
+    for (const std::string& json : c.aiLayers)
+        layer(json);
+    const std::string encounter = c.group >= 0 && c.group < static_cast<int>(chapter_->encounters.size()) ? chapter_->encounters[c.group].id : std::string();
+    for (const Chapter::AiChange& change : chapter_->aiChanges)
+    {
+        const bool matches = (change.creature.empty() || change.creature == c.creatureId) && (change.encounter.empty() || change.encounter == encounter)
+            && (change.name.empty() || change.name == c.sheet.name);
+        if (matches && std::all_of(change.when.begin(), change.when.end(), [&](const std::string& flag) { return flags_.contains(flag); }))
+            layer(change.ai);
+    }
+    if (const auto found = serverCreatureAi_.find(c.creatureId); found != serverCreatureAi_.end())
+        layer(found->second);
+    return profile;
+}
+
+// The server's "ai" config: {"profiles": {"coward": {...}}, "creatures": {"goblin": "coward"}}.
+// Profiles add to (or replace) the ones in the files; creatures put a last layer on a kind of creature.
+void YoreholdGame::applyServerAi(const nlohmann::json& config)
+{
+    serverProfiles_.clear();
+    serverCreatureAi_.clear();
+    if (!chapter_ || !config.is_object())
+        return;
+    const nlohmann::json profiles = config.value("profiles", nlohmann::json::object());
+    const yh::AiProfile blank = [] { yh::AiProfile p; p.base = "custom"; return p; }();
+    // Server profiles can build on each other; a few passes settle any order.
+    for (int pass = 0; pass < 4 && profiles.is_object(); pass++)
+    {
+        for (auto it = profiles.begin(); it != profiles.end(); ++it)
+        {
+            if (serverProfiles_.contains(it.key()) || !it.value().is_object())
+                continue;
+            const std::string name = it.key();
+            const yh::AiProfile::Lookup lookup = [&](std::string_view base) -> const yh::AiProfile* {
+                if (const auto found = serverProfiles_.find(base); found != serverProfiles_.end())
+                    return &found->second;
+                // A profile that replaces one from the files may start from the one it replaces.
+                const auto found = chapter_->compendium.ai.find(base);
+                return found == chapter_->compendium.ai.end() ? nullptr : &found->second;
+            };
+            if (std::optional<yh::AiProfile> profile = yh::AiProfile::fromJson(it.value().dump(), nullptr, lookup, &blank))
+            {
+                profile->base = name;
+                serverProfiles_[name] = std::move(*profile);
+            }
+        }
+    }
+    const nlohmann::json creatures = config.value("creatures", nlohmann::json::object());
+    if (creatures.is_object())
+        for (auto it = creatures.begin(); it != creatures.end(); ++it)
+            if (it.value().is_string() || it.value().is_object())
+                serverCreatureAi_[it.key()] = it.value().dump();
+}
+
+// AI and creature files edited while the game is open: read them again, keep the old ones if they're broken.
+void YoreholdGame::reloadAi()
+{
+    if (!chapter_)
+        return;
+    yh::Compendium fresh;
+    std::string problem;
+    if (!fresh.load(files_, "", &problem) || !fresh.load(files_, chapter_->folder, &problem))
+    {
+        say("AI files not reloaded: " + problem);
+        return;
+    }
+    chapter_->compendium.ai = fresh.ai;
+    for (auto& [id, definition] : chapter_->compendium.creatures)
+        if (const yh::CreatureDefinition* updated = fresh.creature(id))
+            definition.ai = updated->ai;
+    applyServerAi(online_.config().value("ai", nlohmann::json::object()));
+    say("AI profiles reloaded.");
 }
 
 // Walking distance from every cell to the nearest standing foe of `team`, through other creatures.
@@ -1601,7 +1735,7 @@ yh::TacticalView YoreholdGame::tacticalView(size_t me, std::vector<size_t>& who)
         const std::optional<yh::DiceExpression> damage = yh::DiceExpression::parse(c.sheet.damageDice(rules_));
         unit.averageDamage = damage ? std::max(1.0f, static_cast<float>(damage->minimum() + damage->maximum()) / 2) : 1.0f;
         unit.speed = c.sheet.speedSquares(rules_);
-        unit.leader = c.ai.leader;
+        unit.leader = aiFor(i).leader;
         view.units.push_back(unit);
         who.push_back(i);
     }
