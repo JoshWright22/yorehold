@@ -347,6 +347,47 @@ Inside the client, one screen with modes that share one open package, one undo h
   (one panel at a time, larger targets, tools in a bottom sheet). So editor logic lives apart from
   editor layout: each mode is a model plus commands, with a layout drawn over it.
 
+#### Voice lines (todo)
+
+Turns a recorded line into its words and their timings once, when the file is added. The game
+only reads the result; nothing listens to speech while the game runs.
+
+- Pipeline: `voice/<name>.wav` (or `.ogg`) is decoded, mixed to mono and resampled to 16 kHz
+  floats (miniaudio, which audio playback will use too), run through whisper.cpp, and written to
+  `voice/<name>.voice.json` beside it. The original file is never changed and is what plays.
+- whisper.cpp (MIT) comes in through `FetchContent` at a pinned tag, behind a CMake option, and
+  only the editor tools link it: a `yorehold-voice` command and a button in Dialogue mode. The
+  game itself never contains it.
+- Model: `base.en` quantized q5_1 (about 57 MB) by default; `tiny.en` q5_1 (about 31 MB) as the
+  light setting. Models are not in git. The first use downloads one into the user cache and
+  checks its SHA-256; after that everything works offline. If the download fails, the tool says
+  which file to fetch and where to put it.
+- Timings come from whisper.cpp's DTW token timestamps, which use the model's alignment-heads
+  preset and are tighter than its older per-token estimates. Flash attention stays off because
+  DTW needs the attention weights. Tokens are joined into words. Expect an error of tens of
+  milliseconds up to roughly 150 ms. That is good for subtitles, word highlighting and dialogue
+  events, but not good enough for lip-sync.
+- Confidence: each word stores the lowest probability among its tokens. The editor flags words
+  below 0.6, and that cutoff is data.
+- Vocabulary: the names listed in `voice/vocabulary.txt` in a package (Kharos and the like) are
+  given to whisper as its initial prompt, which steers it towards those spellings. No training is
+  involved.
+- The written line wins, because writers own the text. If the dialogue node already has its
+  line, the tool keeps that text and only borrows the timings. It matches the heard words to the
+  written ones by edit distance over normalized words. A written word with no match gets a time
+  spread between its matched neighbours and is flagged. The same matching applies a writer's fix
+  ("Carlos" to "Kharos") without running the model again. If the node has no line yet, the heard
+  text becomes a suggestion the writer accepts or edits.
+- File: `{ "format": 1, "audio", "model", "text", "words": [{ "text", "start", "end",
+  "confidence", "matched" }] }`, with times in seconds. Plain text, SRT and VTT are exported
+  from it on demand and not stored. Later outputs (phonemes, visemes) are added as new fields
+  under a raised `format`.
+- Later, and only if tests show it is needed: a forced aligner for phoneme timings, then a
+  phoneme-to-viseme table for mouth animation.
+- Testing: a set of lines spoken by Windows' built-in speech synthesizer. It reports where each
+  word falls in the audio, so the checks measure word accuracy and timing error for `tiny.en`
+  and `base.en` against known answers. Real recordings are added once there are some.
+
 ### UI
 
 - Flow: Title > Play (Continue, Adventures, Characters, Join) / Create / Settings / Exit.
@@ -434,6 +475,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 39. Gear and hands: I opens the selected hero's gear (in a fight, the acting hero's if it is yours); a click puts an item on or away. Everyone has two hands shared by the held slots: taking up an item whose `hands` aren't free puts the other held items away, so a two-handed weapon and a shield never go together. Between fights changing gear is free; in a fight it happens on the hero's own turn and costs what the Interact action costs (1 action). A grip is what is held; weapons with a one- and a two-handed use come when an item needs one.
 40. Loot and coins: coins are counted in copper on each sheet (10 cp = 1 sp, 10 sp = 1 gp) and come along to the character library. A container is a chapter entry on a walkable cell of its own; it doesn't block the way and stays on the map, dull, once emptied (kits replace it in F1). Enemies drop when the fight is won, not as they fall: what they carried plus their loot table, rolled from the adventure's seed and the fight's number so co-op machines agree. Whoever picks something up gets it; a hero must stand on or beside the pile. Giving is free between fights, at any distance, and the gear panel hands over all of a hero's coins at once. Carried-only items stack; anything worn or held stays its own entry. Loot is not written to the log until someone takes it.
 41. Weight and magic items: capacity is STR x 15 lb; over it a hero walks and moves in fights at half speed, over twice it not at all (`encumberedAt`, `immobileAt`, `encumberedSpeed` in `ruleset.json`). An item is magic when its file says `"magic": true`; the limit of 3 counts every one carried, worn or not, each of a stack. A fourth can't be picked up or handed over, and Take all leaves it behind with a message; nothing is ever dropped automatically. The first magic item is the warding ring (+1 AC), sometimes in the storeroom chest.
+
+42. Merchants: stock and purse are finite and saved, with no restocking. Wren carries two maces (5 gp) and two shields (10 gp), with 100 gp to buy loot. Buy at the item's value, sell at half, rounded up/down respectively; values and multipliers live in content. Trade one unit at a time, beside a peaceful NPC and between fights; worn items must be put away before selling. Zero-valued items have no offer, and buying respects the magic item limit. Shops close when the hero leaves, talks, or starts fighting.
 
 ### Structure choices made in this document
 
