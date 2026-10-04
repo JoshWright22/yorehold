@@ -76,7 +76,7 @@ private:
     static int coopPort();
 
     // Title menus and the in-game pause menu (Esc), in screens/Menus.cpp. Settings are shared by both.
-    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause, Join, Characters, NewCharacter, LevelUp };
+    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause, Join, Characters, NewCharacter, LevelUp, Party };
     struct Settings
     {
         yh::ControlPreset controls = yh::ControlPreset::BG3;
@@ -129,9 +129,20 @@ private:
     std::string stateDir() const;
 
     // Play > Characters: the library, making a character and levelling one up (screens/CharacterScreens.cpp).
+    void loadCharacters();
     void openCharacters();
     void showCharacter(size_t index);
-    void newCharacter();
+    void newCharacter(Menu back = Menu::Characters);
+    // Play > New adventure: one seat per hero the chapter has, each with its ready-made hero, a
+    // character from the library or one made on the spot. Enter on the Play menu skips it.
+    void openParty();
+    void drawParty(const yh::Rect& screen);
+    void startParty();
+    // Characters left "away" in this adventure's save are free again once it is started over.
+    void releaseCharacters();
+    std::vector<std::optional<CharacterLibrary::Entry>> partyChoice_; // per seat; empty = the ready-made hero
+    size_t partySeat_ = 0;
+    Menu draftBack_ = Menu::Characters; // where making a character returns to
     void drawCharacters(const yh::Rect& screen);
     void drawDraft(const yh::Rect& screen);
     void drawSheet(const yh::Rect& area, const yh::Character* sheet, const yh::CharacterChoices& choices, const std::string& problem);

@@ -86,4 +86,36 @@ void worldCharacterTests(const std::function<void(bool, const char*)>& check)
     check(grown.choices.level() == 2 && grown.choices.levels[1].classId == "fighter" && grown.sheet.level == 2
         && grown.sheet.maxHp() > maxHp && grown.sheet.hp >= maxHp - 2 + (grown.sheet.maxHp() - maxHp),
         "The new level is in the hero's class, with its HP added");
+
+    // A character brought from the library takes a seat; the other seats and the dice stay as they were.
+    WorldFixture brought;
+    check(brought.loadJson("chapters/choice-yard", yardFiles(50), 5), "The yard loads for a brought character");
+    if (!brought.chapter()) return;
+    const std::string bo = brought.sheet(1).toJson(), gik = brought.sheet(2).toJson();
+    yh::Random dice(9);
+    World::PartyPick ada{yh::rollChoices(brought.rules(), "Ada", "rogue", dice), {}, "ada.json"};
+    yh::Item rope;
+    rope.id = "rope";
+    rope.name = "Rope";
+    ada.inventory.push_back(rope);
+    yh::Item blade = *brought.chapter()->compendium.item("shortsword");
+    blade.equipped = true;
+    ada.inventory.push_back(blade);
+    brought.setParty({ada, std::nullopt});
+    brought.newAdventure(5);
+    const auto& seated = brought.creatures()[0];
+    check(seated.sheet.name == "Ada" && seated.library == "ada.json" && seated.choices.levels[0].classId == "rogue"
+        && brought.tokens().tokens[0].name == "Ada" && seated.sheet.inventory.size() == 2 && seated.sheet.weapon()
+        && seated.sheet.weapon()->id == "shortsword", "A brought character takes the seat with what it carries, worn as it was");
+    check(brought.sheet(1).toJson() == bo && brought.sheet(2).toJson() == gik, "The other seats and the dice are unchanged");
+    const auto withAda = nlohmann::json::parse(brought.stateJson());
+    check(withAda.at("library") == nlohmann::json::array({"ada.json", ""}), "The save names the brought character's library file");
+    brought.setParty({});
+    brought.newAdventure(5);
+    check(brought.restoreState(withAda.dump()) && brought.creatures()[0].library == "ada.json" && brought.tokens().tokens[0].name == "Ada",
+        "Loading the save puts the brought character back in its seat");
+    ada.choices.levels[0].classId = "bard";
+    brought.setParty({ada});
+    brought.newAdventure(5);
+    check(brought.sheet(0).name == "Ana" && brought.creatures()[0].library.empty(), "A character the chapter can't build leaves the seat to its own hero");
 }

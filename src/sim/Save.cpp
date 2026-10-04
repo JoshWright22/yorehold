@@ -180,6 +180,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             {
                 creatures_[i].choices = std::move(choices[i]);
                 creatures_[i].library = library[i];
+                tokens_.tokens[i].name = creatures_[i].sheet.name; // a brought character in a ready-made hero's seat
             }
             creatures_[i].awake = awake[i];
             creatures_[i].fled = fled[i];

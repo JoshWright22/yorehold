@@ -91,11 +91,43 @@ void World::newAdventure(uint64_t seed)
     yh::Random random(seed);
     for (const Chapter::PartyMember& member : chapter_->party)
     {
+        // The ready-made hero is rolled even when someone else takes the seat, so the dice that
+        // follow are the same either way.
         yh::CharacterChoices choices = yh::rollChoices(rules_, member.name, member.classId, random);
-        creatures_.push_back({*chapter_->compendium.build(rules_, choices)});
-        creatures_.back().choices = std::move(choices);
+        choices.levels.resize(static_cast<size_t>(chapter_->level), choices.levels.front());
+        if (chapter_->level > 1 && !rules_.xpForLevel.empty())
+            choices.xp = rules_.xpForLevel.at(std::min<size_t>(chapter_->level - 2, rules_.xpForLevel.size() - 1));
+        const size_t seat = creatures_.size();
+        const PartyPick* pick = seat < partyPicks_.size() && partyPicks_[seat] ? &*partyPicks_[seat] : nullptr;
+        std::string error;
+        std::optional<yh::Character> brought = pick ? chapter_->compendium.build(rules_, pick->choices, &error) : std::nullopt;
+        if (pick && !brought)
+            say(pick->choices.name + " can't play this adventure (" + error + "); " + member.name + " takes the seat.");
+        if (brought)
+        {
+            // What they carry comes with them, worn as it was.
+            for (size_t i = brought->inventory.size(); i-- > 0;)
+                brought->unequip(i);
+            brought->inventory.clear();
+            for (yh::Item item : pick->inventory)
+            {
+                const bool worn = item.equipped;
+                item.equipped = false;
+                brought->inventory.push_back(std::move(item));
+                if (worn)
+                    brought->equip(brought->inventory.size() - 1);
+            }
+            creatures_.push_back({std::move(*brought)});
+            creatures_.back().choices = pick->choices;
+            creatures_.back().library = pick->library;
+        }
+        else
+        {
+            creatures_.push_back({*chapter_->compendium.build(rules_, choices)});
+            creatures_.back().choices = std::move(choices);
+        }
         yh::Token token;
-        token.name = member.name;
+        token.name = creatures_.back().sheet.name;
         token.color = member.color;
         token.radius = cell * 0.4f;
         token.position = grid_.center(member.at);

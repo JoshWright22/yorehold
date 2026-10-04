@@ -302,6 +302,9 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             c.party.push_back(std::move(member));
         }
         if (c.party.empty()) throw std::invalid_argument("the party needs at least one member");
+        if (c.party.size() > 4) throw std::invalid_argument("the party has at most 4 members");
+        c.level = j.value("level", 1);
+        if (c.level < 1 || c.level > 20) throw std::invalid_argument("level is 1 to 20");
 
         std::set<std::string> encounterIds;
         const auto encounters = j.value("encounters", nlohmann::json::array());

@@ -91,7 +91,10 @@ struct Chapter
     std::string wipeCutscene; // played before returning to the checkpoint
     std::vector<yh::Cell> wipeDestination; // one cell per hero; empty = checkpoint positions
 
+    // One seat per hero. Each holds the chapter's own ready-made character until the player brings
+    // or makes one; ready-made ones start at `level`, the level the chapter is written for.
     std::vector<PartyMember> party;
+    int level = 1;
     std::vector<Encounter> encounters;
     std::vector<Npc> npcs;
     std::vector<AiChange> aiChanges;

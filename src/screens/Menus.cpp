@@ -25,6 +25,8 @@ void YoreholdGame::startNew()
 {
     if (!chapter_)
         return;
+    releaseCharacters();
+    setParty({});
     newAdventure(SDL_GetTicks());
     menu_ = Menu::None;
     notice_.clear();
@@ -49,7 +51,7 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     if (title_)
     {
         title_->drawCentered(renderer, {0, screen.h * 0.12f, screen.w, 80}, paused ? "Paused" : "Yorehold", {255, 214, 140, 255});
-        const bool characterScreen = menu_ == Menu::Characters || menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp;
+        const bool characterScreen = menu_ == Menu::Characters || menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp || menu_ == Menu::Party;
         if (!paused && !characterScreen && ui_.theme.font)
         {
             const std::string subtitle = chapter_ ? chapter_->title : "Content couldn't be loaded";
@@ -89,7 +91,10 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     case Menu::Play:
         if (hasSave_ && button("Continue (Enter)", chapter_ != nullptr))
             continueSaved();
-        else if (button(hasSave_ ? "New adventure" : "New adventure (Enter)", chapter_ != nullptr))
+        if (button("New adventure", chapter_ != nullptr))
+            openParty();
+        // The chapter's ready-made party, no questions asked.
+        if (button(hasSave_ ? "Quick start" : "Quick start (Enter)", chapter_ != nullptr))
             startNew();
         if (button("Characters"))
             openCharacters();
@@ -196,6 +201,9 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     case Menu::LevelUp:
         drawDraft(screen);
         break;
+    case Menu::Party:
+        drawParty(screen);
+        break;
     case Menu::Settings:
         y = screen.h * 0.25f + 20;
         drawSettings({screen.w / 2 - 260, y - 30, 520, 498});
@@ -224,9 +232,12 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     }
     if (!notice_.empty() && !paused)
     {
-        const yh::Rect noticeArea{20, screen.h - (chapterError_.empty() ? 108.0f : 180.0f), screen.w - 40, 64};
+        // The character screens fill the middle, so their notice is a slim line at the bottom.
+        const bool characterScreen = menu_ == Menu::Characters || menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp || menu_ == Menu::Party;
+        const yh::Rect noticeArea = characterScreen ? yh::Rect{20, screen.h - 64, screen.w - 40, 32}
+            : yh::Rect{20, screen.h - (chapterError_.empty() ? 108.0f : 180.0f), screen.w - 40, 64};
         ui_.panel(noticeArea);
-        ui_.label({noticeArea.x + 12, noticeArea.y + 12}, notice_, noticeBad_ ? ui_.theme.bad : ui_.theme.good);
+        ui_.label({noticeArea.x + 12, noticeArea.y + (characterScreen ? 6.0f : 12.0f)}, notice_, noticeBad_ ? ui_.theme.bad : ui_.theme.good);
     }
     if (!chapterError_.empty())
     {

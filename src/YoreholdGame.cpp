@@ -71,12 +71,14 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles) : World(files_)
     menu_ = testRun_ && chapter_ ? Menu::None : Menu::Main;
     if (seed)
         newAdventure(std::strtoull(seed, nullptr, 10));
-    // YOREHOLD_MENU=characters|new-character opens those screens (for pictures of them).
+    // YOREHOLD_MENU=characters|new-character|party opens those screens (for pictures of them).
     if (const char* screen = SDL_getenv("YOREHOLD_MENU"))
     {
         openCharacters();
         if (std::string_view(screen) == "new-character")
             newCharacter();
+        else if (std::string_view(screen) == "party")
+            openParty();
     }
     // Scripted co-op tests: YOREHOLD_HOST hosts at once, YOREHOLD_JOIN=address joins.
     if (SDL_getenv("YOREHOLD_HOST") && chapter_)
@@ -359,6 +361,11 @@ bool YoreholdGame::handle(const SDL_Event& event)
     if (menu_ != Menu::None)
     {
         // Menus: Enter = the first choice on the main/play menus, Esc = back.
+        if (keyDown && (event.key.key == SDLK_RETURN || event.key.key == SDLK_KP_ENTER) && menu_ == Menu::Party)
+        {
+            startParty();
+            return true;
+        }
         if (keyDown && (event.key.key == SDLK_RETURN || event.key.key == SDLK_KP_ENTER) && (menu_ == Menu::Main || menu_ == Menu::Play))
         {
             if (menu_ == Menu::Main)
@@ -372,8 +379,10 @@ bool YoreholdGame::handle(const SDL_Event& event)
         if (keyDown && event.key.key == SDLK_ESCAPE)
         {
             openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None
-                    : menu_ == Menu::Adventures || menu_ == Menu::Join || menu_ == Menu::Characters ? Menu::Play
-                    : menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp ? Menu::Characters : Menu::Main);
+                    : menu_ == Menu::Adventures || menu_ == Menu::Join || menu_ == Menu::Characters || menu_ == Menu::Party ? Menu::Play
+                    : menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp ? draftBack_ : Menu::Main);
+            if (menu_ != Menu::NewCharacter && menu_ != Menu::LevelUp)
+                draft_.reset();
             return true;
         }
         input_.handle(event); // the menus' buttons read the mouse
@@ -483,6 +492,7 @@ void YoreholdGame::finishAdventure()
     if (!testRun_)
     {
         writeBackCharacters(true);
+        setParty({}); // the next run starts with the chapter's own heroes
         std::remove(savePath().c_str());
         std::remove((savePath() + ".bak").c_str());
         hasSave_ = false;

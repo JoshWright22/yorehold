@@ -108,6 +108,16 @@ public:
 
     // Starts the chapter again from its files. Every roll that follows comes from `seed`.
     void newAdventure(uint64_t seed);
+
+    // A character the player brought for one of the chapter's seats, in place of its ready-made
+    // hero. newAdventure uses them until they are set again; seats without one keep the chapter's.
+    struct PartyPick
+    {
+        yh::CharacterChoices choices;
+        std::vector<yh::Item> inventory;
+        std::string library; // its file in the character library
+    };
+    void setParty(std::vector<std::optional<PartyPick>> picks) { partyPicks_ = std::move(picks); }
     void say(std::string line);
 
     // One step of time: walking, conversations opening on arrival, the turns of whatever the game
@@ -341,6 +351,7 @@ protected:
 
     std::vector<Creature> creatures_; // fixed size after newAdventure(): the encounter points into it
     size_t heroCount_ = 0; // the chapter's party; creatures_ lists heroes first
+    std::vector<std::optional<PartyPick>> partyPicks_;
     size_t npcStart_ = 0;
     std::unique_ptr<yh::Encounter> encounter_;
     size_t encounterLogShown_ = 0;
