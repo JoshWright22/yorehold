@@ -376,3 +376,51 @@ These were open; each is the provisional answer and is data or a small switch wh
 12. Internet co-op relays through the server; the host runs the rules.
 13. Surfaces come after spells.
 14. Adventures may require asset packs but carry their own definitions.
+
+### Structure choices made in this document
+
+These shape the code and are the costly ones to change later.
+
+15. The simulation is split from the screens before any new feature is added (roadmap A2).
+16. One effects vocabulary runs spells, features, feats, items, conditions and traps.
+17. Character files hold choices; the sheet is rebuilt from the ruleset on every load.
+18. The editor is C++ inside the client and edits the same JSON the game loads.
+19. The host runs the rules, also over the internet; the server never does. Verified runs would
+    replay the command log.
+20. The DM can change things live with a visible log, as GAME_DESIGN says. An earlier note had the
+    DM only playing creatures as written.
+21. The rules start from 5e reworded with Pathfinder 2e ideas, as GAME_DESIGN says. An earlier note
+    had a B/X-style base.
+22. Build order: rules machinery, characters, items, magic, adventure structure, Create, online,
+    then DM mode and ruleset versions.
+
+### Numbers and details not yet chosen
+
+Each gets a provisional value in `rulesets/yorehold/` when its step is built. None is settled.
+
+- Scores: point-buy budget, the standard array, the rolling method.
+- HP per level (fixed or rolled), the XP table and how fast levels come.
+- Which levels give which kind of feat, and how many feats exist at launch.
+- Spell slot tables, focus points, and the starter spell lists.
+- The skill list (the current one stands until the first vote), damage types and resistances.
+- What a critical hit does (**default:** double the damage dice).
+- How Hide, Seek, Shove, Grapple and Ready work in detail.
+- Opportunity attacks happen on their own (**default**); a setting adds a prompt.
+- Carry limits, revival price, merchant prices, supplies per food item.
+- Camp: one shared built-in map unless an adventure brings its own.
+- Co-op: who picks dialogue replies (anyone, as now), who gets loot (whoever picks it up), what
+  happens to a leaver's character mid-fight (the host takes it).
+- Difficulty options and the list of table rules in the lobby.
+- First release covers levels 1 to 5.
+
+### Not designed yet
+
+Nothing below blocks the roadmap before section H, and each needs a decision from the project.
+
+- Upload licence and moderation rules; vote thresholds and how many sign-offs per category.
+- Sign-in methods beyond a device login; display names.
+- Where the server and the files are hosted.
+- The shared setting, if canon means one world rather than a featured list.
+- The UI look and final HUD layout (the layout here is a working guess).
+- The starter art set, music and sound.
+- Mobile.
