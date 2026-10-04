@@ -48,7 +48,10 @@ Power grows as in Pathfinder 2e, not 5e:
   as they level, and features that add to their hits.
 - **Casters and skill classes** trade damage for utility: control, healing, buffs, mobility and
   answers to problems a sword can't solve.
-- Gear adds to the numbers, as Pathfinder's runes do (**default**).
+- **Magic items:** each character can have at most 3. The limit is a number in the ruleset and can
+  change. A fourth can't be picked up or used until one is given up.
+- **Spellcasting:** spell slots by default. The system also supports other casting resources (spell
+  points, focus, charges...) so classes and content can be built on them.
 
 ## Turns
 
@@ -118,9 +121,8 @@ Power grows as in Pathfinder 2e, not 5e:
 
 ## Open questions (defaults apply until answered)
 
-1. Gear: should magic items scale the numbers as Pathfinder's runes do (**default**), or stay
-   mostly flavour as in 5e?
-2. Spellcasting: spell slots (**default**), or another resource?
-3. Votes: on the website, per season (**default**)? What happens to existing characters when a vote
+1. Magic items: does the limit of 3 count only items in use (worn or held), or everything carried
+   (**default:** in use, like attunement)?
+2. Votes: on the website, per season (**default**)? What happens to existing characters when a vote
    removes or changes something they use (**default:** they get a free rebuild)?
-4. Rests: short and long rests as in 5e (**default**)?
+3. Rests: short and long rests as in 5e (**default**)?
