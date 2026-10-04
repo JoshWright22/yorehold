@@ -27,6 +27,12 @@
   "modifierTable": "d20",
   "scoreMin": 3,
   "scoreMax": 20,
+  "scoreMethods": {
+    "roll": "4d6kh3",
+    "standardArray": [15, 14, 13, 12, 10, 8],
+    "pointBudget": 27,
+    "pointCosts": { "8": 0, "9": 1, "10": 2, "11": 3, "12": 4, "13": 5, "14": 7, "15": 9 }
+  },
   "baseArmorClass": 10,
   "armorClassAbility": "dex",
   "initiativeAbility": "dex",

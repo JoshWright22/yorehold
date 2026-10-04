@@ -60,7 +60,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   every level.
 - [x] **C4. Character library.** `characters/` beside the save, graveyard folder, the "away" flag,
   writing a character back at chapter end.
-- [ ] **C5. Character screens.** Create (three steps, three score methods, live sheet), level up,
+- [x] **C5. Character screens.** Create (three steps, three score methods, live sheet), level up,
   library list. Play > Characters.
 - [ ] **C6. Starting an adventure.** Pick the adventure, pick or make up to four characters at its
   recommended level, lobby with seats, then play. The keep's fixed party becomes its pregenerated

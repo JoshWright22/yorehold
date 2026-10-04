@@ -160,6 +160,8 @@ The game ships human, elf, dwarf and halfling; acolyte, criminal, farmhand, sage
 
 The player's characters live in `characters/` beside the save, one file each, written by the game in the save envelope (`"format": "yorehold.character"`, `"version": 1`). The data holds `choices` (the framework's character choices, FRAMEWORK.md), `inventory` (items as a sheet writes them), `coins`, and `away`: the file name of the adventure save the character is playing in, empty when free. `characters/graveyard/` holds characters that can't be played any more; the game lists them after the others and never writes to them. A save names each hero's library file in `library` (empty for heroes made for that adventure; older saves have none).
 
+Characters are made and levelled up under Play > Characters, always with the game's own ruleset (`rulesets/yorehold`), the built-in classes plus those of installed packages, and the ruleset's races, backgrounds and feats. The score methods' numbers are `scoreMethods` in `ruleset.json` (FRAMEWORK.md, "Character choices").
+
 ## Proficiency ranks
 
 Yorehold uses Untrained/Trained/Expert/Master/Legendary: bonuses 0/2/4/6/8, with level added

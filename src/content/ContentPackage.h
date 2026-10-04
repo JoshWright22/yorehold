@@ -8,6 +8,7 @@ namespace yh
 {
 class FileSystem;
 class Compendium;
+struct Ruleset;
 }
 
 // A complete, transferable content folder, optionally zipped as .yore. The manifest declares
@@ -59,4 +60,8 @@ struct ContentLibrary
     // `builtIn` plus those of every package, in order (a later id replaces an earlier one).
     // Adventures never read this; they play with what their own file carries.
     static yh::Compendium compendium(const std::string& builtIn, const std::vector<Package>& packages);
+    // What making a character needs: the game's own ruleset from `builtIn`, and compendium() with
+    // that ruleset's races, backgrounds and feats added. False, with the reason, if they don't load.
+    static bool creation(const std::string& builtIn, const std::vector<Package>& packages, yh::Ruleset& rules,
+        yh::Compendium& compendium, std::string* error = nullptr);
 };

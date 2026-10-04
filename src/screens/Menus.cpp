@@ -49,7 +49,8 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
     if (title_)
     {
         title_->drawCentered(renderer, {0, screen.h * 0.12f, screen.w, 80}, paused ? "Paused" : "Yorehold", {255, 214, 140, 255});
-        if (!paused && ui_.theme.font)
+        const bool characterScreen = menu_ == Menu::Characters || menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp;
+        if (!paused && !characterScreen && ui_.theme.font)
         {
             const std::string subtitle = chapter_ ? chapter_->title : "Content couldn't be loaded";
             ui_.label({screen.w / 2 - ui_.theme.font->measure(subtitle) / 2, screen.h * 0.12f + 88}, subtitle, ui_.theme.textDim);
@@ -90,6 +91,8 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             continueSaved();
         else if (button(hasSave_ ? "New adventure" : "New adventure (Enter)", chapter_ != nullptr))
             startNew();
+        if (button("Characters"))
+            openCharacters();
         if (button("Join co-op", chapter_ != nullptr))
             openMenu(Menu::Join);
         if (button("Adventures (" + std::to_string(adventures_.size()) + ")"))
@@ -186,6 +189,13 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             openMenu(Menu::Main);
         break;
     }
+    case Menu::Characters:
+        drawCharacters(screen);
+        break;
+    case Menu::NewCharacter:
+    case Menu::LevelUp:
+        drawDraft(screen);
+        break;
     case Menu::Settings:
         y = screen.h * 0.25f + 20;
         drawSettings({screen.w / 2 - 260, y - 30, 520, 498});

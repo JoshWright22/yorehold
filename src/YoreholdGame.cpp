@@ -71,6 +71,13 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles) : World(files_)
     menu_ = testRun_ && chapter_ ? Menu::None : Menu::Main;
     if (seed)
         newAdventure(std::strtoull(seed, nullptr, 10));
+    // YOREHOLD_MENU=characters|new-character opens those screens (for pictures of them).
+    if (const char* screen = SDL_getenv("YOREHOLD_MENU"))
+    {
+        openCharacters();
+        if (std::string_view(screen) == "new-character")
+            newCharacter();
+    }
     // Scripted co-op tests: YOREHOLD_HOST hosts at once, YOREHOLD_JOIN=address joins.
     if (SDL_getenv("YOREHOLD_HOST") && chapter_)
         hostSession();
@@ -365,7 +372,8 @@ bool YoreholdGame::handle(const SDL_Event& event)
         if (keyDown && event.key.key == SDLK_ESCAPE)
         {
             openMenu(menu_ == Menu::Settings ? settingsBack_ : menu_ == Menu::Pause ? Menu::None
-                    : menu_ == Menu::Adventures || menu_ == Menu::Join ? Menu::Play : Menu::Main);
+                    : menu_ == Menu::Adventures || menu_ == Menu::Join || menu_ == Menu::Characters ? Menu::Play
+                    : menu_ == Menu::NewCharacter || menu_ == Menu::LevelUp ? Menu::Characters : Menu::Main);
             return true;
         }
         input_.handle(event); // the menus' buttons read the mouse
@@ -527,6 +535,9 @@ void YoreholdGame::saveAdventure()
 
 std::string YoreholdGame::charactersDir() const
 {
+    // Test runs leave the player's characters alone unless they were given a folder of their own.
+    if (testRun_ && !SDL_getenv("YOREHOLD_SAVE_DIR"))
+        return {};
     const std::string dir = stateDir();
     return dir.empty() ? std::string() : dir + "characters";
 }

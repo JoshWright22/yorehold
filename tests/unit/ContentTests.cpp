@@ -1,5 +1,6 @@
 #include "YoreholdGame.h"
 #include "content/Chapter.h"
+#include "content/CharacterDraft.h"
 #include "content/CharacterLibrary.h"
 #include "content/ContentPackage.h"
 #include "sim/World.h"
@@ -619,6 +620,72 @@ void saveTests(const fs::path& scratch)
     SDL_unsetenv_unsafe("YOREHOLD_CONTENT");
 }
 
+// Making a character and levelling it up, with the game's own ruleset and options.
+void characterDraftTests()
+{
+    yh::Ruleset rules;
+    yh::Compendium compendium;
+    std::string error;
+    check(ContentLibrary::creation(YH_GAME_ASSETS, {}, rules, compendium, &error) && rules.id == "yorehold" && compendium.races.size() == 4
+        && compendium.characterClass("wizard"), "Making characters uses the game's ruleset, classes and options");
+    CharacterDraft draft(rules, compendium);
+    check(draft.choices().scoreMethod == "array" && draft.choices().scores.at("str") == 15 && draft.choices().scores.at("cha") == 8
+        && draft.sheet() && draft.stepProblem(0) == "Give the character a name.", "A new character starts from the standard array, unnamed");
+    draft.setName("Ser Ada");
+    check(draft.stepProblem(0) == "Pick a race.", "Creation asks for a race");
+    draft.setRace("dwarf");
+    draft.setBackground("soldier");
+    check(draft.stepDone(0) && draft.sheet() && draft.sheet()->ancestry == "Dwarf", "Name, race and background finish the first step");
+
+    draft.raise("dex");
+    check(draft.choices().scores.at("dex") == 15 && draft.choices().scores.at("str") == 14 && draft.stepDone(1),
+        "Raising an array score swaps it with the next value up");
+    check(!draft.canRaise("dex") && draft.canLower("dex") && !draft.canLower("cha"), "The array's ends can't move further");
+    yh::Random dice(5);
+    draft.setMethod("pointBuy", dice);
+    check(draft.pointsLeft() == 27 && draft.choices().scores.at("str") == 8, "Point buy starts every score at the cheapest");
+    for (int i = 0; i < 7; i++) draft.raise("str");
+    check(draft.choices().scores.at("str") == 15 && draft.pointsLeft() == 18 && !draft.canRaise("str"), "Point buy spends points up to its highest score");
+    for (int i = 0; i < 7; i++) draft.raise("con");
+    draft.raise("dex"); draft.raise("dex"); draft.raise("dex"); draft.raise("dex");
+    check(draft.pointsLeft() == 5 && draft.choices().scores.at("dex") == 12 && draft.canRaise("int"), "Point buy keeps count");
+    draft.setMethod("roll", dice);
+    const auto rolled = draft.choices().scores;
+    check(std::all_of(rolled.begin(), rolled.end(), [](const auto& s) { return s.second >= 3 && s.second <= 18; }) && !draft.canRaise("str")
+        && draft.stepDone(1), "Rolled scores stand as rolled");
+    draft.setMethod("array", dice);
+
+    draft.setClass("rogue");
+    check(draft.skillPicks() == 2 && draft.stepProblem(2) == "Pick 2 more skills.", "The rogue trains two skills at level 1");
+    const auto& options = draft.skillOptions();
+    check(std::find(options.begin(), options.end(), "perception") == options.end() && std::find(options.begin(), options.end(), "athletics") == options.end()
+        && std::find(options.begin(), options.end(), "stealth") != options.end(), "Skills already trained aren't offered");
+    draft.toggleSkill("stealth");
+    draft.toggleSkill("arcana");
+    draft.toggleSkill("insight");
+    check(draft.picked("skills").size() == 2 && draft.finished() && draft.sheet()->proficiencies.contains("stealth"), "Two picks finish the rogue");
+    draft.toggleSkill("arcana");
+    check(!draft.finished() && draft.picked("skills").size() == 1, "Clicking a picked skill takes it back");
+    draft.toggleSkill("insight");
+
+    // Level 2 offers a class feat; a feat whose requirements aren't met isn't offered.
+    auto made = draft.choices();
+    made.xp = rules.xpForLevel.front();
+    auto up = CharacterDraft::levelUp(rules, compendium, made);
+    check(up.levellingUp() && up.choices().level() == 2 && up.featKinds() == std::vector<std::string>{"class"} && up.stepProblem(2) == "Pick a class feat.",
+        "Levelling up asks for the feat the new level offers");
+    const auto feats = up.featOptions("class");
+    check(!feats.empty() && std::all_of(feats.begin(), feats.end(), [&](const std::string& id) {
+        auto trial = up.choices();
+        trial.levels.back().picks["feats"] = {id};
+        return compendium.build(rules, trial).has_value();
+    }), "Only feats the character can take are offered");
+    up.pickFeat(feats.front());
+    check(up.finished() && up.sheet()->level == 2, "Picking it finishes the level");
+    up.setClass("wizard");
+    check(up.picked("feats").empty() && up.finished() && up.sheet()->characterClass == "Rogue / Wizard", "Any level can go into another class");
+}
+
 void characterLibraryTests(const fs::path& scratch)
 {
     const std::string folder = (scratch / "library-characters").string();
@@ -910,6 +977,7 @@ int main()
         mapTests();
         gameErrorTests();
         saveTests(scratch.path);
+        characterDraftTests();
         characterLibraryTests(scratch.path);
         stealthTests(scratch.path);
         openFileTests(scratch.path);

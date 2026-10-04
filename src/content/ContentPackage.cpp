@@ -228,3 +228,22 @@ yh::Compendium ContentLibrary::compendium(const std::string& builtIn, const std:
         add(package.path);
     return all;
 }
+
+bool ContentLibrary::creation(const std::string& builtIn, const std::vector<Package>& packages, yh::Ruleset& rules,
+    yh::Compendium& compendium, std::string* error)
+{
+    yh::FileSystem files;
+    const std::string folder = Chapter::defaultRuleset;
+    const auto text = ContentPackage::mount(files, builtIn, "game") ? files.readText(folder + "/ruleset.json") : std::nullopt;
+    std::string problem = "the game's ruleset is missing";
+    std::optional<yh::Ruleset> loaded = text ? yh::Ruleset::fromJson(*text, &problem) : std::nullopt;
+    yh::Compendium all = ContentLibrary::compendium(builtIn, packages);
+    if (!loaded || !all.loadOptions(files, folder, &problem))
+    {
+        if (error) *error = folder + ": " + problem;
+        return false;
+    }
+    rules = std::move(*loaded);
+    compendium = std::move(all);
+    return true;
+}

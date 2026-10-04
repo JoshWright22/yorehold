@@ -1,6 +1,8 @@
 #pragma once
 
 #include "content/Chapter.h"
+#include "content/CharacterDraft.h"
+#include "content/CharacterLibrary.h"
 #include "content/ContentPackage.h"
 #include "online/Online.h"
 #include "screens/PlayScreen.h"
@@ -74,7 +76,7 @@ private:
     static int coopPort();
 
     // Title menus and the in-game pause menu (Esc), in screens/Menus.cpp. Settings are shared by both.
-    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause, Join };
+    enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause, Join, Characters, NewCharacter, LevelUp };
     struct Settings
     {
         yh::ControlPreset controls = yh::ControlPreset::BG3;
@@ -125,6 +127,25 @@ private:
     void saveSettings() const;
     void loadSettings();
     std::string stateDir() const;
+
+    // Play > Characters: the library, making a character and levelling one up (screens/CharacterScreens.cpp).
+    void openCharacters();
+    void showCharacter(size_t index);
+    void newCharacter();
+    void drawCharacters(const yh::Rect& screen);
+    void drawDraft(const yh::Rect& screen);
+    void drawSheet(const yh::Rect& area, const yh::Character* sheet, const yh::CharacterChoices& choices, const std::string& problem);
+    void finishDraft();
+    yh::Ruleset creationRules_;       // the game's own ruleset, which every character is made under
+    yh::Compendium creationCompendium_; // compendium_ plus the ruleset's races, backgrounds and feats
+    std::string creationError_;
+    std::vector<CharacterLibrary::Entry> characters_;
+    size_t characterPick_ = 0;
+    size_t characterPage_ = 0;
+    std::optional<yh::Character> pickedSheet_; // characters_[characterPick_] as built now
+    std::string pickedProblem_;
+    std::optional<CharacterDraft> draft_;
+    yh::Random draftDice_{1};
 
     // After the end cutscene, back to the title (the finished adventure's save is removed).
     void finishAdventure();
