@@ -25,6 +25,7 @@ add_library(yorehold-game STATIC
     src/sim/WorldAi.cpp
     src/sim/WorldCombat.cpp
     src/sim/WorldExplore.cpp
+    src/sim/WorldNet.cpp
     src/sim/WorldStealth.cpp
     src/Coop.cpp
     src/FileAssociation.cpp

@@ -82,15 +82,12 @@ private:
     // Each player moves their own heroes while exploring and their positions are shared.
     bool inSession() const { return host_ || client_; }
     void act(std::string_view type, const std::string& data = "{}") override;
-    std::optional<std::string> validate(yh::PlayerId player, std::string_view type, std::string_view data, std::string& reason);
-    void apply(const yh::NetCommand& command);
     void hostSession();
     void joinSession(const std::string& address);
     void endSession(const std::string& reason);
     void updateSession(double deltaSeconds);
     void assignSeats();
     void shareWalking(double deltaSeconds);
-    uint64_t checksum() const;
     static int coopPort();
 
     // Title menus and the in-game pause menu (Esc). Settings are shared by both.

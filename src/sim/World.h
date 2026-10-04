@@ -143,12 +143,19 @@ public:
     // The ending cutscene the world asked for (Event::Ending) has finished or was skipped.
     void endCutscene();
 
+    // Everything that changes the game is an intent: a type and JSON data (WorldNet.cpp lists
+    // them). validate() runs on the host, checks it and returns the command data; apply() runs
+    // that command on every copy of the game in the same order (dice come from the shared seed).
+    // act() is where intents go in. Alone it validates and applies at once as player 0; the game
+    // overrides it to send them through a co-op session.
+    virtual void act(std::string_view type, const std::string& data = "{}");
+    std::optional<std::string> validate(yh::PlayerId player, std::string_view type, std::string_view data, std::string& reason);
+    void apply(const yh::NetCommand& command);
+    uint64_t checksum() const; // everything a desync between copies would show up in
+
 protected:
     enum class EnemyStep { Think, Walk, Strike, Wait };
 
-    // Sends what a player (or the AI) wants done. The game decides where it goes: alone it is
-    // checked and applied at once, in co-op it goes through the session.
-    virtual void act(std::string_view type, const std::string& data = "{}") = 0;
 
     // Exploring (WorldExplore.cpp).
     void walk(double deltaSeconds); // everyone on the move takes their next steps

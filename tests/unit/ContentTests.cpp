@@ -50,7 +50,6 @@ void worldSaveTests()
     struct TestWorld : World
     {
         using World::World;
-        void act(std::string_view, const std::string&) override {}
         bool load()
         {
             auto chapter = Chapter::load(chapterFiles_, "chapters/goblin-keep");
