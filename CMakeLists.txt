@@ -19,7 +19,14 @@ add_library(yorehold-game STATIC
     src/content/Chapter.cpp
     src/content/ContentPackage.cpp
     src/content/GameMap.cpp
+    src/hud/ActionBar.cpp
+    src/hud/DialoguePanel.cpp
+    src/hud/InitiativeStrip.cpp
+    src/hud/JournalPanel.cpp
+    src/hud/PartyCards.cpp
     src/online/Online.cpp
+    src/screens/Menus.cpp
+    src/screens/PlayScreen.cpp
     src/sim/Save.cpp
     src/sim/World.cpp
     src/sim/WorldAi.cpp
@@ -29,6 +36,7 @@ add_library(yorehold-game STATIC
     src/sim/WorldStealth.cpp
     src/Coop.cpp
     src/FileAssociation.cpp
+    src/Settings.cpp
     src/YoreholdGame.cpp
 )
 target_include_directories(yorehold-game PUBLIC src)

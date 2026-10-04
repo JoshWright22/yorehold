@@ -3,25 +3,19 @@
 #include "content/Chapter.h"
 #include "content/ContentPackage.h"
 #include "online/Online.h"
+#include "screens/PlayScreen.h"
 #include "sim/World.h"
 
 #include <yorehold/framework/Host.h>
-#include <yorehold/framework/animation/Cutscene.h>
 #include <yorehold/framework/assets/Assets.h>
 #include <yorehold/framework/assets/FileSystem.h>
-#include <yorehold/framework/graphics/Camera.h>
-#include <yorehold/framework/graphics/Lighting.h>
 #include <yorehold/framework/input/ControlScheme.h>
-#include <yorehold/framework/map/CameraControls.h>
 #include <yorehold/framework/net/Session.h>
 #include <yorehold/framework/ui/Ui.h>
 
-#include <map>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 // Everything the game reads: the framework's and the game's files, then the adventure and the skin.
@@ -30,7 +24,8 @@ struct GameFiles
     yh::FileSystem files_;
 };
 
-// Runs an authored chapter: explore its map and fight its encounters, then play its ending.
+// The game: the title and pause menus, settings, the adventure library, saves and co-op around
+// the World being played, which the PlayScreen shows.
 class YoreholdGame : public yh::Game, private GameFiles, protected World
 {
 public:
@@ -45,15 +40,6 @@ public:
     std::string describe() const override;
 
 private:
-    // Damage numbers and "Miss!" that float up from a token.
-    struct Floater
-    {
-        yh::Vec2 world;
-        std::string text;
-        yh::Color color;
-        float age = 0;
-    };
-
     int configSeen_ = 0;
     double configTimer_ = 0;
 
@@ -63,13 +49,6 @@ private:
     void step(double deltaSeconds);
     bool handle(const SDL_Event& event);
     void render(yh::Renderer& renderer);
-
-    // The player's own hero's turn in a fight: clicks and keys.
-    void heroInput();
-
-    std::optional<size_t> hoveredTalker() const;
-    void drawDialogue(yh::Renderer& renderer);
-    void drawJournal(yh::Renderer& renderer);
 
     // One autosave slot, written after victories and rests (never mid-fight).
     std::string savePath() const;
@@ -90,7 +69,7 @@ private:
     void shareWalking(double deltaSeconds);
     static int coopPort();
 
-    // Title menus and the in-game pause menu (Esc). Settings are shared by both.
+    // Title menus and the in-game pause menu (Esc), in screens/Menus.cpp. Settings are shared by both.
     enum class Menu { None, Main, Play, Adventures, Create, Settings, Pause, Join };
     struct Settings
     {
@@ -128,7 +107,8 @@ private:
     bool installedAdventure() const;
     void releaseAssets();
 
-    // Skins: folders (or .yoreskin zips) in the skins folder whose files replace the default look.
+    // Skins and settings (Settings.cpp). Skins are folders (or .yoreskin zips) in the skins folder
+    // whose files replace the default look.
     std::string skinsDir() const;
     void refreshSkins();
     void mountSkin();
@@ -144,16 +124,6 @@ private:
     // After the end cutscene, back to the title (the finished adventure's save is removed).
     void finishAdventure();
 
-    std::optional<size_t> hoveredCreature() const;
-
-    void drawWorld(yh::Renderer& renderer);
-    void drawHud(yh::Renderer& renderer);
-    void drawParty(yh::Renderer& renderer);
-    void drawInitiative(yh::Renderer& renderer);
-    void drawCombatBar(yh::Renderer& renderer);
-    void drawBars(yh::Renderer& renderer);
-    bool overUi(yh::Vec2 screen) const;
-
     std::string chapterError_; // why no chapter is loaded (shown on the title)
     std::string themePath_;
     std::vector<ContentLibrary::Adventure> adventures_;
@@ -163,24 +133,12 @@ private:
     size_t adventurePage_ = 0;
     std::string notice_; // result of the last added file, shown on the title menus
     bool noticeBad_ = false;
-    yh::Camera camera_;
-    yh::CameraControls controls_;
     yh::ControlScheme scheme_;
     yh::Input input_;
-    yh::Input noInput_; // fed to the token controller while the mouse is over the UI
-    yh::Lighting lighting_;
     yh::Ui ui_;
     std::unique_ptr<yh::Assets> assets_;
     yh::Font* title_ = nullptr;
-
-    std::vector<std::string> log_;
-    std::vector<Floater> floaters_;
-    std::vector<yh::Rect> uiRects_; // last frame's panels, so clicks on them don't walk the party
-    std::string banner_;
-    double bannerTime_ = 0;
-    double time_ = 0;
-    bool cameraPlaced_ = false;
-    bool journalOpen_ = false;
+    PlayScreen play_{*this, ui_, input_, title_};
 
     // Co-op. The host is player 0 and owns the enemies; seats_ says who plays each hero.
     std::unique_ptr<yh::SessionHost> host_;
@@ -192,8 +150,6 @@ private:
     std::string onlineStatus_; // the last one printed
     double syncTimer_ = 0;
     std::string lastSync_;
-    yh::Cutscene cutscene_;
-    bool cutsceneDone_ = false; // set by the cutscene's "finished" event, handled after its update
     Menu menu_ = Menu::Main;
     Menu settingsBack_ = Menu::Main; // where Settings' Back button goes
     Settings settings_;

@@ -153,9 +153,34 @@ public:
     void apply(const yh::NetCommand& command);
     uint64_t checksum() const; // everything a desync between copies would show up in
 
-protected:
-    enum class EnemyStep { Think, Walk, Strike, Wait };
+    // Loads the chapter in `folder` of the files (not started yet: see newAdventure). False, with
+    // the reason, if it can't be loaded.
+    bool loadChapter(const std::string& folder, std::string* error = nullptr);
 
+    // What the screens draw from. They change the world through act(); the exceptions are this
+    // machine's own walking and selection, which the token controller turns from clicks into
+    // paths (shared with the others as "walk"), and the map, fog and tokens caching what they draw.
+    const Chapter* chapter() const { return chapter_.get(); }
+    GameMap& map() { return chapter_->map; }
+    const GameMap& map() const { return chapter_->map; }
+    const yh::Ruleset& rules() const { return rules_; }
+    const yh::Grid& grid() const { return grid_; }
+    yh::TokenController& tokens() { return tokens_; }
+    const yh::TokenController& tokens() const { return tokens_; }
+    yh::FogOfWar& fog() { return fog_; }
+    const yh::FogOfWar& fog() const { return fog_; }
+    const std::vector<Creature>& creatures() const { return creatures_; }
+    size_t heroCount() const { return heroCount_; }
+    const yh::Encounter* encounter() const { return encounter_.get(); }
+    bool fighting() const { return encounter_ && !encounter_->finished(); }
+    const yh::DialogueSession* talk() const { return talk_.get(); }
+    size_t talkWith() const { return talkWith_; }
+    const yh::QuestJournal* journal() const { return journal_ ? &*journal_ : nullptr; }
+    const std::set<std::string>& flags() const { return flags_; }
+    // Where the current hero can still move this turn, and the square they stood on to work it out.
+    const std::unordered_map<yh::Cell, float, yh::CellHash>& reach() const { return reach_; }
+    yh::Cell standing() const { return standing_; }
+    bool autoPlay() const { return autoPlay_; }
 
     // Exploring (WorldExplore.cpp).
     void walk(double deltaSeconds); // everyone on the move takes their next steps
@@ -164,8 +189,24 @@ protected:
     // `heroInput` reads the player's input on their own hero's turn.
     void takeTurns(double deltaSeconds, bool heroesListen, const std::function<void()>& heroInput);
     size_t leaderIndex() const; // the selected hero, else the first one standing
-    std::string dialogueFor(size_t creature) const;
+    // Walks the leader next to `creature`; the conversation opens on arrival.
     void walkToTalk(size_t creature);
+    // Strikes `target`, walking next to it first if the current creature's movement reaches.
+    void tryAttack(size_t target);
+
+    // What the party sees, and sneaking (WorldStealth.cpp).
+    GameMap::LightingMode lightingMode() const;
+    GameMap::Time timeOfDay() const;
+    int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
+    // Enemies that haven't noticed the party watch in a cone; a sneaking hero inside one rolls
+    // Stealth against their passive Perception (see yh::StealthTracker).
+    std::vector<yh::Watcher> watchers() const; // one per creature after the heroes; range below 0 = not watching
+    bool sneakingMine() const; // one of this machine's heroes is sneaking
+
+protected:
+    enum class EnemyStep { Think, Walk, Strike, Wait };
+
+    std::string dialogueFor(size_t creature) const;
     void startTalk(size_t creature);
     void chooseReply(size_t index, size_t hero);
     void dialogueActions(); // carries out the conversation's "do" actions
@@ -176,18 +217,10 @@ protected:
     void go(size_t hero, yh::Cell to);
     void autoExplore();
 
-    // What the party sees, and sneaking (WorldStealth.cpp).
-    GameMap::LightingMode lightingMode() const;
-    GameMap::Time timeOfDay() const;
-    int viewTeam() const; // fog view on screen: 0 = the party, 1 + i = hero i alone
     void revealWalls(int team);
     void updateVisibility();
-    // Enemies that haven't noticed the party watch in a cone; a sneaking hero inside one rolls
-    // Stealth against their passive Perception (see yh::StealthTracker).
-    std::vector<yh::Watcher> watchers() const; // one per creature after the heroes; range below 0 = not watching
     yh::LightLevel lightAt(yh::Vec2 point) const;
     void updateStealth();
-    bool sneakingMine() const; // one of this machine's heroes is sneaking
 
     // Fights (WorldCombat.cpp).
     // Wakes `group` (or only `only` of it) and starts a fight with the party.
@@ -198,8 +231,6 @@ protected:
     void endTurn();
     void syncLog(); // the encounter's new lines into the adventure log
     void attack(size_t target);
-    // Strikes `target`, walking next to it first if the current creature's movement reaches.
-    void tryAttack(size_t target);
     bool swingReady() const; // tryAttack's walk has landed
     void swingIfReady();
     void updateEnemyTurn(double deltaSeconds);
@@ -231,8 +262,6 @@ protected:
 
     // The adventure being played. Null if it failed to load.
     std::unique_ptr<Chapter> chapter_;
-    GameMap& map() { return chapter_->map; }
-    const GameMap& map() const { return chapter_->map; }
     yh::Ruleset rules_ = yh::Ruleset::modern(); // the chapter's, copied at load
     yh::Grid grid_{yh::GridType::Square, GameMap::cellSize};
     // Where everyone stands and walks. The controller also turns a local player's clicks into

@@ -20,6 +20,19 @@ std::vector<World::Event> World::takeEvents()
     return taken;
 }
 
+bool World::loadChapter(const std::string& folder, std::string* error)
+{
+    std::optional<Chapter> chapter = Chapter::load(chapterFiles_, folder, error);
+    if (!chapter)
+    {
+        chapter_.reset();
+        return false;
+    }
+    chapter_ = std::make_unique<Chapter>(std::move(*chapter));
+    rules_ = chapter_->rules;
+    return true;
+}
+
 void World::say(std::string line)
 {
     emit({Event::Kind::Log, std::move(line)});

@@ -21,8 +21,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   Done when: no file in `src/` is over 900 lines; a unit test plays the keep to victory through
   `World` with scripted intents and no window; the scripted run and auto-play seeds give the same
   results as before the split.
-  Progress: content loading, state/save, fights with the AI, exploring with stealth, and
-  validate/apply are split; the screens remain.
+  Progress: all six slices are split; the unit test that plays the keep through `World` remains.
 - [ ] **A3. World test helpers.** A small fixture: load a chapter from a folder or from JSON
   strings, send intents, step time, read state. Use it in every later step.
 

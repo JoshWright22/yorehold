@@ -68,7 +68,7 @@ void YoreholdGame::hostSession()
     rules.checksum = [this] { return checksum(); };
     rules.admit = [this](std::string_view, std::string& reason) {
         // A joiner gets the game between fights; the fight itself isn't saved.
-        if ((encounter_ && !encounter_->finished()) || talk_ || cutscene_.running())
+        if ((encounter_ && !encounter_->finished()) || talk_ || inCutscene_)
             reason = "The host is busy (a fight, a conversation or a cutscene). Try again in a moment.";
         else if (host_->players().size() >= heroCount_)
             reason = "Every hero already has a player.";
