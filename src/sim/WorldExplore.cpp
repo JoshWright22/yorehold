@@ -46,6 +46,15 @@ void World::takeTurns(double deltaSeconds, bool heroesListen, const std::functio
     if (!chapter_)
         return;
     // The host runs the enemies (and the heroes in auto-play); a hero's own player runs their turn.
+    if (pendingWipe_)
+    {
+        if (!inCutscene_ && !remote_ && !wipeRequested_)
+        {
+            wipeRequested_ = true;
+            act("wipe-return");
+        }
+        return;
+    }
     if (pendingMovement_)
     {
         reactionTime(deltaSeconds);

@@ -62,6 +62,7 @@ std::string World::snapshot() const
 {
     nlohmann::json j = nlohmann::json::parse(stateJson());
     j["seats"] = seats_;
+    j["checkpoint"] = checkpoint_;
     for (const auto& [id, name] : playerNames_)
         j["names"][std::to_string(id)] = name;
     return j.dump();
@@ -75,6 +76,15 @@ bool World::restoreState(std::string_view text, std::string* problem)
     try
     {
         const nlohmann::json data = nlohmann::json::parse(text);
+        const std::string checkpoint = data.value("checkpoint", std::string{});
+        if (!checkpoint.empty())
+        {
+            const auto savedCheckpoint = nlohmann::json::parse(checkpoint);
+            if (!savedCheckpoint.is_object() || savedCheckpoint.at("chapterId") != chapter_->id
+                || savedCheckpoint.at("chapterFolder") != chapter_->folder
+                || savedCheckpoint.at("chapterSignature") != chapter_->signature)
+                throw std::runtime_error("Snapshot checkpoint belongs to different content");
+        }
         if (data.at("chapterId") != chapter_->id || data.at("chapterFolder") != chapter_->folder)
             throw std::runtime_error("this save belongs to another chapter");
         if (data.contains("chapterSignature") && data.at("chapterSignature") != chapter_->signature)
@@ -108,6 +118,11 @@ bool World::restoreState(std::string_view text, std::string* problem)
             std::optional<yh::Character> sheet = yh::Character::fromJson(c.at("sheet").dump(), &error);
             if (!sheet || !sheet->checkProficiencyRanks(rules_, &error))
                 throw std::runtime_error(error);
+            if (!c.at("sheet").contains("death")) sheet->death.saves = creatures_[sheets.size()].sheet.death.saves;
+            if (rules_.death.enabled && (sheet->death.failures > rules_.death.failures || sheet->death.successes > rules_.death.successes
+                || (!sheet->death.dead && sheet->death.failures == rules_.death.failures)
+                || (!sheet->death.stable && !sheet->death.dead && sheet->death.successes == rules_.death.successes)))
+                throw std::runtime_error("Saved death counters do not match the ruleset");
             sheets.push_back(std::move(*sheet));
             const yh::Vec2 position{c.at("x").get<float>(), c.at("y").get<float>()};
             if (!std::isfinite(position.x) || !std::isfinite(position.y) || position.x < 0 || position.y < 0
@@ -149,6 +164,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
         }
         fallenConditions();
         emit({Event::Kind::Resumed});
+        checkpoint_ = checkpoint.empty() ? stateJson() : checkpoint;
         return true;
     }
     catch (const std::exception& e)
@@ -157,4 +173,28 @@ bool World::restoreState(std::string_view text, std::string* problem)
             *problem = e.what();
         return false;
     }
+}
+
+void World::returnFromWipe(const std::string& checkpoint)
+{
+    std::string error;
+    if (checkpoint.empty() || !restoreState(checkpoint, &error))
+    {
+        const uint64_t seed = seed_;
+        newAdventure(seed);
+        if (!error.empty()) say("Couldn't return to the autosave: " + error);
+    }
+    bool occupiedDestination = false;
+    for (const yh::Cell destination : chapter_->wipeDestination)
+        for (size_t i = heroCount_; i < creatures_.size(); i++)
+            if (!creatures_[i].sheet.down() && cellOf(i) == destination) occupiedDestination = true;
+    if (!occupiedDestination)
+        for (size_t i = 0; i < chapter_->wipeDestination.size(); i++)
+            tokens_.tokens[i].position = grid_.center(chapter_->wipeDestination[i]);
+    else
+        say("The wipe destination is occupied; using the autosave positions.");
+    selectOwnHero();
+    say("The party returns to the autosave.");
+    emit({Event::Kind::Banner, chapter_->resumeText, {}, FloatKind::Miss, 2});
+    requestSave();
 }

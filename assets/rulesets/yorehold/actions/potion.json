@@ -1,0 +1,14 @@
+{
+  "id": "potion",
+  "name": "Potion",
+  "description": "Give yourself or an adjacent ally a healing potion for 2d4+2 HP. Uses one carried potion.",
+  "order": 45,
+  "cost": 1,
+  "requires": { "resources": { "potions": 1 } },
+  "target": { "kind": "creature", "side": "ally", "range": 1, "downed": true },
+  "log": "{name} uses a healing potion.",
+  "effects": [
+    { "do": "resource", "id": "potions", "op": "spend", "amount": 1, "target": "self" },
+    { "do": "heal", "dice": "2d4+2" }
+  ]
+}

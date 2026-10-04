@@ -78,7 +78,7 @@ if(YOREHOLD_TESTS)
 endif()
 
 if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    add_executable(yorehold-unit-tests tests/unit/ContentTests.cpp tests/unit/WorldFixture.cpp tests/unit/WorldTests.cpp tests/unit/WorldActionTests.cpp tests/unit/WorldTurnTests.cpp tests/unit/WorldPositioningTests.cpp tests/unit/WorldProficiencyTests.cpp)
+    add_executable(yorehold-unit-tests tests/unit/ContentTests.cpp tests/unit/WorldFixture.cpp tests/unit/WorldTests.cpp tests/unit/WorldActionTests.cpp tests/unit/WorldTurnTests.cpp tests/unit/WorldPositioningTests.cpp tests/unit/WorldProficiencyTests.cpp tests/unit/WorldDeathTests.cpp)
     target_link_libraries(yorehold-unit-tests PRIVATE yorehold-game)
     yorehold_warnings(yorehold-unit-tests)
     yorehold_copy_gpu_runtime(yorehold-unit-tests)

@@ -77,7 +77,8 @@ void World::startCombat(int group, std::optional<size_t> only, bool surprise)
         Creature& c = creatures_[i];
         c.fleeing = false;
         c.breakAs.clear();
-        if (c.sheet.down())
+        c.sheet.syncDeath(rules_);
+        if (c.sheet.down() && !(rules_.death.enabled && c.sheet.death.saves && !c.sheet.death.dead))
             continue;
         if (c.team == 0)
             encounter_->add(c.sheet, 0);
@@ -108,6 +109,7 @@ void World::startCombat(int group, std::optional<size_t> only, bool surprise)
 
 void World::endCombat()
 {
+    if (pendingWipe_) return;
     for (Creature& creature : creatures_)
         creature.readiedAction.clear();
     tokens_.settings.inCombat = false;
@@ -122,8 +124,18 @@ void World::endCombat()
 
     if (encounter_->winningTeam() != 0)
     {
-        emit({Event::Kind::Banner, chapter_->defeatText, {}, FloatKind::Miss, 1e9});
+        pendingWipe_ = true;
+        emit({Event::Kind::Banner, chapter_->defeatText, {}, FloatKind::Miss, 2});
         say(chapter_->defeatText);
+        if (!chapter_->wipeCutscene.empty())
+        {
+            if (const auto text = chapterFiles_.readText(chapter_->wipeCutscene))
+            {
+                emit({Event::Kind::Ending, *text});
+                inCutscene_ = true;
+            }
+            else say("Wipe cutscene is missing; returning to the autosave.");
+        }
         return;
     }
 
@@ -132,7 +144,7 @@ void World::endCombat()
     for (size_t i = 0; i < heroCount_; i++)
     {
         Creature& c = creatures_[i];
-        if (c.sheet.down() && rules_.reviveAfterVictory > 0)
+        if (c.sheet.down() && !c.sheet.death.dead && rules_.reviveAfterVictory > 0)
         {
             c.sheet.hp = std::min(rules_.reviveAfterVictory, c.sheet.maxHp());
             say(c.sheet.name + " gets back up with " + std::to_string(c.sheet.hp) + " HP.");
@@ -180,6 +192,13 @@ void World::fallenConditions()
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         Creature& c = creatures_[i];
+        if (rules_.death.enabled)
+        {
+            if (!c.fled) c.sheet.syncDeath(rules_);
+            if (c.sheet.down()) tokens_.tokens[i].floor = dead;
+            else if (tokens_.tokens[i].floor == dead) tokens_.tokens[i].floor = 0;
+            continue;
+        }
         const char* fallen = i < heroCount_ ? downedCondition : deadCondition;
         if (c.sheet.down())
         {
@@ -236,6 +255,7 @@ void World::turnHostile(size_t creature)
 
 void World::beginTurn()
 {
+    fallenConditions();
     const std::optional<size_t> current = currentCreature();
     if (!current)
         return;

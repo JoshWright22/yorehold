@@ -208,6 +208,11 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         };
         checkRanks(c.compendium.classes, "classes");
         checkRanks(c.compendium.creatures, "creatures");
+        if (!c.rules.checkDeathRules(&problem))
+        {
+            where = c.rulesFolder.empty() ? folder + "/chapter.json" : c.rulesFolder + "/ruleset.json";
+            throw std::invalid_argument(problem);
+        }
 
         where = resolve(files, folder, j.value("map", "map.json"));
         std::optional<GameMap> map = GameMap::fromJson(readOrThrow(files, where), &problem);
@@ -369,6 +374,42 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             c.aiChanges.push_back(std::move(entry));
         }
         c.completeWhen = flagsFrom(j, "completeWhen");
+        if (j.contains("onWipe"))
+        {
+            const auto& wipe = j.at("onWipe");
+            if (!wipe.is_object()) throw std::invalid_argument("onWipe must be an object");
+            for (const auto& [field, value] : wipe.items())
+                if (field != "cutscene" && field != "destination") throw std::invalid_argument("Unknown onWipe field: " + field);
+            if (wipe.contains("destination"))
+            {
+                const auto& destinations = wipe.at("destination");
+                if (!destinations.is_array() || destinations.size() != c.party.size())
+                    throw std::invalid_argument("onWipe.destination needs one cell per party member");
+                std::vector<yh::Cell> spots;
+                for (const auto& destination : destinations)
+                {
+                    if (!destination.is_array() || destination.size() != 2 || !destination[0].is_number_integer() || !destination[1].is_number_integer())
+                        throw std::invalid_argument("onWipe.destination cells are integer [x,y]");
+                    const yh::Cell cell{destination[0].get<int>(), destination[1].get<int>()};
+                    if (!c.map.walkable(cell) || std::find(spots.begin(), spots.end(), cell) != spots.end())
+                        throw std::invalid_argument("onWipe.destination cells must be walkable and distinct");
+                    spots.push_back(cell);
+                    for (const auto& encounter : c.encounters)
+                        for (const auto& creature : encounter.creatures)
+                            if (creature.at == cell) throw std::invalid_argument("onWipe.destination overlaps a creature placement");
+                    for (const auto& npc : c.npcs)
+                        if (npc.at == cell) throw std::invalid_argument("onWipe.destination overlaps an NPC placement");
+                    c.wipeDestination.push_back(cell);
+                }
+            }
+            if (const auto cutscene = wipe.value("cutscene", std::string{}); !cutscene.empty())
+            {
+                where = c.wipeCutscene = resolve(files, folder, cutscene);
+                const auto text = readOrThrow(files, where);
+                if (!yh::Cutscene::fromJson(text, &problem)) throw std::invalid_argument(problem);
+                include(nlohmann::json::parse(text).dump());
+            }
+        }
         c.signature = std::to_string(signature);
         return c;
     }

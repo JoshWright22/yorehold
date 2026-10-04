@@ -156,7 +156,7 @@ bool World::validTarget(size_t creature, const yh::ActionDefinition& action, siz
     if (action.target != yh::ActionDefinition::Target::Creature || creature >= creatures_.size() || target >= creatures_.size())
         return false;
     const std::optional<size_t> index = orderIndex(target);
-    if (!index || encounter_->order()[*index].out || creatures_[target].sheet.hasFlag(rules_, "dead")
+    if (!index || encounter_->order()[*index].out || creatures_[target].sheet.death.dead || creatures_[target].sheet.hasFlag(rules_, "dead")
         || (creatures_[target].sheet.down() && !action.allowsDowned))
         return false;
     const bool sameSide = creatures_[target].team == creatures_[creature].team;

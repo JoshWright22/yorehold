@@ -88,6 +88,8 @@ struct Chapter
     std::string resumeText = "Adventure resumed.";
     std::string clearedText = "Chapter complete";
     std::string clearedCutscene; // virtual path, played when every encounter is beaten; empty = none
+    std::string wipeCutscene; // played before returning to the checkpoint
+    std::vector<yh::Cell> wipeDestination; // one cell per hero; empty = checkpoint positions
 
     std::vector<PartyMember> party;
     std::vector<Encounter> encounters;

@@ -148,6 +148,41 @@ private:
     PositioningGame game_;
 };
 
+class DeathGame : public YoreholdGame
+{
+public:
+    void prepare()
+    {
+        load();
+        SDL_Event enter{};
+        enter.type = SDL_EVENT_KEY_DOWN; enter.key.key = SDLK_RETURN;
+        handleEvent(enter); handleEvent(enter);
+        newAdventure(7);
+        if (!chapter_ || heroCount_ < 4 || heroCount_ >= creatures_.size()) return;
+        const int dex = creatures_[0].sheet.abilityScore("dex");
+        creatures_[0].sheet.stats.setBase("dex", 1000);
+        startCombat(creatures_[heroCount_].group);
+        creatures_[0].sheet.stats.setBase("dex", static_cast<float>(dex));
+        for (size_t i = 1; i < 4; i++) creatures_[i].sheet.hp = 0;
+        creatures_[1].sheet.death.successes = 1; creatures_[1].sheet.death.failures = 2;
+        creatures_[2].sheet.death.successes = 3; creatures_[2].sheet.death.stable = true;
+        creatures_[3].sheet.death.failures = 3; creatures_[3].sheet.death.dead = true;
+        fallenConditions();
+        update(2);
+    }
+};
+
+class TestSceneDeath : public yh::TestScene
+{
+public:
+    TestSceneDeath() { game_.prepare(); }
+    void update(double seconds) override { game_.update(seconds); }
+    void draw(yh::Renderer& renderer) override { game_.draw(renderer); }
+    bool handleEvent(const SDL_Event& event) override { return game_.handleEvent(event); }
+private:
+    DeathGame game_;
+};
+
 int main(int argc, char** argv)
 {
     yh::TestBrowser browser;
@@ -155,6 +190,7 @@ int main(int argc, char** argv)
     browser.add<TestSceneReactionPrompt>("Reaction prompt");
     browser.add<TestSceneSharedTurns>("Shared turns");
     browser.add<TestScenePositioning>("Flanking/cover");
+    browser.add<TestSceneDeath>("Death saves");
 
     yh::HostSettings settings;
     settings.title = "yorehold tests";

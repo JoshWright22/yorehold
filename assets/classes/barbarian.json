@@ -6,6 +6,7 @@
   "bonusHp": 4,
   "speed": 30,
   "dcAbility": "str",
+  "resources": { "potions": { "current": 1, "max": 1 } },
   "proficiencyRanks": { "weapons": "trained", "armor": "trained", "dc": "trained", "str": "trained", "con": "trained" },
   "proficiencies": [
     "weapons",

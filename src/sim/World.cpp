@@ -59,6 +59,9 @@ void World::newAdventure(uint64_t seed)
     tokens_.settings.activeTurn.reset();
     creatures_.clear();
     inCutscene_ = false;
+    pendingWipe_ = false;
+    wipeRequested_ = false;
+    checkpoint_.clear();
     autoExploreStuck_ = 0;
     flags_.clear();
     journal_.reset();
@@ -156,6 +159,7 @@ void World::newAdventure(uint64_t seed)
     for (const std::string& line : chapter_->intro)
         say(line);
     emit({Event::Kind::Banner, chapter_->title, {}, FloatKind::Miss, 3});
+    checkpoint_ = stateJson();
 }
 
 bool World::partyDown() const
@@ -191,8 +195,11 @@ bool World::canSave() const
 
 void World::requestSave()
 {
-    if (saves_ && canSave())
-        emit({Event::Kind::Save, stateJson()});
+    if (chapter_ && !(encounter_ && !encounter_->finished()) && !partyDown() && !chapterCleared() && !inCutscene_)
+    {
+        checkpoint_ = stateJson();
+        if (saves_ && !remote_) emit({Event::Kind::Save, checkpoint_});
+    }
 }
 
 yh::Random World::nextRandom(uint64_t salt)

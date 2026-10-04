@@ -106,6 +106,6 @@ void WorldFixture::takeEventsIntoLog()
         if (event.kind == Event::Kind::Log)
             log.push_back(std::move(event.text));
         else if (event.kind == Event::Kind::Ending)
-            ended = true;
+            ended |= !wiping();
     }
 }

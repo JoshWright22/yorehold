@@ -125,6 +125,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `proficiencyRanks` | Optional list of ranks with unique `id`, display `name`, `bonus` (0 to 100) and `addsLevel`. |
 | `proficientRank`, `untrainedRank` | Rank IDs used when a sheet has no explicit choice, according to its old proficiency list. |
 | `baseDc` | Base for a character's action DC before ability and proficiency, 10 by default. |
+| `death` | Optional death-save rules; absent/disabled keeps older play (see Downed and death). |
 | `xpForLevel` | Total XP needed for each level, level 2 first. |
 | `actionsPerTurn`, `bonusActions`, `strikeCostsHands` | Actions in a turn (1 to 10), whether there is a bonus action as well, and whether a Strike costs one action per hand the weapon needs. |
 | `sharedTurns` | Consecutive allies share an active initiative block. True for Yorehold; absent means sequential turns for older rulesets. |
@@ -165,6 +166,39 @@ chapter content changed report that change instead of applying an incompatible s
 The starting classes have trained weapons, armour and DCs, plus two trained saves: Strength and
 Constitution for fighter/barbarian, Wisdom and Charisma for cleric, Dexterity and Intelligence
 for rogue. Existing skill lists remain the fallback. Class level tables will supply later ranks.
+
+## Downed and death
+
+The Yorehold ruleset's `death` object enables death saves. An unmodified d20 rolls against DC 10
+at the start of the downed character's turn, including shared initiative blocks. Three successes
+make it stable at 0 HP; three failures make it dead. A natural 1 counts as two failures; a natural
+20 gets it up with 1 HP. These are the fields `saveDc`, `successes`, `failures`,
+`naturalOneFailures`, `naturalTwentyHp`. Damage at 0 HP adds `damageFailures` (1), or
+`criticalDamageFailures` (2). Temporary HP absorbs damage first. Hurt while stable starts dying
+again with fresh counters. `downedCondition`, `dyingCondition`, `stableCondition`, `deadCondition`
+name condition files. Modern/classic do not enable these rules.
+
+Sheets save `death: {saves, successes, failures, stable, dead}`. Old sheets without the object
+use their original class/creature eligibility and begin with no counters. Creature files may
+opt into saves with `deathSaves: true`; the default is immediate death. Ordinary healing, rests
+and victory recovery cannot revive a dead character. Help gets an adjacent downed ally up with
+1 HP; healing effects and potions remove dying/stable state and reset the counters.
+
+The provisional Potion action costs one action, consumes one `potions` resource from its user
+and heals a living adjacent ally or the user for `2d4+2`. Class/creature files may set
+`resources: {"potions":{"current":1,"max":1}}`; current defaults to max. Each starting class
+has one use. Saves preserve what remains; rests do not refill potions. Consumable inventory
+will supply this resource in D5. Dead targets are refused before spending the use.
+
+When everyone goes down, the host sends a return command with the latest autosave state. It
+restores health, supplies, story, dice counters and positions, and clears the fight. A chapter
+may set `"onWipe":{"cutscene":"wipe.json","destination":[[2,3],[2,4],[1,3],[1,4]]}`.
+Both fields are optional. The cutscene plays before return and can be skipped; destination
+has one distinct, walkable cell per hero in this chapter, away from authored creature/NPC
+placements. An occupied destination at the checkpoint falls back to its saved positions.
+Otherwise an absent destination keeps the checkpoint positions. Starting a chapter or loading
+a save establishes its checkpoint, including in test runs where disk writes are disabled.
+Snapshots carry that checkpoint so co-op return uses the host's state.
 
 ## Conditions
 

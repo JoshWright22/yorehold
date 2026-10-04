@@ -128,6 +128,9 @@ void contentTests(const fs::path& scratch)
         renamed.proficiencyRanks = modern.proficiencyRanks;
         renamed.proficientRank = modern.proficientRank;
         renamed.untrainedRank = modern.untrainedRank;
+        check(renamed.death.enabled && renamed.death.successes == 3 && renamed.death.failures == 3
+            && renamed.death.saveDc == 10 && !modern.death.enabled, "Yorehold enables data-defined death saves");
+        renamed.death = modern.death;
         json mine = json::parse(renamed.toJson()), theirs = json::parse(modern.toJson());
         // Conditions are checked on their own, and a full recovery has no use for a fraction.
         for (json* set : {&mine, &theirs})
@@ -676,6 +679,7 @@ void worldActionTests(const std::function<void(bool, const char*)>& check);
 void worldTurnTests(const std::function<void(bool, const char*)>& check);
 void worldPositioningTests(const std::function<void(bool, const char*)>& check);
 void worldProficiencyTests(const std::function<void(bool, const char*)>& check);
+void worldDeathTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -689,6 +693,7 @@ int main()
         worldTurnTests(check);
         worldPositioningTests(check);
         worldProficiencyTests(check);
+        worldDeathTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

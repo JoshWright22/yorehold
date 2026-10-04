@@ -126,6 +126,7 @@ public:
     void setOptions(const Options& options);
 
     bool partyDown() const;
+    bool wiping() const { return pendingWipe_; }
     bool chapterCleared() const;
     int restsLeft(const yh::RestDefinition& rest) const;
 
@@ -313,6 +314,7 @@ protected:
     void setSneaking(size_t hero, bool on);
     void raise(std::string_view event); // tells everyone's conditions: "fightStart", "fightEnd", "rest"
     void fallenConditions();            // Downed or Dead for whoever is at 0 HP, and off again once they are up
+    void returnFromWipe(const std::string& checkpoint);
 
     void emit(Event event) { events_.push_back(std::move(event)); }
     void flagsChanged(const std::set<std::string>& before);
@@ -388,6 +390,9 @@ protected:
     uint64_t rolls_ = 0; // rests, recoveries and dialogue checks so far; seeds each one's dice
     yh::Random restRandom_{1};
     bool inCutscene_ = false; // the ending is playing: nothing else happens until endCutscene()
+    bool pendingWipe_ = false;
+    bool wipeRequested_ = false;
+    std::string checkpoint_;
     bool saves_ = true;       // autosave points send their state out (off for test runs)
 
     std::vector<yh::StealthTracker> sneak_; // per hero

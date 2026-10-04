@@ -423,6 +423,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 31. Proficiency: the existing skill lists fall back to trained; starting classes have trained weapons, armour, DCs and two saves (STR/CON fighter and barbarian, WIS/CHA cleric, DEX/INT rogue). DC uses the class's STR/WIS/DEX respectively. Goblins train weapons, armour and DCs; commoners only armour. Creature AC stays the written final value at its authored level. All choices are class/creature data; later advancement belongs to the level tables.
 
+32. Death: DC 10 unmodified saves, three successes stable, three failures dead; natural 1 adds two failures and natural 20 heals 1 HP. Unabsorbed damage at zero adds one failure (critical two), and damage to a stable character starts fresh counters. Monsters die immediately unless their file enables saves. Each starting hero carries one resource-backed 2d4+2 potion until consumable inventory is built. A wipe restores the latest checkpoint; optional onWipe cutscene precedes return, and destination supplies one current-chapter cell per hero.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

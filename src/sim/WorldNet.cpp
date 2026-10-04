@@ -51,6 +51,12 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
         auto cellFrom = [](const nlohmann::json& at) { return yh::Cell{at.at(0).get<int>(), at.at(1).get<int>()}; };
         const std::string accepted(data);
 
+        if (type == "wipe-return")
+        {
+            if (player != 0 || !pendingWipe_ || inCutscene_) return std::nullopt;
+            return nlohmann::json{{"checkpoint", checkpoint_}}.dump();
+        }
+
         if (type == "reaction")
         {
             if (!pendingReaction_ || !reactionPrompt_ || !j.at("take").is_boolean()
@@ -231,6 +237,11 @@ void World::apply(const yh::NetCommand& command)
     const std::string& type = command.type;
     const std::optional<size_t> current = currentCreature();
 
+    if (type == "wipe-return")
+    {
+        returnFromWipe(j.at("checkpoint").get<std::string>());
+        return;
+    }
     if (type == "walk")
     {
         // Someone else's heroes: follow where they say they're going.
@@ -437,6 +448,8 @@ uint64_t World::checksum() const
     {
         mix(static_cast<uint64_t>(c.sheet.hp + 1000));
         mix(c.sheet.level);
+        mix(c.sheet.death.saves); mix(c.sheet.death.successes); mix(c.sheet.death.failures);
+        mix(c.sheet.death.stable); mix(c.sheet.death.dead);
         mixText(c.sheet.dcAbility);
         mix(c.sheet.proficiencyRanks.size());
         for (const auto& [target, rank] : c.sheet.proficiencyRanks)

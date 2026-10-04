@@ -456,6 +456,12 @@ void YoreholdGame::step(double deltaSeconds)
 
 void YoreholdGame::finishAdventure()
 {
+    if (wiping())
+    {
+        endCutscene();
+        if (client_) play_.banner("Waiting for the host", 1e9);
+        return;
+    }
     endCutscene();
     // In co-op the host starts the next run for everyone; joined players wait for it.
     if (client_)

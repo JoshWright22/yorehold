@@ -3,5 +3,5 @@
   "name": "Dead",
   "description": "Gone, short of being brought back.",
   "flags": ["dead", "cantAct", "cantMove"],
-  "removes": ["dying", "downed", "hidden"]
+  "removes": ["dying", "downed", "stable", "hidden"]
 }
