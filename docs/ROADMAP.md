@@ -55,8 +55,15 @@ builds, passes `check.ps1` and is committed.
   - Default: a map is one region. The framework's streaming of several regions isn't ported; no chapter uses it.
   - Default: paths use a heap that breaks ties like the C++ client's `std::priority_queue`, so routes match cell for cell.
   - Default: a sprung trap logs saves, damage, healing and conditions only; the fight's full log comes with P5.
-- [ ] **P4. Play screen, first look.** Draw the chapter map (floors, walls, objects, lights),
+- [x] **P4. Play screen, first look.** Draw the chapter map (floors, walls, objects, lights),
   party and creatures, camera pan and zoom, click to move, fog from party vision. Screenshot run.
+  - Default: the play screen opens `chapters/chapter-one`, the adventure's first chapter; `--chapter` picks another until the menus (P11).
+  - Default: lights go into a light map (a SubViewport with Light2D lamps and wall occluders) multiplied over the world like the C++ pass, so light stops at full and daylight doesn't blow out.
+  - Default: clicking a door, lever, locked chest or found trap walks the leader beside it (`World.GoNear`) and uses it on arrival. An unlocked chest is just walked onto until looting (P8).
+  - Default: a left drag or one finger pans, so does a middle or right drag; a press that moves under 10 px is a click. Two fingers pinch to zoom. Zoom goes from the whole map on screen to 4x.
+  - Default: cutscenes end as soon as they start and conversations are only printed until P10. A noticed party stops and waits for fights (P5).
+  - Default: tokens are discs with an initial and tiles are the C++ placeholder painters; token images and painted layer pictures are not drawn yet.
+  - Default: content is read from `res://assets` as a plain folder, which works from the project on desktop. Exports need another way in (P15).
 - [ ] **P5. Combat rules.** Initiative, shared turns, free move plus two actions, all generic
   actions (Strike, Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready), reactions and
   opportunity attacks, downed and death, the AI scorer (including flee and surrender).

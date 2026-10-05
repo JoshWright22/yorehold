@@ -7,7 +7,7 @@ public readonly record struct InputStep(int Frame, string Command, string A, str
 /// Reads the input scripts used by screenshot runs. One step per line: a frame number, a command
 /// and up to two words. The format is the one the C++ client used, so old scripts still read.
 ///   move X Y | down left|right|middle | up ... | key Name | keyup Name | text some words |
-///   wheel N | shot path.png
+///   wheel N | shot path.png | cell X Y | pinch F
 /// </summary>
 public static class InputScript
 {

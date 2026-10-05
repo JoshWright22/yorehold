@@ -5,6 +5,7 @@
 #   .\check.ps1 -Shot a.png  also run the game in a window kept off screen and save ..\.dev\a.png
 #                            -Frames N (default 300) is how long it runs, -Script file.txt drives it
 #                            (format: tests\visual\scripts, same as the C++ client's)
+#                            -Chapter chapters\goblin-keep plays that chapter instead of the scene's
 # Exit code 0 and ALL OK = all good. Full output is in ..\.dev\godot-build.log, -test.log, -run.log,
 # -shot.log.
 
@@ -12,7 +13,8 @@ param(
     [switch]$NoTest,
     [string]$Shot,
     [int]$Frames = 300,
-    [string]$Script
+    [string]$Script,
+    [string]$Chapter
 )
 
 $ErrorActionPreference = 'Continue'
@@ -69,6 +71,7 @@ if ($Shot) {
         if (-not (Test-Path $Script)) { Write-Host "FAIL: script not found: $Script"; exit 1 }
         $arguments += @('--script', "`"$((Resolve-Path $Script).Path)`"")
     }
+    if ($Chapter) { $arguments += @('--chapter', ($Chapter -replace '\\', '/')) }
     $shotLog = Join-Path $dev 'godot-shot.log'
     $p = Start-Process $godot -ArgumentList $arguments -PassThru -WindowStyle Hidden `
         -RedirectStandardOutput $shotLog -RedirectStandardError "$shotLog.err"

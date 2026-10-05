@@ -1,0 +1,7 @@
+# goblin keep by day: walk to the gate, then zoom all the way out to see the fog over the keep
+10 cell 15 14
+11 down left
+12 up left
+150 shot .dev/p4-keep-gate.png
+160 move 640 360
+161 wheel -10

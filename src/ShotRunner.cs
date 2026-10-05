@@ -104,19 +104,23 @@ public partial class ShotRunner : Node
         switch (step.Command)
         {
             case "move":
+                MoveMouse(new Vector2(Number(step.A), Number(step.B)));
+                break;
+            case "cell":
             {
-                Vector2 to = new(Number(step.A), Number(step.B));
-                var motion = new InputEventMouseMotion
+                // the pointer to the middle of a map cell, wherever the camera is now
+                if (GetTree().GetFirstNodeInGroup("play_screen") is not PlayScreen screen)
                 {
-                    Position = to,
-                    GlobalPosition = to,
-                    Relative = to - _mouse,
-                    ButtonMask = _held,
-                };
-                _mouse = to;
-                Input.ParseInputEvent(motion);
+                    GD.PushError($"Input script: no play screen for 'cell' on frame {step.Frame}");
+                    _failed = true;
+                    break;
+                }
+                MoveMouse(screen.ScreenOfCell(new Cell((int)Number(step.A), (int)Number(step.B))));
                 break;
             }
+            case "pinch":
+                Pinch(Number(step.A));
+                break;
             case "down":
             case "up":
             {
@@ -187,6 +191,44 @@ public partial class ShotRunner : Node
                 GD.PushError($"Input script: unknown command '{step.Command}' on frame {step.Frame}");
                 _failed = true;
                 break;
+        }
+    }
+
+    private void MoveMouse(Vector2 to)
+    {
+        var motion = new InputEventMouseMotion
+        {
+            Position = to,
+            GlobalPosition = to,
+            Relative = to - _mouse,
+            ButtonMask = _held,
+        };
+        _mouse = to;
+        Input.ParseInputEvent(motion);
+    }
+
+    // Two fingers on either side of the pointer move apart (factor above 1) or together, then lift.
+    private void Pinch(float factor)
+    {
+        const float gap = 60;
+        Vector2[] start = { _mouse - new Vector2(gap, 0), _mouse + new Vector2(gap, 0) };
+        Vector2[] end = { _mouse - new Vector2(gap * factor, 0), _mouse + new Vector2(gap * factor, 0) };
+        for (int finger = 0; finger < 2; finger++)
+        {
+            Input.ParseInputEvent(new InputEventScreenTouch { Index = finger, Position = start[finger], Pressed = true });
+        }
+        for (int finger = 0; finger < 2; finger++)
+        {
+            Input.ParseInputEvent(new InputEventScreenDrag
+            {
+                Index = finger,
+                Position = end[finger],
+                Relative = end[finger] - start[finger],
+            });
+        }
+        for (int finger = 0; finger < 2; finger++)
+        {
+            Input.ParseInputEvent(new InputEventScreenTouch { Index = finger, Position = end[finger], Pressed = false });
         }
     }
 

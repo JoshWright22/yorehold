@@ -1,0 +1,10 @@
+# chapter one: tap Bob to select him, send him south, then click a wall, which says there is no way there
+10 cell 6 5
+11 down left
+12 up left
+20 cell 6 9
+21 down left
+22 up left
+60 cell 0 9
+61 down left
+62 up left
