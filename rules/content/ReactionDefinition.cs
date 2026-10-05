@@ -18,6 +18,13 @@ public class ReactionDefinition
     public int Order { get; init; }
     public double PromptSeconds { get; init; } = 2;
 
+    /// <summary>A step from before to after squares away crosses the edge of reach the way the trigger needs.</summary>
+    public bool Matches(float before, float after, int reach)
+    {
+        float limit = reach + 0.01f;
+        return Trigger == ReactionTrigger.LeavesReach ? before <= limit && after > limit : before > limit && after <= limit;
+    }
+
     public static ReactionDefinition Read(ContentNode node)
     {
         node.RequireObject("a reaction is a JSON object");

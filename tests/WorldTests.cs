@@ -212,7 +212,7 @@ public class WorldTests
         world.Step(0.1);
         Assert.True(world.Said("sets off the hidden darts"));
         Assert.True(!w.Map.Get(hidden)!.ArmedTrap && w.Map.Get(hidden)!.TrapFound, "Stepping on a hidden trap sets it off once");
-        Assert.True(world.Said("dex save"), "Its effect is run on the hero");
+        Assert.True(world.Said("Ana saves (dex, DC"), "Its effect is run on the hero");
         Assert.True(w.Creatures[0].Sheet.Hp <= hp);
         int after = w.Creatures[0].Sheet.Hp;
         world.Step(0.5);

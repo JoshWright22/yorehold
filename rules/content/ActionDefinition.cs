@@ -59,6 +59,47 @@ public class ActionDefinition
     public string Log { get; init; } = "";
     public Effect Effect { get; init; } = new();
 
+    /// <summary>Actions it takes this creature (see CostsHands), never more than a turn has.</summary>
+    public int CostFor(CharacterSheet sheet, Ruleset rules)
+    {
+        if (!CostsHands)
+        {
+            return Cost;
+        }
+        return sheet.Weapon != null ? Math.Clamp(sheet.Weapon.Hands, 1, Math.Max(1, rules.ActionsPerTurn)) : 1;
+    }
+
+    /// <summary>The creature has the flags, lacks the barring ones and holds the resources it needs. why says what is missing.</summary>
+    public bool Meets(CharacterSheet sheet, Ruleset rules, out string why)
+    {
+        why = "";
+        foreach (string flag in NeedsFlags)
+        {
+            if (!sheet.HasFlag(rules, flag))
+            {
+                why = "needs " + flag;
+                return false;
+            }
+        }
+        foreach (string flag in BarredBy)
+        {
+            if (sheet.HasFlag(rules, flag))
+            {
+                why = "not while " + flag;
+                return false;
+            }
+        }
+        foreach (KeyValuePair<string, int> need in NeedsResources)
+        {
+            if (!sheet.Resources.TryGetValue(need.Key, out Resource? held) || held.Current < need.Value)
+            {
+                why = $"needs {need.Value} {need.Key}";
+                return false;
+            }
+        }
+        return true;
+    }
+
     /// <summary>What an item's "use" or a spell fills in where a plain action file would say it.</summary>
     public record Defaults(string Id = "", string Name = "", int? Cost = null, int? Order = null, bool General = true, string[]? AlsoAllowed = null);
 

@@ -28,6 +28,19 @@ public sealed class WorldCreature
     /// <summary>Item ids it carries. Only keys are read from it until inventories come (P8).</summary>
     public List<string> Items { get; } = new();
 
+    /// <summary>The "ai" entries of its encounter and placement, laid over its creature file's in that order.</summary>
+    public List<ContentNode> AiLayers { get; } = new();
+    /// <summary>Its morale broke and it is running (for help, with BreakAs "alarm").</summary>
+    public bool Fleeing { get; set; }
+    /// <summary>How it took its morale breaking: "flee", "alarm", "surrender" or "fight". Empty until then.</summary>
+    public string BreakAs { get; set; } = "";
+    /// <summary>Gave up in a fight: out of it, standing, no longer an enemy.</summary>
+    public bool Surrendered { get; set; }
+    /// <summary>Got away: out of the adventure, not lying dead in it.</summary>
+    public bool Fled { get; set; }
+    /// <summary>The action a Ready recorded, for its reaction; empty when none.</summary>
+    public string ReadiedAction { get; set; } = "";
+
     /// <summary>A hero moving quietly: slower, lights covered, only noticed inside a vision cone.</summary>
     public bool Sneaking => Sheet.HasCondition(World.HiddenCondition);
 }
@@ -46,8 +59,12 @@ public enum WorldEventKind
     Talk,
     /// <summary>Text is the content path of a cutscene to play.</summary>
     Cutscene,
-    /// <summary>Group noticed the party: a fight starts (P5 runs it).</summary>
+    /// <summary>A fight with Group started.</summary>
     Fight,
+    /// <summary>Text is the name of whoever's turn it is now; At is where they stand.</summary>
+    Turn,
+    /// <summary>The fight is over. Text is "victory" or "defeat".</summary>
+    FightOver,
 }
 
 /// <summary>Something for the screen to show.</summary>
@@ -67,16 +84,20 @@ public sealed class WorldOptions
     public int TimeOfDay { get; set; }
     /// <summary>The fog shows the whole party's view, not only the selected hero's.</summary>
     public bool SharedFog { get; set; } = true;
+    /// <summary>The heroes' turns are played by the AI too (the "hero" profile).</summary>
+    public bool AutoPlay { get; set; }
+    /// <summary>A hero's reaction waits for React instead of being taken at once.</summary>
+    public bool ReactionPrompts { get; set; }
 }
 
 /// <summary>
-/// An adventure in progress, between fights: the map with its objects, the party and everyone
-/// else on it, walking, what the party sees, sneaking, traps, flags and triggers. It draws
-/// nothing and has no clock: time comes in through Update, what the player does through calls
-/// that return false with a Refusal when the rules say no, and what the screen should show goes
-/// out as events.
+/// An adventure in progress: the map with its objects, the party and everyone else on it,
+/// walking, what the party sees, sneaking, traps, flags and triggers, and fights (WorldFight and
+/// the files beside it). It draws nothing and has no clock: time comes in through Update, what
+/// the player does through calls that return false with a Refusal when the rules say no, and
+/// what the screen should show goes out as events.
 /// </summary>
-public sealed class World
+public sealed partial class World
 {
     /// <summary>The ruleset's conditions the world itself puts on creatures. A ruleset without one still plays.</summary>
     public const string HiddenCondition = "hidden";
@@ -133,9 +154,10 @@ public sealed class World
     public WorldOptions Options { get; } = new();
     /// <summary>A trigger's or the ending's cutscene is playing: nothing else happens until EndCutscene.</summary>
     public bool InCutscene { get; private set; }
-    /// <summary>The encounter whose creatures noticed the party; null while nobody has. The fight itself is P5's.</summary>
+    /// <summary>The encounter the fight is with; null between fights.</summary>
     public int? FightGroup { get; private set; }
-    public bool Fighting => FightGroup != null;
+    /// <summary>A fight is on and not yet decided.</summary>
+    public bool Fighting => Encounter != null && !Encounter.Finished;
     /// <summary>Why the last call that returned false said no, when there is a reason to give.</summary>
     public string Refusal { get; private set; } = "";
 
@@ -166,6 +188,7 @@ public sealed class World
         Creatures.Clear();
         InCutscene = false;
         FightGroup = null;
+        ResetFight();
         Flags.Clear();
         FiredTriggers.Clear();
         _trapsLookedAt.Clear();
@@ -178,7 +201,7 @@ public sealed class World
         {
             // Chapter.Load checked that the class exists.
             ClassDefinition characterClass = Chapter.Compendium.Class(member.ClassId)!;
-            var hero = new WorldCreature(WorldSheets.Hero(Rules, characterClass, member.Name, Chapter.Level), 0);
+            var hero = new WorldCreature(WorldSheets.Hero(Rules, Chapter.Compendium, characterClass, member.Name, Chapter.Level), 0);
             hero.Items.AddRange(characterClass.Items);
             Creatures.Add(hero);
             Tokens.Tokens.Add(new Token
@@ -197,11 +220,12 @@ public sealed class World
             foreach (Placement placement in Chapter.Encounters[group].Creatures)
             {
                 CreatureDefinition definition = Chapter.Compendium.Creature(placement.CreatureId)!;
-                var creature = new WorldCreature(WorldSheets.Creature(Rules, definition, placement.Name), 1, group)
+                var creature = new WorldCreature(WorldSheets.Creature(Rules, Chapter.Compendium, definition, placement.Name), 1, group)
                 {
                     CreatureId = placement.CreatureId,
                     Facing = FacingOf(placement),
                 };
+                creature.AiLayers.AddRange(new[] { Chapter.Encounters[group].Ai, placement.Ai }.OfType<ContentNode>());
                 creature.Items.AddRange(definition.Items);
                 Creatures.Add(creature);
                 Tokens.Tokens.Add(new Token
@@ -231,7 +255,7 @@ public sealed class World
         {
             ChapterNpc npc = Chapter.Npcs[i];
             CreatureDefinition definition = Chapter.Compendium.Creature(npc.Creature)!;
-            var creature = new WorldCreature(WorldSheets.Creature(Rules, definition, npc.Name), 2, Chapter.Encounters.Count + i)
+            var creature = new WorldCreature(WorldSheets.Creature(Rules, Chapter.Compendium, definition, npc.Name), 2, Chapter.Encounters.Count + i)
             {
                 Npc = i,
                 CreatureId = npc.Creature,
@@ -264,6 +288,10 @@ public sealed class World
     public void Update(double deltaSeconds)
     {
         Walk(deltaSeconds);
+        if (Fighting)
+        {
+            TakeTurns(deltaSeconds);
+        }
         UpdateVisibility();
     }
 
@@ -760,64 +788,11 @@ public sealed class World
                 Source = o.Name,
                 Dc = effect.Save.Dc,
             };
-            Narrate(effect.Run(new WorldEffectHost(this), context));
-            FallenConditions();
+            EffectResult result = effect.Run(new WorldEffectHost(this), context);
+            Narrate(result);
+            AfterEffect(result);
         }
         ObjectsChanged();
-    }
-
-    // What an effect did, as log lines. The fight's fuller account comes with P5.
-    private void Narrate(EffectResult result)
-    {
-        foreach (EffectEvent e in result.Events)
-        {
-            if (e.Who < 0 || e.Who >= Creatures.Count)
-            {
-                continue;
-            }
-            string who = Creatures[e.Who].Sheet.Name;
-            switch (e.Kind)
-            {
-                case EffectEventKind.Save:
-                    Say($"{who} rolls a {e.Id} save: {e.Roll.Describe()} vs {e.Dc}{(e.Success ? ", saved" : ", failed")}");
-                    break;
-                case EffectEventKind.Damage:
-                    Say($"{who} takes {e.Amount}{(e.Id.Length > 0 ? " " + e.Id : "")} damage.");
-                    _events.Add(new WorldEvent(WorldEventKind.Floater, e.Amount.ToString()) { At = Tokens.Tokens[e.Who].Position });
-                    break;
-                case EffectEventKind.Heal:
-                    Say($"{who} recovers {e.Amount} HP.");
-                    break;
-                case EffectEventKind.ConditionAdded:
-                    Say($"{who} is {Rules.Condition(e.Id)?.Name ?? e.Id}.");
-                    break;
-            }
-        }
-    }
-
-    // Downed for a hero at 0 HP and Dead for anyone else, and off again once they are up.
-    private void FallenConditions()
-    {
-        for (int i = 0; i < Creatures.Count; i++)
-        {
-            CharacterSheet sheet = Creatures[i].Sheet;
-            string fallen = i < HeroCount ? DownedCondition : DeadCondition;
-            if (sheet.Down && !sheet.HasCondition(fallen))
-            {
-                sheet.RemoveCondition(HiddenCondition);
-                sheet.AddCondition(Rules, fallen);
-                if (i >= HeroCount)
-                {
-                    Tokens.Tokens[i].Floor = DeadFloor;
-                }
-                Tokens.Tokens[i].Selected = false;
-                Tokens.Tokens[i].Path.Clear();
-            }
-            else if (!sheet.Down && sheet.HasCondition(fallen))
-            {
-                sheet.RemoveCondition(fallen);
-            }
-        }
     }
 
     private void ObjectsChanged()
@@ -1131,78 +1106,15 @@ public sealed class World
     }
 
     /// <summary>
-    /// An encounter's creatures noticed the party: they wake, everyone stops walking and the heroes
-    /// stop sneaking. The fight itself starts from here in P5.
+    /// An encounter's creatures noticed the party: the fight with them starts (StartFight), which
+    /// wakes them, stops everyone walking and ends sneaking.
     /// </summary>
     public void Notice(int group, string note = "")
     {
-        foreach (WorldCreature c in Creatures)
-        {
-            c.Sheet.ConditionEvent(Rules, "fightStart");
-        }
-        for (int i = 0; i < HeroCount; i++)
-        {
-            SetSneaking(i, false);
-            _sneak[i].Reset();
-        }
-        foreach (Token token in Tokens.Tokens)
-        {
-            token.Path.Clear();
-        }
-        foreach (WorldCreature c in Creatures.Where(c => c.Group == group && c.Team == 1))
-        {
-            c.Awake = true;
-        }
-        FightGroup = group;
         if (note.Length > 0)
         {
             Say(note);
         }
-        if (group >= 0 && group < Chapter.Encounters.Count && Chapter.Encounters[group].Text.Length > 0)
-        {
-            Say(Chapter.Encounters[group].Text);
-        }
-        _events.Add(new WorldEvent(WorldEventKind.Fight) { Group = group });
-    }
-
-    /// <summary>What effects ask of the world: sheets, and who counts as allies and enemies.</summary>
-    private sealed class WorldEffectHost : EffectHost
-    {
-        private readonly World _world;
-
-        public WorldEffectHost(World world)
-        {
-            _world = world;
-        }
-
-        public override CharacterSheet? Sheet(int who)
-        {
-            return who >= 0 && who < _world.Creatures.Count ? _world.Creatures[who].Sheet : null;
-        }
-
-        public override List<int> Group(string which, EffectContext context)
-        {
-            if (which == "area")
-            {
-                return context.Targets;
-            }
-            int team = context.Self >= 0 && context.Self < _world.Creatures.Count ? _world.Creatures[context.Self].Team : 0;
-            return Enumerable.Range(0, _world.Creatures.Count)
-                .Where(i => !_world.Creatures[i].Sheet.Down && (_world.Creatures[i].Team == team) == (which == "allies"))
-                .ToList();
-        }
-
-        public override bool Flag(string name, bool set, EffectContext context)
-        {
-            if (set)
-            {
-                _world.SetFlags(new[] { name });
-            }
-            else
-            {
-                _world.Flags.Remove(name);
-            }
-            return true;
-        }
+        StartFight(group);
     }
 }

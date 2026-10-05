@@ -1,0 +1,69 @@
+namespace Yorehold.Rules;
+
+// Flanking and cover in a fight, from where everyone stands now.
+public sealed partial class World
+{
+    /// <summary>Two standing foes that can act are on opposite sides of it, with nothing between them and it.</summary>
+    public bool IsFlanked(int creature)
+    {
+        PositioningRules positioning = Chapter.Rules.Positioning;
+        if (!positioning.Enabled || positioning.FlankingCondition.Length == 0 || creature < 0 || creature >= Creatures.Count
+            || !Fighting || Creatures[creature].Sheet.Down)
+        {
+            return false;
+        }
+        var foes = new List<Cell>();
+        for (int i = 0; i < Creatures.Count; i++)
+        {
+            if (OrderIndex(i) is int index && Encounter!.Order[index].Standing && Creatures[i].Team != Creatures[creature].Team
+                && !Creatures[i].Sheet.HasFlag(Rules, "cantAct"))
+            {
+                foes.Add(CellOf(i));
+            }
+        }
+        return Positioning.IsFlanked(Grid, CellOf(creature), foes, (float)positioning.FlankingReach,
+            (a, b) => !Sight.LineOfSight(a, b, Map.Walls));
+    }
+
+    /// <summary>Cover the target has from an attacker: walls first, else the creatures standing in between.</summary>
+    public Cover CoverFrom(int from, int target)
+    {
+        if (from < 0 || from >= Creatures.Count || target < 0 || target >= Creatures.Count)
+        {
+            return Cover.None;
+        }
+        var bodies = new List<Cell>();
+        for (int i = 0; i < Creatures.Count; i++)
+        {
+            if (i != from && i != target && !Creatures[i].Sheet.Down && Tokens.Tokens[i].Floor == 0 && !Creatures[i].Fled)
+            {
+                bodies.Add(CellOf(i));
+            }
+        }
+        return Positioning.CoverFrom(Grid, CellOf(from), CellOf(target), Map.Walls, bodies, Chapter.Rules.Positioning);
+    }
+
+    /// <summary>Its armour class with flanking, which counts as the flanking condition without staying on the sheet.</summary>
+    public int PositionalArmorClass(int target)
+    {
+        if (target < 0 || target >= Creatures.Count)
+        {
+            return 0;
+        }
+        CharacterSheet sheet = Creatures[target].Sheet;
+        string flanking = Chapter.Rules.Positioning.FlankingCondition;
+        if (!IsFlanked(target) || sheet.HasCondition(flanking))
+        {
+            return sheet.ArmorClass(Rules);
+        }
+        CharacterSheet shown = sheet.Copy();
+        shown.AddCondition(Rules, flanking);
+        return shown.ArmorClass(Rules);
+    }
+
+    /// <summary>What an attack from one creature on another has to reach: flanking, and cover for ranged attacks.</summary>
+    public int AttackArmorClass(int from, int target, bool ranged)
+    {
+        return PositionalArmorClass(target) + Chapter.Rules.Positioning.CoverArmorClass(CoverFrom(from, target), ranged);
+    }
+}

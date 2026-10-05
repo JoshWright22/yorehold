@@ -3,10 +3,11 @@ namespace Yorehold.Rules;
 /// <summary>
 /// Sheets for the creatures a world starts with. Heroes are a plain build from their class file
 /// until characters are built from their choices (P7); creatures take their stat block as written.
+/// Until inventories come (P8) the first weapon among their items is the one they fight with.
 /// </summary>
 public static class WorldSheets
 {
-    public static CharacterSheet Hero(Ruleset rules, ClassDefinition characterClass, string name, int level)
+    public static CharacterSheet Hero(Ruleset rules, Compendium compendium, ClassDefinition characterClass, string name, int level)
     {
         var sheet = new CharacterSheet { Name = name, Level = Math.Max(1, level), DcAbility = characterClass.DcAbility };
         foreach (AbilityDefinition ability in rules.Abilities)
@@ -31,10 +32,11 @@ public static class WorldSheets
         {
             sheet.Resources[resource.Key] = resource.Value;
         }
+        sheet.Weapon = WeaponFrom(compendium, characterClass.Items);
         return sheet;
     }
 
-    public static CharacterSheet Creature(Ruleset rules, CreatureDefinition definition, string name)
+    public static CharacterSheet Creature(Ruleset rules, Compendium compendium, CreatureDefinition definition, string name)
     {
         var sheet = new CharacterSheet
         {
@@ -43,6 +45,7 @@ public static class WorldSheets
             DcAbility = definition.DcAbility,
             Hp = definition.Hp,
         };
+        sheet.Death.Saves = definition.DeathSaves;
         foreach (AbilityDefinition ability in rules.Abilities)
         {
             sheet.Stats.SetBase(ability.Id, 10);
@@ -70,6 +73,21 @@ public static class WorldSheets
         {
             sheet.Resources[resource.Key] = resource.Value;
         }
+        sheet.Weapon = WeaponFrom(compendium, definition.Items);
         return sheet;
+    }
+
+    // The first item that does damage, as a held weapon. Null leaves an unarmed strike.
+    private static Weapon? WeaponFrom(Compendium compendium, IEnumerable<string> items)
+    {
+        foreach (string id in items)
+        {
+            ItemDefinition? item = compendium.Item(id);
+            if (item != null && item.Damage.Length > 0)
+            {
+                return new Weapon(item.Damage, item.AttackAbility, item.Hands);
+            }
+        }
+        return null;
     }
 }

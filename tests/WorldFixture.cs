@@ -154,6 +154,47 @@ public sealed class WorldFixture : IDisposable
 
     public bool Sneak(bool on) => After(World.Sneak(on));
 
+    /// <summary>Starts the fight with an encounter where everyone stands.</summary>
+    public void Fight(int group = 0)
+    {
+        World.StartFight(group);
+        TakeEvents();
+    }
+
+    public bool Use(string action, int? target = null) => After(World.Use(action, target));
+
+    public bool MoveTo(Cell to) => After(World.MoveTo(to));
+
+    public bool ChooseTurn(int creature) => After(World.ChooseTurn(creature));
+
+    public bool React(bool take) => After(World.React(take));
+
+    /// <summary>Ends turns until it is creature's; false if it never comes.</summary>
+    public bool TurnTo(int creature)
+    {
+        for (int i = 0; i < 8 && World.CurrentCreature != creature; i++)
+        {
+            if (!Use(World.EndTurnAction))
+            {
+                return false;
+            }
+        }
+        return World.CurrentCreature == creature;
+    }
+
+    /// <summary>Lands a creature's walk at once.</summary>
+    public void FinishWalk(int creature)
+    {
+        Token token = World.Tokens.Tokens[creature];
+        if (token.Path.Count > 0)
+        {
+            token.Position = token.Path[^1];
+        }
+        token.Path.Clear();
+    }
+
+    public bool HasReaction(int creature) => World.BudgetOf(creature)?.Reaction ?? false;
+
     public void SetFlags(params string[] flags)
     {
         World.SetFlags(flags);

@@ -96,7 +96,7 @@ public abstract class EffectHost
     /// <summary>Takes damage of a type off someone and returns what was dealt. A game with resistances overrides it.</summary>
     public virtual int Damage(int who, int amount, string type, EffectContext context)
     {
-        Sheet(who)?.TakeDamage(amount);
+        Sheet(who)?.TakeDamage(amount, context.Rules, context.CriticalDamage);
         return amount;
     }
 

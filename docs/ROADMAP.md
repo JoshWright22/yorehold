@@ -64,9 +64,16 @@ builds, passes `check.ps1` and is committed.
   - Default: cutscenes end as soon as they start and conversations are only printed until P10. A noticed party stops and waits for fights (P5).
   - Default: tokens are discs with an initial and tiles are the C++ placeholder painters; token images and painted layer pictures are not drawn yet.
   - Default: content is read from `res://assets` as a plain folder, which works from the project on desktop. Exports need another way in (P15).
-- [ ] **P5. Combat rules.** Initiative, shared turns, free move plus two actions, all generic
+- [x] **P5. Combat rules.** Initiative, shared turns, free move plus two actions, all generic
   actions (Strike, Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready), reactions and
   opportunity attacks, downed and death, the AI scorer (including flee and surrender).
+  - Default: fights take typed calls like exploring does (`Use`, `MoveTo`, `Attack`, `ChooseTurn`, `EndTurn`, `React`, `Ambush`, `StartFight`) and answer `CurrentCreature`, `ActionsLeft`, `MovementLeft`, `UsableActions`, `ReachableCells`, `ValidTargets` and `HitChance` for the screen.
+  - Default: noticing the party starts the fight at once, so `FightGroup` is only set while one is on. Until P6 draws it the play screen stops at the first hero turn.
+  - Default: the AI plays its turns inside `Update` with the C++ pauses (think, walk, strike, wait). `Options.AutoPlay` hands it the heroes too, which is how the tests play every shipped encounter out.
+  - Default: heroes and creatures fight with the first weapon among their class or creature items until inventories (P8).
+  - Default: an action aimed at a square is refused until spells (P9). The `potion` action only shows for a sheet that carries the `potions` resource.
+  - Default: a wiped party sets `PartyWiped` and plays the `onWipe` cutscene; going back to the checkpoint and its destination come with saves (P10). Picking a fight with an NPC or someone who surrendered waits for dialogue (P10).
+  - Not ported: the C++ keep run with the scripted party, since it rests between fights (P10). The yard fight from sight to victory and the AI play-through of every encounter cover it for now.
 - [ ] **P6. Combat on screen.** Action bar, initiative strip, party cards, targeting with ranges
   and areas, hit and damage text, the log. A scripted fight in a screenshot run. First demo.
   - Layout follows Baldur's Gate 3: the hotbar bottom centre with action, bonus and movement
