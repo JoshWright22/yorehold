@@ -1,0 +1,14 @@
+{
+  "id": "rebuke",
+  "name": "Rebuke",
+  "description": "A sharp word in the god's name at one enemy. Wisdom save, or it takes radiant damage and is frightened 1.",
+  "level": 0,
+  "hands": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 6 },
+  "save": { "ability": "wis", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "1d6", "type": "radiant", "onSave": "none",
+      "scale": { "by": "level", "from": 1, "every": 4, "dice": "1d6" } },
+    { "do": "condition", "id": "frightened", "value": 1, "onSave": "none" }
+  ]
+}

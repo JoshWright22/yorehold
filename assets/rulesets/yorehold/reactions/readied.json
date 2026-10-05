@@ -1,0 +1,8 @@
+{
+  "id": "readied",
+  "name": "Readied Strike",
+  "trigger": "entersReach",
+  "readied": true,
+  "order": 5,
+  "promptSeconds": 2
+}

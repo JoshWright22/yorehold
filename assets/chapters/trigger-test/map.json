@@ -1,0 +1,30 @@
+{
+  "tiles": {
+    "grass": {"walkable": true, "blocksSight": false, "art": "grass"},
+    "wall": {"walkable": false, "blocksSight": true, "art": "wall"}
+  },
+  "legend": {"g": "grass", "w": "wall"},
+  "layers": [
+    {
+      "name": "ground",
+      "rows": [
+        "wwwwwwwwwwwwwwww",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wggggggggggggggw",
+        "wwwwwwwwwwwwwwww"
+      ]
+    }
+  ]
+}

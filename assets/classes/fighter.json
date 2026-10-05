@@ -1,0 +1,44 @@
+{
+  "id": "fighter",
+  "name": "Fighter",
+  "description": "A trained warrior in heavy armour.",
+  "hitDie": 10,
+  "bonusHp": 4,
+  "speed": 30,
+  "dcAbility": "str",
+  "proficiencyRanks": { "weapons": "trained", "armor": "trained", "dc": "trained", "str": "trained", "con": "trained" },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "longsword",
+    "chain-shirt",
+    "shield",
+    "healing-potion"
+  ],
+  "levels": [
+    { "features": [{ "id": "second-wind", "name": "Second Wind", "description": "Once a rest, catch a breath and fight on.", "resources": { "second-wind": 1 } }] },
+    { "feats": ["class"], "features": [{ "id": "action-surge", "name": "Action Surge", "description": "Once a rest, push for one more action.", "resources": { "action-surge": 1 } }] },
+    { "skills": 1, "features": [{ "id": "weapon-training", "name": "Weapon Training", "description": "Hits land harder: +1 weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["skill"] },
+    { "ranks": { "weapons": "expert" }, "features": [{ "id": "battle-hardened", "name": "Battle-Hardened", "description": "+1 maximum HP per level reached so far (5).", "modifiers": [{ "stat": "maxHp", "value": 5 }] }] },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "perception": "expert" } },
+    { "feats": ["general"] },
+    { "ranks": { "con": "expert" }, "features": [{ "id": "indomitable", "name": "Indomitable", "description": "Once a rest, shrug off what should have stopped them.", "resources": { "indomitable": 1 } }] },
+    { "feats": ["class"], "features": [{ "id": "second-wind-2", "name": "Deeper Wind", "description": "Second Wind twice a rest.", "resources": { "second-wind": 1 } }] },
+    { "skills": 1, "ranks": { "armor": "expert" }, "features": [{ "id": "weapon-training-2", "name": "Weapon Mastery", "description": "+1 more weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["skill"] },
+    { "ranks": { "weapons": "master" }, "features": [{ "id": "battle-hardened-2", "name": "Battle-Scarred", "description": "+8 maximum HP.", "modifiers": [{ "stat": "maxHp", "value": 8 }] }] },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "str": "expert" } },
+    { "feats": ["general"] },
+    { "ranks": { "armor": "master" }, "features": [{ "id": "action-surge-2", "name": "Relentless Surge", "description": "Action Surge twice a rest.", "resources": { "action-surge": 1 } }] },
+    { "feats": ["class"] },
+    { "skills": 1, "ranks": { "weapons": "legendary" }, "features": [{ "id": "weapon-training-3", "name": "Weapon Legend", "description": "+1 more weapon damage.", "modifiers": [{ "stat": "damage", "value": 1 }] }] },
+    { "feats": ["skill"], "features": [{ "id": "champion", "name": "Champion", "description": "+1 to weapon attacks.", "modifiers": [{ "stat": "attack", "value": 1 }] }] }
+  ]
+}

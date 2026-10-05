@@ -1,0 +1,14 @@
+{
+  "id": "hide",
+  "name": "Hide",
+  "description": "Try Stealth against each enemy's passive Perception. If all checks pass, gain advantage on your next attack until you move, attack or take damage.",
+  "order": 50,
+  "cost": 1,
+  "log": "{name} tries to hide.",
+  "effects": [
+    { "do": "condition", "id": "hidden", "target": "self" },
+    { "do": "roll", "kind": "check", "ability": "stealth", "against": "perception", "target": "enemies", "steps": [
+      { "do": "condition", "id": "hidden", "target": "self", "remove": true, "when": "failure" }
+    ] }
+  ]
+}

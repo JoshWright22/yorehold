@@ -1,0 +1,8 @@
+{
+  "id": "deep-faith",
+  "name": "Deep Faith",
+  "description": "Prayers that bite: +1 to the DCs of everything they cast.",
+  "kind": "class",
+  "requires": { "classes": ["cleric"] },
+  "modifiers": [{ "stat": "dc", "value": 1 }]
+}

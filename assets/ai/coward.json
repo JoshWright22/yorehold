@@ -1,0 +1,6 @@
+{
+  "id": "coward",
+  "description": "Runs the moment a fight starts, and only fights if cornered. Commoners, lookouts.",
+  "base": "cunning",
+  "fleeHp": 1
+}

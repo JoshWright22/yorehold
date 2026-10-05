@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "id": "yorehold",
+  "name": "Yorehold",
+
+  "abilities": [
+    { "id": "str", "name": "Strength" },
+    { "id": "dex", "name": "Dexterity" },
+    { "id": "con", "name": "Constitution" },
+    { "id": "int", "name": "Intelligence" },
+    { "id": "wis", "name": "Wisdom" },
+    { "id": "cha", "name": "Charisma" }
+  ],
+  "skills": [
+    { "id": "athletics", "name": "Athletics", "ability": "str" },
+    { "id": "acrobatics", "name": "Acrobatics", "ability": "dex" },
+    { "id": "stealth", "name": "Stealth", "ability": "dex" },
+    { "id": "arcana", "name": "Arcana", "ability": "int" },
+    { "id": "investigation", "name": "Investigation", "ability": "int" },
+    { "id": "perception", "name": "Perception", "ability": "wis" },
+    { "id": "insight", "name": "Insight", "ability": "wis" },
+    { "id": "survival", "name": "Survival", "ability": "wis" },
+    { "id": "persuasion", "name": "Persuasion", "ability": "cha" },
+    { "id": "deception", "name": "Deception", "ability": "cha" }
+  ],
+
+  "modifierTable": "d20",
+  "scoreMin": 3,
+  "scoreMax": 20,
+  "scoreMethods": {
+    "roll": "4d6kh3",
+    "standardArray": [15, 14, 13, 12, 10, 8],
+    "pointBudget": 27,
+    "pointCosts": { "8": 0, "9": 1, "10": 2, "11": 3, "12": 4, "13": 5, "14": 7, "15": 9 }
+  },
+  "baseArmorClass": 10,
+  "armorClassAbility": "dex",
+  "initiativeAbility": "dex",
+  "passiveBase": 10,
+  "proficiencyByLevel": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6],
+  "proficiencyRanks": [
+    { "id": "untrained", "name": "Untrained", "bonus": 0, "addsLevel": false },
+    { "id": "trained", "name": "Trained", "bonus": 2, "addsLevel": true },
+    { "id": "expert", "name": "Expert", "bonus": 4, "addsLevel": true },
+    { "id": "master", "name": "Master", "bonus": 6, "addsLevel": true },
+    { "id": "legendary", "name": "Legendary", "bonus": 8, "addsLevel": true }
+  ],
+  "proficientRank": "trained",
+  "untrainedRank": "untrained",
+  "baseDc": 10,
+  "death": {
+    "enabled": true, "saveDc": 10, "successes": 3, "failures": 3,
+    "naturalOneFailures": 2, "naturalTwentyHp": 1,
+    "damageFailures": 1, "criticalDamageFailures": 2,
+    "downedCondition": "downed", "dyingCondition": "dying",
+    "stableCondition": "stable", "deadCondition": "dead"
+  },
+  "xpForLevel": [250, 800, 2500, 6000, 13000, 22000, 33000, 46000, 62000,
+                 82000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000],
+
+  "actionsPerTurn": 2,
+  "bonusActions": false,
+  "strikeCostsHands": true,
+  "sharedTurns": true,
+  "feetPerSquare": 5,
+
+  "carryPerStrength": 15,
+  "magicItemLimit": 3,
+
+  "rests": [
+    { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 }, "restores": ["focus"] },
+    { "id": "long", "name": "Long rest", "perAdventure": 0, "recovery": { "kind": "full", "reviveDowned": true }, "restores": ["slots-*", "focus"],
+      "supplyCost": 40, "campOnly": true, "resets": ["short"] }
+  ],
+  "afterVictory": { "kind": "none" },
+  "reviveAfterVictory": 1,
+  "revivePrice": 20000,
+  "reviveHp": 1,
+  "companions": { "limit": 2, "partyLimit": 6, "approvalMin": -100, "approvalMax": 100 },
+  "defaultHitDie": 8,
+  "hitDieAbility": "con",
+  "hitDieByClass": { "Barbarian": 12, "Fighter": 10, "Cleric": 8, "Rogue": 8, "Wizard": 6 }
+}

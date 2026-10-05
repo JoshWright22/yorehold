@@ -1,0 +1,102 @@
+{
+  "id": "wren",
+  "start": "hail",
+  "nodes": [
+    {
+      "id": "hail",
+      "speaker": "Wren",
+      "text": "Keep your voices down. The goblins took the keep three nights ago, and they dragged Tobb the miller in with them.",
+      "choices": [
+        {
+          "id": "help",
+          "text": "We'll clear them out and bring Tobb home.",
+          "next": "thanks",
+          "forbid": ["keep_quest"],
+          "set": ["keep_quest"]
+        },
+        {
+          "id": "chief",
+          "text": "Who leads them?",
+          "next": "chief"
+        },
+        {
+          "id": "pay",
+          "text": "Heroes don't work for free.",
+          "forbid": ["wren_paid", "wren_refused"],
+          "check": {
+            "skill": "persuasion",
+            "difficulty": 13,
+            "success": "paid",
+            "failure": "refused"
+          }
+        },
+        {
+          "id": "again",
+          "text": "We're going in.",
+          "require": ["keep_quest"],
+          "next": "luck"
+        },
+        {
+          "id": "bye",
+          "text": "Not yet.",
+          "next": ""
+        }
+      ]
+    },
+    {
+      "id": "chief",
+      "speaker": "Wren",
+      "text": "Grak. Big for a goblin, and mean with it. He holds the far hall on the east side. The storeroom is north of the entry hall; that's where I'd keep a prisoner.",
+      "choices": [
+        {
+          "id": "back",
+          "text": "Something else.",
+          "next": "hail"
+        }
+      ]
+    },
+    {
+      "id": "thanks",
+      "speaker": "Wren",
+      "text": "Then go quietly. Get through the gate to the east and watch the shadows. Goblins see in the dark better than you do.",
+      "choices": [
+        {
+          "id": "back",
+          "text": "Something else.",
+          "next": "hail"
+        }
+      ]
+    },
+    {
+      "id": "paid",
+      "speaker": "Wren",
+      "text": "Fine. The mill pays twenty silver when Tobb walks out of there. Don't spend it before you've earned it.",
+      "set": ["wren_paid", "keep_quest"],
+      "choices": [
+        {
+          "id": "back",
+          "text": "Something else.",
+          "next": "hail"
+        }
+      ]
+    },
+    {
+      "id": "refused",
+      "speaker": "Wren",
+      "text": "Then you're not heroes, are you? Help or don't. Tobb doesn't have time for haggling.",
+      "set": ["wren_refused"],
+      "choices": [
+        {
+          "id": "back",
+          "text": "Something else.",
+          "next": "hail"
+        }
+      ]
+    },
+    {
+      "id": "luck",
+      "speaker": "Wren",
+      "text": "Good luck. I'll be here."
+    }
+  ]
+}

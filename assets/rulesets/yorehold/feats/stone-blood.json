@@ -1,0 +1,8 @@
+{
+  "id": "stone-blood",
+  "name": "Stone Blood",
+  "description": "Poison and hardship wash off: expert in Constitution saves.",
+  "kind": "race",
+  "requires": { "races": ["dwarf"] },
+  "ranks": { "con": "expert" }
+}

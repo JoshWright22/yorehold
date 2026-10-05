@@ -1,0 +1,15 @@
+{
+  "id": "rams-breath",
+  "name": "Ram's breath",
+  "description": "A blast of force in a three-square cone. Strength save, or take the hit in full and get shoved two squares back.",
+  "level": 2,
+  "hands": 2,
+  "target": { "kind": "point", "side": "enemy" },
+  "area": { "shape": "cone", "size": 3 },
+  "save": { "ability": "str", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "3d6", "type": "force", "onSave": "half",
+      "scale": { "by": "slot", "from": 2, "dice": "1d6" } },
+    { "do": "move", "how": "push", "distance": 2, "onSave": "none" }
+  ]
+}

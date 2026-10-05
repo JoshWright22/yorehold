@@ -1,0 +1,15 @@
+{
+  "id": "earth-heave",
+  "name": "Earth heave",
+  "description": "The ground bucks under enemies two squares around a spot. Dexterity save for half, and those who fail are knocked prone.",
+  "level": 3,
+  "hands": 1,
+  "target": { "kind": "point", "side": "enemy", "range": 8 },
+  "area": { "shape": "burst", "size": 2 },
+  "save": { "ability": "dex", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "3d6", "type": "bludgeoning", "onSave": "half",
+      "scale": { "by": "slot", "from": 3, "dice": "1d6" } },
+    { "do": "condition", "id": "prone", "onSave": "none" }
+  ]
+}

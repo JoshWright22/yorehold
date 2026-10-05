@@ -1,0 +1,8 @@
+{
+  "id": "shield-ward",
+  "name": "Shield Ward",
+  "description": "Turns blows with the edge of a shield: +1 AC.",
+  "kind": "class",
+  "requires": { "classes": ["fighter", "cleric"], "level": 2 },
+  "modifiers": [{ "stat": "ac", "value": 1 }]
+}

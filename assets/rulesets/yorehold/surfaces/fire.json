@@ -1,0 +1,13 @@
+{
+  "id": "fire",
+  "name": "Fire",
+  "description": "A burning area that deals fire damage each round and spreads to adjacent cells.",
+  "damagePerRound": "1d6",
+  "damageType": "fire",
+  "save": {
+    "ability": "dex",
+    "dc": 12
+  },
+  "onSave": "half",
+  "extinguishedBy": ["water"]
+}

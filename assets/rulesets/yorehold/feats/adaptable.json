@@ -1,0 +1,8 @@
+{
+  "id": "adaptable",
+  "name": "Adaptable",
+  "description": "Picked up a little of everything: trained in Insight and Survival.",
+  "kind": "race",
+  "requires": { "races": ["human"] },
+  "proficiencies": ["insight", "survival"]
+}

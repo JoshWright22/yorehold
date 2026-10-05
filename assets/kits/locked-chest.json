@@ -1,0 +1,10 @@
+{
+  "name": "Locked chest",
+  "object": {
+    "name": "Chest",
+    "area": [0, 0, 64, 64],
+    "tags": ["container"],
+    "door": { "open": false, "locked": true },
+    "lock": { "dc": 12, "skill": "dex" }
+  }
+}

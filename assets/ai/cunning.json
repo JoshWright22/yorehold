@@ -1,0 +1,21 @@
+{
+  "id": "cunning",
+  "description": "Gangs up, avoids being surrounded, and breaks when the fight goes badly or the leader falls: most run, some run for help, some give up. Goblins, bandits.",
+  "damage": 1,
+  "finish": 1.5,
+  "weak": 0.8,
+  "isolated": 0.5,
+  "pack": 1,
+  "nearby": 0.3,
+  "danger": 0.5,
+  "random": 0.3,
+  "fleeHp": 0.3,
+  "fleeLosses": 0.75,
+  "fleeLeaderless": true,
+  "onBreak": {
+    "flee": 2,
+    "alarm": 1,
+    "surrender": 1
+  },
+  "surrenderCornered": true
+}

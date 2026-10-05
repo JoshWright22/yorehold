@@ -1,0 +1,11 @@
+{
+  "id": "stride",
+  "name": "Dash",
+  "description": "Spend an action to move your speed again this turn.",
+  "order": 20,
+  "cost": 1,
+  "log": "{name} dashes",
+  "effects": [
+    { "do": "resource", "target": "self", "id": "movement", "op": "restore", "amount": "speed" }
+  ]
+}

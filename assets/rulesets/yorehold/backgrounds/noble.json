@@ -1,0 +1,8 @@
+{
+  "id": "noble",
+  "name": "Noble",
+  "description": "Born to a name that opens doors, and taught how to use it.",
+  "abilities": { "cha": 1 },
+  "proficiencies": ["persuasion", "insight"],
+  "feats": ["silver-tongue"]
+}

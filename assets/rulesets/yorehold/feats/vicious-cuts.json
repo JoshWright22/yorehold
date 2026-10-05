@@ -1,0 +1,8 @@
+{
+  "id": "vicious-cuts",
+  "name": "Vicious Cuts",
+  "description": "Strikes where it hurts most: +1 weapon damage.",
+  "kind": "class",
+  "requires": { "classes": ["rogue", "barbarian"] },
+  "modifiers": [{ "stat": "damage", "value": 1 }]
+}

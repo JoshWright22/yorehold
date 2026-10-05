@@ -1,0 +1,46 @@
+{
+  "id": "tamsin",
+  "start": "hello",
+  "nodes": [
+    {
+      "id": "hello",
+      "speaker": "Tamsin",
+      "text": "Test companion. Talk her round, then ask her along.",
+      "choices": [
+        {
+          "id": "kind",
+          "text": "We'll get you out of here.",
+          "forbid": ["tamsin_heard"],
+          "set": ["tamsin_heard"],
+          "do": ["approve 10"],
+          "next": "hello"
+        },
+        {
+          "id": "rude",
+          "text": "Out of the way.",
+          "forbid": ["tamsin_heard"],
+          "set": ["tamsin_heard"],
+          "do": ["approve -10"],
+          "next": "hello"
+        },
+        {
+          "id": "join",
+          "text": "Come with us.",
+          "do": ["recruit"],
+          "next": ""
+        },
+        {
+          "id": "part",
+          "text": "Wait here for now.",
+          "do": ["dismiss"],
+          "next": ""
+        },
+        {
+          "id": "bye",
+          "text": "Later.",
+          "next": ""
+        }
+      ]
+    }
+  ]
+}

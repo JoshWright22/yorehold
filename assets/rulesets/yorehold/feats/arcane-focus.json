@@ -1,0 +1,8 @@
+{
+  "id": "arcane-focus",
+  "name": "Arcane Focus",
+  "description": "Spells shaped with care: +1 to the DCs of everything they cast.",
+  "kind": "class",
+  "requires": { "classes": ["wizard"] },
+  "modifiers": [{ "stat": "dc", "value": 1 }]
+}

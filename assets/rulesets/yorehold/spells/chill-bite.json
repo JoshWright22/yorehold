@@ -1,0 +1,14 @@
+{
+  "id": "chill-bite",
+  "name": "Chill bite",
+  "description": "Frost nips one enemy. Constitution save, or it takes cold damage and moves at half speed for a round.",
+  "level": 0,
+  "hands": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 6 },
+  "save": { "ability": "con", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "1d4", "type": "cold", "onSave": "none",
+      "scale": { "by": "level", "from": 1, "every": 4, "dice": "1d4" } },
+    { "do": "condition", "id": "slowed", "duration": 1, "onSave": "none" }
+  ]
+}

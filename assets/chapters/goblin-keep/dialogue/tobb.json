@@ -1,0 +1,85 @@
+{
+  "id": "tobb",
+  "start": "bound",
+  "nodes": [
+    {
+      "id": "bound",
+      "speaker": "Tobb",
+      "text": "Mmph! You're not goblins. Please, the ropes. They went to fetch the chief and they'll be back.",
+      "choices": [
+        {
+          "id": "free",
+          "text": "Hold still. We'll cut you loose.",
+          "forbid": ["tobb_freed"],
+          "next": "freed",
+          "set": ["tobb_freed", "keep_quest"]
+        },
+        {
+          "id": "after",
+          "text": "How are you holding up?",
+          "require": ["tobb_freed"],
+          "next": "after"
+        },
+        {
+          "id": "chief",
+          "text": "What do you know about Grak?",
+          "forbid": ["tobb_told"],
+          "check": {
+            "skill": "insight",
+            "difficulty": 10,
+            "success": "secret",
+            "failure": "babble"
+          }
+        },
+        {
+          "id": "bye",
+          "text": "Stay quiet. We'll be back.",
+          "next": ""
+        }
+      ]
+    },
+    {
+      "id": "freed",
+      "speaker": "Tobb",
+      "text": "Bless you. I'll wait here; I'm not walking past those things alone. Go on, finish it.",
+      "choices": [
+        {
+          "id": "back",
+          "text": "One more thing.",
+          "next": "bound"
+        }
+      ]
+    },
+    {
+      "id": "after",
+      "speaker": "Tobb",
+      "text": "My wrists will heal. My flour won't. Just get Grak out of my keep. Well, the lord's keep."
+    },
+    {
+      "id": "secret",
+      "speaker": "Tobb",
+      "text": "He's scared of fire, I think. He kept the torches in his hall lit all night and shouted at anyone who let one gutter.",
+      "set": ["tobb_told"],
+      "choices": [
+        {
+          "id": "back",
+          "text": "Good to know.",
+          "next": "bound"
+        }
+      ]
+    },
+    {
+      "id": "babble",
+      "speaker": "Tobb",
+      "text": "Big, he's big, and he shouts, and there's the smell, and... sorry. I can't think straight.",
+      "set": ["tobb_told"],
+      "choices": [
+        {
+          "id": "back",
+          "text": "That's all right.",
+          "next": "bound"
+        }
+      ]
+    }
+  ]
+}

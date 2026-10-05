@@ -1,0 +1,13 @@
+{
+  "id": "tactical",
+  "description": "Focuses fire, finishes the wounded and rarely slips up. Holds until nearly dead. Chiefs, veterans, mages.",
+  "damage": 1,
+  "finish": 2.5,
+  "weak": 1.2,
+  "isolated": 0.5,
+  "pack": 1.5,
+  "nearby": 0.2,
+  "danger": 0.8,
+  "random": 0.05,
+  "fleeHp": 0.15
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Lever",
+  "object": {
+    "name": "the lever",
+    "area": [0, 0, 64, 64],
+    "tags": ["lever"]
+  }
+}

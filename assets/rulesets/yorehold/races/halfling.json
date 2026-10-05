@@ -1,0 +1,9 @@
+{
+  "id": "halfling",
+  "name": "Halfling",
+  "description": "Small, quiet and lucky, easy to overlook until it matters.",
+  "speed": 25,
+  "abilities": { "dex": 2, "str": -2 },
+  "proficiencies": ["stealth"],
+  "feats": ["underfoot"]
+}

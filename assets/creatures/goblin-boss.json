@@ -1,0 +1,27 @@
+{
+  "id": "goblin-boss",
+  "name": "Goblin boss",
+  "description": "Bigger, meaner, and in charge.",
+  "hp": 20,
+  "armorClass": 15,
+  "speed": 30,
+  "dcAbility": "str",
+  "proficiencyRanks": { "weapons": "trained", "armor": "trained", "dc": "trained" },
+  "darkvision": 60,
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "battleaxe"
+  ],
+  "loot": { "coins": "4d10" },
+  "token": {
+    "color": [
+      180,
+      60,
+      50
+    ],
+    "size": 0.46
+  },
+  "ai": { "base": "tactical", "leader": true, "fleeHp": 0 }
+}

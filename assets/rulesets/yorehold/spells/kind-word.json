@@ -1,0 +1,12 @@
+{
+  "id": "kind-word",
+  "name": "Kind word",
+  "description": "A quick blessing for an ally within six squares: advantage on their next attack this turn.",
+  "level": 0,
+  "hands": 0,
+  "cost": 1,
+  "target": { "kind": "creature", "side": "ally", "range": 6 },
+  "effects": [
+    { "do": "condition", "id": "aided" }
+  ]
+}

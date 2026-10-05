@@ -1,0 +1,14 @@
+{
+  "id": "steadfast-chorus",
+  "name": "Steadfast chorus",
+  "description": "Allies within three squares of the cleric shake off fear and gain temporary HP.",
+  "level": 3,
+  "hands": 0,
+  "cost": 2,
+  "target": { "kind": "self", "side": "ally" },
+  "area": { "shape": "burst", "size": 3 },
+  "effects": [
+    { "do": "condition", "id": "frightened", "remove": true },
+    { "do": "tempHp", "dice": "2d6+3", "scale": { "by": "slot", "from": 3, "dice": "1d6" } }
+  ]
+}

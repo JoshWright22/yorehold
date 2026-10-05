@@ -1,0 +1,8 @@
+{
+  "name": "Chest",
+  "object": {
+    "name": "Chest",
+    "area": [0, 0, 64, 64],
+    "tags": ["container"]
+  }
+}

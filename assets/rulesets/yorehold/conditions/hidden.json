@@ -1,0 +1,8 @@
+{
+  "id": "hidden",
+  "name": "Hidden",
+  "description": "Moving quietly and out of sight. Advantage on attacks; moving in a fight, attacking or taking damage gives it away.",
+  "flags": ["hidden"],
+  "advantageOnAttacks": true,
+  "ends": ["attack", "damage", "move", "fightStart", "fightEnd"]
+}

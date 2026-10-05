@@ -1,0 +1,11 @@
+{
+  "id": "warding-ring",
+  "name": "Warding ring",
+  "slot": "ring",
+  "magic": true,
+  "weight": 0,
+  "value": 5000,
+  "modifiers": [
+    { "stat": "ac", "value": 1 }
+  ]
+}

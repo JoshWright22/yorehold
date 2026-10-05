@@ -1,0 +1,39 @@
+{
+  "format": "yorehold.adventure",
+  "version": 1,
+  "id": "test-adventure",
+  "title": "Two-Chapter Test Adventure",
+  "description": "A simple two-chapter adventure for testing chapter transitions",
+  "minLevel": 1,
+  "maxLevel": 5,
+  "recommendedPartySize": 3,
+  "chapters": [
+    "chapters/chapter-one",
+    "chapters/chapter-two"
+  ],
+  "transitions": [
+    {
+      "from": "chapter-one",
+      "exitMarker": "exit",
+      "to": "chapter-two",
+      "entryMarker": "entry"
+    },
+    {
+      "from": "chapter-two",
+      "exitMarker": "back",
+      "to": "chapter-one",
+      "entryMarker": "return"
+    },
+    {
+      "from": "chapter-two",
+      "exitMarker": "end",
+      "to": "chapter-one",
+      "entryMarker": "start",
+      "when": ["chapter_two_complete"]
+    }
+  ],
+  "flags": [
+    "chapter_one_complete",
+    "chapter_two_complete"
+  ]
+}

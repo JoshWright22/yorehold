@@ -1,0 +1,14 @@
+{
+  "id": "flame-fan",
+  "name": "Flame fan",
+  "description": "A fan of fire from both hands, three squares long. Dexterity save for half.",
+  "level": 1,
+  "hands": 2,
+  "target": { "kind": "point", "side": "any" },
+  "area": { "shape": "cone", "size": 3 },
+  "save": { "ability": "dex", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "2d6", "type": "fire", "onSave": "half",
+      "scale": { "by": "slot", "from": 1, "dice": "1d6" } }
+  ]
+}

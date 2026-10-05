@@ -1,0 +1,7 @@
+{
+  "id": "mindless",
+  "description": "Walks at the nearest thing and hits it. Never afraid. Zombies, oozes, constructs.",
+  "damage": 1,
+  "nearby": 2,
+  "random": 0.5
+}

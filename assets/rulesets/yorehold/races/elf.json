@@ -1,0 +1,10 @@
+{
+  "id": "elf",
+  "name": "Elf",
+  "description": "Light on their feet, long in memory, and quick to notice what others miss.",
+  "speed": 35,
+  "darkvision": 60,
+  "abilities": { "dex": 2, "con": -2 },
+  "proficiencies": ["perception"],
+  "feats": ["keen-senses"]
+}

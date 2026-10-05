@@ -1,0 +1,16 @@
+{
+  "id": "camp",
+  "title": "The Camp",
+  "map": "map.json",
+  "level": 1,
+  "intro": [
+    "The party has made camp."
+  ],
+  "party": [
+    { "name": "Alice", "class": "fighter", "color": [220, 90, 80], "at": [5, 5] },
+    { "name": "Bob", "class": "rogue", "color": [150, 110, 220], "at": [6, 5] },
+    { "name": "Carol", "class": "cleric", "color": [90, 160, 230], "at": [7, 5] },
+    { "name": "Diana", "class": "wizard", "color": [200, 150, 80], "at": [8, 5] }
+  ],
+  "encounters": []
+}

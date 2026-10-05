@@ -1,0 +1,12 @@
+{
+  "id": "shield-of-faith",
+  "name": "Shield of faith",
+  "description": "A focus spell: a nearby ally gains temporary HP. Spends a focus point.",
+  "level": 1,
+  "hands": 1,
+  "spends": { "focus": 1 },
+  "target": { "kind": "creature", "side": "ally", "range": 6 },
+  "effects": [
+    { "do": "tempHp", "dice": "1d8+2", "scale": { "by": "level", "from": 1, "every": 4, "dice": "1d8" } }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ember-scroll",
+  "name": "Ember scroll",
+  "hands": 2,
+  "weight": 0.1,
+  "value": 5000,
+  "use": {
+    "cost": 2,
+    "target": { "kind": "creature", "side": "enemy", "range": 6 },
+    "save": { "ability": "dex", "dc": 12 },
+    "effects": [{ "do": "damage", "dice": "2d6", "type": "fire", "onSave": "half" }]
+  }
+}

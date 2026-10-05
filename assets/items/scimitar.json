@@ -1,0 +1,9 @@
+{
+  "id": "scimitar",
+  "name": "Scimitar",
+  "value": 2500,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "dex",
+  "weight": 3
+}

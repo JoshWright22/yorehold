@@ -1,0 +1,10 @@
+{
+  "id": "chapter-complete",
+  "start": "complete",
+  "nodes": [
+    {
+      "id": "complete",
+      "text": "The chapter is now complete! This is from the non-combat win condition."
+    }
+  ]
+}

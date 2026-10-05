@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/rules/">
+    <Project Path="rules/Yorehold.Rules.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Yorehold.Rules.Tests.csproj" />
+  </Folder>
+  <Project Path="Yorehold.csproj">
+    <BuildType Project="Debug" />
+  </Project>
+</Solution>

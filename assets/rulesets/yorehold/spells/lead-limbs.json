@@ -1,0 +1,14 @@
+{
+  "id": "lead-limbs",
+  "name": "Lead limbs",
+  "description": "One enemy's arms and legs go heavy. Constitution save, or it moves at half speed and attacks at -2 while the caster holds it.",
+  "level": 2,
+  "hands": 1,
+  "concentration": true,
+  "target": { "kind": "creature", "side": "enemy", "range": 8 },
+  "save": { "ability": "con", "dc": "caster" },
+  "effects": [
+    { "do": "condition", "id": "slowed", "duration": 10, "onSave": "none" },
+    { "do": "modifier", "stat": "attack", "value": -2, "duration": 10, "onSave": "none" }
+  ]
+}

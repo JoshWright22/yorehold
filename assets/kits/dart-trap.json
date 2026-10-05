@@ -1,0 +1,17 @@
+{
+  "name": "Dart trap",
+  "object": {
+    "name": "a dart trap",
+    "area": [0, 0, 64, 64],
+    "trap": {
+      "detectDc": 13,
+      "disarmDc": 12,
+      "detectSkill": "perception",
+      "disarmSkill": "dex",
+      "effect": {
+        "save": { "ability": "dex", "dc": 12 },
+        "effects": [{ "do": "damage", "dice": "1d6", "type": "piercing", "onSave": "half" }]
+      }
+    }
+  }
+}

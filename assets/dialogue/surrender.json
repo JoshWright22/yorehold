@@ -1,0 +1,24 @@
+{
+  "id": "surrender",
+  "start": "begging",
+  "nodes": [
+    {
+      "id": "begging",
+      "text": "Don't kill me! I give up, I give up!",
+      "choices": [
+        { "id": "release", "text": "Go. And don't come back.", "next": "released" },
+        { "id": "prisoner", "text": "Stay here. You're our prisoner.", "next": "" },
+        {
+          "id": "threaten",
+          "text": "Tell me why I shouldn't end you.",
+          "check": { "skill": "persuasion", "difficulty": 12, "success": "cowed", "failure": "defiant" }
+        },
+        { "id": "kill", "text": "No mercy.", "next": "executed" }
+      ]
+    },
+    { "id": "released", "text": "Thank you, thank you! You'll never see me again!", "do": ["release"] },
+    { "id": "cowed", "text": "I'm going! I'm going! I'll tell the others to run too!", "do": ["release"] },
+    { "id": "defiant", "text": "You won't scare me twice. Have at you!", "do": ["fight"] },
+    { "id": "executed", "text": "No, wait-", "do": ["kill"] }
+  ]
+}

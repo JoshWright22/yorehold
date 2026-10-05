@@ -1,0 +1,15 @@
+{
+  "id": "frightened",
+  "name": "Frightened",
+  "description": "Shaken: worse at attacking and defending by its value, which drops by one each round.",
+  "modifiers": [
+    { "stat": "attack", "op": "add", "value": -1 },
+    { "stat": "ac", "op": "add", "value": -1 }
+  ],
+  "flags": ["frightened"],
+  "stacking": "value",
+  "maxValue": 4,
+  "perValue": true,
+  "decay": 1,
+  "ends": ["rest"]
+}

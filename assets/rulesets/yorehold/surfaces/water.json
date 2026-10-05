@@ -1,0 +1,8 @@
+{
+  "id": "water",
+  "name": "Water",
+  "description": "A slick surface that makes movement difficult and extinguishes fire.",
+  "speed": 0.5,
+  "slows": true,
+  "extinguishes": ["fire"]
+}

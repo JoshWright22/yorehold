@@ -1,0 +1,8 @@
+{
+  "id": "slowed",
+  "name": "Slowed",
+  "description": "Moves at half speed.",
+  "modifiers": [{ "stat": "speed", "op": "multiply", "value": 0.5 }],
+  "flags": ["slowed"],
+  "ends": ["rest"]
+}

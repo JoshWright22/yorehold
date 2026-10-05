@@ -1,0 +1,13 @@
+{
+  "hands": "free",
+  "slotPrefix": "slots-",
+  "upcast": true,
+  "prepareAfter": ["long"],
+  "concentration": {
+    "onDamage": "save",
+    "ability": "con",
+    "minimumDc": 10,
+    "damageShare": 0.5,
+    "endsWhenDown": true
+  }
+}

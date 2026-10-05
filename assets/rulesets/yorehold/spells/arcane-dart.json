@@ -1,0 +1,13 @@
+{
+  "id": "arcane-dart",
+  "name": "Arcane dart",
+  "description": "A focus spell: a dart of force that never misses one enemy. Spends a focus point.",
+  "level": 1,
+  "hands": 1,
+  "spends": { "focus": 1 },
+  "target": { "kind": "creature", "side": "enemy", "range": 12 },
+  "effects": [
+    { "do": "damage", "dice": "2d4+1", "type": "force",
+      "scale": { "by": "level", "from": 1, "every": 4, "dice": "1d4" } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "seek",
+  "name": "Seek",
+  "description": "Try Perception against an enemy's passive Stealth within six squares. A success reveals it.",
+  "order": 60,
+  "cost": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 6 },
+  "effects": [{ "do": "roll", "kind": "check", "ability": "perception", "against": "stealth", "steps": [
+    { "do": "condition", "id": "hidden", "remove": true, "when": "success" }
+  ] }]
+}

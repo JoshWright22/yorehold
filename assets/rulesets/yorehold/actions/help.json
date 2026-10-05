@@ -1,0 +1,13 @@
+{
+  "id": "help",
+  "name": "Help",
+  "description": "Help an adjacent ally: advantage on their next attack before their turn ends. A downed ally also gets up with 1 HP.",
+  "order": 40,
+  "cost": 1,
+  "target": { "kind": "creature", "side": "ally", "range": 1, "downed": true },
+  "log": "{name} helps an ally.",
+  "effects": [
+    { "do": "heal", "dice": 1, "ifFlag": "downed" },
+    { "do": "condition", "id": "aided" }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "barbarian",
+  "name": "Barbarian",
+  "description": "A furious fighter who shrugs off wounds.",
+  "hitDie": 12,
+  "bonusHp": 4,
+  "speed": 30,
+  "dcAbility": "str",
+  "proficiencyRanks": { "weapons": "trained", "armor": "trained", "dc": "trained", "str": "trained", "con": "trained" },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "greataxe",
+    "hide",
+    "healing-potion"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "chapter-two",
+  "title": "The Second Chapter",
+  "map": "map.json",
+  "level": 2,
+  "intro": [
+    "You've reached the second area.",
+    "Defeat all enemies and reach the final marker."
+  ],
+  "xpPerVictory": 150,
+  "victoryText": "You've cleared the second chapter!",
+  "party": [
+    {
+      "name": "Alice",
+      "class": "fighter",
+      "color": [220, 90, 80],
+      "at": [3, 3]
+    },
+    {
+      "name": "Bob",
+      "class": "rogue",
+      "color": [150, 110, 220],
+      "at": [4, 3]
+    },
+    {
+      "name": "Carol",
+      "class": "cleric",
+      "color": [90, 160, 230],
+      "at": [5, 3]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "boss",
+      "set": ["chapter_two_complete"],
+      "text": "The boss appears!",
+      "creatures": [
+        {
+          "creature": "goblin-boss",
+          "name": "Boss Goblin",
+          "at": [10, 10]
+        }
+      ]
+    }
+  ]
+}

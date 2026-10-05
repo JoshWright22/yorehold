@@ -1,0 +1,8 @@
+{
+  "id": "farmhand",
+  "name": "Farmhand",
+  "description": "Grew up working fields and reading weather.",
+  "abilities": { "con": 1 },
+  "proficiencies": ["athletics", "survival"],
+  "feats": ["trailwise"]
+}

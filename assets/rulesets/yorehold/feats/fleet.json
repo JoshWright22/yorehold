@@ -1,0 +1,7 @@
+{
+  "id": "fleet",
+  "name": "Fleet",
+  "description": "Covers ground fast: +5 feet of speed.",
+  "kind": "general",
+  "modifiers": [{ "stat": "speed", "value": 5 }]
+}

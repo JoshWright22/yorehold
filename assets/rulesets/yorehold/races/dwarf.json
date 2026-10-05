@@ -1,0 +1,10 @@
+{
+  "id": "dwarf",
+  "name": "Dwarf",
+  "description": "Stocky, stubborn and hard to put down, at home under stone.",
+  "speed": 25,
+  "darkvision": 60,
+  "bonusHp": 2,
+  "abilities": { "con": 2, "cha": -2 },
+  "feats": ["stone-blood"]
+}
