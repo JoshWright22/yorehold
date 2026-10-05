@@ -1343,6 +1343,7 @@ void worldCompanionTests(const std::function<void(bool, const char*)>& check);
 void mapEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
 void encountersEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
 void dialogueEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
+void compendiumEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
 
 int main()
 {
@@ -1378,6 +1379,7 @@ int main()
         mapEditorTests(check, scratch.path);
         encountersEditorTests(check, scratch.path);
         dialogueEditorTests(check, scratch.path);
+        compendiumEditorTests(check, scratch.path);
     }
     catch (const std::exception& e)
     {

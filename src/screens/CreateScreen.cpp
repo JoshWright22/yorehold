@@ -57,6 +57,11 @@ void CreateScreen::openPackage(const std::string& path)
 
     // Undo steps point into the editors, so the history is emptied before they go.
     history_.clear();
+    compendium_.reset();
+    compendiumFolders_.clear();
+    compendiumError_.clear();
+    compendiumSkipped_.clear();
+    compendiumPanel_.reset();
     dialogues_.clear();
     dialogueErrors_.clear();
     dialogue_.clear();
@@ -423,6 +428,116 @@ DialogueEditor* CreateScreen::dialogueEditor()
     return &dialogues_.emplace(dialogue_, std::move(tab)).first->second->editor;
 }
 
+CompendiumEditor* CreateScreen::compendiumEditor()
+{
+    if (!package_)
+        return nullptr;
+    if (compendium_)
+        return compendium_.get();
+    if (!compendiumError_.empty())
+        return nullptr;
+
+    yh::FileSystem game;
+    game.mountFolder(YH_GAME_ASSETS, "game");
+    yh::FileSystem files;
+    if (!ContentPackage::mount(files, packagePath_, "package"))
+    {
+        compendiumError_ = "Couldn't open " + packagePath_;
+        return nullptr;
+    }
+    auto editor = std::make_unique<CompendiumEditor>(history_);
+    const std::optional<std::string> forms = game.readText("create/compendium.json");
+    std::string error;
+    if (!forms || !editor->setKinds(*forms, &error))
+    {
+        compendiumError_ = "create/compendium.json: " + (forms ? error : std::string("missing"));
+        return nullptr;
+    }
+
+    // Ruleset folders: the game's own place for one, and any a chapter names that has a ruleset.json.
+    std::vector<std::string> rulesets;
+    auto addRuleset = [&](const std::string& folder) {
+        if (files.exists(folder + "/ruleset.json") && std::find(rulesets.begin(), rulesets.end(), folder) == rulesets.end())
+            rulesets.push_back(folder);
+    };
+    addRuleset("rulesets/yorehold");
+    for (const std::string& chapter : package_->chapters)
+        if (const auto text = files.readText(chapter + "/chapter.json"))
+            if (const nlohmann::json j = nlohmann::json::parse(*text, nullptr, false); j.is_object() && j.contains("ruleset") && j["ruleset"].is_string())
+            {
+                const std::string named = j["ruleset"].get<std::string>();
+                if (!named.empty() && yh::FileSystem::normalize(named) == named)
+                {
+                    addRuleset(chapter + "/" + named);
+                    addRuleset(named);
+                }
+            }
+
+    // The files, from the package root, the chapters' own folders and the ruleset folders.
+    compendiumSkipped_.clear();
+    for (const CompendiumEditor::Kind& kind : editor->kinds())
+    {
+        std::vector<std::string> folders;
+        if (kind.ruleset)
+        {
+            for (const std::string& ruleset : rulesets)
+                folders.push_back(ruleset + "/" + kind.form.folder);
+            if (!rulesets.empty())
+                compendiumFolders_[kind.form.id] = rulesets.front() + "/" + kind.form.folder;
+        }
+        else
+        {
+            folders.push_back(kind.form.folder);
+            for (const std::string& chapter : package_->chapters)
+                folders.push_back(chapter + "/" + kind.form.folder);
+            compendiumFolders_[kind.form.id] = kind.form.folder;
+        }
+        for (const std::string& folder : folders)
+            for (const std::string& path : files.list(folder))
+            {
+                if (!path.ends_with(".json"))
+                    continue;
+                const std::optional<std::string> text = files.readText(path);
+                if (!text || !editor->addFile(kind.form.id, path, *text, &error))
+                    compendiumSkipped_.push_back(text ? error : path + ": can't be read");
+            }
+    }
+
+    // What the forms offer: the ruleset's abilities and skills, the built-in AI profiles and the
+    // game's own ids of each kind (the package's are added by the editor).
+    yh::FormOptions options;
+    std::optional<yh::Ruleset> rules;
+    if (!rulesets.empty())
+        if (const auto text = files.readText(rulesets.front() + "/ruleset.json"))
+            rules = yh::Ruleset::fromJson(*text);
+    if (!rules)
+        if (const auto text = game.readText("rulesets/yorehold/ruleset.json"))
+            rules = yh::Ruleset::fromJson(*text);
+    if (rules)
+    {
+        for (const yh::AbilityDefinition& ability : rules->abilities)
+            options["abilities"].push_back(ability.id);
+        for (const yh::SkillDefinition& skill : rules->skills)
+            options["skills"].push_back(skill.id);
+    }
+    for (const char* preset : {"mindless", "animal", "cunning", "tactical"})
+        options["ai"].push_back(preset);
+    for (const CompendiumEditor::Kind& kind : editor->kinds())
+    {
+        std::vector<std::string>& list = options[kind.form.folder];
+        for (const std::string& path : game.list(kind.ruleset ? "rulesets/yorehold/" + kind.form.folder : kind.form.folder))
+            if (path.ends_with(".json"))
+            {
+                const std::string id = leaf(path).substr(0, leaf(path).size() - 5);
+                if (std::find(list.begin(), list.end(), id) == list.end())
+                    list.push_back(id);
+            }
+    }
+    editor->setOptions(std::move(options));
+    compendium_ = std::move(editor);
+    return compendium_.get();
+}
+
 void CreateScreen::undo()
 {
     const std::string label(history_.undoLabel());
@@ -498,6 +613,18 @@ bool CreateScreen::save()
             }
         changed.push_back({tab->path, std::move(text), &tab->saved});
     }
+    std::vector<size_t> definitions;
+    if (compendium_)
+        for (const size_t entry : compendium_->changed())
+        {
+            for (const CompendiumEditor::Problem& wrong : compendium_->problems(entry))
+                if (wrong.error)
+                {
+                    status_ = compendium_->entries()[entry].path + " not saved: " + wrong.text;
+                    return false;
+                }
+            definitions.push_back(entry);
+        }
     int written = 0;
     for (File& file : changed)
     {
@@ -509,6 +636,18 @@ bool CreateScreen::save()
             return false;
         }
         *file.saved = std::move(file.text);
+        written++;
+    }
+    for (const size_t entry : definitions)
+    {
+        const std::string& path = compendium_->entries()[entry].path;
+        fs::create_directories((fs::path(packagePath_) / path).parent_path(), problem);
+        if (!yh::writeFileAtomically((fs::path(packagePath_) / path).string(), compendium_->toJson(entry), false, &error))
+        {
+            status_ = path + " not saved: " + error;
+            return false;
+        }
+        compendium_->markSaved(entry);
         written++;
     }
     history_.markSaved();
@@ -569,6 +708,14 @@ void CreateScreen::validate()
     for (const auto& [path, tab] : dialogues_)
         for (const DialogueEditor::Problem& problem : tab->editor.problems())
             validations_.push_back({path, leaf(path) + ": " + problem.text, problem.error});
+    if (!compendiumError_.empty())
+        validations_.push_back({"create/compendium.json", compendiumError_, true});
+    for (const std::string& why : compendiumSkipped_)
+        validations_.push_back({why, why, true});
+    if (compendium_)
+        for (size_t i = 0; i < compendium_->entries().size(); i++)
+            for (const CompendiumEditor::Problem& problem : compendium_->problems(i))
+                validations_.push_back({compendium_->entries()[i].path, compendium_->entries()[i].id + ": " + problem.text, problem.error});
 
     // If chapters exist and we can validate them, do so
     if (packagePath_.empty())
@@ -615,7 +762,7 @@ void CreateScreen::draw(yh::Renderer& renderer)
 
     ui_.begin(renderer, input_);
     // Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z) and Ctrl+S; a text box being typed in keeps its own.
-    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_) && !DialoguePanel::typing(ui_))
+    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_) && !DialoguePanel::typing(ui_) && !compendiumPanel_.typing(ui_))
     {
         if (input_.keyPressed(SDLK_Z))
             input_.shiftDown() ? redo() : undo();
@@ -723,6 +870,15 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
         return;
     }
 
+    if (currentMode_ == Mode::Compendium)
+    {
+        if (CompendiumEditor* editor = compendiumEditor())
+            compendiumPanel_.draw(*editor, compendiumFolders_, ui_, input_, renderer, area);
+        else
+            ui_.label({area.x + 20, area.y + 20}, compendiumError_.empty() ? std::string("Nothing to edit.") : compendiumError_, ui_.theme.bad);
+        return;
+    }
+
     if (!ui_.theme.font)
         return;
 
@@ -737,7 +893,6 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     case Mode::Dialogue:
         break;
     case Mode::Compendium:
-        modeText = "Compendium Editor (classes, items, creatures, races)";
         break;
     case Mode::Cutscene:
         modeText = "Cutscene Editor (animations, camera, effects)";
@@ -753,7 +908,7 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     const std::string subtitle = "Package: " + (package_->name.empty() ? "(unnamed)" : package_->name);
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 20}, subtitle, yh::Color{200, 200, 200, 255});
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 50}, modeText, yh::Color{150, 150, 150, 255});
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G5-G7", yh::Color{100, 100, 100, 255});
+    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G6-G7", yh::Color{100, 100, 100, 255});
 }
 
 void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)

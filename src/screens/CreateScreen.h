@@ -1,6 +1,7 @@
 #pragma once
 
 #include "content/ContentPackage.h"
+#include "screens/CompendiumEditor.h"
 #include "screens/DialogueEditor.h"
 #include "screens/EncountersEditor.h"
 #include "screens/MapEditor.h"
@@ -63,11 +64,18 @@ public:
     // The open file's conversation, loaded the first time it is asked for. Null if it can't be read.
     DialogueEditor* dialogueEditor();
 
+    // The package's definition files (its items, creatures, classes, AI profiles, kits, and the
+    // spells, races, backgrounds and feats of its ruleset folders, chapters' own ones too), read
+    // the first time it is asked for. Null if the forms file can't be read.
+    CompendiumEditor* compendiumEditor();
+    // Where Add puts a new entry of each kind; a ruleset kind has none without a ruleset folder.
+    const std::map<std::string, std::string>& compendiumFolders() const { return compendiumFolders_; }
+
     // One history for the whole package: every mode's edits go on it.
     yh::History& history() { return history_; }
     void undo();
     void redo();
-    // Writes every changed map and chapter back to its file. False (and `status()` says why) if
+    // Writes every changed map, chapter, conversation and definition back to its file. False (and `status()` says why) if
     // the package is a .yore, which can't be written to, or a file would no longer load.
     bool save();
     const std::string& status() const { return status_; }
@@ -144,6 +152,11 @@ private:
     std::map<std::string, std::string> dialogueErrors_;
     std::string dialogue_;
     DialoguePanel dialoguePanel_;
+    std::unique_ptr<CompendiumEditor> compendium_;
+    std::map<std::string, std::string> compendiumFolders_; // kind -> folder in the package
+    std::string compendiumError_;
+    std::vector<std::string> compendiumSkipped_; // files that couldn't be opened, and why
+    CompendiumPanel compendiumPanel_;
     std::string listedChapter_;           // the chapter `listed_` is for; empty = list again
     std::vector<std::string> listed_;     // its dialogueFiles(), so the folder isn't read every frame
     Mode currentMode_ = Mode::None;

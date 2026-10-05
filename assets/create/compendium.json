@@ -1,0 +1,147 @@
+{
+  "format": "yorehold.compendium-forms",
+  "version": 1,
+  "kinds": [
+    {
+      "id": "item", "label": "Items", "folder": "items", "reader": "item",
+      "fields": [
+        { "key": "name", "required": true, "default": "New item" },
+        { "key": "description" },
+        { "key": "slot", "type": "choice", "options": ["", "mainHand", "offHand", "armor", "ring"], "help": "where it is worn or held; none = only carried" },
+        { "key": "hands", "type": "integer", "min": 0, "max": 2, "help": "hands it takes when held (1 if left out)" },
+        { "key": "damage", "help": "dice, like 1d8" },
+        { "key": "attackAbility", "type": "choice", "optionsFrom": "abilities" },
+        { "key": "weight", "type": "number", "min": 0, "label": "weight (lb)" },
+        { "key": "value", "type": "integer", "min": 0, "label": "value (cp)" },
+        { "key": "quantity", "type": "integer", "min": 1 },
+        { "key": "magic", "type": "flag", "help": "counts toward the magic item limit" },
+        { "key": "supplies", "type": "integer", "min": 0, "help": "camp supply points per unit" },
+        { "key": "modifiers", "type": "json", "help": "[{\"stat\": \"armorClass\", \"op\": \"add\", \"value\": 1}]" },
+        { "key": "use", "type": "json", "help": "what using it does: cost, target and effects" }
+      ]
+    },
+    {
+      "id": "creature", "label": "Creatures", "folder": "creatures", "reader": "creature",
+      "fields": [
+        { "key": "name", "required": true, "default": "New creature" },
+        { "key": "description" },
+        { "key": "level", "type": "integer", "min": 0, "max": 30, "default": 1 },
+        { "key": "hp", "type": "integer", "min": 1, "default": 7 },
+        { "key": "armorClass", "type": "integer", "min": 0, "default": 12 },
+        { "key": "speed", "type": "integer", "min": 0, "help": "feet" },
+        { "key": "darkvision", "type": "integer", "min": 0, "help": "feet" },
+        { "key": "dcAbility", "type": "choice", "optionsFrom": "abilities" },
+        { "key": "abilities", "type": "json", "help": "fixed scores: {\"dex\": 14}; the rest are rolled" },
+        { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
+        { "key": "proficiencyRanks", "type": "json" },
+        { "key": "deathSaves", "type": "flag" },
+        { "key": "items", "type": "list", "optionsFrom": "items" },
+        { "key": "loot", "type": "json", "help": "a loot table: {\"coins\": \"2d6\"}" },
+        { "key": "token", "type": "json", "help": "{\"color\": [r, g, b], \"size\": 0.4}" },
+        { "key": "ai", "type": "choice", "optionsFrom": "ai", "default": "cunning", "help": "a profile's name" }
+      ]
+    },
+    {
+      "id": "class", "label": "Classes", "folder": "classes", "reader": "class",
+      "fields": [
+        { "key": "name", "required": true, "default": "New class" },
+        { "key": "description" },
+        { "key": "hitDie", "type": "integer", "min": 1, "max": 20, "default": 8 },
+        { "key": "bonusHp", "type": "integer", "min": 0 },
+        { "key": "speed", "type": "integer", "min": 0, "default": 30 },
+        { "key": "darkvision", "type": "integer", "min": 0 },
+        { "key": "dcAbility", "type": "choice", "optionsFrom": "abilities" },
+        { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
+        { "key": "proficiencyRanks", "type": "json" },
+        { "key": "items", "type": "list", "optionsFrom": "items", "help": "starting gear, equipped in order" },
+        { "key": "resources", "type": "json" },
+        { "key": "casting", "type": "choice", "options": ["known", "prepared", "spontaneous"] },
+        { "key": "spells", "type": "json", "help": "spell ids by level: {\"0\": [...], \"1\": [...]}" },
+        { "key": "levels", "type": "json", "help": "the level table, one row per level" }
+      ]
+    },
+    {
+      "id": "ai", "label": "AI profiles", "folder": "ai", "reader": "ai",
+      "fields": [
+        { "key": "description" },
+        { "key": "base", "type": "choice", "optionsFrom": "ai", "default": "cunning", "help": "starts from this profile" },
+        { "key": "damage", "type": "number" },
+        { "key": "finish", "type": "number" },
+        { "key": "weak", "type": "number" },
+        { "key": "isolated", "type": "number" },
+        { "key": "pack", "type": "number" },
+        { "key": "nearby", "type": "number" },
+        { "key": "danger", "type": "number" },
+        { "key": "random", "type": "number" },
+        { "key": "fleeHp", "type": "number", "min": 0, "max": 1, "help": "runs at or below this share of its HP" },
+        { "key": "fleeLosses", "type": "number", "min": 0 },
+        { "key": "fleeLeaderless", "type": "flag" },
+        { "key": "leader", "type": "flag" },
+        { "key": "escapeAt", "type": "integer", "min": 0 },
+        { "key": "alarmReach", "type": "integer", "min": 0 }
+      ]
+    },
+    {
+      "id": "kit", "label": "Kits", "folder": "kits", "idKey": "", "reader": "kit",
+      "fields": [
+        { "key": "name", "required": true, "default": "New kit" },
+        { "key": "object", "type": "json", "required": true, "default": { "name": "the thing", "area": [0, 0, 64, 64], "tags": [] },
+          "help": "the map object it places" }
+      ]
+    },
+    {
+      "id": "spell", "label": "Spells", "folder": "spells", "ruleset": true, "reader": "spell",
+      "fields": [
+        { "key": "name", "required": true, "default": "New spell" },
+        { "key": "description" },
+        { "key": "level", "type": "integer", "min": 0, "max": 20, "default": 1, "help": "0 = cantrip" },
+        { "key": "hands", "type": "integer", "min": 0, "max": 4 },
+        { "key": "concentration", "type": "flag" },
+        { "key": "spends", "type": "json", "help": "{\"focus\": 1}" },
+        { "key": "cost", "type": "integer", "min": 0, "help": "actions; its hands if left out" },
+        { "key": "target", "type": "json", "default": { "kind": "creature", "side": "enemy", "range": 6 } },
+        { "key": "area", "type": "json" },
+        { "key": "save", "type": "json" },
+        { "key": "effects", "type": "json", "required": true, "default": [{ "do": "damage", "dice": "1d6", "type": "force" }] }
+      ]
+    },
+    {
+      "id": "race", "label": "Races", "folder": "races", "ruleset": true, "reader": "race",
+      "fields": [
+        { "key": "name", "required": true, "default": "New race" },
+        { "key": "description" },
+        { "key": "speed", "type": "integer", "min": 0, "help": "feet; 0 = the class's" },
+        { "key": "darkvision", "type": "integer", "min": 0 },
+        { "key": "bonusHp", "type": "integer", "min": 0 },
+        { "key": "abilities", "type": "json", "help": "{\"con\": 2, \"cha\": -2}" },
+        { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
+        { "key": "feats", "type": "list", "optionsFrom": "feats" }
+      ]
+    },
+    {
+      "id": "background", "label": "Backgrounds", "folder": "backgrounds", "ruleset": true, "reader": "background",
+      "fields": [
+        { "key": "name", "required": true, "default": "New background" },
+        { "key": "description" },
+        { "key": "abilities", "type": "json" },
+        { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
+        { "key": "feats", "type": "list", "optionsFrom": "feats" },
+        { "key": "items", "type": "list", "optionsFrom": "items" }
+      ]
+    },
+    {
+      "id": "feat", "label": "Feats", "folder": "feats", "ruleset": true, "reader": "feat",
+      "fields": [
+        { "key": "name", "required": true, "default": "New feat" },
+        { "key": "description" },
+        { "key": "kind", "type": "choice", "options": ["class", "skill", "general", "race"], "default": "general" },
+        { "key": "repeatable", "type": "flag" },
+        { "key": "requires", "type": "json", "help": "{\"level\": 2, \"races\": [...], \"classes\": [...]}" },
+        { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
+        { "key": "ranks", "type": "json" },
+        { "key": "resources", "type": "json" },
+        { "key": "modifiers", "type": "json" }
+      ]
+    }
+  ]
+}

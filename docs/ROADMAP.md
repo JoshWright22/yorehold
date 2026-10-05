@@ -111,7 +111,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [ ] **G8. Voice lines.** A recorded line becomes words with timings in `<name>.voice.json`,
   produced locally by whisper.cpp at import and matched to the written line. Includes a
   measured tiny.en vs base.en comparison. See SYSTEM_DESIGN "Voice lines".
-- [ ] **G5. Compendium mode.** Forms generated from each kind's fields.
+- [x] **G5. Compendium mode.** Forms generated from each kind's fields.
 - [ ] **G6. Cutscene mode.**
 - [ ] **G7. Story mode.** The node graph and its suggestions.
 

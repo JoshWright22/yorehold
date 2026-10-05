@@ -32,6 +32,7 @@ rulesets/yorehold/             the game's rules (built in; see Rulesets)
   feats/tough.json
 rulesets/my-rules.json         optional custom rules, as one file or a folder like the above
 ui/theme.json                  colors and frame styling
+create/compendium.json         the game's own: the forms of Create's Compendium mode
 design/                        optional game/UI design documents
 dialogues/                     optional dialogue documents
 chapters/goblin-keep/
@@ -193,6 +194,18 @@ The left column is the conversation's id and its nodes; `>` marks the start, and
 The right column is the picked reply, or the node's own flags and actions when none is picked. A reply has an id, its words and either Goes to (a node or "end") or a Skill check with what it rolls, the difficulty and where a pass and a fail go. Ticking Skill check moves Goes to into the pass; unticking moves the pass back. "New node after it" makes a node and points the reply (or the check's empty way) at it in one step. Needs flags and Hidden if are `require` and `forbid`. Sets flags, Clears flags and Does are `set`, `clear` and `do`, separated by commas. Recruit, Dismiss, Approve +1 and Approve -1 add the companion actions; the approve buttons step one `approve N` up or down instead of adding another.
 
 The validation list checks each opened file. Errors stop a save: anything the game would refuse to load, and an action the game would do nothing with, like `approve` without a number or `recruit tam`. Warnings don't: a node nothing leads to, a node with no line, a skill the chapter's ruleset doesn't have, an action the game doesn't know, `approve tam 2` for someone who isn't a companion in this chapter, and `recruit`, `dismiss` or a bare `approve` in a file no companion NPC uses. Fields this mode has no tool for are written back as they were. A file is only rewritten once something in it changed, and undo and redo are the same history as the other modes.
+
+### Editing definitions in Create
+
+Create > Compendium edits the package's definition files: items, creatures, classes, AI profiles and kits at the root and in each chapter's own folders, and the spells, races, backgrounds and feats of its ruleset folders (`rulesets/yorehold` and any folder a chapter's `ruleset` names). The left column picks the kind, the next one the entry (a chapter's own shows the chapter, `*` marks one changed since the last save), and the right side is its form.
+
+The forms come from `create/compendium.json` in the game's assets, in the framework's form format (FRAMEWORK.md, "Saves, undo and forms"): a `kinds` list where each kind is a form with two keys of Yorehold's own, `reader` (which of the game's readers checks the file: `item`, `creature`, `class`, `ai`, `kit`, `spell`, `race`, `background` or `feat`) and `ruleset` (true for kinds that live in a ruleset folder). A new field on a form is a line in that file. What the choice fields offer comes from the ruleset (`abilities`, `skills`), the built-in AI profiles, and the ids of the game's and the package's files of each kind, named after the kind's folder (`items`, `feats`...).
+
+Text, number and list fields are boxes (lists as `a, b, c`); a number out of range or text that isn't one is refused and the line under the form says why. Flags are a button, and choices step with the arrows, "(none)" leaving the field out. Nested parts with no fields of their own (a class's `levels`, an item's `use`, a spell's `effects`) are edited as JSON in their box. Fields the form doesn't list are shown under it and written back as they were, in the order the file had them.
+
+Add makes an entry from the form's defaults with the id typed above it (or `new-<kind>`), Copy a copy of the picked one; both go in the kind's folder at the root or in the first ruleset folder. A new package has no ruleset folder, so its spells, races, backgrounds and feats can't be added there. The id is the file name and isn't changed here; nothing is deleted here either.
+
+The validation list checks every entry. Errors stop a save: a field of the wrong type or out of range, a missing required field, an `id` that isn't the file name, and anything the game's reader refuses. A name the lists don't offer (an item another package carries, an AI written as an object) is only a warning. A file is only rewritten once it changed, and undo and redo are the same history as the other modes.
 
 ## Adventures
 
