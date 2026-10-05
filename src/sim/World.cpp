@@ -171,14 +171,9 @@ void World::newAdventure(uint64_t seed)
     heroCount_ = creatures_.size();
     selectOwnHero();
 
-    // Initialize companion approval scores
-    companionApproval_.clear();
-    companionParty_.clear();
-    for (size_t i = 0; i < chapter_->npcs.size(); i++)
-    {
-        const Chapter::Npc& npc = chapter_->npcs[i];
-        companionApproval_[npc.id] = npc.approvalStart;
-    }
+    // A new adventure meets its companions fresh; travel, camp and saves put their roster back.
+    companions_ = {};
+    meetCompanions();
 
     for (size_t group = 0; group < chapter_->encounters.size(); group++)
     {
@@ -221,6 +216,8 @@ void World::newAdventure(uint64_t seed)
             static_cast<int>(chapter_->encounters.size() + i)};
         creature.npc = static_cast<int>(i);
         creature.creatureId = npc.creature;
+        if (npc.companion)
+            creature.companionId = npc.id;
         creature.aiLayers = {npc.ai};
         creature.surrender = chapter_->surrender;
         creatures_.push_back(std::move(creature));
@@ -265,7 +262,7 @@ bool World::chapterCleared() const
         return std::all_of(chapter_->completeWhen.begin(), chapter_->completeWhen.end(), [this](const std::string& f) { return flags_.contains(f); });
     // Every authored enemy is down (NPCs the party picked a fight with don't count).
     return !chapter_->encounters.empty()
-        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return c.npc < 0 && !c.sheet.down() && !c.surrendered; });
+        && std::none_of(creatures_.begin() + heroCount_, creatures_.end(), [](const Creature& c) { return c.npc < 0 && c.team == 1 && !c.sheet.down(); });
 }
 
 int World::restsLeft(const yh::RestDefinition& rest) const
@@ -281,77 +278,6 @@ bool World::canSave() const
     // Only between fights: the encounter points into creatures_ and isn't saved. A joined player's
     // game belongs to the host, who keeps the save.
     return chapter_ && !remote_ && !(encounter_ && !encounter_->finished()) && !partyDown() && !chapterCleared() && !inCutscene_;
-}
-
-int World::partyMemberCount() const
-{
-    return static_cast<int>(heroCount_) + companionCount();
-}
-
-int World::companionCount() const
-{
-    return static_cast<int>(companionParty_.size());
-}
-
-bool World::canRecruitCompanion(size_t npcIndex) const
-{
-    if (!chapter_ || npcIndex >= chapter_->npcs.size())
-        return false;
-
-    const Chapter::Npc& npc = chapter_->npcs[npcIndex];
-
-    // Check if already in party
-    if (companionParty_.count(npc.id) > 0)
-        return false;
-
-    // Check party cap
-    if (partyMemberCount() >= maxPartyMembers)
-        return false;
-
-    // Check approval threshold
-    int approval = getCompanionApproval(npcIndex);
-    if (approval < npc.approvalJoinThreshold)
-        return false;
-
-    return true;
-}
-
-bool World::isCompanionInParty(size_t npcIndex) const
-{
-    if (!chapter_ || npcIndex >= chapter_->npcs.size())
-        return false;
-
-    return companionParty_.count(chapter_->npcs[npcIndex].id) > 0;
-}
-
-void World::setCompanionApproval(size_t npcIndex, int approval)
-{
-    if (!chapter_ || npcIndex >= chapter_->npcs.size())
-        return;
-
-    companionApproval_[chapter_->npcs[npcIndex].id] = approval;
-}
-
-void World::modifyCompanionApproval(size_t npcIndex, int delta)
-{
-    if (!chapter_ || npcIndex >= chapter_->npcs.size())
-        return;
-
-    const std::string& npcId = chapter_->npcs[npcIndex].id;
-    companionApproval_[npcId] += delta;
-}
-
-int World::getCompanionApproval(size_t npcIndex) const
-{
-    if (!chapter_ || npcIndex >= chapter_->npcs.size())
-        return 0;
-
-    const std::string& npcId = chapter_->npcs[npcIndex].id;
-    auto it = companionApproval_.find(npcId);
-    if (it != companionApproval_.end())
-        return it->second;
-
-    return chapter_->npcs[npcIndex].approvalStart;
 }
 
 void World::requestSave()
@@ -381,6 +307,7 @@ void World::setFlags(const std::vector<std::string>& flags)
 // Tells the party what changed in the journal.
 void World::flagsChanged(const std::set<std::string>& before)
 {
+    companionFlags();
     if (!journal_)
         return;
     for (const yh::Quest& quest : journal_->quests)
@@ -445,7 +372,9 @@ bool World::talkable(size_t creature) const
     if (creature >= creatures_.size() || creature < heroCount_)
         return false;
     const Creature& c = creatures_[creature];
-    return c.team == 2 && !c.sheet.down() && (c.npc >= 0 || c.surrendered);
+    if (companion(creature))
+        return !c.sheet.down() && !dialogueFor(creature).empty();
+    return c.team == 2 && !c.sheet.down() && (c.npc >= 0 || c.surrendered || !c.companionTalk.empty());
 }
 
 std::optional<size_t> World::talkerAt(yh::Cell c) const
@@ -470,7 +399,9 @@ bool World::occupied(yh::Cell c, size_t except) const
 
 bool World::walkable(yh::Cell c) const
 {
-    if (!map().walkable(c) || talkerAt(c))
+    if (!map().walkable(c))
+        return false;
+    if (const std::optional<size_t> who = talkerAt(c); who && !companion(*who)) // companions make way like heroes
         return false;
     // Paths go around a trap the party has found, until someone disarms it.
     const std::optional<yh::ObjectId> object = map().objectAt(c);

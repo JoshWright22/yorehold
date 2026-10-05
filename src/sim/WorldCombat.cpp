@@ -143,8 +143,10 @@ void World::endCombat()
 
     // Healing after a win, as the ruleset says: revive the downed, then any victory recovery.
     restRandom_ = nextRandom(0x5eedull);
-    for (size_t i = 0; i < heroCount_; i++)
+    for (size_t i = 0; i < creatures_.size(); i++)
     {
+        if (!partyMember(i))
+            continue;
         Creature& c = creatures_[i];
         if (c.sheet.down() && !c.sheet.death.dead && rules_.reviveAfterVictory > 0)
         {
@@ -155,6 +157,8 @@ void World::endCombat()
             say(c.sheet.name + " recovers " + std::to_string(healed) + " HP.");
         if (!c.sheet.down())
             tokens_.tokens[i].floor = 0;
+        if (i >= heroCount_)
+            continue; // companions stay the level their creature file gives them
         c.sheet.addXp(rules_, chapter_->xpPerVictory);
         gainLevels(i);
     }
@@ -203,7 +207,7 @@ void World::fallenConditions()
             else if (tokens_.tokens[i].floor == dead) tokens_.tokens[i].floor = 0;
             continue;
         }
-        const char* fallen = i < heroCount_ ? downedCondition : deadCondition;
+        const char* fallen = partyMember(i) ? downedCondition : deadCondition;
         if (c.sheet.down())
         {
             // Someone who got away or was let go is out of the adventure, not lying in it.

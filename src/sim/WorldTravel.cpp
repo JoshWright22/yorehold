@@ -47,7 +47,7 @@ void World::travel(const std::string& toChapter, const std::string& entryMarker)
         return;
     }
 
-    // What goes along: the heroes as they are, the story so far and the rests already taken.
+    // What goes along: the heroes and companions as they are, the story so far and the rests already taken.
     const std::vector<Creature> heroes(creatures_.begin(), creatures_.begin() + static_cast<std::ptrdiff_t>(heroCount_));
     std::set<std::string> flags = flags_;
     for (const std::string& local : chapter_->localFlags)
@@ -55,6 +55,8 @@ void World::travel(const std::string& toChapter, const std::string& entryMarker)
     const std::map<std::string, int> rests = restsUsed_;
     const std::set<std::string> fired = firedTriggers_;
     yh::Stash stash = stash_;
+    yh::Companions roster = companions_;
+    std::vector<Along> companions = companionsAlong();
     const std::vector<std::optional<PartyPick>> picks = partyPicks_;
     std::vector<std::optional<PartyPick>> along;
     for (const Creature& hero : heroes)
@@ -82,6 +84,10 @@ void World::travel(const std::string& toChapter, const std::string& entryMarker)
     restsUsed_ = rests;
     firedTriggers_.insert(fired.begin(), fired.end()); // trigger ids are per adventure too
     stash_ = std::move(stash);
+    companions_ = std::move(roster);
+    meetCompanions();
+    placeCompanions(std::move(companions));
+    companionFlags(); // companions met here think about what the party did before
 
     // Everyone stands at the entry: the first hero on the marker, the rest on the nearest free squares.
     gatherAt(*map().marker(entryMarker)); // Adventure::load checked it

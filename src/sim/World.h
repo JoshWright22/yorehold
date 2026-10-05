@@ -11,6 +11,7 @@
 #include <yorehold/framework/map/Tokens.h>
 #include <yorehold/framework/net/Session.h>
 #include <yorehold/framework/rpg/Combat.h>
+#include <yorehold/framework/rpg/Companions.h>
 #include <yorehold/framework/rpg/Dialogue.h>
 #include <yorehold/framework/rpg/QuestJournal.h>
 #include <yorehold/framework/rpg/Random.h>
@@ -59,6 +60,8 @@ public:
         yh::Concentration concentration; // the spell it is holding in place, if any
         bool mayPrepare = true;          // a prepared caster may choose its spells: after a rest that allows it, until a fight
         float facing = 0;      // radians: where an enemy looks until it notices the party
+        std::string companionId;   // someone who can join the party (yh::Companions); in it while on team 0
+        std::string companionTalk; // a companion's dialogue when they came from another chapter
         // A hero moving quietly (the Hidden condition): slower, lights covered, only noticed inside a vision cone.
         bool sneaking() const { return sheet.hasCondition(hiddenCondition); }
     };
@@ -164,17 +167,16 @@ public:
     int suppliesHeld() const; // supply points in the stash and the packs of heroes who aren't dead
     bool canRevive(size_t payer, size_t target, std::string* why = nullptr) const;
 
-    // Companions: party management
-    // Maximum party members: 4 player characters + 2 companions
-    static constexpr int maxPartyMembers = 6;
-    static constexpr int maxPlayerCharacters = 4;
-    int partyMemberCount() const; // player characters + joined companions
-    int companionCount() const; // number of joined companions currently in the party
-    bool canRecruitCompanion(size_t npcIndex) const; // checks approval and party cap
-    bool isCompanionInParty(size_t npcIndex) const; // is this NPC a companion in the current party
-    void setCompanionApproval(size_t npcIndex, int approval); // set approval for an NPC
-    void modifyCompanionApproval(size_t npcIndex, int delta); // change approval by delta
-    int getCompanionApproval(size_t npcIndex) const; // get current approval
+    // Companions (WorldCompanions.cpp): chapter NPCs with a companion entry join through their
+    // dialogue ("recruit") within the ruleset's limits, and leave with "dismiss" or when their
+    // approval falls to their leaveAt. Approval moves with dialogue ("approve") and story flags.
+    // Members fight on the party's side (the host plays them), follow the heroes and come along
+    // to other chapters and to camp. They come after the chapter's NPCs when not from this chapter.
+    const yh::Companions& companions() const { return companions_; }
+    bool companion(size_t creature) const;   // a joined companion
+    bool partyMember(size_t creature) const; // a hero or a joined companion
+    int partyMemberCount() const;
+    std::optional<size_t> companionToken(std::string_view id) const; // where a companion is on this map
 
     // The adventure between fights as JSON: the save file, and what a joining player receives.
     std::string stateJson() const;
@@ -494,16 +496,24 @@ protected:
     // A chapter's files, with a camp's seats made to fit `heroes`.
     std::unique_ptr<Chapter> loadChapterFor(const std::string& folder, size_t heroes, std::string* error) const;
     bool knownFolder(const std::string& folder) const; // a chapter a save may put the party in
-    void gatherAt(yh::Cell entry); // the heroes on and around a cell
+    void gatherAt(yh::Cell entry); // the heroes and companions on and around a cell
+    // A joined companion as they leave one map for another.
+    struct Along
+    {
+        Creature creature;
+        yh::Token token;
+    };
     // What stays with the party when the map changes under it.
     struct Carried
     {
         std::vector<Creature> heroes;
         std::vector<yh::Color> colors; // their tokens'
-        std::set<std::string> flags, fired, companions;
-        std::map<std::string, int> rests, approval;
+        std::set<std::string> flags, fired;
+        std::map<std::string, int> rests;
         uint64_t rolls = 0;
         yh::Stash stash;
+        yh::Companions roster;
+        std::vector<Along> companions;
     };
     Carried carry() const;
     void putBack(Carried carried);
@@ -580,9 +590,18 @@ protected:
     std::string checkpoint_;
     bool saves_ = true;       // autosave points send their state out (off for test runs)
 
-    // Companions: approval scores and party membership
-    std::map<std::string, int> companionApproval_; // by NPC id
-    std::set<std::string> companionParty_; // NPC ids that have joined the party (moved to creatures_)
+    // Companions (WorldCompanions.cpp): everyone the party has met who could join, and who has.
+    yh::Companions companions_;
+    size_t alongStart() const { return npcStart_ + chapter_->npcs.size(); } // companions from other chapters
+    void meetCompanions();                 // the chapter's companion NPCs into the roster
+    void followParty();                    // companions walk behind the heroes
+    void joinParty(size_t creature);       // "recruit"
+    void companionLeaves(std::string_view id);
+    void changeApproval(std::string_view id, int delta);
+    void companionFlags();                 // approval from story flags set since last time
+    bool companionAction(size_t creature, const std::string& action); // recruit, dismiss, approve
+    std::vector<Along> companionsAlong() const;
+    void placeCompanions(std::vector<Along> along); // after newAdventure: members come along
 
     std::vector<yh::StealthTracker> sneak_; // per hero
     std::vector<yh::Vec2> lastAt_;          // per hero: where they stood last frame

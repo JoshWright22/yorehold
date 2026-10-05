@@ -135,7 +135,7 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             // Picking a fight with an NPC or someone who surrendered. The host adds where everyone
             // stands, as for "fight".
             const size_t creature = j.at("creature").get<size_t>();
-            if (!calm || talk_ || !talkable(creature))
+            if (!calm || talk_ || !talkable(creature) || companion(creature))
                 return std::nullopt;
             nlohmann::json at = nlohmann::json::array();
             for (const yh::Token& t : std::span(tokens_.tokens).first(creatures_.size()))
@@ -812,6 +812,7 @@ void World::apply(const yh::NetCommand& command)
         tokens_.clearLinks();
         for (size_t i = 1; i < heroCount_; i++)
             tokens_.link(i, i - 1);
+        followParty();
         selectOwnHero();
         std::string who;
         for (size_t i = 0; i < heroCount_; i++)

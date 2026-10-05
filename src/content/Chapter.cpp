@@ -408,9 +408,19 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
                     [&](std::string_view id) { return c.compendium.item(id); }, &problem);
                 if (!npc.merchant) throw std::invalid_argument("merchant " + npc.id + ": " + problem);
             }
-            // Companion data
-            npc.approvalStart = n.value("approvalStart", 0);
-            npc.approvalJoinThreshold = n.value("approvalJoinThreshold", 0);
+            if (n.contains("companion"))
+            {
+                nlohmann::json entry = n.at("companion");
+                if (!entry.is_object()) throw std::invalid_argument("companion for " + npc.id + " must be an object");
+                entry["id"] = npc.id;
+                npc.companion = yh::CompanionDefinition::fromJson(entry.dump(), &problem);
+                if (!npc.companion) throw std::invalid_argument(problem);
+            }
+            else if (n.contains("approvalStart") || n.contains("approvalJoinThreshold"))
+            {
+                // the first companion fields, from before the companion object
+                npc.companion = yh::CompanionDefinition{npc.id, n.value("approvalStart", 0), n.value("approvalJoinThreshold", 0)};
+            }
             if (!validId(npc.id) || !npcIds.insert(npc.id).second) throw std::invalid_argument("npc ids must be unique and use a-z, 0-9, - and _");
             if (!c.compendium.creature(npc.creature))
                 throw std::invalid_argument("unknown creature \"" + npc.creature + "\" for " + npc.name);

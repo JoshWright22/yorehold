@@ -46,8 +46,17 @@ std::string World::stateJson() const
     data["surfaces"] = surfacesJson();
     data["merchants"] = merchantsJson();
     data["objects"] = nlohmann::json::parse(map().objects().toJson());
-    data["companionApproval"] = companionApproval_;
-    data["companionParty"] = std::vector<std::string>(companionParty_.begin(), companionParty_.end());
+    data["companions"] = nlohmann::json::parse(companions_.toJson());
+    // Companions from other chapters come after the chapter's own creatures; what newAdventure
+    // needs to put them back. Their sheets are with everyone else's below.
+    for (size_t i = alongStart(); i < creatures_.size(); i++)
+    {
+        const yh::Token& token = tokens_.tokens[i];
+        data["companionsAlong"].push_back({{"id", creatures_[i].companionId}, {"creature", creatures_[i].creatureId},
+            {"talk", creatures_[i].companionTalk}, {"color", {token.color.r, token.color.g, token.color.b, token.color.a}},
+            {"radius", token.radius}, {"image", token.image}, {"cutout", token.imageStyle == yh::TokenImageStyle::Cutout},
+            {"imageScale", token.imageScale}});
+    }
     if (!stash_.empty())
         data["stash"] = nlohmann::json::parse(stash_.toJson());
     if (!campReturn_.empty())
@@ -147,8 +156,26 @@ bool World::restoreState(std::string_view text, std::string* problem)
             slots.insert(slots.end(), chapter_->npcs.size(), Slot{2, true, true});
         }
         else
-            for (const Creature& c : creatures_)
-                slots.push_back({c.team, c.npc >= 0, c.sheet.death.saves});
+            for (size_t i = 0; i < std::min(alongStart(), creatures_.size()); i++)
+                slots.push_back({creatures_[i].team, creatures_[i].npc >= 0, creatures_[i].sheet.death.saves});
+        // The companions met so far, and the ones in the party from other chapters, who come
+        // last. Older saves have neither.
+        std::optional<yh::Companions> roster;
+        if (data.contains("companions"))
+        {
+            roster = yh::Companions::fromJson(data.at("companions").dump(), &error);
+            if (!roster) throw std::runtime_error("saved companions: " + error);
+        }
+        const nlohmann::json along = data.value("companionsAlong", nlohmann::json::array());
+        if (!along.is_array() || (!along.empty() && !roster))
+            throw std::runtime_error("saved companions don't match the party");
+        for (const nlohmann::json& a : along)
+        {
+            const std::string id = a.at("id").get<std::string>();
+            if (!roster->member(id) || std::any_of(chapter_->npcs.begin(), chapter_->npcs.end(), [&](const Chapter::Npc& n) { return n.id == id; }))
+                throw std::runtime_error("saved companion " + id + " doesn't fit the chapter");
+            slots.push_back({0, true, true});
+        }
         if (!fog || !saved.is_array() || saved.size() != slots.size())
             throw std::runtime_error(fog ? "the map has changed since this save" : error);
         // Check all state before applying any of it, including positions and recovery counters.
@@ -249,7 +276,8 @@ bool World::restoreState(std::string_view text, std::string* problem)
             // Only an NPC's side can change (a peaceful one the party attacked), or an enemy's that gave up.
             const int team = c.value("team", slots[teams.size()].team);
             surrendered.push_back(c.value("surrendered", false) && team == 2 && teams.size() >= heroCount_);
-            if (team != slots[teams.size()].team && !(slots[teams.size()].npc && (team == 1 || team == 2)) && !surrendered.back())
+            // A companion is an NPC on the party's side.
+            if (team != slots[teams.size()].team && !(slots[teams.size()].npc && team >= 0 && team <= 2) && !surrendered.back())
                 throw std::runtime_error("saved creature is on the wrong side");
             teams.push_back(team);
         }
@@ -279,20 +307,30 @@ bool World::restoreState(std::string_view text, std::string* problem)
             firedTriggers_.insert(fired.begin(), fired.end());
         }
         rolls_ = rolls;
-        // Restore companion data (newer saves) or reinitialize (older saves)
-        if (data.contains("companionApproval"))
-            companionApproval_ = data.at("companionApproval").get<std::map<std::string, int>>();
-        else
-            companionApproval_.clear();
-        if (data.contains("companionParty"))
+        if (roster)
         {
-            const auto party = data.at("companionParty").get<std::vector<std::string>>();
-            companionParty_.clear();
-            for (const auto& id : party)
-                companionParty_.insert(id);
+            companions_ = std::move(*roster);
+            meetCompanions();
         }
-        else
-            companionParty_.clear();
+        std::vector<Along> joined;
+        for (size_t k = 0, first = sheets.size() - along.size(); k < along.size(); k++)
+        {
+            const nlohmann::json& a = along[k];
+            Along entry{{sheets[first + k]}, {}};
+            entry.creature.companionId = a.at("id").get<std::string>();
+            entry.creature.creatureId = a.value("creature", std::string{});
+            entry.creature.companionTalk = a.value("talk", std::string{});
+            const auto color = a.value("color", std::vector<int>{200, 180, 140, 255});
+            if (color.size() == 4)
+                entry.token.color = {static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[1]), static_cast<uint8_t>(color[2]), static_cast<uint8_t>(color[3])};
+            entry.token.name = entry.creature.sheet.name;
+            entry.token.radius = a.value("radius", GameMap::cellSize * 0.4f);
+            entry.token.image = a.value("image", std::string{});
+            entry.token.imageStyle = a.value("cutout", false) ? yh::TokenImageStyle::Cutout : yh::TokenImageStyle::Portrait;
+            entry.token.imageScale = a.value("imageScale", 1.0f);
+            joined.push_back(std::move(entry));
+        }
+        placeCompanions(std::move(joined));
         for (size_t i = 0; i < creatures_.size(); i++)
         {
             creatures_[i].sheet = std::move(sheets[i]);
@@ -318,6 +356,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             if (creatures_[i].sheet.down())
                 token.floor = dead;
         }
+        followParty();
         fallenConditions();
         heroMarker_.clear();
         for (size_t i = 0; i < heroCount_; i++)

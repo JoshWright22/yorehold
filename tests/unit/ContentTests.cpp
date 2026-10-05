@@ -556,11 +556,14 @@ void contentTests(const fs::path& scratch)
         check(renamed.rests[1].campOnly && renamed.rests[1].supplyCost == 40 && renamed.rests[1].perAdventure == 0
             && renamed.rests[1].resets == std::vector<std::string>{"short"} && !renamed.rests[0].campOnly && renamed.rests[0].supplyCost == 0
             && renamed.revivePrice == 20000 && renamed.reviveHp == 1, "The long rest is taken at camp for 40 supplies; revival there costs 200 gp");
+        // Companions are new too: two of them, and six in the party with four heroes.
+        check(renamed.companions.limit == 2 && renamed.companions.partyLimit == 6, "Two companions join four heroes");
         for (json* set : {&mine, &theirs})
         {
             set->erase("conditions");
             set->erase("revivePrice");
             set->erase("reviveHp");
+            set->erase("companions");
             for (json& rest : set->at("rests"))
             {
                 rest.erase("restores");
@@ -1348,6 +1351,7 @@ void worldSpellTests(const std::function<void(bool, const char*)>& check);
 void worldObjectTests(const std::function<void(bool, const char*)>& check);
 void worldTravelTests(const std::function<void(bool, const char*)>& check);
 void worldCampTests(const std::function<void(bool, const char*)>& check);
+void worldCompanionTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -1370,6 +1374,7 @@ int main()
         worldObjectTests(check);
         worldTravelTests(check);
         worldCampTests(check);
+        worldCompanionTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

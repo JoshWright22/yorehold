@@ -89,18 +89,23 @@ bool World::canRevive(size_t payer, size_t target, std::string* why) const
 
 void World::gatherAt(yh::Cell entry)
 {
-    // The first hero on the cell, the rest on the nearest free squares.
+    // The first hero on the cell, the rest and then the companions on the nearest free squares.
+    std::vector<size_t> party;
+    for (size_t i = 0; i < creatures_.size(); i++)
+        if (partyMember(i))
+            party.push_back(i);
     std::deque<yh::Cell> open{entry};
     std::set<std::pair<int, int>> seen{{entry.x, entry.y}};
-    for (size_t i = 0; i < heroCount_ && !open.empty();)
+    for (size_t next = 0; next < party.size() && !open.empty();)
     {
         const yh::Cell c = open.front();
         open.pop_front();
+        const size_t i = party[next];
         if (walkable(c) && !occupied(c, i))
         {
             tokens_.tokens[i].position = grid_.center(c);
             tokens_.tokens[i].path.clear();
-            i++;
+            next++;
         }
         for (const yh::Cell n : {yh::Cell{c.x + 1, c.y}, yh::Cell{c.x - 1, c.y}, yh::Cell{c.x, c.y + 1}, yh::Cell{c.x, c.y - 1}})
             if (map().inside(n) && map().walkable(n) && seen.insert({n.x, n.y}).second)
@@ -121,8 +126,8 @@ World::Carried World::carry() const
     c.fired = firedTriggers_;
     c.rolls = rolls_;
     c.stash = stash_;
-    c.approval = companionApproval_;
-    c.companions = companionParty_;
+    c.roster = companions_;
+    c.companions = companionsAlong();
     return c;
 }
 
@@ -146,8 +151,9 @@ void World::putBack(Carried carried)
     firedTriggers_.insert(carried.fired.begin(), carried.fired.end());
     rolls_ = carried.rolls;
     stash_ = std::move(carried.stash);
-    companionApproval_ = std::move(carried.approval);
-    companionParty_ = std::move(carried.companions);
+    companions_ = std::move(carried.roster);
+    meetCompanions();
+    placeCompanions(std::move(carried.companions));
     fallenConditions();
 }
 

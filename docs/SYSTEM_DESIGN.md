@@ -272,9 +272,10 @@ content files, "client" = Yorehold code.
   (`from`, `exit` marker, `to`, `entry` marker, optional `when` flags). Flags are per adventure; a
   chapter may mark flags local (`localFlags`). A hero stepping onto an open exit takes the party
   on ("travel", sent by the host), sheets and flags included; saves follow the party's chapter.
-- Companions: creatures with a character file, an approval number changed by dialogue actions and
-  flags, and their own dialogue. They join through a dialogue action. Up to 4 player characters
-  plus 2 companions (**default**).
+- Companions (done): NPCs with a `companion` entry, an approval number changed by dialogue actions
+  and flags (FW `Companions`), and their own dialogue. They join through a dialogue action, fight
+  on the party's side and travel with it. Up to 4 player characters plus 2 companions
+  (**default**, in the ruleset).
 - XP: each encounter and quest declares its XP; the editor proposes a value from creature levels.
 - Cutscenes: done. Triggers gain `onEnter` (region or marker), `onFlag` and `onWipe`.
 
@@ -502,9 +503,11 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 46. Map objects: a key is an item whose id a lock's `key:<id>` tag names; locks without a key are picked with a dex check, traps found with passive perception within 2 squares (`trapSpotRange`) and disarmed with dex. Failing a disarm by 5 sets the trap off. Only heroes set traps off, since enemies know where their own are. Paths avoid found traps. Using an object is free between fights and costs Interact in one. Only floor 0 is played; layers on other floors load and are kept.
 
-47. Travel between chapters: any standing hero stepping onto an open exit between fights moves the whole party, no vote or prompt. Every chapter of an adventure seats the same number of heroes. Heroes keep their sheets; rests taken, flags and fired triggers carry, except a chapter's `localFlags`. Companions don't travel yet (F4). The adventure's level range only checks chapter levels for now.
+47. Travel between chapters: any standing hero stepping onto an open exit between fights moves the whole party, no vote or prompt. Every chapter of an adventure seats the same number of heroes. Heroes keep their sheets; rests taken, flags and fired triggers carry, except a chapter's `localFlags`. Companions in the party travel with it (49). The adventure's level range only checks chapter levels for now.
 
-48. Camp: the party goes from anywhere between fights (a chapter can say no) and comes back to the same spot with the chapter as it was left; the long rest is only taken there, costs 40 supplies, has no other limit and gives the two short rests back. Supplies come from the stash first, then the heroes' packs. A supplies item is worth 10 and costs 5 sp; the keep's storeroom chest has four. Anyone at camp can take from the stash ("give but not take" is about each other's packs). Revival at camp costs 200 gp from the selected hero and brings the hero back at 1 HP. Nobody holds a spell on the way to camp. Camp has no NPCs yet; companions come with F4.
+48. Camp: the party goes from anywhere between fights (a chapter can say no) and comes back to the same spot with the chapter as it was left; the long rest is only taken there, costs 40 supplies, has no other limit and gives the two short rests back. Supplies come from the stash first, then the heroes' packs. A supplies item is worth 10 and costs 5 sp; the keep's storeroom chest has four. Anyone at camp can take from the stash ("give but not take" is about each other's packs). Revival at camp costs 200 gp from the selected hero and brings the hero back at 1 HP. Nobody holds a spell on the way to camp. Camp has no NPCs yet; companions in the party come along and rest there with the heroes.
+
+49. Companions: an NPC is one only if its chapter entry has a `companion` object. They join with the dialogue action `recruit` when their approval is at least `joinAt` and the party has room: at most 2 companions and 6 in all (`companions` in `ruleset.json`), approval from -100 to 100. Approval moves with `approve` actions on any choice and with story flags the companion lists, each flag once; at or below `leaveAt` a member leaves, and `dismiss` sends one away. In the party they are on team 0 and the host plays their turns, with death saves like a hero; they rest and recover after a win with the party but get no XP and keep their creature's level. They walk at the back of the line of whoever plays the first hero. They travel and go to camp with their sheets as they are, and talk with their own dialogue anywhere. One sent away outside their own chapter stays in that chapter and is lost once the party moves on. Dialogue can't see whether someone joined, so writers check it with their own flags for now. Party cards don't show companions until the UI pass.
 
 ### Structure choices made in this document
 

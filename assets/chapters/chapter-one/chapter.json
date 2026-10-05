@@ -29,6 +29,20 @@
       "at": [7, 5]
     }
   ],
+  "npcs": [
+    {
+      "id": "tamsin",
+      "name": "Tamsin",
+      "color": [200, 160, 90],
+      "at": [3, 4],
+      "dialogue": "tamsin.json",
+      "companion": {
+        "joinAt": 10,
+        "leaveAt": -50,
+        "flags": { "chapter_one_complete": 5 }
+      }
+    }
+  ],
   "encounters": [
     {
       "id": "entry",

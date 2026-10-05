@@ -76,6 +76,7 @@
   "reviveAfterVictory": 1,
   "revivePrice": 20000,
   "reviveHp": 1,
+  "companions": { "limit": 2, "partyLimit": 6, "approvalMin": -100, "approvalMax": 100 },
   "defaultHitDie": 8,
   "hitDieAbility": "con",
   "hitDieByClass": { "Barbarian": 12, "Fighter": 10, "Cleric": 8, "Rogue": 8, "Wizard": 6 }

@@ -109,7 +109,7 @@ std::string World::dialogueFor(size_t creature) const
     const Creature& c = creatures_[creature];
     if (c.surrendered)
         return c.surrender;
-    return c.npc >= 0 ? chapter_->npcs[c.npc].dialogue : std::string();
+    return c.npc >= 0 ? chapter_->npcs[c.npc].dialogue : c.companionTalk;
 }
 
 void World::walkToTalk(size_t creature)
@@ -178,6 +178,7 @@ void World::startTalk(size_t creature)
 //   release  they leave for good (no body)
 //   kill     they die where they stand
 //   fight    they attack the party (again)
+//   recruit, dismiss, approve [id] <change>   companions (WorldCompanions.cpp)
 void World::dialogueActions()
 {
     if (!talk_)
@@ -189,6 +190,8 @@ void World::dialogueActions()
     {
         if (c.sheet.down())
             break;
+        if (companion(who) && (action == "release" || action == "kill" || action == "fight"))
+            companionLeaves(c.companionId);
         if (action == "release")
         {
             say(c.sheet.name + " leaves.");
@@ -209,19 +212,8 @@ void World::dialogueActions()
             turnHostile(who);
             return;
         }
-        else if (action == "recruit" && c.npc >= 0)
-        {
-            // Recruit an NPC companion if they pass the approval check
-            if (canRecruitCompanion(static_cast<size_t>(c.npc)))
-            {
-                companionParty_.insert(chapter_->npcs[c.npc].id);
-                say(c.sheet.name + " joins the party.");
-            }
-            else
-            {
-                say(c.sheet.name + " is not ready to join yet.");
-            }
-        }
+        else
+            companionAction(who, action); // recruit, dismiss, approve (WorldCompanions.cpp)
     }
     fallenConditions();
 }
@@ -291,8 +283,10 @@ void World::rest(const yh::RestDefinition& rest)
         say("It uses " + std::to_string(rest.supplyCost) + " supplies; " + std::to_string(suppliesHeld()) + " left.");
     }
     endAllConcentration(); // nobody holds a spell through a rest
-    for (size_t i = 0; i < heroCount_; i++)
+    for (size_t i = 0; i < creatures_.size(); i++)
     {
+        if (!partyMember(i))
+            continue;
         yh::Character& c = creatures_[i].sheet;
         // Spell slots and whatever else the rest's file names come back, to the living.
         if (!c.death.dead && c.restoreResources(rest.restores) > 0)

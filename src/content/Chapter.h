@@ -5,6 +5,7 @@
 #include <yorehold/framework/rpg/Action.h>
 #include <yorehold/framework/rpg/Reaction.h>
 #include <yorehold/framework/rpg/Compendium.h>
+#include <yorehold/framework/rpg/Companions.h>
 #include <yorehold/framework/rpg/Merchant.h>
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/rpg/Stealth.h>
@@ -98,9 +99,9 @@ struct Chapter
         std::string ai; // JSON on top of their creature's, for when they're attacked; empty = none
         std::optional<yh::Merchant> merchant; // stock, purse and price multipliers; absent = no trading
 
-        // Companion fields: if present, this NPC can join the party
-        int approvalStart = 0; // starting approval score for this NPC
-        int approvalJoinThreshold = 0; // approval needed to recruit (0 = always recruiteable)
+        // Someone who can join the party through their dialogue; absent = they never will. The
+        // id is always the NPC's.
+        std::optional<yh::CompanionDefinition> companion;
     };
 
     std::string id;
