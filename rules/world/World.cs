@@ -498,9 +498,7 @@ public sealed class World
         {
             return false;
         }
-        bool hiddenTrap = o.Trap != null && !o.TrapFound;
-        bool usable = (o.HasDoor && (!o.Has("container") || o.Locked)) || o.Has("lever") || o.Has("interactable") || (o.ArmedTrap && !hiddenTrap);
-        if (!usable)
+        if (!Usable(o))
         {
             return false;
         }
@@ -524,6 +522,61 @@ public sealed class World
             }
         }
         return true;
+    }
+
+    /// <summary>A door, lever, locked chest or found trap: something Interact works on, from close enough.</summary>
+    public bool Usable(WorldObject o)
+    {
+        bool hiddenTrap = o.Trap != null && !o.TrapFound;
+        return !o.Destroyed
+            && ((o.HasDoor && (!o.Has("container") || o.Locked)) || o.Has("lever") || o.Has("interactable") || (o.ArmedTrap && !hiddenTrap));
+    }
+
+    /// <summary>
+    /// Walks a hero to the nearest square beside an object, so it can be used on arrival. True
+    /// with no walking when they already stand beside it.
+    /// </summary>
+    public bool GoNear(int hero, int objectId)
+    {
+        Refusal = "";
+        WorldObject? o = Map.Get(objectId);
+        if (o == null || o.Destroyed || hero < 0 || hero >= HeroCount || Creatures[hero].Sheet.Down || Fighting || InCutscene)
+        {
+            Refusal = "Not now.";
+            return false;
+        }
+        List<Cell> cells = MapState.CellsOf(o);
+        Cell at = CellOf(hero);
+        if (cells.Any(c => Math.Abs(c.X - at.X) <= 1 && Math.Abs(c.Y - at.Y) <= 1))
+        {
+            return true;
+        }
+        List<Cell>? best = null;
+        foreach (Cell c in cells)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    var beside = new Cell(c.X + dx, c.Y + dy);
+                    if (cells.Contains(beside) || !Walkable(beside))
+                    {
+                        continue;
+                    }
+                    List<Cell> path = Paths.Find(Grid, at, beside, Walkable);
+                    if (path.Count > 0 && (best == null || path.Count < best.Count))
+                    {
+                        best = path;
+                    }
+                }
+            }
+        }
+        if (best == null)
+        {
+            Refusal = "There is no way there.";
+            return false;
+        }
+        return Go(hero, best[^1]);
     }
 
     /// <summary>Something beside the hero to use, the first by id.</summary>

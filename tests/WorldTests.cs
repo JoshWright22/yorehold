@@ -169,6 +169,28 @@ public class WorldTests
     }
 
     [Fact]
+    public void GoNearWalksUpToAnObject()
+    {
+        using WorldFixture world = WorldFixture.LoadJson("chapters/obj-yard", ObjectYard, 3);
+        World w = world.World;
+        int door = world.ObjectOn(new Cell(5, 2)), chest = world.ObjectOn(new Cell(1, 1));
+        Assert.True(w.Usable(w.Map.Get(door)!) && w.Usable(w.Map.Get(chest)!));
+
+        world.Put(0, new Cell(1, 2));
+        Assert.True(w.GoNear(0, door));
+        Assert.NotEmpty(w.Tokens.Tokens[0].Path);
+        Assert.True(world.StepUntil(() => w.Tokens.Tokens[0].Path.Count == 0, 10));
+        Cell at = w.CellOf(0);
+        Assert.True(at.X == 4 && Math.Abs(at.Y - 2) <= 1, $"stops beside the door, not at {at}");
+        Assert.True(world.Interact(0, door));
+
+        // Already beside it: nothing to walk.
+        Assert.True(w.GoNear(0, door));
+        Assert.Empty(w.Tokens.Tokens[0].Path);
+        Assert.False(w.GoNear(0, 99));
+    }
+
+    [Fact]
     public void TrapsAreFoundDisarmedAndSprung()
     {
         using WorldFixture world = WorldFixture.LoadJson("chapters/obj-yard", ObjectYard, 9);
