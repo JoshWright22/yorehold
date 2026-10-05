@@ -1341,6 +1341,7 @@ void worldTravelTests(const std::function<void(bool, const char*)>& check);
 void worldCampTests(const std::function<void(bool, const char*)>& check);
 void worldCompanionTests(const std::function<void(bool, const char*)>& check);
 void mapEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
+void encountersEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
 
 int main()
 {
@@ -1374,6 +1375,7 @@ int main()
         openFileTests(scratch.path);
         createScreenTests();
         mapEditorTests(check, scratch.path);
+        encountersEditorTests(check, scratch.path);
     }
     catch (const std::exception& e)
     {

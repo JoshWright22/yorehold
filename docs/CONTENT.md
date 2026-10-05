@@ -167,6 +167,23 @@ How many can come is the ruleset's `companions` object (FRAMEWORK.md, "Companion
 
 A creature placement may set `facing`: the direction it looks until it notices the party, in degrees from -360 to 360, where 0 is east (right on the map), 90 south, 180 west and 270 north. Without it the creature looks toward where the party starts. Facing only matters to sneaking heroes, who are noticed inside the vision cone in front of an enemy and not behind it. In the keep, Gob has `"facing": 180` and watches the door.
 
+An encounter group may set `xp`, a whole number from 0: what each hero gets for winning the fight that group starts. Without it the win gives the chapter's `xpPerVictory`, and `{xp}` in `victoryText` is whichever was given. A group may also carry a `loot` table (FRAMEWORK.md, "Loot tables"). It is rolled once nobody in the group is left to fight, and lies in the sack of the last of them to die, with what that one carried. A group whose last members ran or gave up leaves no group loot.
+
+### Placing encounters in Create
+
+Create > Encounters edits the `encounters` and `xpPerVictory` of the same chapter's `chapter.json`, over that chapter's map as it is drawn in Map mode. Heroes, NPCs and chests show as squares and can't be moved here. Creatures are discs with a ring in their group's colour and a line for where they look: solid if `facing` is set, faint if they only watch for the party.
+
+| Tool | Left button | Right button |
+|---|---|---|
+| Select | pick a creature, or drag it to another cell | remove the creature there |
+| Place | put the creature picked on the right into the group picked on the left; the first one in a chapter starts its first group | remove the creature there |
+
+The left column lists the groups with how many are in each, and adds or removes one. Picking a group shows it on the right: its id, the line shown when its fight starts, the flags set on a win (`set`, separated by commas), an AI profile for everyone in it, its `xp` beside the chapter's `xpPerVictory`, and its loot (coins as dice, then items with a chance and a count that step on each click). "Use N from levels" fills in the proposed XP, 25 for each level of each creature in the group. Picking a creature shows its name, its group (the arrows move it to another), the eight ways it can face or "Party" for no `facing`, its own AI profile and Remove. Del removes the picked creature.
+
+What can be placed are the game's own creatures, AI profiles and items plus the package's and the chapter's. Nobody can be put on a wall, off the map or on a taken cell. An `ai` written by hand as an object shows as "custom" and stays until a profile is picked over it. Fields this mode has no tool for (`surrender`, and everything else in the chapter) are written back as they were, in the order the file had them. A group with nobody in it is listed as a warning and left out of the file, since the game refuses one; `aiChanges` that name a renamed group follow it, and those that name a removed one go with it.
+
+Undo and redo are the same history as Map mode. Save writes `chapter.json` only once something in it has changed, and writes nothing at all while a creature is on a wall or a taken cell or names something the package doesn't have: the status line says which.
+
 ## Adventures
 
 `adventure.json` at the content root ties chapters together into a playable journey. It defines:

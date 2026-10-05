@@ -100,6 +100,7 @@ void World::fillContainers()
 void World::dropLoot()
 {
     yh::Random dice(seed_ ^ 0x100700ull ^ (static_cast<uint64_t>(fights_) << 32));
+    std::vector<std::pair<int, Pile>> fallen; // with the group each was in
     for (size_t i = heroCount_; i < creatures_.size(); i++)
     {
         Creature& c = creatures_[i];
@@ -115,6 +116,26 @@ void World::dropLoot()
             for (yh::Item& item : chapter_->compendium.lootItems(found))
                 pile.items.push_back(std::move(item));
         }
+        fallen.emplace_back(c.group, std::move(pile));
+    }
+    // A group's own loot lies with the last of it to fall, once nobody in it is left to fight.
+    // Rolled after the creatures' own, so a chapter without any finds what it always did.
+    for (int group = 0; group < static_cast<int>(chapter_->encounters.size()); group++)
+    {
+        const yh::LootTable& loot = chapter_->encounters[group].loot;
+        const auto last = std::find_if(fallen.rbegin(), fallen.rend(), [&](const auto& entry) { return entry.first == group; });
+        if (loot.empty() || last == fallen.rend())
+            continue;
+        if (std::any_of(creatures_.begin() + heroCount_, creatures_.end(),
+                [&](const Creature& c) { return c.group == group && !c.sheet.down() && !c.surrendered; }))
+            continue;
+        const yh::LootRoll found = yh::rollLoot(loot, dice);
+        last->second.coins += found.coins;
+        for (yh::Item& item : chapter_->compendium.lootItems(found))
+            last->second.items.push_back(std::move(item));
+    }
+    for (auto& [group, pile] : fallen)
+    {
         for (yh::Item& item : pile.items)
             item.equipped = false;
         if (!pile.empty())

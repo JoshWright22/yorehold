@@ -569,6 +569,7 @@ protected:
     std::optional<size_t> enemyTarget_;
     int sideAtStart_[2] = {0, 0}; // how many each side brought to this fight, and whether a leader was among them
     bool hadLeader_[2] = {false, false};
+    int fightGroup_ = -1; // the encounter that started this fight: its xp is the reward (-1 = the chapter's)
     bool aiNotes_ = false;  // each AI decision is explained in the log
     bool autoPlay_ = false; // heroes use the AI too (for testing whole runs)
     int autoExploreStuck_ = 0;

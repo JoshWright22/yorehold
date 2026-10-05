@@ -72,6 +72,7 @@ void World::startCombat(int group, std::optional<size_t> only, bool surprise)
     turnBlockShown_ = 0;
     sideAtStart_[0] = sideAtStart_[1] = 0;
     hadLeader_[0] = hadLeader_[1] = false;
+    fightGroup_ = group;
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         Creature& c = creatures_[i];
@@ -141,6 +142,12 @@ void World::endCombat()
         return;
     }
 
+    // The encounter that started the fight says what it is worth, or the chapter does.
+    int xp = chapter_->xpPerVictory;
+    if (fightGroup_ >= 0 && fightGroup_ < static_cast<int>(chapter_->encounters.size()) && chapter_->encounters[fightGroup_].xp)
+        xp = *chapter_->encounters[fightGroup_].xp;
+    fightGroup_ = -1;
+
     // Healing after a win, as the ruleset says: revive the downed, then any victory recovery.
     restRandom_ = nextRandom(0x5eedull);
     for (size_t i = 0; i < creatures_.size(); i++)
@@ -159,12 +166,12 @@ void World::endCombat()
             tokens_.tokens[i].floor = 0;
         if (i >= heroCount_)
             continue; // companions stay the level their creature file gives them
-        c.sheet.addXp(rules_, chapter_->xpPerVictory);
+        c.sheet.addXp(rules_, xp);
         gainLevels(i);
     }
     fallenConditions(); // the revived are no longer Downed
     selectOwnHero();
-    say(fillXp(chapter_->victoryText, chapter_->xpPerVictory));
+    say(fillXp(chapter_->victoryText, xp));
 
     // Every encounter with nobody left standing sets its story flags.
     std::vector<std::string> won;

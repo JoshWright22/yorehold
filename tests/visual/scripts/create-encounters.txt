@@ -1,0 +1,31 @@
+10 move 195 20
+11 down left
+12 up left
+20 move 126 63
+21 down left
+22 up left
+26 move 900 144
+27 down left
+28 up left
+32 move 452 367
+33 down left
+34 up left
+38 move 502 318
+39 down left
+40 up left
+44 move 900 177
+45 down left
+46 up left
+50 move 552 392
+51 down left
+52 up left
+58 move 47 63
+59 down left
+60 up left
+64 move 502 318
+65 down left
+66 up left
+72 move 854 280
+73 down left
+74 up left
+80 move 600 200

@@ -76,9 +76,10 @@ tests/unit/    WorldFixture: load a chapter, send intents, step time, read state
 The Create screen lets authors design and build content packages (adventures, rulesets, item collections). It sits at `src/screens/CreateScreen.h/cpp` and includes:
 
 - **Package management**: Open an existing package folder or .yore file, or create a new one (a folder under `create/` in the state directory). The last opened package path is saved to `settings.lastCreatePackage` and offered on the Create menu.
-- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story. Map is built (G2); the rest are placeholders until G3-G7.
+- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story. Map (G2) and Encounters (G3) are built; the rest are placeholders until G4-G7.
 - **Shared undo/redo**: One `yh::History` for the whole package. Each mode's commands record on it, and Ctrl+Z/Ctrl+Y or the toolbar step through them whichever mode or chapter they were made in. Save (Ctrl+S) writes what changed and marks the history saved.
 - **Map mode** (`src/screens/MapEditor.h/cpp`): `MapEditor` is the model and its commands (paint, fill, layers, resize, lights, markers, kits), with no drawing, so tests and other layouts use it as it is. `MapEditorPanel` is the desktop layout over it. The map being edited is a `GameMap`, changed in place; the Create screen keeps one editor per opened chapter. Tile strokes record one cell at a time; everything else records what the layers, objects, lights and markers were before and after.
+- **Encounters mode** (`src/screens/EncountersEditor.h/cpp`): the same two parts. `EncountersEditor` holds a chapter's groups and the commands on them (place, move, remove, name, facing, AI, group id, line, flags, XP, loot) and writes them back into the `chapter.json` it read, leaving every other field as it was. `EncountersPanel` draws them over the chapter's map. It asks the chapter's `MapEditor` where someone can stand, so a wall painted in Map mode counts at once. Each command records the groups before and after.
 - **Validation list**: Real-time validation of the package manifest and file structure. Errors are highlighted; warnings are dimmed. Invalid packages cannot be playtested or exported.
 - **Playtest**: Loads the package and plays a chapter in-game to test rules, encounters, and dialogue (G1 is placeholder; actual playtest hooks come in later steps).
 - **Export**: Saves the package as a .yore file or folder for sharing. Only valid packages can be exported.
@@ -344,8 +345,9 @@ Next.js (App Router, TypeScript), talking only to the server API.
 Inside the client, one screen with modes that share one open package, one undo history
 (`yh::History`) and one Playtest button. Writers can move between modes at any time.
 
-- Done: the shell (G1) and Map mode (G2). Still to add in Map mode: importing a painted image,
-  new tile types, and autotiled walls.
+- Done: the shell (G1), Map mode (G2) and Encounters mode (G3). Still to add in Map mode:
+  importing a painted image, new tile types, and autotiled walls. Still to add in Encounters
+  mode: reinforcements.
 
 | Mode | Does |
 |---|---|
@@ -514,6 +516,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 49. Companions: an NPC is one only if its chapter entry has a `companion` object. They join with the dialogue action `recruit` when their approval is at least `joinAt` and the party has room: at most 2 companions and 6 in all (`companions` in `ruleset.json`), approval from -100 to 100. Approval moves with `approve` actions on any choice and with story flags the companion lists, each flag once; at or below `leaveAt` a member leaves, and `dismiss` sends one away. In the party they are on team 0 and the host plays their turns, with death saves like a hero; they rest and recover after a win with the party but get no XP and keep their creature's level. They walk at the back of the line of whoever plays the first hero. They travel and go to camp with their sheets as they are, and talk with their own dialogue anywhere. One sent away outside their own chapter stays in that chapter and is lost once the party moves on. Dialogue can't see whether someone joined, so writers check it with their own flags for now. Party cards don't show companions until the UI pass.
 
 50. Map mode (G2): walls are sight-blocking tiles on a layer named `walls`, one per floor, with the edges the game builds shown live; autotiling waits for wall art that has variants. The palette is the map's own tile types, and a new map gets one per built-in painter; adding types comes with Compendium mode (G5). Lights and markers have no floor, as in `map.json`. Floors run from -9 to 9. The right button removes with every tool. Create > New writes straight to `create/new-adventure` in the state directory, with no name dialog. The editor offers the game's own kits and saves placed kits as whole objects. Undo is kept until another package is opened, not across sessions.
+
+51. Encounters mode (G3): a group's `xp` is what the fight it starts gives each hero, and without one the chapter's `xpPerVictory` still does; the editor proposes 25 per creature level (`Catalog::xpPerLevel`). A group's `loot` lies with the last of it to die, and nothing is left if the last ones ran or gave up. Loot on one creature stays in its creature file until Compendium mode (G5). AI is picked by profile name; changes written as an object are kept but not edited. An empty group is not saved. Creatures are placed on floor 0 only. Reinforcements are not in yet.
 
 ### Structure choices made in this document
 

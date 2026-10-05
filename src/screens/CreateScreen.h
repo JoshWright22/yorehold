@@ -1,6 +1,7 @@
 #pragma once
 
 #include "content/ContentPackage.h"
+#include "screens/EncountersEditor.h"
 #include "screens/MapEditor.h"
 
 #include <yorehold/framework/editor/History.h>
@@ -42,18 +43,20 @@ public:
     // The folder or .yore that is open; empty when nothing is.
     const std::string& packagePath() const { return packagePath_; }
 
-    // The chapter whose map (and, later, encounters) is being edited.
+    // The chapter whose map and encounters are being edited.
     const std::string& chapter() const { return chapter_; }
     void selectChapter(const std::string& folder);
     // That chapter's map, loaded the first time it is asked for. Null if it can't be read.
     MapEditor* mapEditor();
+    // That chapter's encounters, the same way. They stand on its map, so they need it too.
+    EncountersEditor* encountersEditor();
 
     // One history for the whole package: every mode's edits go on it.
     yh::History& history() { return history_; }
     void undo();
     void redo();
-    // Writes every changed map back to its map.json. False (and `status()` says why) if the
-    // package is a .yore, which can't be written to, or a map would no longer load.
+    // Writes every changed map and chapter back to its file. False (and `status()` says why) if
+    // the package is a .yore, which can't be written to, or a file would no longer load.
     bool save();
     const std::string& status() const { return status_; }
 
@@ -81,6 +84,16 @@ private:
         std::string saved; // the JSON as last read or written
     };
 
+    // One chapter's encounters and the layout's own state for them.
+    struct EncountersTab
+    {
+        explicit EncountersTab(yh::History& history) : editor(history) {}
+        EncountersEditor editor;
+        EncountersPanel panel;
+        std::string path;  // "chapters/keep/chapter.json"
+        std::string saved; // the JSON as last read or written, in the editor's form
+    };
+
     void loadPackageFromFile(const std::string& path);
     void validate();
     void drawTabs(yh::Renderer& renderer, const yh::Rect& area);
@@ -88,6 +101,7 @@ private:
     void drawValidationList(yh::Renderer& renderer, const yh::Rect& area);
     void drawToolbar(yh::Renderer& renderer, const yh::Rect& area);
     MapTab* mapTab();
+    EncountersTab* encountersTab();
 
     yh::Ui& ui_;
     yh::Input& input_;
@@ -96,10 +110,13 @@ private:
     std::optional<ContentPackage> package_;
     std::string packagePath_; // file path or folder path of opened package
     std::string chapter_;     // chapter folder inside the package
-    // Its undo steps point into the map editors below: empty it before dropping any of them.
+    // Its undo steps point into the editors below: empty it before dropping any of them.
     yh::History history_;
     std::map<std::string, std::unique_ptr<MapTab>> maps_; // by chapter folder
     std::map<std::string, std::string> mapErrors_;        // chapters whose map couldn't be read, and why
+    // The encounter editors ask the map editors where someone can stand: drop these first.
+    std::map<std::string, std::unique_ptr<EncountersTab>> encounters_;
+    std::map<std::string, std::string> encounterErrors_;
     Mode currentMode_ = Mode::None;
     std::string status_; // the last save or load, shown in the toolbar
 

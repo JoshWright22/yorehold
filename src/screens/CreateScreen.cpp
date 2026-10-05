@@ -54,8 +54,10 @@ void CreateScreen::openPackage(const std::string& path)
     if (path.empty())
         return;
 
-    // Undo steps point into the map editors, so the history is emptied before they go.
+    // Undo steps point into the editors, so the history is emptied before they go.
     history_.clear();
+    encounters_.clear();
+    encounterErrors_.clear();
     maps_.clear();
     mapErrors_.clear();
     package_.reset();
@@ -204,6 +206,60 @@ MapEditor* CreateScreen::mapEditor()
     return tab ? &tab->editor : nullptr;
 }
 
+CreateScreen::EncountersTab* CreateScreen::encountersTab()
+{
+    if (!package_ || chapter_.empty())
+        return nullptr;
+    if (const auto found = encounters_.find(chapter_); found != encounters_.end())
+        return found->second.get();
+    if (encounterErrors_.contains(chapter_))
+        return nullptr;
+    MapTab* map = mapTab();
+    if (!map)
+        return nullptr; // the map's own error says why
+
+    auto fail = [&](std::string why) {
+        encounterErrors_[chapter_] = std::move(why);
+        return nullptr;
+    };
+    yh::FileSystem files;
+    if (!ContentPackage::mount(files, packagePath_, "package"))
+        return fail("Couldn't open " + packagePath_);
+    const std::string path = chapter_ + "/chapter.json";
+    const std::optional<std::string> text = files.readText(path);
+    if (!text)
+        return fail(path + " is missing");
+
+    // What can be placed: the game's own creatures, AI profiles and items under the package's and
+    // the chapter's, which is what a played package sees. A broken file only leaves itself out
+    // here; the package's own checks report it.
+    yh::FileSystem all;
+    all.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
+    all.mountFolder(YH_GAME_ASSETS, "game");
+    ContentPackage::mount(all, packagePath_, "package");
+    yh::Compendium compendium;
+    std::string problem;
+    compendium.load(all, "", &problem);
+    compendium.load(all, chapter_, &problem);
+
+    auto tab = std::make_unique<EncountersTab>(history_);
+    std::string error;
+    // The map as it is being drawn, so a wall painted a moment ago already counts.
+    MapEditor* walls = &map->editor;
+    if (!tab->editor.load(*text, &error, EncountersEditor::Catalog::from(compendium), [walls](yh::Cell cell) { return walls->map().walkable(cell); }))
+        return fail(path + ": " + error);
+    tab->path = path;
+    // Compared in the editor's own form, so a hand-written chapter isn't rewritten until it is changed.
+    tab->saved = tab->editor.toJson();
+    return encounters_.emplace(chapter_, std::move(tab)).first->second.get();
+}
+
+EncountersEditor* CreateScreen::encountersEditor()
+{
+    EncountersTab* tab = encountersTab();
+    return tab ? &tab->editor : nullptr;
+}
+
 void CreateScreen::undo()
 {
     const std::string label(history_.undoLabel());
@@ -228,29 +284,57 @@ bool CreateScreen::save()
         status_ = "A .yore can't be saved into. Unpack it to a folder first.";
         return false;
     }
-    int written = 0;
+    // Everything is checked before anything is written, so a refused file doesn't leave the
+    // others saved around it. Never write a map or a chapter the game would then refuse to load.
+    struct File
+    {
+        std::string path, text;
+        std::string* saved;
+    };
+    std::vector<File> changed;
+    std::string error;
     for (auto& [chapter, tab] : maps_)
     {
-        const std::string text = tab->editor.toJson();
+        std::string text = tab->editor.toJson();
         if (text == tab->saved)
             continue;
-        // Never write a map the game would then refuse to load.
-        std::string error;
         if (!GameMap::fromJson(text, &error))
         {
             status_ = tab->path + " not saved: " + error;
             return false;
         }
-        if (!yh::writeFileAtomically((fs::path(packagePath_) / tab->path).string(), text, false, &error))
+        changed.push_back({tab->path, std::move(text), &tab->saved});
+    }
+    for (auto& [chapter, tab] : encounters_)
+    {
+        std::string text = tab->editor.toJson();
+        const auto map = maps_.find(chapter);
+        const bool mapChanged = map != maps_.end() && map->second->editor.toJson() != map->second->saved;
+        if (text == tab->saved && !mapChanged)
+            continue;
+        // A wall painted over a creature counts too, though only the map changed.
+        for (const EncountersEditor::Problem& wrong : tab->editor.problems())
+            if (wrong.error)
+            {
+                status_ = leaf(chapter) + " not saved: " + wrong.text;
+                return false;
+            }
+        if (text != tab->saved)
+            changed.push_back({tab->path, std::move(text), &tab->saved});
+    }
+    int written = 0;
+    for (File& file : changed)
+    {
+        if (!yh::writeFileAtomically((fs::path(packagePath_) / file.path).string(), file.text, false, &error))
         {
-            status_ = tab->path + " not saved: " + error;
+            status_ = file.path + " not saved: " + error;
             return false;
         }
-        tab->saved = text;
+        *file.saved = std::move(file.text);
         written++;
     }
     history_.markSaved();
-    status_ = written == 0 ? "Nothing to save" : written == 1 ? "Saved 1 map" : "Saved " + std::to_string(written) + " maps";
+    status_ = written == 0 ? "Nothing to save" : written == 1 ? "Saved 1 file" : "Saved " + std::to_string(written) + " files";
     validate();
     return true;
 }
@@ -297,6 +381,11 @@ void CreateScreen::validate()
     for (auto& [chapter, tab] : maps_)
         for (const std::string& line : tab->editor.problems())
             validations_.push_back({tab->path, leaf(chapter) + ": " + line, false});
+    for (const auto& [chapter, why] : encounterErrors_)
+        validations_.push_back({chapter, why, true});
+    for (const auto& [chapter, tab] : encounters_)
+        for (const EncountersEditor::Problem& problem : tab->editor.problems())
+            validations_.push_back({tab->path, leaf(chapter) + ": " + problem.text, problem.error});
 
     // If chapters exist and we can validate them, do so
     if (packagePath_.empty())
@@ -343,7 +432,7 @@ void CreateScreen::draw(yh::Renderer& renderer)
 
     ui_.begin(renderer, input_);
     // Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z) and Ctrl+S; a text box being typed in keeps its own.
-    if (input_.shortcutDown() && !ui_.editing("map-marker"))
+    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_))
     {
         if (input_.keyPressed(SDLK_Z))
             input_.shiftDown() ? redo() : undo();
@@ -427,6 +516,24 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
         return;
     }
 
+    if (currentMode_ == Mode::Encounters)
+    {
+        EncountersTab* tab = encountersTab();
+        MapTab* map = mapTab();
+        if (tab && map)
+        {
+            tab->panel.draw(tab->editor, map->editor.map(), ui_, input_, renderer, area);
+            return;
+        }
+        // Creatures stand on the map, so a map that can't be read stops this mode too.
+        auto why = encounterErrors_.find(chapter_);
+        if (why == encounterErrors_.end() && (why = mapErrors_.find(chapter_)) == mapErrors_.end())
+            ui_.label({area.x + 20, area.y + 20}, "This package has no chapter to place creatures in.", ui_.theme.textDim);
+        else
+            ui_.label({area.x + 20, area.y + 20}, why->second, ui_.theme.bad);
+        return;
+    }
+
     if (!ui_.theme.font)
         return;
 
@@ -437,7 +544,6 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     case Mode::Map:
         break;
     case Mode::Encounters:
-        modeText = "Encounters Editor (creatures, groups, AI, loot)";
         break;
     case Mode::Dialogue:
         modeText = "Dialogue Editor (conversations, choices, triggers)";
@@ -459,7 +565,7 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     const std::string subtitle = "Package: " + (package_->name.empty() ? "(unnamed)" : package_->name);
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 20}, subtitle, yh::Color{200, 200, 200, 255});
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 50}, modeText, yh::Color{150, 150, 150, 255});
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G3-G7", yh::Color{100, 100, 100, 255});
+    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G4-G7", yh::Color{100, 100, 100, 255});
 }
 
 void CreateScreen::drawValidationList(yh::Renderer& renderer, const yh::Rect& area)

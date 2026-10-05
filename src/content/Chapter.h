@@ -83,6 +83,8 @@ struct Chapter
         std::vector<std::string> set; // story flags set when the party wins this fight
         std::string ai; // JSON for everyone in it, on top of each creature's own; empty = none
         std::string surrender; // dialogue for any of them that gives up; empty = the chapter's
+        std::optional<int> xp; // what winning the fight it starts gives each hero; empty = the chapter's xpPerVictory
+        yh::LootTable loot;    // left with the last of them to fall, besides what each one carried
     };
 
     // Someone on the map the party can talk to. They only fight if the party attacks them.

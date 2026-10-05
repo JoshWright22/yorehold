@@ -387,6 +387,18 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             encounter.set = flagsFrom(e, "set");
             encounter.ai = aiFrom(e, c.compendium);
             encounter.surrender = dialogueFrom(e, "");
+            if (e.contains("xp"))
+            {
+                if (!e.at("xp").is_number_integer() || e.at("xp").get<int64_t>() < 0 || e.at("xp").get<int64_t>() > 1000000)
+                    throw std::invalid_argument("xp is a whole number from 0, in " + encounter.id);
+                encounter.xp = e.at("xp").get<int>();
+            }
+            if (e.contains("loot"))
+            {
+                std::optional<yh::LootTable> loot = yh::LootTable::fromJson(e.at("loot").dump(), &problem);
+                if (!loot || !c.compendium.checkLoot(*loot, &problem)) throw std::invalid_argument(encounter.id + " loot: " + problem);
+                encounter.loot = std::move(*loot);
+            }
             c.encounters.push_back(std::move(encounter));
         }
 
