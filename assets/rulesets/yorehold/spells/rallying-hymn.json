@@ -1,0 +1,14 @@
+{
+  "id": "rallying-hymn",
+  "name": "Rallying hymn",
+  "description": "Allies within three squares of the cleric get +1 to attacks for as long as the cleric keeps singing.",
+  "level": 1,
+  "hands": 0,
+  "cost": 1,
+  "concentration": true,
+  "target": { "kind": "self", "side": "ally" },
+  "area": { "shape": "burst", "size": 3 },
+  "effects": [
+    { "do": "modifier", "stat": "attack", "value": 1, "duration": 10 }
+  ]
+}

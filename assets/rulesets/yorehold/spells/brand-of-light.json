@@ -1,0 +1,14 @@
+{
+  "id": "brand-of-light",
+  "name": "Brand of light",
+  "description": "A streak of light marks one enemy up to twelve squares away. Dexterity save for half; on a failure it is off-guard until its next turn.",
+  "level": 1,
+  "hands": 1,
+  "target": { "kind": "creature", "side": "enemy", "range": 12 },
+  "save": { "ability": "dex", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "3d6", "type": "radiant", "onSave": "half",
+      "scale": { "by": "slot", "from": 1, "dice": "1d6" } },
+    { "do": "condition", "id": "off-guard", "onSave": "none" }
+  ]
+}

@@ -18,8 +18,10 @@
   ],
   "casting": "prepared",
   "spells": {
-    "0": ["spark"],
-    "1": ["flame-fan", "mire", "arcane-dart"]
+    "0": ["spark", "chill-bite"],
+    "1": ["flame-fan", "mire", "arcane-dart", "glass-skin"],
+    "2": ["rams-breath", "lead-limbs"],
+    "3": ["cinder-burst", "earth-heave"]
   },
   "levels": [
     { "slots": { "1": 2 }, "spells": 2, "features": [{ "id": "arcane-recovery", "name": "Arcane Recovery", "description": "Once a long rest, win back some spent magic.", "resources": { "arcane-recovery": 1 } }, { "id": "focus-pool", "name": "Focus Pool", "description": "One focus point for a focus spell; a short rest brings it back.", "resources": { "focus": 1 } }] },

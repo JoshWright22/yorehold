@@ -21,7 +21,10 @@
   ],
   "casting": "prepared",
   "spells": {
-    "1": ["mend", "shield-of-faith"]
+    "0": ["rebuke", "kind-word"],
+    "1": ["mend", "shield-of-faith", "brand-of-light", "rallying-hymn"],
+    "2": ["gathered-mending", "iron-vow"],
+    "3": ["dawnburst", "steadfast-chorus"]
   },
   "levels": [
     { "slots": { "1": 2 }, "spells": 2, "features": [{ "id": "focus-pool", "name": "Focus Pool", "description": "One focus point for a focus spell; a short rest brings it back.", "resources": { "focus": 1 } }] },

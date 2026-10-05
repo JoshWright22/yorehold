@@ -1,0 +1,12 @@
+{
+  "id": "gathered-mending",
+  "name": "Gathered mending",
+  "description": "Every ally within two squares of the cleric heals, and downed ones get back up.",
+  "level": 2,
+  "hands": 1,
+  "target": { "kind": "self", "side": "ally", "downed": true },
+  "area": { "shape": "burst", "size": 2 },
+  "effects": [
+    { "do": "heal", "dice": "2d4+2", "scale": { "by": "slot", "from": 2, "dice": "1d4" } }
+  ]
+}

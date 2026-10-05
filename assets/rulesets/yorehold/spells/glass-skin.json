@@ -1,0 +1,11 @@
+{
+  "id": "glass-skin",
+  "name": "Glass skin",
+  "description": "The caster's skin hardens to a clear shell: +2 AC for ten rounds.",
+  "level": 1,
+  "hands": 1,
+  "target": { "kind": "self" },
+  "effects": [
+    { "do": "modifier", "stat": "ac", "value": 2, "duration": 10 }
+  ]
+}

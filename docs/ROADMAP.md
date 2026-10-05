@@ -80,9 +80,8 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [x] **E1. Spell files and casting.** Slots, cantrips, hands as cost, targeting with area
   templates and the ruler, saves, concentration.
 - [x] **E2. Prepared and spontaneous casters, focus points.**
-- [ ] **E3. Starter lists.** About eight spells each for cleric and wizard across levels 0 to 3,
+- [x] **E3. Starter lists.** About eight spells each for cleric and wizard across levels 0 to 3,
   written fresh, each with a unit check.
-  Blocked: E2 complete but spell lists not yet written.
 - [x] **E4. AI uses abilities.** The scorer rates every action a creature has.
 - [x] **E5. Surfaces.** Fire, grease, water, ice as effect areas on the map.
 
@@ -145,3 +144,11 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 - [ ] **I5. The remaining SRD classes and races.**
 - [ ] **I7. Touch layout for Create on mobile.**
 - [ ] **I6. One CI run for Linux and macOS.**
+- [ ] **I8. Test audit.** Measure build and test time per target and per test file, find tests that
+  are slow, flaky or duplicate each other, and cut or speed up what costs more than it protects.
+  Done when: a short report (in `.dev\` or CHECKLIST) lists time per test file and what changed;
+  `check.ps1` is measurably faster; coverage of rules that matter is not lost.
+- [ ] **I8. Test audit.** Time a full check.ps1 and each test file, find the slow, flaky or
+  duplicate tests and the ones that rebuild too much, then cut or speed them up. Done when:
+  a report lists the cost of every test file, check.ps1 runs the quick checks by default, and
+  nothing that guards real behaviour was dropped.

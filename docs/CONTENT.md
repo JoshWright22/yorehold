@@ -580,14 +580,35 @@ slots, free hands, what the hero concentrates on, and every spell with why it ca
 Between fights, spells that help can be cast from there on the party; spells that harm or aim at
 the map need a fight.
 
-The sample spells (the full lists are a later step): `spark` (cantrip, one hand, 1d6 lightning,
-Dexterity save negates, +1d6 every four levels), `flame-fan` (level 1, two hands, a three-square
-cone, 2d6 fire, Dexterity save for half, +1d6 per higher slot), `mire` (level 1, concentration,
-a one-square burst within 6 squares slowing enemies who fail a Strength save) for the wizard, and
-`mend` (level 1, touch, 1d8+2 healing, gets a downed ally up) for the cleric. Focus spells:
-`arcane-dart` (wizard, one enemy within 12 squares, 2d4+1 force, no save, +1d4 every four levels)
-and `shield-of-faith` (cleric, an ally within 6 squares gains 1d8+2 temporary HP, +1d8 every four
-levels). The **Spell targeting** test scene arms Mire on a caster's turn with the pointer on a
+The starter lists, ten spells each: two cantrips, one focus spell and seven to prepare (three of
+level 1, two of 2, two of 3), so a caster always has more on its list than it can prepare. A
+levelled spell grows with each slot above its own level unless it says otherwise; a cantrip or
+focus spell that grows does so every four character levels.
+
+| Spell | Class, level | What it does |
+|---|---|---|
+| `spark` | wizard, 0 | One enemy within 6: 1d6 lightning, Dexterity save negates. |
+| `chill-bite` | wizard, 0 | One enemy within 6: 1d4 cold and slowed for a round, Constitution save negates. |
+| `arcane-dart` | wizard, focus | One enemy within 12: 2d4+1 force, no save. |
+| `flame-fan` | wizard, 1 | Two hands, three-square cone: 2d6 fire, Dexterity save for half. |
+| `mire` | wizard, 1 | Concentration, one-square burst within 6: enemies who fail a Strength save are slowed. |
+| `glass-skin` | wizard, 1 | The caster gets +2 AC for ten rounds. |
+| `rams-breath` | wizard, 2 | Two hands, three-square cone of enemies: 3d6 force, Strength save for half; a failed save pushes them two squares. |
+| `lead-limbs` | wizard, 2 | Concentration, one enemy within 8: slowed and -2 to attacks, Constitution save negates. |
+| `cinder-burst` | wizard, 3 | Two hands, two-square burst within 12, friend or foe: 5d6 fire, Dexterity save for half. |
+| `earth-heave` | wizard, 3 | Two-square burst of enemies within 8: 3d6 bludgeoning, Dexterity save for half; a failed save knocks them prone. |
+| `rebuke` | cleric, 0 | One enemy within 6: 1d6 radiant and frightened 1, Wisdom save negates. |
+| `kind-word` | cleric, 0 | No hands, one action: an ally within 6 is aided (advantage on their next attack this turn). |
+| `shield-of-faith` | cleric, focus | An ally within 6 gains 1d8+2 temporary HP. |
+| `mend` | cleric, 1 | Touch: 1d8+2 healing, gets a downed ally up. |
+| `brand-of-light` | cleric, 1 | One enemy within 12: 3d6 radiant, Dexterity save for half; a failed save leaves it off-guard. |
+| `rallying-hymn` | cleric, 1 | No hands, one action, concentration: allies within 3 of the cleric get +1 to attacks. |
+| `gathered-mending` | cleric, 2 | Allies within 2 of the cleric, downed ones too: 2d4+2 healing. |
+| `iron-vow` | cleric, 2 | Concentration, an ally within 6: +2 AC. |
+| `dawnburst` | cleric, 3 | Two hands, two-square burst of enemies within 10: 4d8 radiant, Constitution save for half. |
+| `steadfast-chorus` | cleric, 3 | No hands, two actions: allies within 3 of the cleric stop being frightened and gain 2d6+3 temporary HP. |
+
+The **Spell targeting** test scene arms Mire on a caster's turn with the pointer on a
 goblin; **Preparing spells** opens the spell panel of the first preparing hero before any fight.
 
 ## NPCs, dialogue, quests and story flags

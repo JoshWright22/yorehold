@@ -1,0 +1,14 @@
+{
+  "id": "dawnburst",
+  "name": "Dawnburst",
+  "description": "Light flares two squares around a spot up to ten squares away and burns only enemies. Constitution save for half.",
+  "level": 3,
+  "hands": 2,
+  "target": { "kind": "point", "side": "enemy", "range": 10 },
+  "area": { "shape": "burst", "size": 2 },
+  "save": { "ability": "con", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "4d8", "type": "radiant", "onSave": "half",
+      "scale": { "by": "slot", "from": 3, "dice": "1d8" } }
+  ]
+}

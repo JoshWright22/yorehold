@@ -1,0 +1,14 @@
+{
+  "id": "cinder-burst",
+  "name": "Cinder burst",
+  "description": "A ball of hot cinders bursts two squares wide, up to twelve squares away. Dexterity save for half.",
+  "level": 3,
+  "hands": 2,
+  "target": { "kind": "point", "side": "any", "range": 12 },
+  "area": { "shape": "burst", "size": 2 },
+  "save": { "ability": "dex", "dc": "caster" },
+  "effects": [
+    { "do": "damage", "dice": "5d6", "type": "fire", "onSave": "half",
+      "scale": { "by": "slot", "from": 3, "dice": "1d6" } }
+  ]
+}

@@ -474,6 +474,18 @@ void contentTests(const fs::path& scratch)
                     tables = false;
                     std::fprintf(stderr, "%s level %d: prepares %d, not %d\n", classId, level, sheet->prepareLimit, prepares);
                 }
+                // The list always has more to prepare than the table asks for, so there is a choice.
+                if (caster && static_cast<int>(sheet->preparable.size()) <= sheet->prepareLimit)
+                {
+                    tables = false;
+                    std::fprintf(stderr, "%s level %d: %zu spells to prepare %d from\n", classId, level, sheet->preparable.size(), sheet->prepareLimit);
+                }
+                // By level 5 the whole starter list is in reach: two cantrips, a focus spell and seven to prepare.
+                if (caster && level >= 5 && (sheet->preparable.size() != 7 || sheet->spells.size() != 3 + static_cast<size_t>(sheet->prepareLimit)))
+                {
+                    tables = false;
+                    std::fprintf(stderr, "%s level %d: %zu to prepare and %zu spells\n", classId, level, sheet->preparable.size(), sheet->spells.size());
+                }
             }
         }
         check(tables, "Fighter, rogue, cleric and wizard build at every level from 1 to 20");

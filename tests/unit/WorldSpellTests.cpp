@@ -12,6 +12,8 @@ using Check = std::function<void(bool, const char*)>;
 struct SpellWorld : WorldFixture
 {
     using World::creatures_;
+    using World::castSpell;
+    using World::endConcentration;
     // Runs an effect directly, then takes what the world said into the log (an intent nobody
     // knows is refused, and only reads the events).
     void hit(size_t from, const yh::ActionDefinition& action, size_t target)
@@ -74,13 +76,13 @@ void betweenFights(const Check& check)
     SpellWorld world, peer;
     check(world.loadJson("chapters/spell-hall", hallFiles(), 5) && peer.loadJson("chapters/spell-hall", hallFiles(), 5), "The spell hall loads");
     if (!world.chapter() || !peer.chapter()) return;
-    check(world.sheet(0).spells == std::vector<std::string>{"spark", "arcane-dart", "flame-fan", "mire"}
-        && world.sheet(1).spells == std::vector<std::string>{"shield-of-faith", "mend"}
+    check(world.sheet(0).spells == std::vector<std::string>{"spark", "chill-bite", "arcane-dart", "flame-fan", "mire"}
+        && world.sheet(1).spells == std::vector<std::string>{"rebuke", "kind-word", "shield-of-faith", "mend", "brand-of-light"}
         && world.sheet(2).spells.empty() && world.sheet(0).resources.at("slots-1").max == 2, "Casters start with their class's spells and slots");
     const auto has = world.actionsOf(0);
     check(world.findSpell("mire") && world.findAction("mire") == &world.findSpell("mire")->action
         && std::find(has.begin(), has.end(), world.findAction("spark")) != has.end()
-        && has.back()->id == World::endTurnAction && world.actionsOf(2).size() + 4 == has.size(), "A caster's spells are listed with its actions");
+        && has.back()->id == World::endTurnAction && world.actionsOf(2).size() + 5 == has.size(), "A caster's spells are listed with its actions");
 
     world.sheet(2).hp = 1; peer.sheet(2).hp = 1;
     const nlohmann::json mend{{"hero", 1}, {"spell", "mend"}, {"target", 2}, {"healing", 1000}, {"slot", 0}};
@@ -237,7 +239,8 @@ void preparing(const Check& check)
     check(world.loadJson("chapters/spell-hall", hallFiles(), 13) && peer.loadJson("chapters/spell-hall", hallFiles(), 13), "The hall loads for preparing");
     if (!world.chapter() || !peer.chapter()) return;
     const yh::Character& wizard = world.sheet(0);
-    check(wizard.preparable == std::vector<std::string>{"flame-fan", "mire"} && wizard.prepareLimit == 2 && wizard.prepared == wizard.preparable
+    check(wizard.preparable == std::vector<std::string>{"flame-fan", "mire", "glass-skin"} && wizard.prepareLimit == 2
+        && wizard.prepared == std::vector<std::string>{"flame-fan", "mire"}
         && world.creatures()[0].mayPrepare, "A new wizard has its first spells prepared and may choose again before the first fight");
 
     // Choosing: from its own list, within its limit, by its own player.
@@ -280,6 +283,111 @@ void focusSpells(const Check& check)
         "A short rest refills the pool");
 }
 
+// The starter lists: each spell cast once through the real casting path, from the slot of its own
+// level, against goblins that always fail the save.
+void starterLists(const Check& check)
+{
+    SpellWorld world;
+    check(world.loadJson("chapters/spell-hall", hallFiles(), 17), "The hall loads for the starter lists");
+    if (!world.chapter()) return;
+    prepare(world);
+    world.sheet(1).stats.setBase("wis", 1000);
+    for (size_t caster : {size_t{0}, size_t{1}})
+        for (int level = 1; level <= 3; level++)
+            world.sheet(caster).resources["slots-" + std::to_string(level)] = {4, 4};
+    const auto cell = [&](size_t who) { return world.grid().cellAt(world.tokens().tokens[who].position); };
+    const auto lost = [&](size_t who) { return world.sheet(who).maxHp() - world.sheet(who).hp; };
+    const auto heal = [&] {
+        for (size_t i = 0; i < world.creatures().size(); i++)
+        {
+            world.sheet(i).hp = world.sheet(i).maxHp();
+            world.sheet(i).tempHp = 0;
+            for (const char* id : {"slowed", "frightened", "prone", "off-guard", "aided"})
+                world.sheet(i).removeCondition(id);
+        }
+    };
+    const auto cast = [&](size_t caster, const char* id, std::optional<size_t> target, std::optional<yh::Cell> at = std::nullopt) {
+        const yh::SpellDefinition* spell = world.findSpell(id);
+        if (!spell) return false;
+        world.castSpell(caster, *spell, target, at, spell->level);
+        world.send("read-log");
+        return true;
+    };
+
+    // Between fights: helping spells go through the cast intent like any other.
+    world.sheet(2).hp = 0;
+    world.sheet(0).hp = 1;
+    check(!world.send("cast", {{"hero", 1}, {"spell", "kind-word"}, {"target", 2}}) && world.sheet(2).hp == 0
+        && !world.sheet(2).hasCondition("aided"), "Kind word cannot help someone downed");
+    check(world.send("cast", {{"hero", 1}, {"spell", "kind-word"}, {"target", 0}}) && world.sheet(0).hasCondition("aided")
+        && world.sheet(1).resources.at("slots-1").current == 4, "Kind word aids an ally, even with a mace and shield in hand");
+    world.sheet(1).spells.push_back("gathered-mending");
+    emptyHands(world.sheet(1));
+    check(world.send("cast", {{"hero", 1}, {"spell", "gathered-mending"}, {"target", 1}}) && world.sheet(2).hp >= 4 && world.sheet(0).hp >= 5
+        && world.sheet(1).resources.at("slots-2").current == 3, "Gathered mending heals everyone near the cleric and gets the downed up");
+    heal();
+    check(startFight(world), "The fight for the starter lists starts");
+    if (world.currentCreature() != 0) return;
+
+    // Wizard.
+    check(world.actionCost(1, *world.findAction("kind-word")) == 1 && world.actionCost(1, *world.findAction("steadfast-chorus")) == 2,
+        "A spell cast with no hands still costs its actions");
+    check(cast(0, "chill-bite", 3) && lost(3) >= 1 && lost(3) <= 4 && world.sheet(3).hasCondition("slowed"),
+        "Chill bite does 1d4 cold and slows");
+    heal();
+    const int ac = world.sheet(0).armorClass(world.rules());
+    check(cast(0, "glass-skin", std::nullopt) && world.sheet(0).armorClass(world.rules()) == ac + 2
+        && world.sheet(0).resources.at("slots-1").current == 3, "Glass skin gives the wizard +2 AC for a first-level slot");
+    check(cast(0, "arcane-dart", 3) && lost(3) >= 3 && lost(3) <= 9 && world.sheet(0).resources.at("focus").current == 0,
+        "Arcane dart does 2d4+1 force for a focus point");
+    heal();
+    const yh::Cell nok = cell(4);
+    check(cast(0, "rams-breath", std::nullopt, yh::Cell{5, 3}) && lost(3) >= 3 && lost(3) <= 18 && lost(4) == lost(3)
+        && cell(4).x == nok.x + 2 && world.sheet(0).resources.at("slots-2").current == 3, "Ram's breath hits the cone and shoves the goblins back");
+    world.tokens().tokens[4].position = world.grid().center(nok);
+    heal();
+    const int attack = world.sheet(5).attackModifier(world.rules());
+    check(cast(0, "lead-limbs", 5) && world.sheet(5).hasCondition("slowed") && world.sheet(5).attackModifier(world.rules()) == attack - 2
+        && world.creatures()[0].concentration.spell == "lead-limbs" && world.creatures()[0].concentration.holds.size() == 2,
+        "Lead limbs slows and weakens one goblin while the wizard concentrates");
+    world.endConcentration(0, "");
+    check(!world.sheet(5).hasCondition("slowed") && world.sheet(5).attackModifier(world.rules()) == attack, "Letting go of Lead limbs undoes both");
+    heal();
+    check(cast(0, "cinder-burst", std::nullopt, cell(4)) && lost(3) >= 5 && lost(3) <= 30 && lost(4) == lost(3) && lost(5) == 0
+        && lost(0) == 0 && world.sheet(0).resources.at("slots-3").current == 3, "Cinder burst burns everyone two squares around the spot");
+    heal();
+    check(cast(0, "earth-heave", std::nullopt, cell(5)) && lost(5) >= 3 && lost(5) <= 18 && world.sheet(5).hasCondition("prone")
+        && lost(1) == 0 && !world.sheet(1).hasCondition("prone"), "Earth heave hurts and floors enemies only");
+    heal();
+
+    // Cleric.
+    check(cast(1, "rebuke", 3) && lost(3) >= 1 && lost(3) <= 6 && world.sheet(3).hasCondition("frightened"),
+        "Rebuke does 1d6 radiant and frightens");
+    heal();
+    check(cast(1, "brand-of-light", 4) && lost(4) >= 3 && lost(4) <= 18 && world.sheet(4).hasCondition("off-guard"),
+        "Brand of light does 3d6 radiant and leaves the goblin off-guard");
+    heal();
+    const int fighterAttack = world.sheet(2).attackModifier(world.rules());
+    const int wizardAttack = world.sheet(0).attackModifier(world.rules());
+    const int goblinAttack = world.sheet(3).attackModifier(world.rules());
+    check(cast(1, "rallying-hymn", std::nullopt) && world.sheet(2).attackModifier(world.rules()) == fighterAttack + 1
+        && world.sheet(0).attackModifier(world.rules()) == wizardAttack + 1 && world.sheet(3).attackModifier(world.rules()) == goblinAttack
+        && world.creatures()[1].concentration.spell == "rallying-hymn", "Rallying hymn lifts the allies near the cleric and nobody else");
+    const int fighterAc = world.sheet(2).armorClass(world.rules());
+    check(cast(1, "iron-vow", 2) && world.sheet(2).armorClass(world.rules()) == fighterAc + 2
+        && world.sheet(2).attackModifier(world.rules()) == fighterAttack && world.creatures()[1].concentration.spell == "iron-vow",
+        "Iron vow gives +2 AC and ends the hymn");
+    world.endConcentration(1, "");
+    check(world.sheet(2).armorClass(world.rules()) == fighterAc, "The vow ends with the cleric's concentration");
+    check(cast(1, "dawnburst", std::nullopt, cell(4)) && lost(3) >= 4 && lost(3) <= 32 && lost(4) == lost(3) && lost(0) == 0,
+        "Dawnburst burns the goblins and spares the party");
+    heal();
+    world.sheet(2).addCondition(world.rules(), "frightened", 3, 2);
+    check(cast(1, "steadfast-chorus", std::nullopt) && !world.sheet(2).hasCondition("frightened") && world.sheet(2).tempHp >= 5
+        && world.sheet(0).tempHp >= 5 && world.sheet(3).tempHp == 0 && world.sheet(1).resources.at("slots-3").current == 2,
+        "Steadfast chorus ends fear and gives the party temporary HP");
+}
+
 void badFiles(const Check& check)
 {
     auto broken = hallFiles();
@@ -315,5 +423,6 @@ void worldSpellTests(const Check& check)
     concentration(check);
     preparing(check);
     focusSpells(check);
+    starterLists(check);
     badFiles(check);
 }
