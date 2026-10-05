@@ -5,12 +5,13 @@
 | Folder | What is in it |
 |---|---|
 | `rules/` | Plain C# with no Godot types: content loading, rules, World, AI, saves. Its own project (`Yorehold.Rules.csproj`). |
-| `tests/` | xunit tests for `rules/`, plus the content check that parses every JSON file under `assets/`. |
+| `rules/content/` | One type per content kind (ruleset, conditions, effects, actions, classes, creatures, maps, chapters...) and the code that reads it from JSON. |
+| `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
 | `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. |
 | `scenes/` | Godot scenes. `Main.tscn` is the start scene. |
-| `assets/` | Content as JSON and images, same formats as the C++ client (`../yorehold/docs/CONTENT.md`). |
-| `docs/` | `ROADMAP.md` (order of work) and this file. |
+| `assets/` | Content as JSON and images, same formats as the C++ client (`docs/CONTENT.md`). |
+| `docs/` | `ROADMAP.md` (order of work), `CONTENT.md` (the file formats) and this file. |
 
 `Yorehold.csproj` is the game project and leaves `rules/` and `tests/` out of its own build.
 `Yorehold.slnx` builds all three. Scratch files, logs and screenshots go in `../.dev/`, never in the repo.
@@ -47,4 +48,16 @@ The game reads these after `--` on the command line: `--shot file`, `--frames N`
 - Comments say why, not what.
 - New rules get xunit tests. Anything drawn gets a screenshot run.
 - Numbers and names that belong to the game live in `assets/`, not in code.
-- Bad content fails with a message that names the file.
+- Bad content fails with a message that names the file and the field (`ContentException`).
+
+## Reading content
+
+`ContentFiles` is the content tree: one or more folders, later ones on top, with forward-slash paths
+(`classes/fighter.json`). `ContentNode` is one JSON value plus the file and field path it came from, so a
+reader says where a problem is with `node.Fail(...)`. Each content type has a static `Read(ContentNode)`
+that checks the file on its own; what needs other files (an item a class names, a condition an effect
+applies) is checked by whatever loads them together: `Compendium`, `RulesFolder`, `Chapter`, `Adventure`,
+`ContentPackage`.
+
+A new field goes in the type, its `Read`, a test in `tests/` and `docs/CONTENT.md`, in the same commit.
+A new file under `assets/` has to be loaded by something or `ContentTests.EveryShippedFileLoads` fails.

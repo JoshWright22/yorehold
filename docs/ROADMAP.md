@@ -23,9 +23,17 @@ builds, passes `check.ps1` and is committed.
   - Default: `shot` paths inside a script are taken from the workspace folder, so `.dev/x.png` works like before.
   - Default: the content check only parses JSON for now, strict (no comments or trailing commas). Typed loading is P1.
   - Default: `Main` draws the version and the last input as a placeholder until P4.
-- [ ] **P1. Content model.** Ruleset folder, conditions, effects, actions, races, backgrounds,
+- [x] **P1. Content model.** Ruleset folder, conditions, effects, actions, races, backgrounds,
   feats, classes, creatures, items, spells, kits, loot tables, adventure and chapter files, read
   into C# types with System.Text.Json. Same formats as CONTENT.md; clear messages on bad files.
+  - Default: files are read by hand from `JsonElement` (no attribute mapping), so every message can name the file and the field path.
+  - Default: `docs/CONTENT.md` is a copy of the C++ client's with a "In the Godot port" section on top; FRAMEWORK.md stays in the framework repo.
+  - Default: the framework's `modern` and `classic` rulesets are not ported (numbers stay in `assets/`); a chapter naming one is refused, and content needs `rulesets/yorehold` under it.
+  - Default: the four built-in AI presets and the three basic actions are in code like the framework had them; the shipped `ai/` and `actions/` files replace them.
+  - Default: surface files keep the extra fields the shipped ones carry (damage, slipping, what puts them out) though no rule reads them yet.
+  - Default: content is read from folders only. `.yore` archives, the save signature, the merchant `inventory` form and a `tileMap` `delta` wait for the steps that need them (P10).
+  - Default: map lights and markers stay in cells and object areas in world units (64 a cell), as the files write them. Walls and indoor areas are built in P2/P3.
+  - Default: `DiceText` only checks that dice text can be rolled. Rolling is P2.
 - [ ] **P2. Core rules.** Seeded RNG, dice, checks and DCs, proficiency ranks, modifiers,
   conditions with durations, the effect step list, grid helpers (distance, reach, flanking,
   cover, line of sight). Port the C++ unit checks for these.
