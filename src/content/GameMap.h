@@ -112,6 +112,13 @@ public:
     // Needs the renderer, so it's done on the first draw.
     void bindTileset(yh::Renderer& renderer);
 
+    // For the map editor, which changes the TileMap in place.
+    const std::vector<TileType>& tileTypes() const { return types_; }
+    // Call after tiles changed: what can be walked, what blocks sight, walls and indoor areas.
+    void tilesChanged();
+    // Another tile map in place of this one (a resize, layers added or removed). The tileset stays.
+    void setTiles(std::unique_ptr<yh::TileMap> tiles);
+
     bool inside(yh::Cell c) const { return c.x >= 0 && c.y >= 0 && c.x < width_ && c.y < height_; }
     // Tiles and objects: a shut door stops you, an open one doesn't.
     bool walkable(yh::Cell c) const;
@@ -127,6 +134,7 @@ public:
 
 private:
     void buildWalls();
+    void buildIndoorAreas();
     void cacheTiles(); // the per-cell flags below, from the TileMap's floor 0 layers
 
     std::string name_;

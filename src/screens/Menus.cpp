@@ -193,7 +193,7 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             ui_.label({panel.x + 20, panel.y + 50}, "Plan the game and UI before building its editing tools.");
             ui_.label({panel.x + 20, panel.y + 76}, "Maps, walls, lights, tokens, encounters and dialogue.");
             ui_.label({panel.x + 20, panel.y + 102}, "Chapter writers own placement, story and cutscenes.");
-            ui_.label({panel.x + 20, panel.y + 134}, "The visual editor is planned; content files work now.", ui_.theme.textDim);
+            ui_.label({panel.x + 20, panel.y + 134}, "New makes an adventure folder with an empty map to draw on.", ui_.theme.textDim);
             ui_.label({panel.x + 20, panel.y + 164}, "Compendium: " + std::to_string(compendium_.classes.size()) + " classes, "
                 + std::to_string(compendium_.items.size()) + " items, " + std::to_string(compendium_.creatures.size())
                 + " creatures (add more by opening .yore files)", ui_.theme.textDim);
@@ -204,7 +204,7 @@ void YoreholdGame::drawMenu(yh::Renderer& renderer)
             {
                 if (!settings_.lastCreatePackage.empty())
                 {
-                    openCreateScreen();
+                    openCreateScreen(settings_.lastCreatePackage);
                 }
             }
             if (button("Back (Esc)"))

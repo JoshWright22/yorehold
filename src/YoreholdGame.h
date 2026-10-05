@@ -178,7 +178,7 @@ private:
     std::string notice_; // result of the last added file, shown on the title menus
     bool noticeBad_ = false;
     // Create screen: edit content packages (CreateScreen.cpp)
-    void openCreateScreen();
+    void openCreateScreen(const std::string& package = {});
     void closeCreateScreen();
     void playtestPackage();
     void exportPackage(const std::string& path);

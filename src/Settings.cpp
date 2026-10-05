@@ -136,6 +136,7 @@ void YoreholdGame::saveSettings() const
         {"joinAddress", settings_.joinAddress},
         {"lastPackage", settings_.lastPackage},
         {"lastFolder", settings_.lastFolder},
+        {"lastCreatePackage", settings_.lastCreatePackage},
         {"skin", settings_.skin},
         {"server", settings_.server},
         {"serverKey", settings_.serverKey},
@@ -173,6 +174,7 @@ void YoreholdGame::loadSettings()
         s.joinAddress = j.value("joinAddress", s.joinAddress).substr(0, 253);
         s.lastPackage = j.value("lastPackage", s.lastPackage);
         s.lastFolder = j.value("lastFolder", s.lastFolder);
+        s.lastCreatePackage = j.value("lastCreatePackage", s.lastCreatePackage);
         s.skin = j.value("skin", s.skin).substr(0, 200);
         s.server = j.value("server", s.server).substr(0, 253);
         s.serverKey = j.value("serverKey", s.serverKey).substr(0, 128);

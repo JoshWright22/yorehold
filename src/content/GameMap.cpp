@@ -312,18 +312,7 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
             rest.erase(key);
         m.rest_ = rest.dump();
         m.buildWalls();
-        for (int y = 0; y < m.height_; y++)
-        {
-            for (int x = 0; x < m.width_; x++)
-            {
-                if (!m.indoors({x, y}))
-                    continue;
-                const int start = x;
-                while (x + 1 < m.width_ && m.indoors({x + 1, y}))
-                    x++;
-                m.indoorAreas_.push_back({start * cellSize, y * cellSize, (x - start + 1) * cellSize, cellSize});
-            }
-        }
+        m.buildIndoorAreas();
         return m;
     }
     catch (const std::exception& e)
@@ -362,6 +351,42 @@ void GameMap::cacheTiles()
             }
         first = false;
     }
+}
+
+void GameMap::buildIndoorAreas()
+{
+    indoorAreas_.clear();
+    for (int y = 0; y < height_; y++)
+    {
+        for (int x = 0; x < width_; x++)
+        {
+            if (!indoors({x, y}))
+                continue;
+            const int start = x;
+            while (x + 1 < width_ && indoors({x + 1, y}))
+                x++;
+            indoorAreas_.push_back({start * cellSize, y * cellSize, (x - start + 1) * cellSize, cellSize});
+        }
+    }
+}
+
+void GameMap::tilesChanged()
+{
+    cacheTiles();
+    tileWalls_.clear();
+    buildWalls();
+    buildIndoorAreas();
+}
+
+void GameMap::setTiles(std::unique_ptr<yh::TileMap> tiles)
+{
+    if (!region_ || !tiles)
+        return;
+    tiles->setTileset(region_->map->tileset());
+    region_->map = std::move(tiles);
+    width_ = region_->map->width();
+    height_ = region_->map->height();
+    tilesChanged();
 }
 
 bool GameMap::walkable(yh::Cell c) const

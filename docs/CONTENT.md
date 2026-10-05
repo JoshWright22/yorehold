@@ -130,6 +130,25 @@ The text rows are an import for maps written by hand. The game keeps every map i
 
 Heroes use doors, levers, locks and found traps with E when standing beside them: free between fights, the Interact action's cost on the hero's own turn in a fight. A failed disarm by 5 or more sets the trap off. Doors, chests and traps are saved as they were left; saves from before objects load with the map's own.
 
+### Drawing a map in Create
+
+Create > Map edits the `map.json` of the chapter named in the top right (click it for the package's next chapter). Create > New writes a new adventure folder to `create/` beside the save: a manifest, `chapters/chapter-one` and an empty 24 x 16 map with a tile type for each built-in painter. It carries no classes yet, so the validation list says which is missing until they are added.
+
+| Tool | Left button | Right button |
+|---|---|---|
+| Paint | the picked tile on the picked layer, dragged | erase from that layer |
+| Fill box | drag out a box of the picked tile | drag out a box to erase |
+| Wall | the picked sight-blocking tile (or the map's first one) on the floor's `walls` layer | erase from the `walls` layer |
+| Light | place a light at the cell's centre with the radius, colour and flame on the right, or select one to change it | remove |
+| Marker | place the named marker, or move it if the map has it; clicking a marker picks its name | remove |
+| Kit | place the picked kit on the cell | remove the object there |
+
+The middle button drags the view, the arrow keys move it and the wheel zooms. The right column picks the floor (-9 to 9) and the layer, adds and removes layers and changes the map's size; cells are kept from the top-left, and a smaller map drops the lights, markers and objects left outside it. The orange lines are the walls the game will build from the tiles and shut doors on floor 0. On a higher floor the one below shows through, dimmed.
+
+Kits offered are the game's own plus the package's `kits/` and the chapter's. Placed kits are written as whole objects, so the saved map does not need the kit files. Undo and redo (Ctrl+Z, Ctrl+Y) step through every edit made since the package was opened, in every chapter; one stroke or one slider drag is one step. Save (Ctrl+S) writes each changed map in the `tiles` array and `tileMap` form described above, keeping the fields the editor has no tool for (`lighting`, `ambient`, `trapSpotRange`). A hand-written map is only rewritten once it has been changed. A `.yore` has to be unpacked to a folder before it can be saved into.
+
+`YOREHOLD_CREATE=<folder or .yore>` starts the game in Create with that package open, and `YOREHOLD_CREATE=new` with a new one.
+
 ## Chapters and writer-owned text
 
 `chapter.json` declares `id`, `title`, `map`, `party` and `encounters`, and optionally `ruleset`. Without `ruleset` the chapter plays by the game's own rules, `rulesets/yorehold` (see Rulesets); leave it out unless the chapter is a test of other rules. It can be `modern` or `classic` (sets built into the framework, kept for tests), a relative JSON path, or a folder with `ruleset.json` in it. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.

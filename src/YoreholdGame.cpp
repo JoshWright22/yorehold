@@ -80,6 +80,12 @@ YoreholdGame::YoreholdGame(std::vector<std::string> openFiles) : World(files_)
         else if (std::string_view(screen) == "party")
             openParty();
     }
+    // YOREHOLD_CREATE=<package folder or .yore> opens it in the Create screen; "new" makes a new adventure.
+    if (const char* package = SDL_getenv("YOREHOLD_CREATE"))
+    {
+        menu_ = Menu::Create;
+        openCreateScreen(std::string_view(package) == "new" ? std::string() : std::string(package));
+    }
     // Scripted co-op tests: YOREHOLD_HOST hosts at once, YOREHOLD_JOIN=address joins.
     if (SDL_getenv("YOREHOLD_HOST") && chapter_)
         hostSession();
@@ -629,21 +635,32 @@ bool YoreholdGame::loadAdventure()
 
 // ---------------------------------------------------------------- Create screen
 
-void YoreholdGame::openCreateScreen()
+void YoreholdGame::openCreateScreen(const std::string& package)
 {
     // Set up callbacks for the Create screen
     create_.table.stateDir = stateDir();
     create_.table.playtest = [this] { playtestPackage(); };
     create_.table.export_package = [this](const std::string& path) { exportPackage(path); };
 
-    // Open the last package if available, otherwise create a new one
-    if (!settings_.lastCreatePackage.empty())
+    // A folder or .yore to open; none makes a new adventure.
+    if (!package.empty())
+        create_.openPackage(package);
+    else
+        create_.newPackage();
+
+    if (create_.isOpen())
     {
-        create_.openPackage(settings_.lastCreatePackage);
+        notice_.clear();
+        if (settings_.lastCreatePackage != create_.packagePath())
+        {
+            settings_.lastCreatePackage = create_.packagePath();
+            saveSettings();
+        }
     }
     else
     {
-        create_.newPackage();
+        notice_ = create_.status();
+        noticeBad_ = true;
     }
 }
 

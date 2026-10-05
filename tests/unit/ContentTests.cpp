@@ -1256,25 +1256,13 @@ void stealthTests(const fs::path& scratch)
 
 void createScreenTests()
 {
-    // Test PackageHistory undo/redo
+    // The Create screen's undo is the framework's History; MapEditorTests.cpp covers edits on it.
     {
-        PackageHistory history;
-        history.clear();
-        check(!history.canUndo() && !history.canRedo(), "Empty history has no undo/redo");
-
-        history.push(R"({"name":"test1"})", "First state");
-        check(!history.canUndo() && !history.canRedo(), "Single state has no undo/redo");
-
-        history.push(R"({"name":"test2"})", "Second state");
-        check(history.canUndo() && !history.canRedo(), "After second push, undo available");
-
-        auto undone = history.undo();
-        check(undone.has_value() && undone.value() == R"({"name":"test1"})", "Undo returns first state");
-        check(!history.canUndo() && history.canRedo(), "After undo, redo available");
-
-        auto redone = history.redo();
-        check(redone.has_value() && redone.value() == R"({"name":"test2"})", "Redo returns second state");
-        check(history.canUndo() && !history.canRedo(), "After redo, undo available again");
+        yh::Ui ui;
+        yh::Input input;
+        yh::Font* title = nullptr;
+        CreateScreen screen(ui, input, title);
+        check(!screen.isOpen() && !screen.history().canUndo() && !screen.history().canRedo(), "A Create screen with nothing open has nothing to undo");
     }
 
     // Test CreateScreen package validation
@@ -1352,6 +1340,7 @@ void worldObjectTests(const std::function<void(bool, const char*)>& check);
 void worldTravelTests(const std::function<void(bool, const char*)>& check);
 void worldCampTests(const std::function<void(bool, const char*)>& check);
 void worldCompanionTests(const std::function<void(bool, const char*)>& check);
+void mapEditorTests(const std::function<void(bool, const char*)>& check, const std::filesystem::path& scratch);
 
 int main()
 {
@@ -1384,6 +1373,7 @@ int main()
         stealthTests(scratch.path);
         openFileTests(scratch.path);
         createScreenTests();
+        mapEditorTests(check, scratch.path);
     }
     catch (const std::exception& e)
     {

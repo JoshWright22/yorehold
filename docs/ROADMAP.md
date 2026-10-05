@@ -105,7 +105,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 - [x] **G1. The shell.** Create screen with mode tabs, open/new package, shared undo, validation
   list, Playtest and export.
-- [ ] **G2. Map mode.** Tiles by layer and floor, walls, lights, markers, kits.
+- [x] **G2. Map mode.** Tiles by layer and floor, walls, lights, markers, kits.
 - [ ] **G3. Encounters mode.** Creatures, groups, facing, AI, XP, loot.
 - [ ] **G4. Dialogue mode.**
 - [ ] **G8. Voice lines.** A recorded line becomes words with timings in `<name>.voice.json`,

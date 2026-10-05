@@ -75,9 +75,10 @@ tests/unit/    WorldFixture: load a chapter, send intents, step time, read state
 
 The Create screen lets authors design and build content packages (adventures, rulesets, item collections). It sits at `src/screens/CreateScreen.h/cpp` and includes:
 
-- **Package management**: Open an existing package folder or .yore file, or create a new one. The last opened package path is saved to `settings.lastCreatePackage` and reopened on the next session.
-- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story (placeholder UI; full editors come in G2-G7).
-- **Shared undo/redo**: One history for the whole package, managed by `PackageHistory`. Pressing Ctrl+Z/Ctrl+Y (future) undoes/redoes all changes.
+- **Package management**: Open an existing package folder or .yore file, or create a new one (a folder under `create/` in the state directory). The last opened package path is saved to `settings.lastCreatePackage` and offered on the Create menu.
+- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story. Map is built (G2); the rest are placeholders until G3-G7.
+- **Shared undo/redo**: One `yh::History` for the whole package. Each mode's commands record on it, and Ctrl+Z/Ctrl+Y or the toolbar step through them whichever mode or chapter they were made in. Save (Ctrl+S) writes what changed and marks the history saved.
+- **Map mode** (`src/screens/MapEditor.h/cpp`): `MapEditor` is the model and its commands (paint, fill, layers, resize, lights, markers, kits), with no drawing, so tests and other layouts use it as it is. `MapEditorPanel` is the desktop layout over it. The map being edited is a `GameMap`, changed in place; the Create screen keeps one editor per opened chapter. Tile strokes record one cell at a time; everything else records what the layers, objects, lights and markers were before and after.
 - **Validation list**: Real-time validation of the package manifest and file structure. Errors are highlighted; warnings are dimmed. Invalid packages cannot be playtested or exported.
 - **Playtest**: Loads the package and plays a chapter in-game to test rules, encounters, and dialogue (G1 is placeholder; actual playtest hooks come in later steps).
 - **Export**: Saves the package as a .yore file or folder for sharing. Only valid packages can be exported.
@@ -338,10 +339,13 @@ Next.js (App Router, TypeScript), talking only to the server API.
 - `/forums` discussion per category and per content item.
 - Sign in with the same account as the game.
 
-### Create (todo)
+### Create (part)
 
 Inside the client, one screen with modes that share one open package, one undo history
 (`yh::History`) and one Playtest button. Writers can move between modes at any time.
+
+- Done: the shell (G1) and Map mode (G2). Still to add in Map mode: importing a painted image,
+  new tile types, and autotiled walls.
 
 | Mode | Does |
 |---|---|
@@ -508,6 +512,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 48. Camp: the party goes from anywhere between fights (a chapter can say no) and comes back to the same spot with the chapter as it was left; the long rest is only taken there, costs 40 supplies, has no other limit and gives the two short rests back. Supplies come from the stash first, then the heroes' packs. A supplies item is worth 10 and costs 5 sp; the keep's storeroom chest has four. Anyone at camp can take from the stash ("give but not take" is about each other's packs). Revival at camp costs 200 gp from the selected hero and brings the hero back at 1 HP. Nobody holds a spell on the way to camp. Camp has no NPCs yet; companions in the party come along and rest there with the heroes.
 
 49. Companions: an NPC is one only if its chapter entry has a `companion` object. They join with the dialogue action `recruit` when their approval is at least `joinAt` and the party has room: at most 2 companions and 6 in all (`companions` in `ruleset.json`), approval from -100 to 100. Approval moves with `approve` actions on any choice and with story flags the companion lists, each flag once; at or below `leaveAt` a member leaves, and `dismiss` sends one away. In the party they are on team 0 and the host plays their turns, with death saves like a hero; they rest and recover after a win with the party but get no XP and keep their creature's level. They walk at the back of the line of whoever plays the first hero. They travel and go to camp with their sheets as they are, and talk with their own dialogue anywhere. One sent away outside their own chapter stays in that chapter and is lost once the party moves on. Dialogue can't see whether someone joined, so writers check it with their own flags for now. Party cards don't show companions until the UI pass.
+
+50. Map mode (G2): walls are sight-blocking tiles on a layer named `walls`, one per floor, with the edges the game builds shown live; autotiling waits for wall art that has variants. The palette is the map's own tile types, and a new map gets one per built-in painter; adding types comes with Compendium mode (G5). Lights and markers have no floor, as in `map.json`. Floors run from -9 to 9. The right button removes with every tool. Create > New writes straight to `create/new-adventure` in the state directory, with no name dialog. The editor offers the game's own kits and saves placed kits as whole objects. Undo is kept until another package is opened, not across sessions.
 
 ### Structure choices made in this document
 
