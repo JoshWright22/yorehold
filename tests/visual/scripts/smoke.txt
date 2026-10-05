@@ -1,0 +1,6 @@
+# proves a screenshot run: a key, then a click the title screen marks
+5 key Return
+6 keyup Return
+10 move 640 360
+11 down left
+12 up left

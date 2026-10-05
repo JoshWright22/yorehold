@@ -15,10 +15,14 @@ builds, passes `check.ps1` and is committed.
 
 ## P. Port
 
-- [ ] **P0. Tooling.** `check.ps1 -Shot name.png [-Frames N] [-Script file]`: run the game in a
+- [x] **P0. Tooling.** `check.ps1 -Shot name.png [-Frames N] [-Script file]`: run the game in a
   window placed off screen, play an input script, save a screenshot to `../.dev/` and quit. A
   content check in the test run that loads every shipped file under `assets/` and fails on errors.
   `docs/STRUCTURE.md` for the C# style. Copy of `yorehold/assets` already in `assets/`.
+  - Default: the shot window sits at -4000,-4000 (not minimised, a minimised window may not draw) and runs at a fixed 60 fps.
+  - Default: `shot` paths inside a script are taken from the workspace folder, so `.dev/x.png` works like before.
+  - Default: the content check only parses JSON for now, strict (no comments or trailing commas). Typed loading is P1.
+  - Default: `Main` draws the version and the last input as a placeholder until P4.
 - [ ] **P1. Content model.** Ruleset folder, conditions, effects, actions, races, backgrounds,
   feats, classes, creatures, items, spells, kits, loot tables, adventure and chapter files, read
   into C# types with System.Text.Json. Same formats as CONTENT.md; clear messages on bad files.
