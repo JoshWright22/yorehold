@@ -56,8 +56,15 @@ void CreateScreen::openPackage(const std::string& path)
     if (path.empty())
         return;
 
+    // An import still running belongs to the package it started in.
+    if (voice_)
+        voicePanel_.finish(*voice_, true);
     // Undo steps point into the editors, so the history is emptied before they go.
     history_.clear();
+    voice_.reset();
+    voiceError_.clear();
+    packageFiles_.reset();
+    voicePanel_.reset();
     story_.reset();
     storySaved_.clear();
     storyError_.clear();
@@ -417,6 +424,42 @@ std::string CreateScreen::newDialogue()
     listedChapter_.clear();
     openDialogue(path);
     return path;
+}
+
+VoiceImporter* CreateScreen::voiceImporter()
+{
+    if (!package_)
+        return nullptr;
+    if (!voice_)
+    {
+        VoiceImporter::Settings settings;
+        yh::FileSystem game;
+        game.mountFolder(YH_GAME_ASSETS, "game");
+        if (const std::optional<std::string> text = game.readText("create/voice.json"))
+        {
+            std::string error;
+            if (std::optional<VoiceImporter::Settings> read = VoiceImporter::Settings::fromJson(*text, &error))
+                settings = std::move(*read);
+            else
+                voiceError_ = "create/voice.json: " + error + " (using the defaults)";
+        }
+        voice_ = std::make_unique<VoiceImporter>(history_, std::move(settings));
+    }
+    return voice_.get();
+}
+
+const yh::FileSystem* CreateScreen::packageFiles()
+{
+    if (!package_)
+        return nullptr;
+    if (!packageFiles_)
+    {
+        auto files = std::make_unique<yh::FileSystem>();
+        if (!ContentPackage::mount(*files, packagePath_, "package"))
+            return nullptr;
+        packageFiles_ = std::move(files);
+    }
+    return packageFiles_.get();
 }
 
 DialogueEditor* CreateScreen::dialogueEditor()
@@ -941,6 +984,9 @@ bool CreateScreen::save()
             changed.push_back({"story.json", text, [this, text] { storySaved_ = text; }});
         }
     }
+    if (voice_)
+        for (auto& [path, text] : voice_->changed())
+            changed.push_back({path, text, [v = voice_.get(), path] { v->markSaved(path); }});
     std::vector<size_t> definitions;
     if (compendium_)
         for (const size_t entry : compendium_->changed())
@@ -1038,6 +1084,17 @@ void CreateScreen::validate()
     for (const auto& [path, tab] : dialogues_)
         for (const DialogueEditor::Problem& problem : tab->editor.problems())
             validations_.push_back({path, leaf(path) + ": " + problem.text, problem.error});
+    if (!voiceError_.empty())
+        validations_.push_back({"create/voice.json", voiceError_, false});
+    // Only voice lines already looked at: nothing is read from disk here.
+    if (voice_)
+        for (const auto& [path, tab] : dialogues_)
+            for (const DialogueEditor::Node& node : tab->editor.nodes())
+            {
+                const std::string stem = VoiceImporter::stem(tab->editor.id(), node.id);
+                for (const VoiceImporter::Problem& problem : voice_->problems(stem, node.text))
+                    validations_.push_back({VoiceImporter::voicePath(stem), problem.text, problem.error});
+            }
     for (const auto& [path, why] : cutsceneErrors_)
         validations_.push_back({path, why, true});
     for (const auto& [path, tab] : cutscenes_)
@@ -1292,6 +1349,9 @@ void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)
         ui_.label({row.x + row.w + 10, row.y + 5}, std::to_string(listed_.size()) + (listed_.size() == 1 ? " file" : " files"), ui_.theme.textDim);
     if (ui_.button({area.x + area.w - 98, row.y, 90, row.h}, "New"))
         newDialogue();
+    // The recorded lines of the same conversation, in place of its nodes.
+    if (ui_.toggle({area.x + area.w - 194, row.y, 90, row.h}, "Voice", voiceView_))
+        voiceView_ = !voiceView_;
 
     const yh::Rect body{area.x, area.y + bar, area.w, area.h - bar};
     if (dialogue_.empty())
@@ -1301,7 +1361,12 @@ void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)
     }
     if (DialogueEditor* editor = dialogueEditor())
     {
-        dialoguePanel_.draw(*editor, ui_, input_, renderer, body);
+        VoiceImporter* voice = voiceView_ ? voiceImporter() : nullptr;
+        const yh::FileSystem* files = voice ? packageFiles() : nullptr;
+        if (voice && files)
+            voicePanel_.draw(*voice, *editor, *files, ui_, input_, renderer, body);
+        else
+            dialoguePanel_.draw(*editor, ui_, input_, renderer, body);
         return;
     }
     const auto why = dialogueErrors_.find(dialogue_);

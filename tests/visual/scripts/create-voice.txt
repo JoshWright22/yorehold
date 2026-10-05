@@ -1,0 +1,10 @@
+10 move 320 20
+11 down left
+12 up left
+40 move 910 60
+41 down left
+42 up left
+70 move 140 120
+71 down left
+72 up left
+90 move 760 700

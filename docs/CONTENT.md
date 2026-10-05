@@ -33,6 +33,10 @@ rulesets/yorehold/             the game's rules (built in; see Rulesets)
 rulesets/my-rules.json         optional custom rules, as one file or a folder like the above
 ui/theme.json                  colors and frame styling
 create/compendium.json         the game's own: the forms of Create's Compendium mode
+create/voice.json              the game's own: settings for voice lines in Create
+voice/wren.hello.wav           optional recorded lines and their words with timings (see Voice lines in Create)
+voice/wren.hello.voice.json
+voice/vocabulary.txt
 story.json                     optional story graph from Create's Story mode; the game doesn't read it
 design/                        optional game/UI design documents
 dialogues/                     optional dialogue documents
@@ -194,7 +198,39 @@ The left column is the conversation's id and its nodes; `>` marks the start, and
 
 The right column is the picked reply, or the node's own flags and actions when none is picked. A reply has an id, its words and either Goes to (a node or "end") or a Skill check with what it rolls, the difficulty and where a pass and a fail go. Ticking Skill check moves Goes to into the pass; unticking moves the pass back. "New node after it" makes a node and points the reply (or the check's empty way) at it in one step. Needs flags and Hidden if are `require` and `forbid`. Sets flags, Clears flags and Does are `set`, `clear` and `do`, separated by commas. Recruit, Dismiss, Approve +1 and Approve -1 add the companion actions; the approve buttons step one `approve N` up or down instead of adding another.
 
-The validation list checks each opened file. Errors stop a save: anything the game would refuse to load, and an action the game would do nothing with, like `approve` without a number or `recruit tam`. Warnings don't: a node nothing leads to, a node with no line, a skill the chapter's ruleset doesn't have, an action the game doesn't know, `approve tam 2` for someone who isn't a companion in this chapter, and `recruit`, `dismiss` or a bare `approve` in a file no companion NPC uses. Fields this mode has no tool for are written back as they were. A file is only rewritten once something in it changed, and undo and redo are the same history as the other modes.
+The validation list checks each opened file. Errors stop a save: anything the game would refuse to load, and an action the game would do nothing with, like `approve` without a number or `recruit tam`.
+
+### Voice lines in Create
+
+A node's recording goes in the package's `voice/` folder named after its conversation id and node id: `voice/wren.hello.wav` (or `.ogg`) for node `hello` of conversation `wren`. Importing it writes the words of the line with their timings to `voice/wren.hello.voice.json` beside it. The recording itself is never changed and is what plays. The game only reads the voice file; nothing listens to speech while it runs.
+
+Voice in Dialogue mode's top bar swaps the node editor for the conversation's lines. The left column lists the nodes: `-` has no recording, `to import` has one, `ok` has a voice file with nothing to look at, `check` has one worth a look. The right side is the picked node's line and recording, and:
+
+- Import (Import again) listens to the recording with the speech model that ships with the game and lines the heard words up with the written line. The written line wins: its words keep their spelling and only take the heard timings, so "Carlos" heard for "Kharos" is still written Kharos. A written word with nothing heard for it gets a time between its neighbours and shows as guessed. With no line written yet, what was heard is shown as a suggestion and Use as line makes it the node's line.
+- Match to line lines the words up again after the line was changed, without listening again.
+- Look again finds a recording added since. Copy SRT and Copy VTT put subtitles for the line on the clipboard; they aren't stored.
+
+Under the buttons is the line along the recording (green heard, red heard unsurely, gold guessed) and every word with its start, end and how sure the model was. Import runs in the background and is one undo step, like Match; both are on the same history as the other modes, and Save writes the voice files with everything else.
+
+`voice/vocabulary.txt` in the package lists names the model should spell your way, one per line (`#` starts a comment). They are given to it as a hint, nothing more. `create/voice.json` in the game's assets holds the cutoff under which a word is flagged (`flagBelow`, 0.6) and the recording types looked for (`extensions`, `["wav", "ogg"]`). Warnings: a recording not imported yet, a voice file with no recording, a line changed since its voice was matched, words heard unsurely and words guessed. A voice file that can't be read is an error.
+
+The voice file:
+
+```json
+{
+  "format": 1,
+  "audio": "wren.hello.wav",
+  "model": "base.en",
+  "text": "Halt! Who goes there?",
+  "words": [
+    {"text": "Halt!", "start": 0.12, "end": 0.62, "confidence": 0.94, "matched": true}
+  ]
+}
+```
+
+Times are seconds into the recording. `confidence` is the lowest probability the model gave any part of the word (1 for a guessed one); `matched` is false for a word whose time is a guess. `confidence` and `matched` may be left out (1 and true). A file with a newer `format` is refused with a message saying so. Timings are good to a few tens of milliseconds, enough for subtitles and word highlighting, not for lip-sync.
+
+For many lines at once, `yorehold-voice <package folder>` imports every recording in `voice/` that has no voice file yet (`--again` redoes them all), each matched to the node it is named after. `--model <file>` uses another model file. Warnings don't: a node nothing leads to, a node with no line, a skill the chapter's ruleset doesn't have, an action the game doesn't know, `approve tam 2` for someone who isn't a companion in this chapter, and `recruit`, `dismiss` or a bare `approve` in a file no companion NPC uses. Fields this mode has no tool for are written back as they were. A file is only rewritten once something in it changed, and undo and redo are the same history as the other modes.
 
 ### Editing definitions in Create
 

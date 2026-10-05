@@ -7,6 +7,7 @@
 #include "screens/EncountersEditor.h"
 #include "screens/MapEditor.h"
 #include "screens/StoryEditor.h"
+#include "screens/VoiceImporter.h"
 
 #include <yorehold/framework/editor/History.h>
 #include <yorehold/framework/ui/Ui.h>
@@ -91,6 +92,15 @@ public:
     StoryEditor* storyEditor();
     // What the package has for the graph to point at, read again from the files and the open editors.
     StoryEditor::Catalog storyCatalog();
+
+    // The package's voice lines, made the first time it is asked for, with the settings in the
+    // game's create/voice.json. Dialogue mode shows them for the open conversation with its Voice button.
+    VoiceImporter* voiceImporter();
+    // The open package's files, mounted once; null if it can't be.
+    const yh::FileSystem* packageFiles();
+    VoicePanel& voicePanel() { return voicePanel_; }
+    // Dialogue mode shows the voice lines in place of the node editor.
+    void showVoice(bool on) { voiceView_ = on; }
 
     // One history for the whole package: every mode's edits go on it.
     yh::History& history() { return history_; }
@@ -185,6 +195,11 @@ private:
     std::map<std::string, std::string> dialogueErrors_;
     std::string dialogue_;
     DialoguePanel dialoguePanel_;
+    std::unique_ptr<VoiceImporter> voice_;
+    std::string voiceError_; // why create/voice.json couldn't be read; its defaults are used
+    std::unique_ptr<yh::FileSystem> packageFiles_;
+    VoicePanel voicePanel_;
+    bool voiceView_ = false;
     std::unique_ptr<CompendiumEditor> compendium_;
     std::map<std::string, std::string> compendiumFolders_; // kind -> folder in the package
     std::string compendiumError_;

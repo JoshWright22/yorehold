@@ -1,0 +1,11 @@
+# Test lines for measuring the speech models, not story text. Names from the vocabulary on purpose.
+Halt! Who goes there?
+Welcome, friend. You may pass.
+Kharos sent us to find Tobb before the rain comes.
+The north gate is shut, and the key is with the captain.
+I wouldn't go down to the cellar if I were you.
+Wren says the goblins took everything but the bread.
+Three silver for the room, and one more if you want it warm.
+We leave at first light. Bring rope, a torch and something to eat.
+Tamsin, put the sword down. Nobody here wants a fight.
+If you see the old chapel, turn left and keep walking until the road ends.

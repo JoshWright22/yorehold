@@ -350,10 +350,10 @@ Inside the client, one screen with modes that share one open package, one undo h
 (`yh::History`) and one Playtest button. Writers can move between modes at any time.
 
 - Done: the shell (G1), Map mode (G2), Encounters mode (G3), Dialogue mode (G4), Compendium
-  mode (G5), Cutscene mode (G6) and Story mode (G7). Still to add in Story mode: making a chapter
+  mode (G5), Cutscene mode (G6), Story mode (G7) and voice lines in Dialogue mode (G8). Still to add in Story mode: making a chapter
   from a scene's map suggestion, and writing travel links into `adventure.json`. Still to add in Map mode: importing a painted image, new tile
   types, and autotiled walls. Still to add in Encounters mode: reinforcements. Still to add in
-  Dialogue mode: a graph view and voice lines (G8). Still to add in Compendium mode: renaming and
+  Dialogue mode: a graph view, playing a recording, and a file picker for recordings. Still to add in Compendium mode: renaming and
   deleting entries, and forms for the nested parts (level tables, effects) in place of their JSON
   boxes. Still to add in Cutscene mode: dragging steps on the timeline, renaming and deleting
   files, and previewing from where the party stands.
@@ -378,7 +378,7 @@ Inside the client, one screen with modes that share one open package, one undo h
   (one panel at a time, larger targets, tools in a bottom sheet). So editor logic lives apart from
   editor layout: each mode is a model plus commands, with a layout drawn over it.
 
-#### Voice lines (todo)
+#### Voice lines (done)
 
 Turns a recorded line into its words and their timings once, when the file is added. The game
 only reads the result; nothing listens to speech while the game runs.
@@ -419,6 +419,27 @@ only reads the result; nothing listens to speech while the game runs.
 - Testing: a set of lines spoken by Windows' built-in speech synthesizer. It reports where each
   word falls in the audio, so the checks measure word accuracy and timing error for `tiny.en`
   and `base.en` against known answers. Real recordings are added once there are some.
+  `tests/voice/make-lines.ps1` makes them and `yorehold-voice measure` measures them. Measured
+  2026-10-05 on 20 lines (10 each by the David and Zira voices, 82 s, 204 words), whisper.cpp
+  v1.9.4, CPU only:
+
+  | | tiny.en q5_1 | base.en q5_1 |
+  |---|---|---|
+  | Word error rate | 4.9% | 4.9% |
+  | Word start off by, mean / median | 86 / 80 ms | 90 / 70 ms |
+  | 90% of starts within | 175 ms | 170 ms |
+  | Worst start | 290 ms | 425 ms |
+  | Starts late on average | +79 ms | -85 ms |
+  | Time to listen per second of speech | 0.28 s | 0.71 s |
+
+  Both miss 10 words of 204, mostly in the lines with names, even with the vocabulary as a
+  prompt; the written line fixes those. A word's start taken from its own token's DTW time was
+  late every time (mean 339 ms tiny.en, 139 ms base.en), and whisper's older token times had
+  misses over a second, hence the rule in "Defaults chosen here" (56). Clear synthesized speech
+  flatters tiny.en; base.en stays the shipped model until real recordings say otherwise.
+- Built: `src/voice/` (decode, the whisper wrapper, the file format and matcher), Voice in
+  Dialogue mode (`VoiceImporter` and `VoicePanel`) and the `yorehold-voice` command. The playing
+  side (subtitles and highlighting from the file) comes with the UI pass.
 
 ### UI
 
@@ -535,6 +556,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 54. Cutscene mode (G6): steps are a list with a timeline under the preview, not dragged on the timeline yet. The preview frames a 1280 x 720 screen and starts from the middle of the map at zoom 1, since in play it starts from the party. New makes `cutscenes/cutscene.json` in the chapter, and triggers it adds are called `cutscene-N`. The only event offered is `finished`, the one the game acts on; others are warnings. A trigger that also opens a conversation keeps it when its cutscene is removed. A missing file or a bad trigger id stops a save; an unknown ease or event, an empty caption or a camera off the map is only a warning.
 
 55. Story mode (G7): the graph is its own file, `story.json` at the package root, since no file the game plays has room for notes and positions; the game doesn't read it. Accepting a suggestion only changes the graph: a scene's map suggestion records a size (24 by 16, 8 by 4 more for each fight linked from it) and doesn't make the chapter yet, and a link between scenes doesn't write `adventure.json`, it only warns when that file can't travel that way. XP suggestions use Encounters mode's 25 per creature level; a quest gets no XP of its own. New nodes for a chapter go in a column beside its scene. Nothing in the graph stops a save; every problem is a warning.
+
+56. Voice lines (G8): a node's recording is named after its conversation and node, `voice/<conversation id>.<node id>.wav` (or `.ogg`), so the dialogue format needs no new field; writers copy recordings into `voice/` by hand, with no file picker yet. Only nodes are voiced, not the players' replies. A word starts at the DTW time of the token before it, not its own: measured on 20 synthesized lines that is 90 ms off on average with base.en against 139 ms. A heard word that differs from the written one keeps its time and is flagged unless at most half its letters differ, and one written word may take two heard pieces of a name. A recording that stops early pairs with the first of two same words. base.en ships: tiny.en hears as well on clear speech and is more than twice as fast, but real recordings are noisier and the cost is a once-only wait at import. ggml is built for the machine that builds it (whisper.cpp's default), which needs a check before release builds go to other machines.
 
 ### Structure choices made in this document
 
