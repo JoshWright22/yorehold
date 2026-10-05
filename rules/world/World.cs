@@ -40,6 +40,10 @@ public sealed class WorldCreature
     public bool Fled { get; set; }
     /// <summary>The action a Ready recorded, for its reaction; empty when none.</summary>
     public string ReadiedAction { get; set; } = "";
+    /// <summary>A hero's choices, which its sheet is built from; null for everyone else.</summary>
+    public CharacterChoices? Choices { get; set; }
+    /// <summary>The library file a brought character came from; empty for a ready-made hero.</summary>
+    public string Library { get; init; } = "";
 
     /// <summary>A hero moving quietly: slower, lights covered, only noticed inside a vision cone.</summary>
     public bool Sneaking => Sheet.HasCondition(World.HiddenCondition);
@@ -66,6 +70,9 @@ public enum WorldEventKind
     /// <summary>The fight is over. Text is "victory" or "defeat".</summary>
     FightOver,
 }
+
+/// <summary>A library character taking a seat in place of the chapter's ready-made hero.</summary>
+public sealed record PartyPick(CharacterChoices Choices, IReadOnlyList<Item> Inventory, string Library, int Coins);
 
 /// <summary>Something for the screen to show.</summary>
 public sealed record WorldEvent(WorldEventKind Kind, string Text = "")
@@ -197,16 +204,14 @@ public sealed partial class World
         LightLevels.BrightFraction = (float)Chapter.Map.Lighting.BrightFraction;
         LightLevels.SetFixed(Map.Lights, Map.Walls);
 
+        var partyDice = new Rng(seed);
         foreach (PartyMember member in Chapter.Party)
         {
-            // Chapter.Load checked that the class exists.
-            ClassDefinition characterClass = Chapter.Compendium.Class(member.ClassId)!;
-            var hero = new WorldCreature(WorldSheets.Hero(Rules, Chapter.Compendium, characterClass, member.Name, Chapter.Level), 0);
-            hero.Items.AddRange(characterClass.Items);
+            WorldCreature hero = SeatHero(member, partyDice);
             Creatures.Add(hero);
             Tokens.Tokens.Add(new Token
             {
-                Name = member.Name,
+                Name = hero.Sheet.Name,
                 Color = member.Color,
                 Radius = GameMap.CellSize * 0.4f,
                 Position = Grid.Center(member.At),
@@ -677,7 +682,7 @@ public sealed partial class World
         }
         else
         {
-            List<string> keys = Creatures[hero].Items.Select(item => "key:" + item).ToList();
+            List<string> keys = Creatures[hero].Items.Concat(sheet.Inventory.Select(i => i.Id)).Select(item => "key:" + item).ToList();
             bool wasLocked = o.IsLocked;
             Interaction result = Map.Interact(id, keys);
             if (result == Interaction.Locked && o.Lock != null && o.Lock.Dc > 0)

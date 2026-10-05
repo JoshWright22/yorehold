@@ -6,56 +6,17 @@
 90 cell 12 6
 91 down left
 92 up left
-# Alice's turn: step into the room, defend, end the turn
-305 cell 11 6
+# Alice's turn: walk up beside the goblin, then the tooltip on Shove
+305 cell 11 9
 315 shot .dev/p6-fight-start.png
 316 down left
 317 up left
-350 key 3
-360 key Space
-# Bob, then Carol, walk in beside the goblin
-410 cell 10 6
-410 down left
-411 up left
-470 key Space
-520 cell 9 6
-520 down left
-521 up left
-590 key Space
-# round two: the goblin backs off, which gives Carol and then Bob a reaction
-640 shot .dev/p6-reaction.png
-650 move 564 555
-650 down left
-651 up left
-700 down left
-701 up left
-740 shot .dev/p6-enemy-turn.png
-# Alice again: the tooltip on Shove, then Strike with the chance to hit at the pointer
-800 move 730 660
-820 shot .dev/p6-tooltip.png
-830 key 1
-831 creature Goblin_1
-845 shot .dev/p6-targeting.png
-846 down left
-847 up left
-870 shot .dev/p6-miss.png
-# a plain click on an enemy strikes too
-890 down left
-891 up left
-915 shot .dev/p6-hit.png
-930 key Space
-# Bob walks up and strikes twice
-980 creature Goblin_1
-980 down left
-981 up left
-1040 creature Goblin_1
-1040 down left
-1041 up left
-1070 key Space
-# Carol does the same
-1120 creature Goblin_1
-1120 down left
-1121 up left
-1200 creature Goblin_1
-1200 down left
-1201 up left
+360 move 730 660
+380 shot .dev/p6-tooltip.png
+# Strike with the chance to hit at the pointer: with the seed the run uses, it drops the goblin and the chapter is won
+390 key 1
+391 creature Goblin_1
+405 shot .dev/p6-targeting.png
+406 down left
+407 up left
+430 shot .dev/p6-hit.png

@@ -1,41 +1,12 @@
 namespace Yorehold.Rules;
 
 /// <summary>
-/// Sheets for the creatures a world starts with. Heroes are a plain build from their class file
-/// until characters are built from their choices (P7); creatures take their stat block as written.
-/// Until inventories come (P8) the first weapon among their items is the one they fight with.
+/// Sheets for the creatures a world starts with: they take their stat block as written. Heroes
+/// are built from their choices (CharacterBuild). Until inventories reach creatures (P8) the first
+/// weapon among their items is the one they fight with.
 /// </summary>
 public static class WorldSheets
 {
-    public static CharacterSheet Hero(Ruleset rules, Compendium compendium, ClassDefinition characterClass, string name, int level)
-    {
-        var sheet = new CharacterSheet { Name = name, Level = Math.Max(1, level), DcAbility = characterClass.DcAbility };
-        foreach (AbilityDefinition ability in rules.Abilities)
-        {
-            sheet.Stats.SetBase(ability.Id, 10);
-        }
-        int maxHp = characterClass.HitDie + characterClass.BonusHp + (sheet.Level - 1) * (characterClass.HitDie / 2 + 1);
-        sheet.Stats.SetBase("maxHp", maxHp);
-        sheet.Stats.SetBase("speed", characterClass.Speed);
-        sheet.Stats.SetBase("darkvision", characterClass.Darkvision);
-        sheet.Stats.SetBase("ac", 10);
-        sheet.Hp = maxHp;
-        foreach (string proficiency in characterClass.Proficiencies)
-        {
-            sheet.Proficiencies.Add(proficiency);
-        }
-        foreach (KeyValuePair<string, string> rank in characterClass.ProficiencyRanks)
-        {
-            sheet.ProficiencyRanks[rank.Key] = rank.Value;
-        }
-        foreach (KeyValuePair<string, Resource> resource in characterClass.Resources)
-        {
-            sheet.Resources[resource.Key] = resource.Value;
-        }
-        sheet.Weapon = WeaponFrom(compendium, characterClass.Items);
-        return sheet;
-    }
-
     public static CharacterSheet Creature(Ruleset rules, Compendium compendium, CreatureDefinition definition, string name)
     {
         var sheet = new CharacterSheet

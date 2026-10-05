@@ -6,13 +6,14 @@
 |---|---|
 | `rules/` | Plain C# with no Godot types: content loading, rules, World, AI, saves. Its own project (`Yorehold.Rules.csproj`). |
 | `rules/content/` | One type per content kind (ruleset, conditions, effects, actions, classes, creatures, maps, chapters...) and the code that reads it from JSON. |
-| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions), `EffectHost` and the effect runner, `Grid`, `Sight` and `Positioning`. |
+| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions, gear and hands, spells known), `Item` (one inventory entry), `Coins`, `EffectHost` and the effect runner, `Grid`, `Sight`, `Positioning` and `SaveFormat` (the versioned file envelope). |
+| `rules/characters/` | Characters as choices: `CharacterChoices` (the file), `CharacterBuild` (choices to a sheet), `CharacterDraft` (making one or adding a level, step by step) and `CharacterLibrary` (the player's files and the graveyard). |
 | `rules/fight/` | A fight on its own, with no map: `Encounter` (initiative, rounds, shared turn blocks, each combatant's actions, movement and reaction, death saves, its log) and `Tactics` (the AI scorer: who to hit, where to stand, when to run or give up). |
-| `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). |
+| `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
-| `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels. |
-| `scenes/` | Godot scenes. `Main.tscn` is the start scene and holds `PlayScreen.tscn`. `scenes/hud/` is the panels and their theme. |
+| `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels, `src/characters/` the character screens. |
+| `scenes/` | Godot scenes. `Main.tscn` is the start scene and holds `PlayScreen.tscn`. `scenes/hud/` is the panels and their theme, `scenes/characters/` the character screens. |
 | `assets/` | Content as JSON and images, same formats as the C++ client (`docs/CONTENT.md`). |
 | `docs/` | `ROADMAP.md` (order of work), `CONTENT.md` (the file formats) and this file. |
 
@@ -36,6 +37,7 @@ turns taps into `World` calls. It draws through its children, one script each:
 | `Overlay/TokenBars` (`TokenBarsView`) | in a fight: HP bars over tokens, a ring on whose turn it is and on who can be targeted |
 | `Fight` (`FightControl`) | the player's side of a fight: the picked action, what the pointer is over (`FightAim`), taps and keys into `World` calls |
 | `Hud` | chapter title, banner, and `Panels` (`scenes/hud/PlayHud.tscn`) |
+| `Characters` (`CharacterScreen`) | the character screens over everything; the world waits while they are up |
 
 The input actions (`pan_left`, `pan_right`, `pan_up`, `pan_down`, `zoom_in`, `zoom_out`, `recenter`) are in
 `project.godot`. `--chapter chapters/goblin-keep` after `--` plays another chapter than the scene's, and
@@ -58,6 +60,18 @@ only shows them and raises an event when something is pressed; `FightControl` do
 | `Reaction` | use it or pass, with the time left, when a hero's reaction is offered |
 | `Defeat` | the chapter's defeat text once the party is wiped |
 | `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |
+| `Menu` | the buttons along the top right: Characters, and one per panel (Sheet, C). A panel's key or button opens it and again closes it; one is open at a time |
+| `Sheet` (`SheetView.tscn`) | the hero's sheet: who they are, HP, AC, speed and XP, scores, skills, feats, uses and gear. It shows the acting hero in a fight and the selected one between fights |
+
+## The character screens
+
+`scenes/characters/CharacterScreen.tscn` with `src/characters/CharacterScreen.cs`, opened by Characters on the
+menu. The left side is made again after every click from `CharacterDraft` and the library; the right is a
+`SheetView` of whatever is picked. Characters lists the library and the graveyard, with New character and
+Level up (when the XP is there). New adventure has one seat per hero the chapter places: each holds its
+ready-made hero until a library character or a new one takes it, and Start (or Enter) plays the chapter again
+with them. Making a character has three steps, Origin, Class and scores, Skills and feats; levelling up only
+the class and the last. The library folder is `characters/` in Godot's user folder (`Places`).
 
 Cards and slots are `TipButton`s: the pointer over one shows its tooltip, and so does holding it down, which
 is how a touch screen gets one. A greyed slot can still be pressed and then says why it is greyed. Nothing
@@ -90,6 +104,7 @@ start with a number are skipped, so `#` notes work.
 | `shot .dev/name.png` | saves an extra picture on that frame, path from the workspace folder |
 | `cell X Y` | moves the mouse to the middle of map cell X, Y wherever the camera is |
 | `creature Name` | moves the mouse onto the token with that name, wherever it stands (underscores for spaces: `Goblin_1`) |
+| `button Words` | moves the mouse onto the first button on screen whose text starts with the words (`New_character`), or a text box by the words it shows when empty |
 | `tap` | one finger down and up where the mouse is, the way a touch screen clicks |
 | `pinch F` | two fingers either side of the mouse move apart by F (below 1 pinches in) and lift |
 
@@ -99,8 +114,9 @@ The game reads these after `--` on the command line: `--shot file`, `--frames N`
 A screenshot run prints every log line with the frame it came on (`../.dev/godot-shot.log`), which is how to
 time a script against a fight. The camera goes to whoever's turn it is, so a click on a cell should wait
 until it has settled. `tests/visual/scripts/fight.txt` plays chapter one's fight from the door to the last
-goblin with keys and clicks only (1240 frames), and `fight-hud.txt` goes through the tooltips, cancelling,
-the log, the shared turn and a touch tap (570 frames).
+goblin with keys and clicks only (440 frames), and `fight-hud.txt` goes through the tooltips, cancelling,
+the log and a touch tap (570 frames). `characters.txt` opens the sheet, makes a character and starts the
+chapter with them (280 frames). A run keeps its library in `../.dev/shot-characters`, emptied as it starts.
 
 ## C# style
 

@@ -42,7 +42,19 @@ public sealed class CharacterSheet
     /// <summary>For AddCondition: last as long as the condition's own file says.</summary>
     public const int DefinedDuration = EffectStep.DefinedDuration;
 
+    /// <summary>Hands a creature has; held items share them.</summary>
+    public const int HandCount = 2;
+
+    private Weapon? _weapon;
+
     public string Name { get; set; } = "";
+    /// <summary>The race's name, for the sheet.</summary>
+    public string Ancestry { get; set; } = "";
+    /// <summary>The class names, "Fighter / Rogue" for a character with levels in both.</summary>
+    public string ClassName { get; set; } = "";
+    /// <summary>The first class's hit die, "1d10".</summary>
+    public string HitDie { get; set; } = "";
+    public string Notes { get; set; } = "";
     public int Level { get; set; } = 1;
     /// <summary>Abilities by id, plus "maxHp", "ac", "speed" (feet), "attack", "damage" and "dc".</summary>
     public StatBlock Stats { get; } = new();
@@ -56,18 +68,52 @@ public sealed class CharacterSheet
     public Dictionary<string, string> ProficiencyRanks { get; } = new();
     /// <summary>Empty: a DC with no ability bonus.</summary>
     public string DcAbility { get; set; } = "";
-    public Weapon? Weapon { get; set; }
+
+    /// <summary>
+    /// What it strikes with: the weapon held in the main hand, else one set by hand (tests, sheets
+    /// without gear), else nothing, which is an unarmed strike.
+    /// </summary>
+    public Weapon? Weapon
+    {
+        get
+        {
+            Item? held = WeaponItem;
+            return held != null ? new Weapon(held.Definition.Damage, held.Definition.AttackAbility, held.Hands) : _weapon;
+        }
+        set => _weapon = value;
+    }
+
+    /// <summary>The equipped main-hand item, if there is one.</summary>
+    public Item? WeaponItem => Inventory.Find(i => i.Equipped && i.Slot == "mainHand");
+
     public DeathState Death { get; } = new();
-    /// <summary>Experience so far. Levels come from it once characters are built from choices (P7).</summary>
+    /// <summary>Experience so far; levels come from it (see AddXp).</summary>
     public int Xp { get; set; }
+
+    /// <summary>Spell ids it can cast, in the order they are listed; the prepared ones are among them.</summary>
+    public List<string> Spells { get; } = new();
+    /// <summary>Spell ids a prepared caster may prepare; empty for anyone else.</summary>
+    public List<string> Preparable { get; } = new();
+    public int PrepareLimit { get; set; }
+    public List<string> Prepared { get; } = new();
+
+    public List<Item> Inventory { get; } = new();
+    /// <summary>In copper. Coins weigh nothing.</summary>
+    public int Coins { get; set; }
 
     /// <summary>A separate sheet with the same numbers, for asking "what if" without touching this one.</summary>
     public CharacterSheet Copy()
     {
         var copy = new CharacterSheet
         {
-            Name = Name, Level = Level, Hp = Hp, TempHp = TempHp, DcAbility = DcAbility, Weapon = Weapon, Xp = Xp,
+            Name = Name, Ancestry = Ancestry, ClassName = ClassName, HitDie = HitDie, Notes = Notes,
+            Level = Level, Hp = Hp, TempHp = TempHp, DcAbility = DcAbility, _weapon = _weapon, Xp = Xp,
+            PrepareLimit = PrepareLimit, Coins = Coins,
         };
+        copy.Spells.AddRange(Spells);
+        copy.Preparable.AddRange(Preparable);
+        copy.Prepared.AddRange(Prepared);
+        copy.Inventory.AddRange(Inventory.Select(i => i.Copy()));
         foreach (KeyValuePair<string, float> stat in Stats.Bases)
         {
             copy.Stats.SetBase(stat.Key, stat.Value);
@@ -563,6 +609,252 @@ public sealed class CharacterSheet
             RemoveCondition(id);
         }
     }
+
+    // ---------------------------------------------------------------- gear
+
+    public int HandsInUse()
+    {
+        return Inventory.Where(i => i.Equipped && i.Held).Sum(i => Math.Max(0, i.Hands));
+    }
+
+    public int FreeHands => HandCount - HandsInUse();
+
+    /// <summary>
+    /// Puts an item on, taking off whatever was in its slot. Held items share the hands: taking up
+    /// something that needs more than are free puts the other held items away, the last listed
+    /// first, so a greatsword leaves no hand for a shield.
+    /// </summary>
+    public bool Equip(int index)
+    {
+        if (index < 0 || index >= Inventory.Count || Inventory[index].Slot.Length == 0 || Inventory[index].Equipped)
+        {
+            return false;
+        }
+        Item item = Inventory[index];
+        for (int i = 0; i < Inventory.Count; i++)
+        {
+            if (Inventory[i].Equipped && Inventory[i].Slot == item.Slot)
+            {
+                Unequip(i);
+            }
+        }
+        if (item.Held)
+        {
+            for (int i = Inventory.Count - 1; i >= 0 && HandsInUse() + Math.Max(0, item.Hands) > HandCount; i--)
+            {
+                if (Inventory[i].Equipped && Inventory[i].Held)
+                {
+                    Unequip(i);
+                }
+            }
+        }
+        item.Equipped = true;
+        foreach (Modifier modifier in item.Definition.Modifiers)
+        {
+            Stats.AddModifier(modifier, ItemSource(item, index));
+        }
+        return true;
+    }
+
+    public void Unequip(int index)
+    {
+        if (index < 0 || index >= Inventory.Count || !Inventory[index].Equipped)
+        {
+            return;
+        }
+        Inventory[index].Equipped = false;
+        Stats.RemoveSource(ItemSource(Inventory[index], index));
+    }
+
+    /// <summary>
+    /// Adds an item; one with a free slot is put on at once, so the first weapon listed stays in
+    /// hand. Carried-only items stack with what is there already.
+    /// </summary>
+    public void GiveItem(ItemDefinition definition, int quantity = -1, bool wear = true)
+    {
+        var item = new Item(definition, quantity);
+        if (item.Slot.Length == 0)
+        {
+            Item? same = Inventory.Find(i => i.Id == item.Id && i.Slot.Length == 0 && i.Value == item.Value);
+            if (same != null)
+            {
+                same.Quantity += item.Quantity;
+                return;
+            }
+        }
+        Inventory.Add(item);
+        if (wear && item.Slot.Length > 0 && !Inventory.Take(Inventory.Count - 1).Any(i => i.Equipped && i.Slot == item.Slot))
+        {
+            Equip(Inventory.Count - 1);
+        }
+    }
+
+    /// <summary>Takes one unit of an item that isn't worn, keeping the worn items' modifiers right.</summary>
+    public bool RemoveItem(int index)
+    {
+        if (index < 0 || index >= Inventory.Count || Inventory[index].Equipped || Inventory[index].Quantity < 1)
+        {
+            return false;
+        }
+        if (--Inventory[index].Quantity > 0)
+        {
+            return true;
+        }
+        TakeOut(index);
+        return true;
+    }
+
+    /// <summary>Takes a whole entry out, worn or not, and hands it back unworn.</summary>
+    public Item TakeOut(int index)
+    {
+        // modifier sources carry the index, so everything after it is taken off and put back on
+        var worn = new List<bool>();
+        for (int i = index; i < Inventory.Count; i++)
+        {
+            worn.Add(Inventory[i].Equipped);
+            Unequip(i);
+        }
+        Item taken = Inventory[index];
+        Inventory.RemoveAt(index);
+        for (int i = 1; i < worn.Count; i++)
+        {
+            if (worn[i])
+            {
+                Equip(index + i - 1);
+            }
+        }
+        Hp = Math.Min(Hp, MaxHp);
+        return taken;
+    }
+
+    // ---------------------------------------------------------------- levels, resources and spells
+
+    /// <summary>Adds experience; the level follows it up (never down).</summary>
+    public void AddXp(Ruleset rules, int amount)
+    {
+        Xp += amount;
+        Level = Math.Max(Level, rules.LevelForXp(Xp));
+    }
+
+    /// <summary>Refills resources by name: "*" is all of them, "slots-*" every one starting so. Returns the points that came back.</summary>
+    public int RestoreResources(IEnumerable<string> names)
+    {
+        List<string> list = names.ToList();
+        int restored = 0;
+        foreach (string id in Resources.Keys.ToList())
+        {
+            Resource resource = Resources[id];
+            bool named = list.Any(name => name.EndsWith('*') ? id.StartsWith(name[..^1], StringComparison.Ordinal) : id == name);
+            if (!named || resource.Current >= resource.Max)
+            {
+                continue;
+            }
+            restored += resource.Max - resource.Current;
+            Resources[id] = resource with { Current = resource.Max };
+        }
+        return restored;
+    }
+
+    /// <summary>
+    /// A prepared caster makes ids its prepared spells: at least one, all preparable, no more than
+    /// its limit. why says what is wrong when it can't.
+    /// </summary>
+    public bool Prepare(IReadOnlyList<string> ids, out string why)
+    {
+        why = "";
+        if (ids.Count == 0)
+        {
+            why = "keep at least one spell prepared";
+            return false;
+        }
+        if (ids.Count > PrepareLimit)
+        {
+            why = $"prepares at most {PrepareLimit} {(PrepareLimit == 1 ? "spell" : "spells")}";
+            return false;
+        }
+        for (int i = 0; i < ids.Count; i++)
+        {
+            if (!Preparable.Contains(ids[i]))
+            {
+                why = $"can't prepare \"{ids[i]}\"";
+                return false;
+            }
+            if (ids.Take(i).Contains(ids[i]))
+            {
+                why = $"\"{ids[i]}\" is listed twice";
+                return false;
+            }
+        }
+        // what it always knows never overlaps what it may prepare (see CharacterBuild)
+        Spells.RemoveAll(Preparable.Contains);
+        Spells.AddRange(ids);
+        Prepared.Clear();
+        Prepared.AddRange(ids);
+        return true;
+    }
+
+    /// <summary>
+    /// Takes everything the choices decide from a freshly built sheet and keeps what was lived
+    /// through: HP lost, temporary HP, conditions, gear, death saves and resources spent. HP stays
+    /// within the new maximum. Modifiers from "build:" sources (feats, features) are swapped for
+    /// the new sheet's.
+    /// </summary>
+    public void AdoptBuild(CharacterSheet built)
+    {
+        Name = built.Name;
+        Ancestry = built.Ancestry;
+        ClassName = built.ClassName;
+        Level = built.Level;
+        Xp = Math.Max(Xp, built.Xp);
+        HitDie = built.HitDie;
+        Notes = built.Notes;
+        foreach (KeyValuePair<string, float> stat in built.Stats.Bases)
+        {
+            Stats.SetBase(stat.Key, stat.Value);
+        }
+        foreach (string source in Stats.Modifiers.Select(m => m.Source).Where(s => s.StartsWith("build:", StringComparison.Ordinal)).Distinct().ToList())
+        {
+            Stats.RemoveSource(source);
+        }
+        foreach (AppliedModifier applied in built.Stats.Modifiers.Where(m => m.Source.StartsWith("build:", StringComparison.Ordinal)))
+        {
+            Stats.AddModifier(applied.Modifier, applied.Source);
+        }
+        Proficiencies.Clear();
+        Proficiencies.UnionWith(built.Proficiencies);
+        ProficiencyRanks.Clear();
+        foreach (KeyValuePair<string, string> rank in built.ProficiencyRanks)
+        {
+            ProficiencyRanks[rank.Key] = rank.Value;
+        }
+        DcAbility = built.DcAbility;
+        // prepared spells are the player's: keep those still on the list, up to the new count
+        var keep = new List<string>();
+        foreach (string id in Prepared)
+        {
+            if (keep.Count < built.PrepareLimit && built.Preparable.Contains(id) && !keep.Contains(id))
+            {
+                keep.Add(id);
+            }
+        }
+        Preparable.Clear();
+        Preparable.AddRange(built.Preparable);
+        PrepareLimit = built.PrepareLimit;
+        List<string> prepared = keep.Count == 0 ? built.Prepared.ToList() : keep;
+        Prepared.Clear();
+        Prepared.AddRange(prepared);
+        Spells.Clear();
+        Spells.AddRange(built.Spells.Where(id => !built.Prepared.Contains(id)));
+        Spells.AddRange(Prepared);
+        foreach (KeyValuePair<string, Resource> resource in built.Resources)
+        {
+            int current = Resources.TryGetValue(resource.Key, out Resource? live) ? Math.Clamp(live.Current, 0, resource.Value.Max) : resource.Value.Current;
+            Resources[resource.Key] = new Resource(current, resource.Value.Max);
+        }
+        Hp = Math.Min(Hp, MaxHp);
+    }
+
+    private static string ItemSource(Item item, int index) => $"item:{item.Id}#{index}";
 
     private static string ConditionSource(string id) => "condition:" + id;
 

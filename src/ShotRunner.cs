@@ -61,6 +61,11 @@ public partial class ShotRunner : Node
         // Scripted events must reach the game before it handles the frame.
         ProcessPriority = int.MinValue;
         Running = true;
+        string characters = Places.CharactersFolder();
+        if (System.IO.Directory.Exists(characters))
+        {
+            System.IO.Directory.Delete(characters, true);
+        }
         RenderingServer.FramePostDraw += AfterDraw;
         GD.Print($"Shot run: {_frames} frames, {_script.Count} script steps, saving {_shot}");
     }
@@ -136,6 +141,19 @@ public partial class ShotRunner : Node
                     break;
                 }
                 MoveMouse(at);
+                break;
+            }
+            case "button":
+            {
+                // the pointer onto a button by the words it starts with, wherever the layout put it
+                string words = step.A.Replace('_', ' ');
+                if (FindButton(GetTree().Root, words) is not Control button)
+                {
+                    GD.PushError($"Input script: no button '{words}' for 'button' on frame {step.Frame}");
+                    _failed = true;
+                    break;
+                }
+                MoveMouse(button.GetGlobalRect().GetCenter());
                 break;
             }
             case "tap":
@@ -219,6 +237,29 @@ public partial class ShotRunner : Node
                 _failed = true;
                 break;
         }
+    }
+
+    // The first button on screen whose words start so, in tree order; a text box goes by the words it shows when empty.
+    private static Control? FindButton(Node node, string words)
+    {
+        string shown = node switch
+        {
+            Button button => button.Text,
+            LineEdit box => box.PlaceholderText,
+            _ => "",
+        };
+        if (shown.Length > 0 && ((Control)node).IsVisibleInTree() && shown.StartsWith(words, System.StringComparison.OrdinalIgnoreCase))
+        {
+            return (Control)node;
+        }
+        foreach (Node child in node.GetChildren())
+        {
+            if (FindButton(child, words) is Control found)
+            {
+                return found;
+            }
+        }
+        return null;
     }
 
     private void MoveMouse(Vector2 to)

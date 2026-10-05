@@ -26,10 +26,6 @@
 391 down left
 430 shot .dev/p6-hold-tip.png
 431 up left
-# Bob's card hands him the shared turn
-440 move 52 220
-440 down left
-441 up left
 # a finger: the first tap on a square shows the walk, the second one takes it
 500 cell 8 6
 500 tap

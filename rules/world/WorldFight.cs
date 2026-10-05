@@ -479,7 +479,11 @@ public sealed partial class World
             {
                 Tokens.Tokens[i].Floor = 0;
             }
-            sheet.Xp += xp;
+            if (i < HeroCount)
+            {
+                sheet.AddXp(Rules, xp);
+                GainLevels(i);
+            }
         }
         FallenConditions(); // the revived are no longer Downed
         SelectStandingHero();

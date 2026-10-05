@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
 [ext_resource type="Script" path="res://src/hud/PlayHud.cs" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://src/hud/PortraitView.cs" id="7"]
 [ext_resource type="Script" path="res://src/hud/PipsView.cs" id="8"]
 [ext_resource type="Script" path="res://src/hud/MoveBarView.cs" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/hud/SheetView.tscn" id="10"]
 
 [node name="PlayHud" type="Control"]
 layout_mode = 3
@@ -296,6 +297,41 @@ theme_override_font_sizes/font_size = 28
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
+
+[node name="Menu" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -400.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 46.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 2
+
+[node name="Characters" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+text = "Characters"
+
+[node name="Sheet" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Sheet (C)"
+
+[node name="Sheet" parent="." instance=ExtResource("10")]
+visible = false
+layout_mode = 0
+offset_left = 104.0
+offset_top = 56.0
+offset_right = 504.0
+offset_bottom = 300.0
+mouse_filter = 2
 
 [node name="Tip" type="PanelContainer" parent="."]
 visible = false

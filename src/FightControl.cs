@@ -17,6 +17,8 @@ public partial class FightControl : Node
     public FightAim Aim { get; } = new();
     /// <summary>The creature the camera should follow; null for the selected hero.</summary>
     public int? Watch { get; private set; }
+    /// <summary>A screen is over the map: keys and clicks are not for the fight.</summary>
+    public bool Paused { get; set; }
 
     private World? _world;
     private PlayCamera? _camera;
@@ -84,7 +86,7 @@ public partial class FightControl : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_world == null || !_world.Fighting)
+        if (_world == null || !_world.Fighting || Paused)
         {
             return;
         }

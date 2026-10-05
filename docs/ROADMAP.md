@@ -91,8 +91,14 @@ builds, passes `check.ps1` and is committed.
   - Default: the area of an area action is previewed from its shape (burst, cone, line, square) around the pointer. No shipped action has one until spells (P9), so it hasn't been seen on screen.
   - Default: a successful or failed save floats "Saved" or "Failed" from the creature, like "Miss".
   - Not seen in a screenshot run: the defeat panel. The goblin in chapter one runs away before it can wipe a party that only ends its turns.
-- [ ] **P7. Characters.** Character files hold choices, the sheet is computed; class tables 1 to
+- [x] **P7. Characters.** Character files hold choices, the sheet is computed; class tables 1 to
   20; character library with graveyard; create and level-up screens; starting an adventure.
+  - Default: as in the C++ client, each seat's ready-made hero is rolled (4d6 drop the lowest) from the world seed, even when a library character takes the seat, so the dice after it don't change. This changed chapter one's fight: `fight.txt` is now Alice striking the goblin down, and `fight-hud.txt` lost its shared-turn step.
+  - Default: the sheet carries its gear (`Item`), worn as the class and background give it; the weapon is the one held in the main hand. A weapon set by hand is the fallback for sheets without gear. The gear panel, loot and weight are P8.
+  - Default: library files are the C++ client's (`yorehold.character` envelope). Until saves (P10) nothing is marked away: a brought character's copy goes back to its file when the chapter is cleared, when a new adventure starts and when the game closes, and a dead one then goes to the graveyard.
+  - Default: until the menus (P11) the play screen's Characters button opens both the library and New adventure; Start plays the chapter again with a new seed (the same seed in screenshot runs). Screenshot runs keep their library in `.dev/shot-characters`.
+  - Default: levels from XP in play go into the hero's latest class, as in the C++ client; the level-up screen is for library characters with XP to spare.
+  - Not ported yet: reading choices back off an old sheet (`choicesFromSheet`), which only older saves need (P10).
 - [ ] **P8. Items.** Inventory and hands, loot and containers, weight and the magic item limit,
   merchants, consumables; their panels.
 - [ ] **P9. Magic.** Spell files and casting, slots, prepared and spontaneous casters, focus

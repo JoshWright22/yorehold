@@ -31,6 +31,8 @@ public partial class PlayHud : Control
     public event Action<int>? CreaturePressed;
     /// <summary>True for use it, false for pass.</summary>
     public event Action<bool>? ReactionAnswered;
+    /// <summary>A button on the menu along the top right, by its node name ("Characters").</summary>
+    public event Action<string>? MenuPressed;
 
     // the scene has all of these
     private VBoxContainer _party = null!;
@@ -63,6 +65,8 @@ public partial class PlayHud : Control
     private Label _tipBody = null!;
     private Label _tipWarning = null!;
     private Label _cursor = null!;
+    private SheetView _sheet = null!;
+    private Button _sheetButton = null!;
 
     private readonly Dictionary<string, string> _icons = new();
     private readonly List<PartyCard> _partyCards = new();
@@ -109,6 +113,16 @@ public partial class PlayHud : Control
         _tipBody = GetNode<Label>("Tip/Rows/Body");
         _tipWarning = GetNode<Label>("Tip/Rows/Warning");
         _cursor = GetNode<Label>("Cursor");
+        _sheet = GetNode<SheetView>("Sheet");
+        _sheetButton = GetNode<Button>("Menu/Sheet");
+        foreach (Node child in GetNode("Menu").GetChildren())
+        {
+            if (child is Button button)
+            {
+                string name = button.Name;
+                button.Pressed += () => MenuPressed?.Invoke(name);
+            }
+        }
 
         _endTurn.Pressed += () => EndTurnPressed?.Invoke();
         GetNode<Button>("Reaction/Rows/Buttons/Use").Pressed += () => ReactionAnswered?.Invoke(true);
@@ -116,6 +130,15 @@ public partial class PlayHud : Control
         _top.Visible = false;
         _bottom.Visible = false;
         ReadIcons();
+    }
+
+    /// <summary>The panel opened from the menu (the sheet, the gear, the spells), or "" for none.</summary>
+    public string OpenPanel { get; private set; } = "";
+
+    /// <summary>Opens a panel by its menu name, or closes it when it is the one open.</summary>
+    public void TogglePanel(string name)
+    {
+        OpenPanel = OpenPanel == name ? "" : name;
     }
 
     /// <summary>The action on the hotbar's slot with this place, 0 first; null when there is none.</summary>
@@ -162,6 +185,7 @@ public partial class PlayHud : Control
         ShowReaction(world);
         _defeat.Visible = world.PartyWiped;
         _defeatText.Text = world.Chapter.DefeatText;
+        ShowPanels(world, shown);
 
         _cursor.Visible = aim.Label.Length > 0;
         if (_cursor.Visible)
@@ -172,6 +196,19 @@ public partial class PlayHud : Control
             _cursor.Position = aim.LabelAt + new Vector2(20, 14);
         }
         ShowTip();
+    }
+
+    // The hero a panel shows is the one whose turn it is, or the selected one between fights.
+    private void ShowPanels(World world, int hero)
+    {
+        _sheetButton.SetPressedNoSignal(OpenPanel == "Sheet");
+        _sheet.Visible = OpenPanel == "Sheet" && hero < world.HeroCount;
+        if (_sheet.Visible)
+        {
+            WorldCreature c = world.Creatures[hero];
+            _sheet.ShowSheet(world.Rules, world.Chapter.Compendium, c.Sheet, c.Choices, "");
+            _sheet.Size = Vector2.Zero; // shrinks to what the lines need
+        }
     }
 
     private void ReadIcons()

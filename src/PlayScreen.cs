@@ -33,7 +33,10 @@ public partial class PlayScreen : Node2D
     private FightControl _fight = null!;
     private FightGroundView _fightGround = null!;
     private TokenBarsView _tokenBars = null!;
+    private CharacterScreen _characters = null!;
     private (int Hero, int Object)? _pendingUse;
+    private int _seed;
+    private bool _clearedWritten;
 
     public World? World => _world;
 
@@ -52,6 +55,8 @@ public partial class PlayScreen : Node2D
         _fight = GetNode<FightControl>("Fight");
         _fightGround = GetNode<FightGroundView>("Overlay/FightGround");
         _tokenBars = GetNode<TokenBarsView>("Overlay/TokenBars");
+        _characters = GetNode<CharacterScreen>("Characters");
+        _characters.StartPressed += Restart;
         _camera.Tapped += Tap;
         _shading.Texture = _lightMap.GetTexture();
         GetViewport().SizeChanged += FitLightMap;
@@ -72,6 +77,7 @@ public partial class PlayScreen : Node2D
             }
         }
 
+        _seed = seed;
         try
         {
             _world = World.Load(new ContentFiles(ProjectSettings.GlobalizePath("res://assets")), folder, (ulong)seed);
@@ -124,6 +130,7 @@ public partial class PlayScreen : Node2D
         if (_hud.Panels != null)
         {
             _fight.Bind(world, _camera, _hud.Panels, _floaters);
+            _hud.Panels.MenuPressed += Menu;
         }
         _camera.Bounds = new Rect2(0, 0, map.Width * GameMap.CellSize, map.Height * GameMap.CellSize);
         _camera.JumpTo(world.Tokens.Tokens[0].Position.ToGodot(), 1);
@@ -137,7 +144,19 @@ public partial class PlayScreen : Node2D
         {
             return;
         }
+        // the world waits while the character screens are up
+        _fight.Paused = _characters.IsOpen;
+        if (_characters.IsOpen)
+        {
+            Refresh();
+            return;
+        }
         _world.Update(delta);
+        if (!_clearedWritten && _world.ChapterCleared())
+        {
+            _clearedWritten = true;
+            WriteBack();
+        }
         if (_pendingUse is (int hero, int id) && _world.Tokens.Tokens[hero].Path.Count == 0)
         {
             _pendingUse = null;
@@ -148,6 +167,101 @@ public partial class PlayScreen : Node2D
         }
         ShowEvents();
         Refresh();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (_world == null || _characters.IsOpen || @event is not InputEventKey { Pressed: true, Echo: false } key)
+        {
+            return;
+        }
+        string? panel = key.Keycode switch
+        {
+            Key.C => "Sheet",
+            _ => null,
+        };
+        if (panel != null)
+        {
+            Menu(panel);
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        WriteBack(); // leaving the game takes the brought characters home
+    }
+
+    private void Menu(string name)
+    {
+        if (_world == null)
+        {
+            return;
+        }
+        if (name == "Characters")
+        {
+            WriteBack(); // so the library shows what the brought characters have now
+            _characters.Open(_world, Places.CharactersFolder(), CharacterScreen.View.Characters);
+            return;
+        }
+        _hud.Panels?.TogglePanel(name);
+    }
+
+    // New adventure from the character screen: the brought characters so far go home first, then
+    // the chapter starts again with the seats as picked.
+    private void Restart(System.Collections.Generic.List<PartyPick?> picks)
+    {
+        if (_world == null)
+        {
+            return;
+        }
+        WriteBack();
+        _world.SetParty(picks);
+        // a screenshot run keeps its seed so the same script plays the same way
+        ulong seed = ShotRunner.Running ? (ulong)_seed : Time.GetTicksUsec();
+        _world.NewAdventure(seed);
+        _clearedWritten = false;
+        _camera.JumpTo(_world.Tokens.Tokens[0].Position.ToGodot(), 1);
+    }
+
+    // Each brought character's copy goes back to its library file: choices with the XP earned,
+    // what it carries and its coins. The dead go to the graveyard. Ready-made heroes stay behind.
+    private void WriteBack()
+    {
+        if (_world == null)
+        {
+            return;
+        }
+        string folder = Places.CharactersFolder();
+        for (int i = 0; i < _world.HeroCount; i++)
+        {
+            WorldCreature hero = _world.Creatures[i];
+            if (hero.Library.Length == 0 || _world.LibraryCopy(i) is not LibraryEntry copy)
+            {
+                continue;
+            }
+            try
+            {
+                if (CharacterLibrary.Find(folder, hero.Library) is not LibraryEntry entry || entry.Retired)
+                {
+                    continue;
+                }
+                entry.Choices = copy.Choices;
+                entry.Inventory.Clear();
+                entry.Inventory.AddRange(copy.Inventory);
+                entry.Coins = copy.Coins;
+                entry.Away = "";
+                CharacterLibrary.Write(folder, entry);
+                if (hero.Sheet.Death.Dead)
+                {
+                    CharacterLibrary.Retire(folder, entry);
+                }
+            }
+            catch (System.Exception error) when (error is ContentException or System.IO.IOException or System.InvalidOperationException)
+            {
+                GD.PushWarning($"Couldn't write {hero.Library} back: {error.Message}");
+            }
+        }
     }
 
     private void FitLightMap()

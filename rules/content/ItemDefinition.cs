@@ -22,6 +22,8 @@ public class ItemDefinition
     public List<Modifier> Modifiers { get; init; } = new();
     /// <summary>What using it up does, for consumables.</summary>
     public ActionDefinition? Use { get; init; }
+    /// <summary>The "use" object as written, so a carried item is saved the way it was read.</summary>
+    public string UseJson { get; init; } = "";
 
     public static ItemDefinition Read(ContentNode node)
     {
@@ -65,6 +67,7 @@ public class ItemDefinition
             Supplies = node.Int("supplies", 0, 0, 10000),
             Modifiers = ContentParts.ModifiersFrom(node, strict: false),
             Use = use,
+            UseJson = node.Get("use") is ContentNode written ? written.Raw() : "",
         };
     }
 }

@@ -29,8 +29,13 @@ What the port reads so far, and where it differs:
 - `ui/action-icons.json` is new: action id to the shape its hotbar icon is drawn with (`sword`, `dash`,
   `shield`, `plus`, `flask`, `hidden`, `eye`, `push`, `rings`, `up`, `hourglass`). An action it doesn't
   name gets its first letter. The rules don't read it.
-- Create, voice lines, character files and account sync are described below as the C++ client has
-  them. They are ported in later steps (see ROADMAP.md).
+- Character files ("Character files" below) are read and written in the same envelope and shape, so a
+  library made by the C++ client opens here. The choices inside are FRAMEWORK.md's character choices.
+  Until saves (P10) nothing marks a character `away`; its copy goes back to the file when the chapter
+  is cleared, when a new adventure starts and when the game closes. The library is `characters/` in
+  Godot's user folder.
+- Create, voice lines and account sync are described below as the C++ client has them. They are
+  ported in later steps (see ROADMAP.md).
 
 Content is a folder of JSON files and assets. Copy individual definitions between projects, or zip a complete folder into a `.yore` package. `.yore` is a regular ZIP archive, mounted directly; the game does not extract it or execute code from it.
 

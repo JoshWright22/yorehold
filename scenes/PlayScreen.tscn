@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://src/PlayScreen.cs" id="1"]
 [ext_resource type="Script" path="res://src/MapView.cs" id="2"]
@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://src/TokenBarsView.cs" id="13"]
 [ext_resource type="Script" path="res://src/FightControl.cs" id="14"]
 [ext_resource type="PackedScene" path="res://scenes/hud/PlayHud.tscn" id="15"]
+[ext_resource type="PackedScene" path="res://scenes/characters/CharacterScreen.tscn" id="16"]
 
 [sub_resource type="CanvasItemMaterial" id="Material_multiply"]
 blend_mode = 3
@@ -123,3 +124,5 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Panels" parent="Hud" instance=ExtResource("15")]
+
+[node name="Characters" parent="." instance=ExtResource("16")]

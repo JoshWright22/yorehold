@@ -1,0 +1,83 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
+[ext_resource type="Script" path="res://src/characters/CharacterScreen.cs" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/hud/SheetView.tscn" id="3"]
+
+[node name="CharacterScreen" type="CanvasLayer"]
+layer = 6
+script = ExtResource("2")
+
+[node name="Back" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.028, 0.04, 0.93)
+
+[node name="Root" type="HBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -330.0
+offset_right = 480.0
+offset_bottom = 330.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1")
+theme_override_constants/separation = 20
+
+[node name="Left" type="PanelContainer" parent="Root"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Root/Left"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Root/Left/Rows"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_font_sizes/font_size = 24
+text = "Characters"
+
+[node name="Tabs" type="HBoxContainer" parent="Root/Left/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Scroll" type="ScrollContainer" parent="Root/Left/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="VBoxContainer" parent="Root/Left/Rows/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Problem" type="Label" parent="Root/Left/Rows"]
+visible = false
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+theme_type_variation = &"WarnLabel"
+autowrap_mode = 3
+
+[node name="Notice" type="Label" parent="Root/Left/Rows"]
+visible = false
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Left/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Sheet" parent="Root" instance=ExtResource("3")]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_vertical = 0
