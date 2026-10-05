@@ -6,7 +6,7 @@ namespace Yorehold.Rules.Tests;
 public class ContentTests
 {
     // Files the rules don't read: they belong to the UI and to Create, and only have to be JSON here.
-    private static readonly string[] NotRules = { "create/compendium.json", "create/voice.json" };
+    private static readonly string[] NotRules = { "create/compendium.json", "create/voice.json", "ui/action-icons.json" };
 
     [Fact]
     public void EveryShippedFileLoads()

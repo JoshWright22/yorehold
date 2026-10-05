@@ -26,6 +26,9 @@ What the port reads so far, and where it differs:
 - A map's `tileMap` may not carry a `delta`: saved changes come with saves.
 - The save signature of a chapter is not worked out yet; it comes with saves.
 - `ui/theme.json` and the two files in `create/` are not rules content. They only have to be JSON here.
+- `ui/action-icons.json` is new: action id to the shape its hotbar icon is drawn with (`sword`, `dash`,
+  `shield`, `plus`, `flask`, `hidden`, `eye`, `push`, `rings`, `up`, `hourglass`). An action it doesn't
+  name gets its first letter. The rules don't read it.
 - Create, voice lines, character files and account sync are described below as the C++ client has
   them. They are ported in later steps (see ROADMAP.md).
 

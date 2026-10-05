@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/hud/LogPanel.cs" id="1"]
+
+[node name="LogPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(300, 0)
+script = ExtResource("1")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Header" type="Button" parent="Rows"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HeaderButton"
+text = "Log"
+alignment = 0
+
+[node name="Body" type="PanelContainer" parent="Rows"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"LogBody"
+
+[node name="Text" type="RichTextLabel" parent="Rows/Body"]
+layout_mode = 2
+focus_mode = 0
+scroll_following = true

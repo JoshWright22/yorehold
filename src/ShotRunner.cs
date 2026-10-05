@@ -22,6 +22,11 @@ public partial class ShotRunner : Node
     private readonly List<string> _pendingShots = new();
     private bool _failed;
 
+    /// <summary>A screenshot run is on.</summary>
+    public static bool Running { get; private set; }
+    /// <summary>The frame the run is on, as input scripts count them.</summary>
+    public static int Frame { get; private set; }
+
     public override void _Ready()
     {
         string[] args = OS.GetCmdlineUserArgs();
@@ -55,6 +60,7 @@ public partial class ShotRunner : Node
 
         // Scripted events must reach the game before it handles the frame.
         ProcessPriority = int.MinValue;
+        Running = true;
         RenderingServer.FramePostDraw += AfterDraw;
         GD.Print($"Shot run: {_frames} frames, {_script.Count} script steps, saving {_shot}");
     }
@@ -70,6 +76,7 @@ public partial class ShotRunner : Node
     public override void _Process(double delta)
     {
         _frame++;
+        Frame = _frame;
         foreach (InputStep step in _script)
         {
             if (step.Frame == _frame)
@@ -118,6 +125,26 @@ public partial class ShotRunner : Node
                 MoveMouse(screen.ScreenOfCell(new Cell((int)Number(step.A), (int)Number(step.B))));
                 break;
             }
+            case "creature":
+            {
+                // the pointer onto a token by its name, wherever it has walked to; underscores for spaces
+                string name = step.A.Replace('_', ' ');
+                if (GetTree().GetFirstNodeInGroup("play_screen") is not PlayScreen screen || screen.ScreenOfCreature(name) is not Vector2 at)
+                {
+                    GD.PushError($"Input script: nobody called '{name}' for 'creature' on frame {step.Frame}");
+                    _failed = true;
+                    break;
+                }
+                MoveMouse(at);
+                break;
+            }
+            case "tap":
+                // one finger down and up where the pointer is, which is how a touch screen clicks
+                foreach (bool pressed in new[] { true, false })
+                {
+                    Input.ParseInputEvent(new InputEventScreenTouch { Index = 0, Position = _mouse, Pressed = pressed });
+                }
+                break;
             case "pinch":
                 Pinch(Number(step.A));
                 break;

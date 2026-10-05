@@ -14,14 +14,24 @@ public partial class FloatersView : Node2D
         public Vector2 At;
         public string Text = "";
         public Color Color;
+        public float Scale = 1;
         public float Age;
     }
 
     private readonly List<Floater> _floaters = new();
 
-    public void Add(Vector2 at, string text, Color color)
+    /// <summary>scale makes the words bigger than FontSize, for numbers that matter.</summary>
+    public void Add(Vector2 at, string text, Color color, float scale = 1)
     {
-        _floaters.Add(new Floater { At = at, Text = text, Color = color });
+        // two from the same spot at once would sit on top of each other: the later one starts higher
+        foreach (Floater other in _floaters)
+        {
+            if (other.Age < 0.4f && other.At.DistanceTo(at) < 12)
+            {
+                at.Y -= FontSize * 1.3f;
+            }
+        }
+        _floaters.Add(new Floater { At = at, Text = text, Color = color, Scale = scale });
     }
 
     public void Clear()
@@ -46,10 +56,11 @@ public partial class FloatersView : Node2D
         {
             Color color = f.Color;
             color.A = Mathf.Clamp(1.5f - f.Age / Seconds * 1.5f, 0, 1);
-            Vector2 size = font.GetStringSize(f.Text, HorizontalAlignment.Left, -1, FontSize);
+            int fontSize = Mathf.RoundToInt(FontSize * f.Scale);
+            Vector2 size = font.GetStringSize(f.Text, HorizontalAlignment.Left, -1, fontSize);
             Vector2 at = f.At + new Vector2(-size.X / 2, -30 - f.Age * 40);
-            DrawStringOutline(font, at, f.Text, HorizontalAlignment.Left, -1, FontSize, 6, new Color(0, 0, 0, color.A));
-            DrawString(font, at, f.Text, HorizontalAlignment.Left, -1, FontSize, color);
+            DrawStringOutline(font, at, f.Text, HorizontalAlignment.Left, -1, fontSize, 6, new Color(0, 0, 0, color.A));
+            DrawString(font, at, f.Text, HorizontalAlignment.Left, -1, fontSize, color);
         }
     }
 }

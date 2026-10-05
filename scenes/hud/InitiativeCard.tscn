@@ -1,0 +1,75 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/hud/InitiativeCard.cs" id="1"]
+[ext_resource type="Script" path="res://src/hud/PortraitView.cs" id="2"]
+
+[node name="InitiativeCard" type="Button"]
+custom_minimum_size = Vector2(50, 58)
+size_flags_vertical = 0
+focus_mode = 0
+script = ExtResource("1")
+
+[node name="Portrait" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 7.0
+offset_right = -4.0
+offset_bottom = -11.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")
+
+[node name="Side" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 4.0
+offset_top = 3.0
+offset_right = -4.0
+offset_bottom = 6.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Hp" type="ProgressBar" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -10.0
+offset_right = -4.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"HpBar"
+step = 1.0
+value = 100.0
+show_percentage = false
+
+[node name="Ready" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ReadyFrame"
+
+[node name="Turn" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"TurnFrame"

@@ -11,8 +11,8 @@
 | `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
-| `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. |
-| `scenes/` | Godot scenes. `Main.tscn` is the start scene and holds `PlayScreen.tscn`. |
+| `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels. |
+| `scenes/` | Godot scenes. `Main.tscn` is the start scene and holds `PlayScreen.tscn`. `scenes/hud/` is the panels and their theme. |
 | `assets/` | Content as JSON and images, same formats as the C++ client (`docs/CONTENT.md`). |
 | `docs/` | `ROADMAP.md` (order of work), `CONTENT.md` (the file formats) and this file. |
 
@@ -31,12 +31,43 @@ turns taps into `World` calls. It draws through its children, one script each:
 | `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, drags and pinches; a click or tap that isn't a drag comes out as `Tapped` |
 | `LightMap` (SubViewport) and `Lighting` (`LightingView`) | the light map: white ground under the ambient colour, `Light.tscn` lamps and carried lights, walls as occluders |
 | `Shading/LightMap` | multiplies the light map over the world, like the C++ lighting pass |
-| `Overlay/Fog` (`FogView`), `Overlay/Floaters` | fog of war from the party's view, words that float up |
-| `Hud` | chapter title, banner and the last log lines |
+| `Overlay/Fog` (`FogView`), `Overlay/Floaters` | fog of war from the party's view, words that float up (damage big and red, healing green, a miss pale) |
+| `Overlay/FightGround` (`FightGroundView`) | on a hero's turn: the squares in reach, the path a click would walk, a picked action's range and area |
+| `Overlay/TokenBars` (`TokenBarsView`) | in a fight: HP bars over tokens, a ring on whose turn it is and on who can be targeted |
+| `Fight` (`FightControl`) | the player's side of a fight: the picked action, what the pointer is over (`FightAim`), taps and keys into `World` calls |
+| `Hud` | chapter title, banner, and `Panels` (`scenes/hud/PlayHud.tscn`) |
 
 The input actions (`pan_left`, `pan_right`, `pan_up`, `pan_down`, `zoom_in`, `zoom_out`, `recenter`) are in
-`project.godot`. `--chapter chapters/goblin-keep` after `--` plays another chapter than the scene's.
+`project.godot`. `--chapter chapters/goblin-keep` after `--` plays another chapter than the scene's, and
+`--seed 7` another run of the dice.
 `Yorehold.slnx` builds all three. Scratch files, logs and screenshots go in `../.dev/`, never in the repo.
+
+## The panels
+
+`scenes/hud/PlayHud.tscn` with `src/hud/PlayHud.cs` is every panel over the map, laid out with containers and
+anchors and styled by `scenes/hud/hud-theme.tres` (dark panels, a thin warm trim; the type variations in it
+are the bars, frames and label styles). `PlayScreen` hands it the `World` and the `FightAim` each frame. It
+only shows them and raises an event when something is pressed; `FightControl` does the acting.
+
+| Part | Is |
+|---|---|
+| `Party` | a `PartyCard.tscn` per hero down the left edge: portrait, HP, conditions as small badges, a gold frame on whose turn it is (or who is selected between fights) and a green one on who can take the shared turn. Pressing one selects that hero |
+| `Top` | the turn order in a fight: an `InitiativeCard.tscn` each from the block whose turn it is, the current one bigger, allies who share a turn together with a gap before the next block, the dead left out |
+| `Bottom` | in a fight: the acting hero's portrait and HP, the hotbar (action, reaction and bonus pips, the movement bar, an `ActionSlot.tscn` per action with its key) and End Turn |
+| `Log` (`LogPanel.tscn`) | the log, bottom right; its header folds it |
+| `Reaction` | use it or pass, with the time left, when a hero's reaction is offered |
+| `Defeat` | the chapter's defeat text once the party is wiped |
+| `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |
+
+Cards and slots are `TipButton`s: the pointer over one shows its tooltip, and so does holding it down, which
+is how a touch screen gets one. A greyed slot can still be pressed and then says why it is greyed. Nothing
+needs a hover: on a touch screen the first tap on a square shows the path or the chance to hit and the second
+tap does it.
+
+In a fight: a click on a square in reach walks there, a click on an enemy strikes it (walking up first), the
+number keys or a slot pick an action and the next click aims it, a right click or Escape puts it away, Space
+ends the turn. Portraits are the token's disc and action icons are plain shapes (`ActionIcon`) until there is
+art; `assets/ui/action-icons.json` says which shape each action id gets.
 
 ## Checking
 
@@ -58,10 +89,18 @@ start with a number are skipped, so `#` notes work.
 | `text some words` | types the rest of the line |
 | `shot .dev/name.png` | saves an extra picture on that frame, path from the workspace folder |
 | `cell X Y` | moves the mouse to the middle of map cell X, Y wherever the camera is |
+| `creature Name` | moves the mouse onto the token with that name, wherever it stands (underscores for spaces: `Goblin_1`) |
+| `tap` | one finger down and up where the mouse is, the way a touch screen clicks |
 | `pinch F` | two fingers either side of the mouse move apart by F (below 1 pinches in) and lift |
 
 The game reads these after `--` on the command line: `--shot file`, `--frames N`, `--script file`
 (`src/ShotRunner.cs`).
+
+A screenshot run prints every log line with the frame it came on (`../.dev/godot-shot.log`), which is how to
+time a script against a fight. The camera goes to whoever's turn it is, so a click on a cell should wait
+until it has settled. `tests/visual/scripts/fight.txt` plays chapter one's fight from the door to the last
+goblin with keys and clicks only (1240 frames), and `fight-hud.txt` goes through the tooltips, cancelling,
+the log, the shared turn and a touch tap (570 frames).
 
 ## C# style
 

@@ -1,0 +1,37 @@
+# chapter one, the same fight as fight.txt: the hud's smaller parts on Alice's first turn
+10 cell 9 6
+11 down left
+12 up left
+90 cell 12 6
+91 down left
+92 up left
+# tooltips: Alice's party card, then the goblin in the turn order
+300 move 52 108
+320 shot .dev/p6-card-tip.png
+330 move 763 43
+345 shot .dev/p6-order-tip.png
+# pick Strike and put it away with Escape, pick Shove and put it away with a right click
+350 key 1
+355 key Escape
+360 key 7
+365 cell 11 6
+368 shot .dev/p6-shove-armed.png
+370 down right
+371 up right
+# fold the log, then hold a greyed slot down until its tooltip says why
+380 move 1010 407
+380 down left
+381 up left
+390 move 858 660
+391 down left
+430 shot .dev/p6-hold-tip.png
+431 up left
+# Bob's card hands him the shared turn
+440 move 52 220
+440 down left
+441 up left
+# a finger: the first tap on a square shows the walk, the second one takes it
+500 cell 8 6
+500 tap
+515 shot .dev/p6-touch-preview.png
+520 tap

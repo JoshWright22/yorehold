@@ -74,12 +74,23 @@ builds, passes `check.ps1` and is committed.
   - Default: an action aimed at a square is refused until spells (P9). The `potion` action only shows for a sheet that carries the `potions` resource.
   - Default: a wiped party sets `PartyWiped` and plays the `onWipe` cutscene; going back to the checkpoint and its destination come with saves (P10). Picking a fight with an NPC or someone who surrendered waits for dialogue (P10).
   - Not ported: the C++ keep run with the scripted party, since it rests between fights (P10). The yard fight from sight to victory and the AI play-through of every encounter cover it for now.
-- [ ] **P6. Combat on screen.** Action bar, initiative strip, party cards, targeting with ranges
+- [x] **P6. Combat on screen.** Action bar, initiative strip, party cards, targeting with ranges
   and areas, hit and damage text, the log. A scripted fight in a screenshot run. First demo.
   - Layout follows Baldur's Gate 3: the hotbar bottom centre with action, bonus and movement
     pips and End Turn beside it, party portraits with HP down the left, the initiative strip of
     portraits top centre, the combat log bottom right, hit chance at the cursor when targeting,
     tooltips on every action. Our own art and names, the same arrangement and feel.
+  - Default: the panels are styled by `scenes/hud/hud-theme.tres` (flat dark boxes, a 1 px warm trim). The pixel art in `assets/ui` is the C++ client's purple theme and isn't used here.
+  - Default: portraits are the token's disc and initial, action icons are plain shapes picked by `assets/ui/action-icons.json`, conditions are two-letter badges. Art replaces them later.
+  - Default: the ruleset has no bonus actions, so that pip is hidden and a reaction pip sits beside the action pips.
+  - Default: a click on an enemy with nothing picked strikes it, walking up first. An action on oneself (Dash, Defend, Hide, Ready) is used as soon as its slot is pressed. End turn is the big button and Space, with no slot.
+  - Default: reaction prompts are on (`ReactionPrompts` on the play screen) and take the reaction when the ruleset's `promptSeconds` run out. The panel sits low in the middle so it doesn't cover who is moving.
+  - Default: on a touch screen the first tap on a square previews and the second acts. A greyed slot can be pressed and says why.
+  - Default: the party cards and the log show between fights too. The log moved from bottom left to bottom right.
+  - Default: reach, range and paths are drawn above the lighting and the fog, or they wouldn't show in a dark room. They show the map's shape under unexplored fog.
+  - Default: the area of an area action is previewed from its shape (burst, cone, line, square) around the pointer. No shipped action has one until spells (P9), so it hasn't been seen on screen.
+  - Default: a successful or failed save floats "Saved" or "Failed" from the creature, like "Miss".
+  - Not seen in a screenshot run: the defeat panel. The goblin in chapter one runs away before it can wipe a party that only ends its turns.
 - [ ] **P7. Characters.** Character files hold choices, the sheet is computed; class tables 1 to
   20; character library with graveyard; create and level-up screens; starting an adventure.
 - [ ] **P8. Items.** Inventory and hands, loot and containers, weight and the magic item limit,

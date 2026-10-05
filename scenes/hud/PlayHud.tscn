@@ -1,0 +1,343 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
+[ext_resource type="Script" path="res://src/hud/PlayHud.cs" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/hud/ActionSlot.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/hud/PartyCard.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/hud/InitiativeCard.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/hud/LogPanel.tscn" id="6"]
+[ext_resource type="Script" path="res://src/hud/PortraitView.cs" id="7"]
+[ext_resource type="Script" path="res://src/hud/PipsView.cs" id="8"]
+[ext_resource type="Script" path="res://src/hud/MoveBarView.cs" id="9"]
+
+[node name="PlayHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("1")
+script = ExtResource("2")
+SlotScene = ExtResource("3")
+PartyCardScene = ExtResource("4")
+InitiativeCardScene = ExtResource("5")
+
+[node name="Party" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 56.0
+offset_right = 94.0
+offset_bottom = 96.0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Top" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 8.0
+offset_right = 200.0
+offset_bottom = 130.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Initiative" type="PanelContainer" parent="Top"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Row" type="HBoxContainer" parent="Top/Initiative"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Round" type="Label" parent="Top/Initiative/Row"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Round 1"
+
+[node name="Cards" type="HBoxContainer" parent="Top/Initiative/Row"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Turn" type="Label" parent="Top"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+horizontal_alignment = 1
+
+[node name="Bottom" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -118.0
+offset_right = 200.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Selected" type="PanelContainer" parent="Bottom"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Bottom/Selected"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Portrait" type="Control" parent="Bottom/Selected/Rows"]
+custom_minimum_size = Vector2(84, 60)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+script = ExtResource("7")
+
+[node name="Hp" type="ProgressBar" parent="Bottom/Selected/Rows"]
+custom_minimum_size = Vector2(84, 18)
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"HpBar"
+step = 1.0
+value = 100.0
+show_percentage = false
+
+[node name="Text" type="Label" parent="Bottom/Selected/Rows/Hp"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"KeyLabel"
+theme_override_colors/font_color = Color(0.96, 0.94, 0.9, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Hotbar" type="PanelContainer" parent="Bottom"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Bottom/Hotbar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Status" type="HBoxContainer" parent="Bottom/Hotbar/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ActionsLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Actions"
+
+[node name="Actions" type="Control" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("8")
+
+[node name="BonusLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Bonus"
+
+[node name="Bonus" type="Control" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("8")
+Full = Color(0.95, 0.6, 0.25, 1)
+
+[node name="ReactionLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Reaction"
+
+[node name="Reaction" type="Control" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("8")
+Full = Color(0.72, 0.52, 0.92, 1)
+
+[node name="MoveLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Move"
+
+[node name="Move" type="Control" parent="Bottom/Hotbar/Rows/Status"]
+custom_minimum_size = Vector2(120, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("9")
+
+[node name="MoveText" type="Label" parent="Bottom/Hotbar/Rows/Status"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_colors/font_color = Color(0.93, 0.9, 0.83, 1)
+text = "30 ft"
+horizontal_alignment = 2
+
+[node name="Slots" type="HBoxContainer" parent="Bottom/Hotbar/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EndTurn" type="Button" parent="Bottom"]
+custom_minimum_size = Vector2(112, 0)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"EndTurnButton"
+text = "End Turn"
+
+[node name="Log" parent="." instance=ExtResource("6")]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -312.0
+offset_top = -336.0
+offset_right = -10.0
+offset_bottom = -126.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="Reaction" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -276.0
+offset_right = 180.0
+offset_bottom = -134.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Rows" type="VBoxContainer" parent="Reaction"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Reaction/Rows"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Reaction"
+horizontal_alignment = 1
+
+[node name="Text" type="Label" parent="Reaction/Rows"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Time" type="ProgressBar" parent="Reaction/Rows"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+theme_type_variation = &"TimeBar"
+max_value = 1.0
+step = 0.001
+value = 1.0
+show_percentage = false
+
+[node name="Buttons" type="HBoxContainer" parent="Reaction/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Use" type="Button" parent="Reaction/Rows/Buttons"]
+custom_minimum_size = Vector2(140, 48)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"EndTurnButton"
+text = "Use"
+
+[node name="Pass" type="Button" parent="Reaction/Rows/Buttons"]
+custom_minimum_size = Vector2(140, 48)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Pass"
+
+[node name="Defeat" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -50.0
+offset_right = 220.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Text" type="Label" parent="Defeat"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Tip" type="PanelContainer" parent="."]
+visible = false
+z_index = 10
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 80.0
+mouse_filter = 2
+theme_type_variation = &"TipPanel"
+
+[node name="Rows" type="VBoxContainer" parent="Tip"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Tip/Rows"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+
+[node name="Meta" type="Label" parent="Tip/Rows"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+
+[node name="Body" type="Label" parent="Tip/Rows"]
+custom_minimum_size = Vector2(290, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="Warning" type="Label" parent="Tip/Rows"]
+custom_minimum_size = Vector2(290, 0)
+layout_mode = 2
+theme_type_variation = &"WarnLabel"
+autowrap_mode = 3
+
+[node name="Cursor" type="Label" parent="."]
+visible = false
+z_index = 9
+layout_mode = 0
+offset_right = 120.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.95, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 22
