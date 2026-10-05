@@ -90,6 +90,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 - [ ] **F1. The game map on the framework's TileMap, Objects and Regions.** Doors, levers, locks,
   traps and chests work through Interact; the text map stays as an import.
+  Blocked: Build hangs mid-SDL compilation (CMakeLists cache issue); 3 attempts failed.
 - [ ] **F2. `adventure.json`.** Several chapters, transitions between markers, adventure-wide
   flags, level range. A two-chapter test adventure (test content, not shipped as story).
 - [ ] **F3. Camp, supplies and long rests.** A camp map, the stash, rest costs, revival at camp.
