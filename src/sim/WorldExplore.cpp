@@ -31,6 +31,7 @@ void World::walk(double deltaSeconds)
     }
     tokens_.advance(grid_, passable, deltaSeconds);
     watchTraps();
+    watchExits();
 }
 
 void World::arrive()

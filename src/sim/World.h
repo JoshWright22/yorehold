@@ -2,6 +2,7 @@
 
 #include <yorehold/framework/map/Positioning.h>
 
+#include "content/Adventure.h"
 #include "content/Chapter.h"
 
 #include <yorehold/framework/assets/FileSystem.h>
@@ -216,6 +217,11 @@ public:
     // machine's own walking and selection, which the token controller turns from clicks into
     // paths (shared with the others as "walk"), and the map, fog and tokens caching what they draw.
     const Chapter* chapter() const { return chapter_.get(); }
+    // The adventure the chapter belongs to (adventure.json at the content root lists it), if any.
+    // A hero stepping onto one of its exit markers between fights takes the party on to the next
+    // chapter ("travel"), with their sheets as they are and every flag the old chapter doesn't keep.
+    const Adventure* adventure() const { return adventure_ ? &*adventure_ : nullptr; }
+    std::string exitMarkerAt(yh::Cell cell) const; // the adventure's exit marker on this cell, if any
     GameMap& map() { return chapter_->map; }
     const GameMap& map() const { return chapter_->map; }
     const yh::Ruleset& rules() const { return rules_; }
@@ -461,6 +467,10 @@ protected:
     void springTrap(yh::ObjectId object, size_t hero);
     void objectsChanged();                            // walls and fixed lights after a door moved
     std::set<std::pair<size_t, yh::ObjectId>> trapsLookedAt_; // host: hero and trap pairs already checked
+    void watchExits();  // host: a hero stepping onto an open exit marker becomes a "travel" intent
+    void travel(const std::string& toChapter, const std::string& entryMarker);
+    std::optional<Adventure> adventure_;
+    std::vector<std::string> heroMarker_; // host: the exit marker each hero stood on last frame
     void dropLoot();       // after a win: the dead enemies' gear and loot, where they fell
     nlohmann::json pilesJson() const;
     std::vector<Pile> pilesFrom(const nlohmann::json& saved) const; // throws for loot that doesn't fit the chapter

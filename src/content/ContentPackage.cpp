@@ -1,4 +1,5 @@
 #include "ContentPackage.h"
+#include "Adventure.h"
 #include "Chapter.h"
 
 #include <yorehold/framework/animation/Cutscene.h>
@@ -108,6 +109,9 @@ bool ContentPackage::validate(const yh::FileSystem& files, std::string* error) c
             return false;
         }
     }
+    // An adventure.json beside the manifest ties chapters together; a broken one would only show at play.
+    if (files.exists("adventure.json") && !Adventure::load(files, "", error))
+        return false;
     auto validateFile = [&](const std::string& path, auto parse) {
         const auto text = files.readText(path);
         std::string problem;

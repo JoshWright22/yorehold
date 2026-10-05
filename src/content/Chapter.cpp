@@ -472,6 +472,7 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             c.aiChanges.push_back(std::move(entry));
         }
         c.completeWhen = flagsFrom(j, "completeWhen");
+        c.localFlags = flagsFrom(j, "localFlags");
         if (j.contains("onWipe"))
         {
             const auto& wipe = j.at("onWipe");

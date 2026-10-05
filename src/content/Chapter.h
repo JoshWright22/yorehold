@@ -143,6 +143,9 @@ struct Chapter
     std::string surrender;
     // The chapter is complete once all of these story flags are set. Empty = once every encounter is won.
     std::vector<std::string> completeWhen;
+    // Story flags that stay behind when the party travels on to another chapter of the adventure.
+    // Every other flag goes with them.
+    std::vector<std::string> localFlags;
 
     // Triggers that fire dialogue or cutscenes on chapter events: onEnter (at start),
     // onFlag (when flags change), onWipe (defeat), onComplete (chapter completion).

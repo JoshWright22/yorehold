@@ -326,6 +326,8 @@ void PlayScreen::show(World::Event& event)
         giving_.reset();
         looting_.reset();
         cameraPlaced_ = false;
+        if (world_.chapter())
+            camera_.setBounds(world_.map().map().worldBounds()); // travelling on brings a new map
         trading_.reset();
         tradePage_ = 0;
         consuming_.reset();

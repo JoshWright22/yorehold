@@ -32,6 +32,7 @@
   "encounters": [
     {
       "id": "entry",
+      "set": ["chapter_one_complete"],
       "text": "Enemies appear!",
       "creatures": [
         {

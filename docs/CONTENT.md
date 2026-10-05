@@ -197,7 +197,13 @@ Example:
 }
 ```
 
-The `flags` array pre-declares all story flags so the content checker can validate transitions; undeclared flags still work but won't be validated. Transitions with unmet `when` flags are unavailable (the marker doesn't trigger a move). Multiple chapters can share the same entry marker name; the transition specifies which one.
+The `flags` array pre-declares the adventure's story flags; undeclared flags still work. Transitions with unmet `when` flags are unavailable (the marker doesn't trigger a move). Multiple chapters can share the same entry marker name; the transition specifies which one. `from` and `to` may also be objects, `{"chapter": "goblin-keep", "marker": "north-passage"}`, in place of the two marker fields.
+
+The file is checked when the package is checked or packed, and when one of its chapters is opened: every listed chapter loads, chapter ids are unique, each transition names chapters in the list and markers on their maps (the entry marker on a cell you can stand on), every chapter's `level` is inside `minLevel` to `maxLevel` (1 to 20), and every chapter seats the same number of heroes, since the party travels as one. `recommendedPartySize` is 1 to 4.
+
+In play, a chapter the file lists belongs to the adventure. Between fights, a hero stepping onto an exit marker whose transition is open takes the whole party to the next chapter: the first hero stands on the entry marker, the others on the nearest free squares. Heroes keep their sheets as they are (wounds, spent slots, conditions, gear, coins and XP), rests already taken still count, and every story flag goes along except the ones the old chapter lists in its `localFlags` array in `chapter.json`. Arriving on a marker doesn't trigger it; a hero has to step off and on again. The autosave after travelling is in the new chapter, and loading it opens that chapter even though the adventure starts in the first.
+
+The game's built-in files carry a test adventure in `adventure.json`: `chapters/chapter-one` and `chapters/chapter-two`, with a way there, a way back and a way back that opens once `chapter_two_complete` is set. It is test content, not story.
 
 ## Rulesets
 

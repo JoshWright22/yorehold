@@ -150,6 +150,17 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 any |= tokens_.tokens[i].owner == player && !creatures_[i].sheet.down();
             return calm && !talk_ && any && j.at("on").is_boolean() ? std::optional(accepted) : std::nullopt;
         }
+        if (type == "travel")
+        {
+            // The host saw a hero step onto an open exit: the party goes on to the next chapter.
+            const size_t hero = j.at("hero").get<size_t>();
+            const std::string marker = j.at("marker").get<std::string>();
+            const std::vector<std::string> flags(flags_.begin(), flags_.end());
+            if (player != 0 || !calm || talk_ || !adventure_ || hero >= heroCount_ || creatures_[hero].sheet.down()
+                || marker.empty() || exitMarkerAt(cellOf(hero)) != marker || !adventure_->transition(chapter_->id, marker, flags))
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"marker", marker}}.dump();
+        }
         if (type == "unseen") // the host telling everyone a sneaking hero passed a check
             return player == 0 && calm && j.at("hero").get<size_t>() < heroCount_ ? std::optional(accepted) : std::nullopt;
         if (type == "ambush")
@@ -466,6 +477,15 @@ void World::apply(const yh::NetCommand& command)
         }
         if (command.player == self_)
             say(on ? "Sneaking: slower, with lights covered. Stay out of the red cones." : "No longer sneaking.");
+    }
+    else if (type == "travel")
+    {
+        const std::vector<std::string> flags(flags_.begin(), flags_.end());
+        if (const Adventure::Transition* way = adventure_ ? adventure_->transition(chapter_->id, j.at("marker").get<std::string>(), flags) : nullptr)
+        {
+            const Adventure::Transition taken = *way;
+            travel(taken.toChapter, taken.entryMarker);
+        }
     }
     else if (type == "unseen")
         emit({Event::Kind::Floater, "Unseen", tokens_.tokens[j.at("hero").get<size_t>()].position, FloatKind::Unseen});

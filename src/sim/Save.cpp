@@ -92,9 +92,21 @@ bool World::restoreState(std::string_view text, std::string* problem)
     if (!chapter_)
         return false;
     std::string error;
+    std::unique_ptr<Chapter> previous; // the chapter before a save from elsewhere in the adventure swapped it out
     try
     {
         const nlohmann::json data = nlohmann::json::parse(text);
+        // The party may have travelled on to another chapter of the adventure since it started.
+        if (const std::string folder = data.value("chapterFolder", chapter_->folder);
+            folder != chapter_->folder && adventure_ && adventure_->hasFolder(folder))
+        {
+            std::optional<Chapter> other = Chapter::load(chapterFiles_, folder, &error);
+            if (!other)
+                throw std::runtime_error(error);
+            previous = std::move(chapter_);
+            chapter_ = std::make_unique<Chapter>(std::move(*other));
+            rules_ = chapter_->rules;
+        }
         const std::string checkpoint = data.value("checkpoint", std::string{});
         if (!checkpoint.empty())
         {
@@ -271,12 +283,20 @@ bool World::restoreState(std::string_view text, std::string* problem)
                 token.floor = dead;
         }
         fallenConditions();
+        heroMarker_.clear();
+        for (size_t i = 0; i < heroCount_; i++)
+            heroMarker_.push_back(exitMarkerAt(cellOf(i)));
         emit({Event::Kind::Resumed});
         checkpoint_ = checkpoint.empty() ? stateJson() : checkpoint;
         return true;
     }
     catch (const std::exception& e)
     {
+        if (previous)
+        {
+            chapter_ = std::move(previous);
+            rules_ = chapter_->rules;
+        }
         if (problem)
             *problem = e.what();
         return false;

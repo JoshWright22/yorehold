@@ -32,6 +32,25 @@ bool World::loadChapter(const std::string& folder, std::string* error)
     }
     chapter_ = std::make_unique<Chapter>(std::move(*chapter));
     rules_ = chapter_->rules;
+    // The adventure it belongs to, if the content's adventure.json lists it. Checked once, here,
+    // and kept while the party travels between its chapters.
+    if (!adventure_ || !adventure_->hasFolder(folder))
+    {
+        adventure_.reset();
+        const std::vector<std::string> listed = Adventure::listedChapters(chapterFiles_, "");
+        if (std::find(listed.begin(), listed.end(), folder) != listed.end())
+        {
+            std::string problem;
+            adventure_ = Adventure::load(chapterFiles_, "", &problem);
+            if (!adventure_)
+            {
+                if (error)
+                    *error = problem;
+                chapter_.reset();
+                return false;
+            }
+        }
+    }
     return true;
 }
 
@@ -209,6 +228,10 @@ void World::newAdventure(uint64_t seed)
     }
     for (size_t i = 1; i < heroCount_; i++)
         tokens_.link(i, i - 1);
+    // Starting on an exit doesn't take anyone through it; stepping off and back on does.
+    heroMarker_.clear();
+    for (size_t i = 0; i < heroCount_; i++)
+        heroMarker_.push_back(exitMarkerAt(cellOf(i)));
 
     for (const std::string& line : chapter_->intro)
         say(line);

@@ -17,6 +17,19 @@
       "exitMarker": "exit",
       "to": "chapter-two",
       "entryMarker": "entry"
+    },
+    {
+      "from": "chapter-two",
+      "exitMarker": "back",
+      "to": "chapter-one",
+      "entryMarker": "return"
+    },
+    {
+      "from": "chapter-two",
+      "exitMarker": "end",
+      "to": "chapter-one",
+      "entryMarker": "start",
+      "when": ["chapter_two_complete"]
     }
   ],
   "flags": [

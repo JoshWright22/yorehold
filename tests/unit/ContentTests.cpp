@@ -289,8 +289,13 @@ void adventureTests()
         "Chapter folders are in the correct order");
 
     // Check transitions
-    check(adventure->transitions.size() == 1,
-        "One transition is defined");
+    check(adventure->transitions.size() == 3,
+        "Three transitions are defined");
+    check(adventure->chapterIds == std::vector<std::string>{"chapter-one", "chapter-two"} && adventure->folderOf("chapter-two") == "chapters/chapter-two",
+        "Chapter ids are read from the chapter files");
+    check(!adventure->nextChapter("chapter-two", "end", {}) && adventure->nextChapter("chapter-two", "end", {"chapter_two_complete"}) == "chapter-one",
+        "A transition with when flags only opens once they are set");
+    check(adventure->nextChapter("chapter-two", "back", {}) == "chapter-one", "The way back is open from the start");
     if (adventure->transitions.size() >= 1)
     {
         const auto& trans = adventure->transitions[0];
@@ -1329,6 +1334,7 @@ void worldCharacterTests(const std::function<void(bool, const char*)>& check);
 void worldItemTests(const std::function<void(bool, const char*)>& check);
 void worldSpellTests(const std::function<void(bool, const char*)>& check);
 void worldObjectTests(const std::function<void(bool, const char*)>& check);
+void worldTravelTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -1349,6 +1355,7 @@ int main()
         worldItemTests(check);
         worldSpellTests(check);
         worldObjectTests(check);
+        worldTravelTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

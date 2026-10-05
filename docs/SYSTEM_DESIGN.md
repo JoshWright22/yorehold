@@ -268,9 +268,10 @@ content files, "client" = Yorehold code.
 ### Story (part)
 
 - Dialogue, quests and flags: done for NPCs in a chapter.
-- Adventure structure: `adventure.json` lists chapters and the transitions between them
+- Adventure structure (done): `adventure.json` lists chapters and the transitions between them
   (`from`, `exit` marker, `to`, `entry` marker, optional `when` flags). Flags are per adventure; a
-  chapter may mark flags local.
+  chapter may mark flags local (`localFlags`). A hero stepping onto an open exit takes the party
+  on ("travel", sent by the host), sheets and flags included; saves follow the party's chapter.
 - Companions: creatures with a character file, an approval number changed by dialogue actions and
   flags, and their own dialogue. They join through a dialogue action. Up to 4 player characters
   plus 2 companions (**default**).
@@ -500,6 +501,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 45. Package manifest fields: `kind` categorizes a package (adventure, ruleset, compendium, character_class, race, feat; inferred from structure if empty), `id` is a stable identifier across versions, `revision` is a publish counter, `ruleset` names a ruleset version requirement, `requires` lists dependent packages. Old packages without manifest fields still load with empty defaults. Dependency checking and version matching happen at the library level when loading installed packages.
 
 46. Map objects: a key is an item whose id a lock's `key:<id>` tag names; locks without a key are picked with a dex check, traps found with passive perception within 2 squares (`trapSpotRange`) and disarmed with dex. Failing a disarm by 5 sets the trap off. Only heroes set traps off, since enemies know where their own are. Paths avoid found traps. Using an object is free between fights and costs Interact in one. Only floor 0 is played; layers on other floors load and are kept.
+
+47. Travel between chapters: any standing hero stepping onto an open exit between fights moves the whole party, no vote or prompt. Every chapter of an adventure seats the same number of heroes. Heroes keep their sheets; rests taken, flags and fired triggers carry, except a chapter's `localFlags`. Companions don't travel yet (F4). The adventure's level range only checks chapter levels for now.
 
 ### Structure choices made in this document
 
