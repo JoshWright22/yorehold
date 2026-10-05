@@ -56,15 +56,22 @@ int World::viewTeam() const
 // bordering what a view sees.
 void World::revealWalls(int team)
 {
+    // Shut doors hide their own square the way walls do, so they are shown the same way.
+    std::vector<yh::Cell> doors;
+    for (const auto& [id, object] : map().objects().all())
+        if (object.blocksSight())
+            for (const yh::Cell c : map().cellsOf(object))
+                doors.push_back(c);
+    auto solid = [&](yh::Cell c) { return map().blocksSight(c) || std::find(doors.begin(), doors.end(), c) != doors.end(); };
     for (int y = 0; y < map().height(); y++)
     {
         for (int x = 0; x < map().width(); x++)
         {
-            if (map().blocksSight({x, y}) || fog_.state(team, 0, {x, y}) != yh::FogState::Visible)
+            if (solid({x, y}) || fog_.state(team, 0, {x, y}) != yh::FogState::Visible)
                 continue;
             for (int dy = -1; dy <= 1; dy++)
                 for (int dx = -1; dx <= 1; dx++)
-                    if (map().inside({x + dx, y + dy}) && map().blocksSight({x + dx, y + dy}))
+                    if (map().inside({x + dx, y + dy}) && solid({x + dx, y + dy}))
                         fog_.reveal(team, 0, {x + dx, y + dy});
         }
     }

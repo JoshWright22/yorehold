@@ -45,6 +45,7 @@ std::string World::stateJson() const
     data["piles"] = pilesJson();
     data["surfaces"] = surfacesJson();
     data["merchants"] = merchantsJson();
+    data["objects"] = nlohmann::json::parse(map().objects().toJson());
     data["companionApproval"] = companionApproval_;
     data["companionParty"] = std::vector<std::string>(companionParty_.begin(), companionParty_.end());
     for (size_t i = 0; i < creatures_.size(); i++)
@@ -139,6 +140,17 @@ bool World::restoreState(std::string_view text, std::string* problem)
         const std::optional<std::vector<Pile>> piles = data.contains("piles") ? std::optional(pilesFrom(data.at("piles"))) : std::nullopt;
         const auto surfaces = data.contains("surfaces") ? std::optional(surfacesFrom(data.at("surfaces"))) : std::nullopt;
         const auto merchants = data.contains("merchants") ? std::optional(merchantsFrom(data.at("merchants"))) : std::nullopt;
+        // Doors, chests and traps as they were left. Older saves have none: the map's own state.
+        std::optional<yh::Objects> objects;
+        if (data.contains("objects"))
+        {
+            objects = yh::Objects::fromJson(data.at("objects").dump(), &error);
+            if (!objects) throw std::runtime_error("saved map objects: " + error);
+            const auto& authored = map().objects().all();
+            if (objects->all().size() != authored.size()
+                || !std::equal(authored.begin(), authored.end(), objects->all().begin(), [](const auto& a, const auto& b) { return a.first == b.first; }))
+                throw std::runtime_error("the map's objects have changed since this save");
+        }
         std::vector<yh::CharacterChoices> choices;
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
@@ -204,6 +216,11 @@ bool World::restoreState(std::string_view text, std::string* problem)
             surfaces_ = *surfaces;
         if (merchants)
             merchants_ = *merchants;
+        if (objects)
+        {
+            map().objects() = std::move(*objects);
+            objectsChanged();
+        }
         fights_ = fights;
         restsUsed_ = std::move(rests);
         flags_ = std::move(flags);

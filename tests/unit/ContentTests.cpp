@@ -1328,6 +1328,7 @@ void worldDeathTests(const std::function<void(bool, const char*)>& check);
 void worldCharacterTests(const std::function<void(bool, const char*)>& check);
 void worldItemTests(const std::function<void(bool, const char*)>& check);
 void worldSpellTests(const std::function<void(bool, const char*)>& check);
+void worldObjectTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -1347,6 +1348,7 @@ int main()
         worldCharacterTests(check);
         worldItemTests(check);
         worldSpellTests(check);
+        worldObjectTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

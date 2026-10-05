@@ -42,6 +42,7 @@ add_library(yorehold-game STATIC
     src/sim/WorldCombat.cpp
     src/sim/WorldExplore.cpp
     src/sim/WorldLoot.cpp
+    src/sim/WorldObjects.cpp
     src/sim/WorldTrade.cpp
     src/sim/WorldItems.cpp
     src/sim/WorldSpells.cpp
@@ -92,7 +93,7 @@ endif()
 if(BUILD_TESTING AND NOT ANDROID AND NOT EMSCRIPTEN AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     add_executable(yorehold-unit-tests tests/unit/ContentTests.cpp tests/unit/WorldFixture.cpp tests/unit/WorldTests.cpp tests/unit/WorldActionTests.cpp tests/unit/WorldTurnTests.cpp tests/unit/WorldPositioningTests.cpp tests/unit/WorldProficiencyTests.cpp tests/unit/WorldDeathTests.cpp tests/unit/WorldCharacterTests.cpp)
     target_link_libraries(yorehold-unit-tests PRIVATE yorehold-game)
-    target_sources(yorehold-unit-tests PRIVATE tests/unit/WorldItemTests.cpp tests/unit/WorldSpellTests.cpp)
+    target_sources(yorehold-unit-tests PRIVATE tests/unit/WorldItemTests.cpp tests/unit/WorldSpellTests.cpp tests/unit/WorldObjectTests.cpp)
     yorehold_warnings(yorehold-unit-tests)
     yorehold_copy_gpu_runtime(yorehold-unit-tests)
     add_test(NAME client-unit COMMAND yorehold-unit-tests)

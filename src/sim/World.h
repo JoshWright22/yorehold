@@ -6,6 +6,7 @@
 
 #include <yorehold/framework/assets/FileSystem.h>
 #include <yorehold/framework/map/FogOfWar.h>
+#include <yorehold/framework/map/Objects.h>
 #include <yorehold/framework/map/Tokens.h>
 #include <yorehold/framework/net/Session.h>
 #include <yorehold/framework/rpg/Combat.h>
@@ -236,9 +237,19 @@ public:
         int coins = 0;
         std::vector<yh::Item> items;
         int container = -1; // index into the chapter's containers; -1 = left by a creature
+        yh::ObjectId object = 0; // the chest on the map it is kept in (0 = none); a locked one can't be looted
         bool empty() const { return coins == 0 && items.empty(); }
     };
     const std::vector<Pile>& piles() const { return piles_; }
+    bool pileLocked(size_t pile) const;
+
+    // Doors, levers, locks, chests and traps on the map (WorldObjects.cpp). A hero beside one uses
+    // it with Interact ("interact"): free between fights, the Interact action's cost on their turn
+    // in one. Locks open with a key (an item whose id the lock's key:<id> tag names) or a check;
+    // a found trap is disarmed with a check. Traps go off under a hero; the host sends "trap".
+    bool canInteract(size_t hero, yh::ObjectId object, std::string* why = nullptr) const;
+    std::optional<yh::ObjectId> objectNear(size_t hero) const; // something beside the hero to use
+    void interact(size_t hero, yh::ObjectId object);
     // The nearest pile with something in it that `hero` can reach from where they stand.
     std::optional<size_t> pileNear(size_t hero) const;
 
@@ -445,6 +456,11 @@ protected:
     nlohmann::json merchantsJson() const;
     std::vector<std::optional<yh::Merchant>> merchantsFrom(const nlohmann::json& saved) const;
     void fillContainers(); // newAdventure: each of the chapter's containers becomes a pile
+    void useObject(size_t hero, yh::ObjectId object); // "interact", on every copy
+    void watchTraps();                                // host: traps spotted or stepped on become "trap" intents
+    void springTrap(yh::ObjectId object, size_t hero);
+    void objectsChanged();                            // walls and fixed lights after a door moved
+    std::set<std::pair<size_t, yh::ObjectId>> trapsLookedAt_; // host: hero and trap pairs already checked
     void dropLoot();       // after a win: the dead enemies' gear and loot, where they fell
     nlohmann::json pilesJson() const;
     std::vector<Pile> pilesFrom(const nlohmann::json& saved) const; // throws for loot that doesn't fit the chapter

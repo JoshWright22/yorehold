@@ -68,6 +68,20 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 return std::nullopt;
             return nlohmann::json{{"take", take}, {"creature", pendingReaction_->creature}, {"offer", reactionPrompt_->id}}.dump();
         }
+        if (type == "trap")
+        {
+            // The host saw a hero find a hidden trap ("spot") or step on one. It can happen mid-move.
+            const yh::MapObject* object = map().objects().get(j.at("object").get<yh::ObjectId>());
+            const size_t hero = j.at("hero").get<size_t>();
+            if (player != 0 || inCutscene_ || !object || !object->armedTrap() || hero >= heroCount_ || creatures_[hero].sheet.down())
+                return std::nullopt;
+            if (j.value("spot", false))
+                return object->trap->found ? std::nullopt : std::optional(nlohmann::json{{"object", object->id}, {"hero", hero}, {"spot", true}}.dump());
+            const std::vector<yh::Cell> cells = map().cellsOf(*object);
+            if (std::find(cells.begin(), cells.end(), cellOf(hero)) == cells.end())
+                return std::nullopt;
+            return nlohmann::json{{"object", object->id}, {"hero", hero}}.dump();
+        }
         if (pendingMovement_ && type != "seats")
             return std::nullopt;
 
@@ -279,6 +293,30 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
                 return std::nullopt;
             return accepted;
         }
+        if (type == "interact")
+        {
+            // A door, lever, lock or found trap beside the hero: free between fights, Interact's cost on their turn.
+            const size_t hero = j.at("hero").get<size_t>();
+            const yh::ObjectId object = j.at("object").get<yh::ObjectId>();
+            if (hero >= heroCount_ || !mayAct(player, hero) || !canInteract(hero, object, &reason))
+                return std::nullopt;
+            if (fighting)
+            {
+                if (!acting || *current != hero)
+                {
+                    reason = creatures_[hero].sheet.name + " can only do that on their own turn.";
+                    return std::nullopt;
+                }
+                if (!encounter_->canAct(equipCost(hero)))
+                {
+                    reason = "Not enough actions left.";
+                    return std::nullopt;
+                }
+            }
+            else if (!calm || talk_)
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"object", object}}.dump();
+        }
         if (type == "loot")
         {
             // Taking from a pile the hero stands on or beside: one item, the coins, or all of it.
@@ -287,6 +325,11 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
             if (!calm || talk_ || hero >= heroCount_ || !mayAct(player, hero) || creatures_[hero].sheet.down() || pile >= piles_.size()
                 || piles_[pile].empty())
                 return std::nullopt;
+            if (pileLocked(pile))
+            {
+                reason = piles_[pile].name + " is locked.";
+                return std::nullopt;
+            }
             const yh::Cell at = cellOf(hero);
             if (std::abs(piles_[pile].at.x - at.x) > 1 || std::abs(piles_[pile].at.y - at.y) > 1)
             {
@@ -604,6 +647,22 @@ void World::apply(const yh::NetCommand& command)
         sheet.hp = std::min(sheet.hp, sheet.maxHp());
         syncLog();
     }
+    else if (type == "interact")
+        useObject(j.at("hero").get<size_t>(), j.at("object").get<yh::ObjectId>());
+    else if (type == "trap")
+    {
+        const yh::ObjectId object = j.at("object").get<yh::ObjectId>();
+        const size_t hero = j.at("hero").get<size_t>();
+        if (j.value("spot", false))
+        {
+            yh::MapObject* found = map().objects().get(object);
+            found->trap->found = true;
+            say(creatures_[hero].sheet.name + " spots " + (found->name.empty() ? std::string("a trap") : found->name) + ".");
+            emit({Event::Kind::Floater, "Trap", tokens_.tokens[hero].position, FloatKind::Unseen});
+        }
+        else
+            springTrap(object, hero);
+    }
     else if (type == "loot")
     {
         yh::Character& sheet = creatures_[j.at("hero").get<size_t>()].sheet;
@@ -764,6 +823,7 @@ uint64_t World::checksum() const
             mix(static_cast<unsigned char>(ch));
     mix(rolls_);
     mixText(merchantsJson().dump());
+    mixText(map().objects().toJson());
     if (encounter_ && !encounter_->finished() && encounter_->started())
     {
         mix(encounter_->currentIndex());

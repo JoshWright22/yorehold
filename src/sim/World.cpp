@@ -75,8 +75,10 @@ void World::newAdventure(uint64_t seed)
 
     heroCount_ = 0;
     piles_.clear();
+    trapsLookedAt_.clear();
     if (!chapter_)
         return;
+    map().resetObjects(); // doors shut and chests full again, as the map file has them
     fillContainers();
     if (!chapter_->quests.empty())
         if (const std::optional<std::string> text = chapterFiles_.readText(chapter_->quests))
@@ -438,7 +440,12 @@ bool World::occupied(yh::Cell c, size_t except) const
 
 bool World::walkable(yh::Cell c) const
 {
-    return map().walkable(c) && !talkerAt(c);
+    if (!map().walkable(c) || talkerAt(c))
+        return false;
+    // Paths go around a trap the party has found, until someone disarms it.
+    const std::optional<yh::ObjectId> object = map().objectAt(c);
+    const yh::MapObject* found = object ? map().objects().get(*object) : nullptr;
+    return !found || !found->armedTrap() || !found->trap->found;
 }
 
 std::optional<size_t> World::orderIndex(size_t creature) const

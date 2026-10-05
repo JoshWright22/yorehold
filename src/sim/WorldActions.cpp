@@ -399,3 +399,40 @@ void World::narrate(const yh::EffectResult& result)
     }
     flush();
 }
+
+// A trap going off under a hero (WorldObjects.cpp watches for it): its effect, aimed at them.
+void World::springTrap(yh::ObjectId id, size_t hero)
+{
+    const std::optional<std::string> effectText = map().objects().spring(id);
+    if (!effectText || hero >= heroCount_)
+        return;
+    const yh::MapObject* object = map().objects().get(id);
+    say(creatures_[hero].sheet.name + " sets off " + (object->name.empty() ? std::string("a trap") : object->name) + "!");
+    emit({Event::Kind::Floater, "Trap!", tokens_.tokens[hero].position, FloatKind::Hit});
+    const std::optional<yh::Effect> effect = yh::Effect::fromJson(*effectText); // Chapter::load checked it
+    if (effect && !effect->empty())
+    {
+        EffectsHost host(*this);
+        yh::Random dice = nextRandom(0x7a4b5ull);
+        yh::EffectContext context;
+        context.rules = &rules_;
+        context.random = &dice;
+        context.self = static_cast<yh::EffectActor>(hero);
+        context.targets = {static_cast<yh::EffectActor>(hero)};
+        context.source = object->name;
+        context.dc = effect->save.dc;
+        const yh::EffectResult result = effect->run(host, context);
+        narrate(result);
+        fallenConditions();
+        for (const yh::EffectEvent& event : result.events)
+            if (event.kind == yh::EffectEvent::Kind::Damage && event.dropped && creatures_[static_cast<size_t>(event.who)].sheet.down())
+            {
+                yh::Token& token = tokens_.tokens[static_cast<size_t>(event.who)];
+                token.floor = dead;
+                token.selected = false;
+                token.path.clear();
+            }
+    }
+    objectsChanged();
+    syncLog();
+}

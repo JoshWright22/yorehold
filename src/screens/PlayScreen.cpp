@@ -110,10 +110,26 @@ bool PlayScreen::handle(const SDL_Event& event)
         trading_.reset();
         return true;
     }
+    if (keyDown && event.key.key == SDLK_E && world_.fighting())
+    {
+        // In a fight: the acting hero uses a door, lever, lock or found trap beside them (Interact).
+        const std::optional<size_t> acting = world_.currentCreature();
+        if (acting && world_.mine(*acting))
+            if (const std::optional<yh::ObjectId> object = world_.objectNear(*acting))
+                world_.interact(*acting, *object);
+        return true;
+    }
     if (keyDown && event.key.key == SDLK_E && !world_.fighting())
     {
         // Beside something to take: open it, then take everything.
         const size_t hero = world_.leaderIndex();
+        if (!looting_ && !inventoryOpen_ && !journalOpen_ && !trading_ && !spellsOpen_)
+            if (const std::optional<yh::ObjectId> object = world_.objectNear(hero))
+            {
+                // A door, lever, lock or found trap comes first; a chest that opens is looted with E again.
+                world_.interact(hero, *object);
+                return true;
+            }
         if (looting_)
             world_.act("loot", nlohmann::json{{"hero", hero}, {"pile", *looting_}, {"all", true}}.dump());
         else if (!inventoryOpen_ && !journalOpen_ && !trading_ && !spellsOpen_)
@@ -438,14 +454,54 @@ void PlayScreen::drawWorld(yh::Renderer& renderer)
         renderer.drawLine(token.position - yh::Vec2{r, r}, token.position + yh::Vec2{r, r}, {20, 10, 10, 255}, 5);
         renderer.drawLine(token.position + yh::Vec2{-r, r}, token.position + yh::Vec2{r, -r}, {20, 10, 10, 255}, 5);
     }
-    // Things to take: a chest for a container (dull once emptied), a small sack for what the dead left.
-    for (const World::Pile& pile : world_.piles())
+    // Doors, levers and traps the party has found. Chests are drawn with what is in them, below.
+    for (const auto& [id, object] : world_.map().objects().all())
     {
-        if ((pile.container < 0 && pile.empty()) || world_.fog().state(world_.viewTeam(), 0, pile.at) == yh::FogState::Unexplored)
+        if (object.destroyed || object.has("container") || (object.trap && !object.trap->found)
+            || world_.fog().state(world_.viewTeam(), 0, world_.map().cellOf(object)) == yh::FogState::Unexplored)
+            continue;
+        const yh::Rect area = object.area;
+        const yh::Vec2 centre{area.x + area.w / 2, area.y + area.h / 2};
+        if (object.door)
+        {
+            if (object.door->open)
+                renderer.drawRect({area.x + 4, area.y + 4, area.w - 8, area.h - 8}, {110, 75, 40, 255}, 3);
+            else
+            {
+                renderer.fillRect({area.x + 4, area.y + 4, area.w - 8, area.h - 8}, {120, 80, 42, 255});
+                renderer.drawRect({area.x + 4, area.y + 4, area.w - 8, area.h - 8}, {45, 28, 14, 255}, 3);
+            }
+            if (object.door->locked)
+                renderer.fillCircle(centre, 6, {225, 195, 80, 255});
+        }
+        else if (object.has("lever"))
+        {
+            renderer.fillRect({centre.x - 10, centre.y + 6, 20, 8}, {70, 70, 76, 255});
+            renderer.drawLine({centre.x, centre.y + 8}, {centre.x + 10, centre.y - 14}, {150, 120, 80, 255}, 4);
+        }
+        else if (object.trap)
+        {
+            const yh::Color mark = object.trap->armed ? yh::Color{220, 60, 50, 255} : yh::Color{110, 100, 95, 255};
+            const float r = std::min(area.w, area.h) * 0.3f;
+            renderer.drawLine(centre - yh::Vec2{r, r}, centre + yh::Vec2{r, r}, mark, 4);
+            renderer.drawLine(centre + yh::Vec2{-r, r}, centre + yh::Vec2{r, -r}, mark, 4);
+        }
+        else
+            renderer.fillRect({area.x + 8, area.y + 8, area.w - 16, area.h - 16}, {100, 90, 80, 255});
+    }
+
+    // Things to take: a chest for a container (dull once emptied), a small sack for what the dead left.
+    for (size_t p = 0; p < world_.piles().size(); p++)
+    {
+        const World::Pile& pile = world_.piles()[p];
+        const bool chest = pile.container >= 0 || pile.object != 0;
+        if ((!chest && pile.empty()) || world_.fog().state(world_.viewTeam(), 0, pile.at) == yh::FogState::Unexplored)
             continue;
         const yh::Vec2 centre{(pile.at.x + 0.5f) * cell, (pile.at.y + 0.5f) * cell};
-        if (pile.container >= 0)
+        if (chest)
         {
+            if (world_.pileLocked(p))
+                renderer.fillCircle(centre + yh::Vec2{0, cell * 0.3f}, 5, {225, 195, 80, 255});
             const yh::Rect box{centre.x - cell * 0.3f, centre.y - cell * 0.2f, cell * 0.6f, cell * 0.42f};
             renderer.fillRect(box, pile.empty() ? yh::Color{70, 60, 50, 255} : yh::Color{140, 95, 45, 255});
             renderer.drawRect(box, {30, 20, 10, 255}, 2);

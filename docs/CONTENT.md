@@ -118,6 +118,18 @@ Optional `lighting` picks how light works on the map. `mode` is `off` (everythin
 
 Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in cells, `color`, and `flame` (false gives a steady light). Light positions are fractional cell coordinates, so `[4.5, 3.5]` centers a light on cell `[4, 3]`. `markers` map names to integer cells. One cell is 64 world units.
 
+The text rows are an import for maps written by hand. The game keeps every map in the framework's `TileMap` and `Objects` (one `Region` per chapter), and a map can be written that way too: `tiles` as an array (`{"name": "stone", "art": "stone", ...}`, tile id = place in the array + 1) and `tileMap` holding the framework's TileMap JSON (FRAMEWORK.md, "Maps, objects and streamed worlds"; `tileSize` 64) in place of `legend` and `layers`. Only floor 0 layers count for walking and sight for now. `GameMap::toJson` writes a loaded map in this form.
+
+`objects` places doors, levers, chests and traps. Each entry is a kit on a cell, `{"kit": "door", "at": [x, y]}`, where any other field changes that copy (`name`, `door`, `lock`, `trap`, `contents`) and `tags` add to the kit's. An entry without `kit` is a whole object in the framework's format, one cell big unless it has an `area`. Kits are one file each in `kits/` at the root or in the chapter's own `kits/` (which wins), named after their id, in the framework's Kit format. The game ships `door`, `locked-door`, `lever`, `chest`, `locked-chest` and `dart-trap`.
+
+- A door with `blocksMovement` and `blocksSight` stops walking and sight until it is opened. `"door": {"locked": true}` needs a key: an item whose id matches the door's `key:<item id>` tag. Add `"lock": {"dc": 15, "skill": "dex"}` and a check can open it too (`dc` 0 or no lock means a key only).
+- A lever toggles every door that shares one of its `link:<name>` tags, locked or not.
+- Any object with a `flag:<name>` tag sets that story flag the first time it is used.
+- A `container` holds `contents`: item ids with counts, and `"coins"` in copper. It is looted like a chapter container. Give it a locked `door` (the lid) and a `lock` and it has to be opened first.
+- A `trap` has `detectDc`, `disarmDc`, `detectSkill` (default perception), `disarmSkill` (default dex), `effect` (the effects format, FRAMEWORK.md "Effects", written in place) and `rearms`. A hero within `trapSpotRange` squares (top-level map field, default 2) with a clear view finds it when their passive score reaches `detectDc`. Found traps are drawn and paths go around them. A hero stepping on an armed trap sets it off: its effect runs on them, with its save. Only heroes set traps off.
+
+Heroes use doors, levers, locks and found traps with E when standing beside them: free between fights, the Interact action's cost on the hero's own turn in a fight. A failed disarm by 5 or more sets the trap off. Doors, chests and traps are saved as they were left; saves from before objects load with the map's own.
+
 ## Chapters and writer-owned text
 
 `chapter.json` declares `id`, `title`, `map`, `party` and `encounters`, and optionally `ruleset`. Without `ruleset` the chapter plays by the game's own rules, `rulesets/yorehold` (see Rulesets); leave it out unless the chapter is a test of other rules. It can be `modern` or `classic` (sets built into the framework, kept for tests), a relative JSON path, or a folder with `ruleset.json` in it. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.

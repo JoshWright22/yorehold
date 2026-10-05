@@ -242,10 +242,37 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
             throw std::invalid_argument(problem);
         }
 
+        // Kits: map object prototypes, one per file named after its id. The chapter's own replace shared ones.
+        GameMap::Kits kits;
+        for (const std::string& kitFolder : {std::string("kits"), folder + "/kits"})
+        {
+            for (const std::string& path : files.list(kitFolder))
+            {
+                if (!path.ends_with(".json"))
+                    continue;
+                where = path;
+                const size_t slash = path.rfind('/');
+                const std::string id = path.substr(slash == std::string::npos ? 0 : slash + 1, path.size() - (slash == std::string::npos ? 0 : slash + 1) - 5);
+                if (!validId(id)) throw std::invalid_argument("kit file names use a-z, 0-9, - and _");
+                std::optional<yh::Kit> kit = yh::Kit::fromJson(readOrThrow(files, where), &problem);
+                if (!kit) throw std::invalid_argument(problem);
+                kits[id] = std::move(*kit);
+            }
+        }
         where = resolve(files, folder, j.value("map", "map.json"));
-        std::optional<GameMap> map = GameMap::fromJson(readOrThrow(files, where), &problem);
+        std::optional<GameMap> map = GameMap::fromJson(readOrThrow(files, where), &problem, kits);
         if (!map) throw std::invalid_argument(problem);
         c.map = std::move(*map);
+        for (const auto& [objectId, object] : c.map.objects().all())
+        {
+            for (const auto& [item, count] : object.contents)
+                if (item != "coins" && !c.compendium.item(item))
+                    throw std::invalid_argument("unknown item \"" + item + "\" in " + (object.name.empty() ? std::string("a map object") : object.name));
+            if (!object.trap || object.trap->effect.empty())
+                continue;
+            const std::optional<yh::Effect> effect = yh::Effect::fromJson(object.trap->effect, &problem);
+            if (!effect || !effect->check(c.rules, &problem)) throw std::invalid_argument("trap " + object.name + ": " + problem);
+        }
         // Hash canonical data rather than whitespace. Shared definitions and the rules are included,
         // so a save cannot silently apply old sheets to a newly edited chapter.
         uint64_t signature = 14695981039346656037ull;
@@ -262,6 +289,8 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         // tweak) without making old saves or a co-op partner's copy count as a different chapter.
         include(withoutAi(j).dump());
         include(nlohmann::json::parse(readOrThrow(files, where)).dump());
+        if (!c.map.objects().all().empty())
+            include(c.map.objects().toJson()); // the kits as the map placed them; maps without any keep their old signature
         include(c.rules.toJson());
         include(c.stealth.toJson());
         if (c.positioning.enabled) include(c.positioning.toJson());

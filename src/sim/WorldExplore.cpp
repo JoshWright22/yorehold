@@ -30,6 +30,7 @@ void World::walk(double deltaSeconds)
         tokens_.tokens[i].pace = pace;
     }
     tokens_.advance(grid_, passable, deltaSeconds);
+    watchTraps();
 }
 
 void World::arrive()

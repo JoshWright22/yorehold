@@ -1,0 +1,9 @@
+{
+  "name": "Door",
+  "object": {
+    "name": "the door",
+    "area": [0, 0, 64, 64],
+    "tags": ["blocksMovement", "blocksSight"],
+    "door": { "open": false, "locked": false }
+  }
+}

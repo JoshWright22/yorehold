@@ -279,11 +279,13 @@ content files, "client" = Yorehold code.
 
 ### Maps and world (part)
 
-- FW done: sparse tile maps, floors, objects and kits, regions, fog, light, navigation.
-- The game still loads its own small `map.json` (text rows). It moves to the framework's `TileMap`
-  + `Objects` + `Regions` so doors, levers, chests, traps, floors and large areas work. The text
-  format stays as an import for hand-written maps.
-- Interacting: doors, levers, containers and traps through Interact; locks and traps use checks.
+- FW done: sparse tile maps, floors, objects and kits, regions, fog, light, navigation, lock and
+  trap components.
+- Done: each chapter's map lives in a `yh::Region` (TileMap + Objects). `map.json` takes the
+  framework's TileMap JSON or the old text rows as an import, plus kits placed as `objects`.
+- Done: doors, levers, containers and traps through Interact; locks and traps use checks. Object
+  state is saved and checked between co-op copies.
+- Still to add: playing on floors other than 0, and moving between regions inside one chapter.
 - Surfaces (fire, grease, water, ice) as a map layer of effect areas (**default:** yes, after
   spells).
 
@@ -496,6 +498,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 44. Spells: hands must be free to cast (a shield or weapon in them is in the way) and a spell costs one action per hand; cantrips spend no slot and a spell spends the lowest slot of its level or above; a long rest restores slots. Concentration breaks on a new concentration spell, a failed CON save against 10 or half the damage, dropping to 0 HP, the fight ending or a rest. Spells that harm wait for a fight; helpful ones can be cast between fights. All of it is `spellcasting.json` and spell files.
 
 45. Package manifest fields: `kind` categorizes a package (adventure, ruleset, compendium, character_class, race, feat; inferred from structure if empty), `id` is a stable identifier across versions, `revision` is a publish counter, `ruleset` names a ruleset version requirement, `requires` lists dependent packages. Old packages without manifest fields still load with empty defaults. Dependency checking and version matching happen at the library level when loading installed packages.
+
+46. Map objects: a key is an item whose id a lock's `key:<id>` tag names; locks without a key are picked with a dex check, traps found with passive perception within 2 squares (`trapSpotRange`) and disarmed with dex. Failing a disarm by 5 sets the trap off. Only heroes set traps off, since enemies know where their own are. Paths avoid found traps. Using an object is free between fights and costs Interact in one. Only floor 0 is played; layers on other floors load and are kept.
 
 ### Structure choices made in this document
 

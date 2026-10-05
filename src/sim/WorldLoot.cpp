@@ -65,6 +65,36 @@ void World::fillContainers()
             item.equipped = false;
         piles_.push_back(std::move(pile));
     }
+    // Chests placed on the map as objects: what is in them ("coins" in copper) becomes a pile kept
+    // in that object, so its lock keeps hands out until it is opened.
+    for (const auto& [id, object] : map().objects().all())
+    {
+        if (!object.has("container") || object.destroyed)
+            continue;
+        Pile pile{object.name.empty() ? std::string("Chest") : object.name, map().cellOf(object), 0, {}, -1, id};
+        for (const auto& [item, count] : object.contents)
+        {
+            if (item == "coins")
+            {
+                pile.coins += count;
+                continue;
+            }
+            const yh::Item* found = chapter_->compendium.item(item); // Chapter::load checked the ids
+            if (!found || count <= 0)
+                continue;
+            yh::Item copy = *found;
+            copy.equipped = false;
+            if (copy.slot.empty())
+            {
+                copy.quantity = count;
+                pile.items.push_back(copy);
+            }
+            else
+                for (int i = 0; i < count; i++)
+                    pile.items.push_back(copy);
+        }
+        piles_.push_back(std::move(pile));
+    }
 }
 
 void World::dropLoot()
@@ -98,7 +128,7 @@ std::optional<size_t> World::pileNear(size_t hero) const
         return std::nullopt;
     const yh::Cell at = cellOf(hero);
     for (size_t i = 0; i < piles_.size(); i++)
-        if (!piles_[i].empty() && std::abs(piles_[i].at.x - at.x) <= 1 && std::abs(piles_[i].at.y - at.y) <= 1)
+        if (!piles_[i].empty() && !pileLocked(i) && std::abs(piles_[i].at.x - at.x) <= 1 && std::abs(piles_[i].at.y - at.y) <= 1)
             return i;
     return std::nullopt;
 }
@@ -113,6 +143,8 @@ nlohmann::json World::pilesJson() const
         holder.inventory = pile.items;
         piles.push_back({{"name", pile.name}, {"at", {pile.at.x, pile.at.y}}, {"coins", pile.coins}, {"container", pile.container},
             {"items", nlohmann::json::parse(holder.toJson()).at("inventory")}});
+        if (pile.object)
+            piles.back()["object"] = pile.object;
     }
     return piles;
 }
@@ -129,9 +161,11 @@ std::vector<World::Pile> World::pilesFrom(const nlohmann::json& saved) const
         pile.at = {entry.at("at").at(0).get<int>(), entry.at("at").at(1).get<int>()};
         pile.coins = entry.at("coins").get<int>();
         pile.container = entry.value("container", -1);
+        pile.object = entry.value("object", yh::ObjectId(0));
         std::string error;
         const std::optional<yh::Character> holder = yh::Character::fromJson(nlohmann::json{{"inventory", entry.at("items")}}.dump(), &error);
-        if (!holder || pile.coins < 0 || !map().inside(pile.at) || pile.container < -1 || pile.container >= static_cast<int>(chapter_->containers.size()))
+        if (!holder || pile.coins < 0 || !map().inside(pile.at) || pile.container < -1 || pile.container >= static_cast<int>(chapter_->containers.size())
+            || (pile.object && !map().objects().get(pile.object)))
             throw std::runtime_error("saved loot doesn't fit the chapter");
         pile.items = holder->inventory;
         for (yh::Item& item : pile.items)

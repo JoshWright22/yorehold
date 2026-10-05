@@ -1,11 +1,13 @@
 #include "GameMap.h"
 
 #include <yorehold/framework/graphics/Renderer.h>
+#include <yorehold/framework/rpg/Effect.h>
 
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <cmath>
+#include <set>
 #include <stdexcept>
 
 namespace
@@ -93,14 +95,16 @@ yh::Color colorFrom(const nlohmann::json& j)
 
 }
 
-std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* error)
+std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* error, const Kits& kits)
 {
     if (error) error->clear();
     try
     {
         const auto j = nlohmann::json::parse(text);
-        if (!j.is_object() || !j.at("tiles").is_object() || !j.at("legend").is_object() || !j.at("layers").is_array())
-            throw std::invalid_argument("maps need tiles/legend objects and a layers array");
+        const bool native = j.is_object() && j.contains("tileMap");
+        if (!j.is_object() || !j.contains("tiles") || (!j.at("tiles").is_object() && !j.at("tiles").is_array())
+            || (!native && (!j.contains("legend") || !j.at("legend").is_object() || !j.contains("layers") || !j.at("layers").is_array())))
+            throw std::invalid_argument("maps need tiles and either a tileMap or legend/layers");
         GameMap m;
         m.name_ = j.value("name", "");
         if (j.contains("ambient")) m.ambient_ = colorFrom(j.at("ambient"));
@@ -138,8 +142,8 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
         }
 
         std::map<std::string, yh::TileId> ids;
-        for (const auto& [name, t] : j.at("tiles").items())
-        {
+        auto addType = [&](const std::string& name, const nlohmann::json& t) {
+            if (name.empty() || ids.contains(name)) throw std::invalid_argument("tile names must be unique and not empty");
             TileType type;
             type.name = name;
             type.art = t.value("art", name);
@@ -149,48 +153,86 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
             type.indoors = t.value("indoors", false);
             m.types_.push_back(std::move(type));
             ids[name] = static_cast<yh::TileId>(m.types_.size());
-        }
+        };
+        if (j.at("tiles").is_array())
+            for (const auto& t : j.at("tiles"))
+                addType(t.at("name").get<std::string>(), t);
+        else
+            for (const auto& [name, t] : j.at("tiles").items())
+                addType(name, t);
         if (m.types_.empty() || m.types_.size() > 4096) throw std::invalid_argument("a map needs 1..4096 tile types");
 
-        std::map<char, yh::TileId> legend;
-        for (const auto& [symbol, name] : j.at("legend").items())
+        m.region_ = std::make_unique<yh::Region>();
+        if (native)
         {
-            const auto id = ids.find(name.get<std::string>());
-            if (symbol.size() != 1 || symbol == " ") throw std::invalid_argument("legend keys are single characters (space means empty)");
-            if (id == ids.end()) throw std::invalid_argument("legend '" + symbol + "' names unknown tile \"" + name.get<std::string>() + "\"");
-            legend[symbol[0]] = id->second;
+            std::string problem;
+            m.region_->map = yh::TileMap::fromJson(j.at("tileMap").dump(), &problem);
+            if (!m.region_->map) throw std::invalid_argument("tileMap: " + problem);
+            m.width_ = m.region_->map->width();
+            m.height_ = m.region_->map->height();
+            if (m.width_ < 1 || m.height_ < 1 || m.width_ > 4096 || m.height_ > 4096) throw std::invalid_argument("maps are 1..4096 cells a side");
+            if (m.region_->map->tileSize() != cellSize) throw std::invalid_argument("tileMap tiles are 64 units");
+            if (m.region_->map->layerCount() == 0) throw std::invalid_argument("a map needs at least one layer");
+            for (size_t layer = 0; layer < m.region_->map->layerCount(); layer++)
+                for (int y = 0; y < m.height_; y++)
+                    for (int x = 0; x < m.width_; x++)
+                        if (m.region_->map->tile(static_cast<int>(layer), x, y) > m.types_.size())
+                            throw std::invalid_argument("tileMap uses a tile id with no tile type");
         }
-
-        std::vector<std::string> layerNames;
-        for (const auto& layer : j.at("layers"))
+        else
         {
-            const auto rows = layer.at("rows").get<std::vector<std::string>>();
-            if (m.layers_.empty())
+            // The text format: an import for hand-written maps, turned into the same TileMap.
+            std::map<char, yh::TileId> legend;
+            for (const auto& [symbol, name] : j.at("legend").items())
             {
-                m.height_ = static_cast<int>(rows.size());
-                m.width_ = rows.empty() ? 0 : static_cast<int>(rows[0].size());
-                if (m.width_ < 1 || m.height_ < 1 || m.width_ > 4096 || m.height_ > 4096) throw std::invalid_argument("maps are 1..4096 cells a side");
+                const auto id = ids.find(name.get<std::string>());
+                if (symbol.size() != 1 || symbol == " ") throw std::invalid_argument("legend keys are single characters (space means empty)");
+                if (id == ids.end()) throw std::invalid_argument("legend '" + symbol + "' names unknown tile \"" + name.get<std::string>() + "\"");
+                legend[symbol[0]] = id->second;
             }
-            if (static_cast<int>(rows.size()) != m.height_) throw std::invalid_argument("every layer needs the same number of rows");
-            std::vector<yh::TileId> cells(static_cast<size_t>(m.width_) * m.height_, 0);
-            for (int y = 0; y < m.height_; y++)
+            std::vector<std::vector<yh::TileId>> layers;
+            std::vector<std::string> layerNames;
+            for (const auto& layer : j.at("layers"))
             {
-                if (static_cast<int>(rows[y].size()) != m.width_)
-                    throw std::invalid_argument("row " + std::to_string(y) + " of layer \"" + layer.value("name", "") + "\" isn't " + std::to_string(m.width_) + " wide");
-                for (int x = 0; x < m.width_; x++)
+                const auto rows = layer.at("rows").get<std::vector<std::string>>();
+                if (layers.empty())
                 {
-                    const char symbol = rows[y][x];
-                    if (symbol == ' ')
-                        continue;
-                    const auto id = legend.find(symbol);
-                    if (id == legend.end()) throw std::invalid_argument(std::string("'") + symbol + "' isn't in the legend");
-                    cells[static_cast<size_t>(y) * m.width_ + x] = id->second;
+                    m.height_ = static_cast<int>(rows.size());
+                    m.width_ = rows.empty() ? 0 : static_cast<int>(rows[0].size());
+                    if (m.width_ < 1 || m.height_ < 1 || m.width_ > 4096 || m.height_ > 4096) throw std::invalid_argument("maps are 1..4096 cells a side");
                 }
+                if (static_cast<int>(rows.size()) != m.height_) throw std::invalid_argument("every layer needs the same number of rows");
+                std::vector<yh::TileId> cells(static_cast<size_t>(m.width_) * m.height_, 0);
+                for (int y = 0; y < m.height_; y++)
+                {
+                    if (static_cast<int>(rows[y].size()) != m.width_)
+                        throw std::invalid_argument("row " + std::to_string(y) + " of layer \"" + layer.value("name", "") + "\" isn't " + std::to_string(m.width_) + " wide");
+                    for (int x = 0; x < m.width_; x++)
+                    {
+                        const char symbol = rows[y][x];
+                        if (symbol == ' ')
+                            continue;
+                        const auto id = legend.find(symbol);
+                        if (id == legend.end()) throw std::invalid_argument(std::string("'") + symbol + "' isn't in the legend");
+                        cells[static_cast<size_t>(y) * m.width_ + x] = id->second;
+                    }
+                }
+                layers.push_back(std::move(cells));
+                layerNames.push_back(layer.value("name", "layer " + std::to_string(layers.size())));
             }
-            m.layers_.push_back(std::move(cells));
-            layerNames.push_back(layer.value("name", "layer " + std::to_string(m.layers_.size())));
+            if (layers.empty()) throw std::invalid_argument("a map needs at least one layer");
+            m.region_->map = std::make_unique<yh::TileMap>(m.width_, m.height_, cellSize);
+            for (size_t layer = 0; layer < layers.size(); layer++)
+            {
+                const int index = m.region_->map->addLayer(layerNames[layer]);
+                for (int y = 0; y < m.height_; y++)
+                    for (int x = 0; x < m.width_; x++)
+                        if (const yh::TileId id = layers[layer][static_cast<size_t>(y) * m.width_ + x])
+                            m.region_->map->setTile(index, x, y, id);
+            }
         }
-        if (m.layers_.empty()) throw std::invalid_argument("a map needs at least one layer");
+        m.region_->id = m.name_;
+        m.cacheTiles();
 
         for (const auto& l : j.value("lights", nlohmann::json::array()))
         {
@@ -213,15 +255,62 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
             m.markers_[name] = {cell[0], cell[1]};
         }
 
-        m.map_ = std::make_unique<yh::TileMap>(m.width_, m.height_, cellSize);
-        for (size_t layer = 0; layer < m.layers_.size(); layer++)
+        // Objects: a kit on a cell ({"kit": "door", "at": [x, y]}, any other fields change that
+        // copy, and "tags" add to the kit's), or a whole object with "at" or a world "area".
+        const auto objects = j.value("objects", nlohmann::json::array());
+        if (!objects.is_array()) throw std::invalid_argument("objects must be an array");
+        for (size_t i = 0; i < objects.size(); i++)
         {
-            const int index = m.map_->addLayer(layerNames[layer]);
-            for (int y = 0; y < m.height_; y++)
-                for (int x = 0; x < m.width_; x++)
-                    if (const yh::TileId id = m.layers_[layer][static_cast<size_t>(y) * m.width_ + x])
-                        m.map_->setTile(index, x, y, id);
+            const nlohmann::json& entry = objects[i];
+            const std::string where = "objects[" + std::to_string(i) + "]: ";
+            if (!entry.is_object()) throw std::invalid_argument(where + "each object is an object");
+            nlohmann::json object = nlohmann::json::object();
+            if (entry.contains("kit"))
+            {
+                const std::string kit = entry.at("kit").get<std::string>();
+                const auto found = kits.find(kit);
+                if (found == kits.end()) throw std::invalid_argument(where + "unknown kit \"" + kit + "\"");
+                object = nlohmann::json::parse(found->second.toJson()).at("object");
+                object.erase("id");
+            }
+            else
+                object["area"] = {0, 0, cellSize, cellSize}; // one cell unless it says otherwise
+            nlohmann::json changes = entry;
+            changes.erase("kit");
+            changes.erase("at");
+            if (changes.contains("tags"))
+            {
+                std::set<std::string> tags = object.value("tags", std::set<std::string>{});
+                for (const auto& tag : changes.at("tags")) tags.insert(tag.get<std::string>());
+                changes["tags"] = tags;
+            }
+            object.merge_patch(changes);
+            std::string problem;
+            std::optional<yh::Kit> made = yh::Kit::fromJson(nlohmann::json{{"name", ""}, {"object", object}}.dump(), &problem);
+            if (!made) throw std::invalid_argument(where + problem);
+            yh::MapObject placed = made->prototype;
+            if (entry.contains("at"))
+            {
+                const auto at = entry.at("at").get<std::vector<int>>();
+                if (at.size() != 2) throw std::invalid_argument(where + "at is [x, y]");
+                placed.area.x = at[0] * cellSize;
+                placed.area.y = at[1] * cellSize;
+            }
+            if (placed.area.x < 0 || placed.area.y < 0 || placed.area.x + placed.area.w > m.width_ * cellSize || placed.area.y + placed.area.h > m.height_ * cellSize)
+                throw std::invalid_argument(where + "is outside the map");
+            if (placed.trap && !placed.trap->effect.empty() && !yh::Effect::fromJson(placed.trap->effect, &problem))
+                throw std::invalid_argument(where + "trap effect: " + problem);
+            m.region_->objects.add(std::move(placed));
         }
+        m.authoredObjects_ = m.region_->objects.toJson();
+        m.trapSpotRange_ = j.value("trapSpotRange", m.trapSpotRange_);
+        if (!std::isfinite(m.trapSpotRange_) || m.trapSpotRange_ < 0 || m.trapSpotRange_ > 100)
+            throw std::invalid_argument("trapSpotRange is 0 to 100 squares");
+
+        nlohmann::json rest = j;
+        for (const char* key : {"tiles", "legend", "layers", "tileMap", "objects"})
+            rest.erase(key);
+        m.rest_ = rest.dump();
         m.buildWalls();
         for (int y = 0; y < m.height_; y++)
         {
@@ -244,22 +333,112 @@ std::optional<GameMap> GameMap::fromJson(std::string_view text, std::string* err
     }
 }
 
+void GameMap::cacheTiles()
+{
+    const size_t cells = static_cast<size_t>(width_) * height_;
+    ground_.assign(cells, 0);
+    open_.assign(cells, 1);
+    sight_.assign(cells, 0);
+    roofed_.assign(cells, 0);
+    const yh::TileMap& tiles = *region_->map;
+    bool first = true;
+    for (size_t layer = 0; layer < tiles.layerCount(); layer++)
+    {
+        if (tiles.layerFloor(static_cast<int>(layer)) != 0)
+            continue;
+        for (int y = 0; y < height_; y++)
+            for (int x = 0; x < width_; x++)
+            {
+                const yh::TileId id = tiles.tile(static_cast<int>(layer), x, y);
+                const size_t i = static_cast<size_t>(y) * width_ + x;
+                if (first)
+                    ground_[i] = id != 0; // empty ground is a hole, not a floor
+                if (id == 0)
+                    continue;
+                const TileType& type = types_[id - 1];
+                open_[i] &= type.walkable ? 1 : 0;
+                sight_[i] |= type.blocksSight ? 1 : 0;
+                roofed_[i] |= type.indoors ? 1 : 0;
+            }
+        first = false;
+    }
+}
+
 bool GameMap::walkable(yh::Cell c) const
 {
     if (!inside(c))
         return false;
     const size_t i = static_cast<size_t>(c.y) * width_ + c.x;
-    if (layers_.front()[i] == 0)
-        return false; // empty ground is a hole, not a floor
-    return std::all_of(layers_.begin(), layers_.end(), [&](const auto& layer) { return layer[i] == 0 || types_[layer[i] - 1].walkable; });
+    if (!ground_[i] || !open_[i])
+        return false;
+    // A little inside the cell, so an object on the next cell over doesn't count.
+    return region_->objects.passable({c.x * cellSize + 1, c.y * cellSize + 1, cellSize - 2, cellSize - 2}, 0);
 }
 
 bool GameMap::indoors(yh::Cell c) const
 {
-    if (!inside(c))
-        return false;
-    const size_t i = static_cast<size_t>(c.y) * width_ + c.x;
-    return std::any_of(layers_.begin(), layers_.end(), [&](const auto& layer) { return layer[i] != 0 && types_[layer[i] - 1].indoors; });
+    return inside(c) && roofed_[static_cast<size_t>(c.y) * width_ + c.x];
+}
+
+void GameMap::resetObjects()
+{
+    if (!region_)
+        return;
+    region_->objects = *yh::Objects::fromJson(authoredObjects_);
+    refreshWalls();
+}
+
+void GameMap::refreshWalls()
+{
+    walls_ = tileWalls_;
+    if (region_)
+        for (const yh::Wall& wall : region_->objects.walls(0))
+            walls_.push_back(wall);
+}
+
+std::optional<yh::ObjectId> GameMap::objectAt(yh::Cell c) const
+{
+    return region_ ? region_->objects.at({(c.x + 0.5f) * cellSize, (c.y + 0.5f) * cellSize}, 0) : std::nullopt;
+}
+
+yh::Cell GameMap::cellOf(const yh::MapObject& object) const
+{
+    return {static_cast<int>(std::floor((object.area.x + 1) / cellSize)), static_cast<int>(std::floor((object.area.y + 1) / cellSize))};
+}
+
+std::vector<yh::Cell> GameMap::cellsOf(const yh::MapObject& object) const
+{
+    std::vector<yh::Cell> out;
+    const yh::Cell first = cellOf(object);
+    const int lastX = static_cast<int>(std::floor((object.area.x + object.area.w - 1) / cellSize));
+    const int lastY = static_cast<int>(std::floor((object.area.y + object.area.h - 1) / cellSize));
+    for (int y = first.y; y <= std::max(first.y, lastY); y++)
+        for (int x = first.x; x <= std::max(first.x, lastX); x++)
+            out.push_back({x, y});
+    return out;
+}
+
+std::string GameMap::toJson() const
+{
+    nlohmann::json j = nlohmann::json::parse(rest_.empty() ? "{}" : rest_);
+    nlohmann::json tiles = nlohmann::json::array();
+    for (const TileType& t : types_)
+    {
+        nlohmann::json tile{{"name", t.name}, {"art", t.art}, {"color", {t.color.r, t.color.g, t.color.b, t.color.a}},
+            {"walkable", t.walkable}, {"blocksSight", t.blocksSight}};
+        if (t.indoors) tile["indoors"] = true;
+        tiles.push_back(std::move(tile));
+    }
+    j["tiles"] = std::move(tiles);
+    if (region_)
+    {
+        nlohmann::json tileMap = nlohmann::json::parse(region_->map->toJson());
+        tileMap.erase("tracking"); // authored maps carry no edit history
+        tileMap.erase("delta");
+        j["tileMap"] = std::move(tileMap);
+        j["objects"] = nlohmann::json::parse(region_->objects.toJson()).at("objects");
+    }
+    return j.dump(2);
 }
 
 GameMap::Sky GameMap::sky(Time time) const
@@ -277,10 +456,7 @@ GameMap::Sky GameMap::sky(Time time) const
 
 bool GameMap::blocksSight(yh::Cell c) const
 {
-    if (!inside(c))
-        return true;
-    const size_t i = static_cast<size_t>(c.y) * width_ + c.x;
-    return std::any_of(layers_.begin(), layers_.end(), [&](const auto& layer) { return layer[i] != 0 && types_[layer[i] - 1].blocksSight; });
+    return !inside(c) || sight_[static_cast<size_t>(c.y) * width_ + c.x];
 }
 
 std::optional<yh::Cell> GameMap::marker(std::string_view name) const
@@ -327,7 +503,7 @@ void GameMap::bindTileset(yh::Renderer& renderer)
         tileset.averageColors.push_back({static_cast<uint8_t>(r / n), static_cast<uint8_t>(g / n), static_cast<uint8_t>(b / n), static_cast<uint8_t>(a / n)});
     }
     tileset.texture = renderer.createTexture(columns * px, rows * px, pixels.data());
-    map_->setTileset(std::move(tileset));
+    region_->map->setTileset(std::move(tileset));
 }
 
 void GameMap::buildWalls()
@@ -344,7 +520,7 @@ void GameMap::buildWalls()
                 start = x;
             if (!on && start >= 0)
             {
-                walls_.push_back({{start * cellSize, y * cellSize}, {x * cellSize, y * cellSize}});
+                tileWalls_.push_back({{start * cellSize, y * cellSize}, {x * cellSize, y * cellSize}});
                 start = -1;
             }
         }
@@ -359,9 +535,10 @@ void GameMap::buildWalls()
                 start = y;
             if (!on && start >= 0)
             {
-                walls_.push_back({{x * cellSize, start * cellSize}, {x * cellSize, y * cellSize}});
+                tileWalls_.push_back({{x * cellSize, start * cellSize}, {x * cellSize, y * cellSize}});
                 start = -1;
             }
         }
     }
+    refreshWalls();
 }
