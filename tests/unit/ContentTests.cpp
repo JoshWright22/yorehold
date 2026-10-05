@@ -1,4 +1,5 @@
 #include "YoreholdGame.h"
+#include "content/Adventure.h"
 #include "content/Chapter.h"
 #include "content/CharacterDraft.h"
 #include "content/CharacterLibrary.h"
@@ -259,6 +260,87 @@ void manifestTests()
             std::error_code ec;
             fs::remove_all(testDir, ec);
         }
+    }
+}
+
+void adventureTests()
+{
+    yh::FileSystem files;
+    check(files.mountFolder(YH_GAME_ASSETS, "game"), "Mount authored game files");
+    std::string error;
+
+    // Load the test adventure
+    auto adventure = Adventure::load(files, "", &error);
+    check(adventure.has_value(), "The test adventure.json loads");
+    if (!adventure) { std::fprintf(stderr, "%s\n", error.c_str()); return; }
+
+    // Check basic adventure properties
+    check(adventure->id == "test-adventure" && adventure->title == "Two-Chapter Test Adventure",
+        "Adventure metadata is loaded correctly");
+    check(adventure->minLevel == 1 && adventure->maxLevel == 5,
+        "Adventure level range is loaded");
+    check(adventure->recommendedPartySize == 3,
+        "Adventure recommended party size is loaded");
+
+    // Check chapters are loaded
+    check(adventure->chapterFolders.size() == 2,
+        "Adventure lists two chapter folders");
+    check(adventure->chapterFolders[0] == "chapters/chapter-one" && adventure->chapterFolders[1] == "chapters/chapter-two",
+        "Chapter folders are in the correct order");
+
+    // Check transitions
+    check(adventure->transitions.size() == 1,
+        "One transition is defined");
+    if (adventure->transitions.size() >= 1)
+    {
+        const auto& trans = adventure->transitions[0];
+        check(trans.fromChapter == "chapter-one" && trans.exitMarker == "exit" &&
+              trans.toChapter == "chapter-two" && trans.entryMarker == "entry",
+            "Transition specifies from/exit and to/entry correctly");
+        check(trans.when.empty(),
+            "Transition has no required flags");
+    }
+
+    // Check flags
+    check(adventure->flags.size() == 2,
+        "Adventure declares two story flags");
+    check(std::find(adventure->flags.begin(), adventure->flags.end(), "chapter_one_complete") != adventure->flags.end() &&
+          std::find(adventure->flags.begin(), adventure->flags.end(), "chapter_two_complete") != adventure->flags.end(),
+        "Declared flags match expected names");
+
+    // Test nextChapter navigation
+    auto next = adventure->nextChapter("chapter-one", "exit", {});
+    check(next.has_value() && *next == "chapter-two",
+        "Exiting chapter-one at 'exit' marker leads to chapter-two");
+
+    // Test nextChapter with no matching transition
+    auto nowhere = adventure->nextChapter("chapter-two", "exit", {});
+    check(!nowhere.has_value(),
+        "Exiting chapter-two at non-existent transition returns empty");
+
+    // Test nextChapter with non-existent marker
+    auto invalid = adventure->nextChapter("chapter-one", "nonexistent", {});
+    check(!invalid.has_value(),
+        "Exiting at non-existent marker returns empty");
+
+    // Load both chapters to verify they exist and are valid
+    auto ch1 = Chapter::load(files, "chapters/chapter-one", &error);
+    check(ch1.has_value(), "Chapter one loads successfully");
+    if (!ch1) { std::fprintf(stderr, "%s\n", error.c_str()); }
+
+    auto ch2 = Chapter::load(files, "chapters/chapter-two", &error);
+    check(ch2.has_value(), "Chapter two loads successfully");
+    if (!ch2) { std::fprintf(stderr, "%s\n", error.c_str()); }
+
+    // Verify markers exist on the maps
+    if (ch1)
+    {
+        check(ch1->map.marker("exit").has_value(), "Chapter one map has 'exit' marker");
+    }
+
+    if (ch2)
+    {
+        check(ch2->map.marker("entry").has_value(), "Chapter two map has 'entry' marker");
     }
 }
 
@@ -1243,6 +1325,7 @@ int main()
     {
         Scratch scratch;
         manifestTests();
+        adventureTests();
         contentTests(scratch.path);
         worldSaveTests();
         worldPlayTests(check);

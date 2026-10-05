@@ -136,6 +136,57 @@ NPCs track approval throughout the adventure and are placed in the party when re
 
 A creature placement may set `facing`: the direction it looks until it notices the party, in degrees from -360 to 360, where 0 is east (right on the map), 90 south, 180 west and 270 north. Without it the creature looks toward where the party starts. Facing only matters to sneaking heroes, who are noticed inside the vision cone in front of an enemy and not behind it. In the keep, Gob has `"facing": 180` and watches the door.
 
+## Adventures
+
+`adventure.json` at the content root ties chapters together into a playable journey. It defines:
+
+- `id`: unique identifier for this adventure
+- `title`: display name for the Play menu
+- `description`: optional description of the adventure
+- `minLevel`, `maxLevel`: recommended level range (default 1 to 20)
+- `recommendedPartySize`: suggested party size (default 4)
+- `chapters`: array of chapter folder paths (e.g., `"chapters/chapter-one"`)
+- `transitions`: how chapters connect when the party reaches markers
+- `flags`: adventure-wide story flags that track across chapters
+
+A `transition` specifies how to move from one chapter to another:
+
+- `from`: the chapter id the party is leaving
+- `exitMarker`: the marker name on that chapter's map where the exit happens
+- `to`: the chapter id the party enters
+- `entryMarker`: the marker name on the destination chapter's map where they arrive
+- `when`: optional array of story flags that must all be set for this transition to be available
+
+Example:
+
+```json
+{
+  "id": "goblin-adventure",
+  "title": "The Goblin Menace",
+  "minLevel": 1,
+  "maxLevel": 5,
+  "chapters": ["chapters/goblin-keep", "chapters/goblin-warren"],
+  "transitions": [
+    {
+      "from": "goblin-keep",
+      "exitMarker": "north-passage",
+      "to": "goblin-warren",
+      "entryMarker": "southern-entrance"
+    },
+    {
+      "from": "goblin-keep",
+      "exitMarker": "secret-exit",
+      "to": "goblin-warren",
+      "entryMarker": "hidden-passage",
+      "when": ["key-found"]
+    }
+  ],
+  "flags": ["key-found", "warren-cleared"]
+}
+```
+
+The `flags` array pre-declares all story flags so the content checker can validate transitions; undeclared flags still work but won't be validated. Transitions with unmet `when` flags are unavailable (the marker doesn't trigger a move). Multiple chapters can share the same entry marker name; the transition specifies which one.
+
 ## Rulesets
 
 The game's rules are a folder, `rulesets/yorehold/`, and every number the rules use is in it. Changing a number there changes the game; nothing in the code repeats it. `ruleset.json` is the framework's ruleset format:
