@@ -40,6 +40,21 @@ public class PositioningRules
         };
     }
 
+    /// <summary>What cover adds to armour class against an attack. Melee ignores cover unless the file says otherwise.</summary>
+    public int CoverArmorClass(Cover cover, bool ranged)
+    {
+        if (!Enabled || (!ranged && !CoverAgainstMelee))
+        {
+            return 0;
+        }
+        return cover switch
+        {
+            Cover.Half => HalfCoverArmorClass,
+            Cover.ThreeQuarters => ThreeQuartersCoverArmorClass,
+            _ => 0,
+        };
+    }
+
     public void Check(Ruleset rules, string file)
     {
         if (FlankingCondition.Length > 0 && rules.Condition(FlankingCondition) == null)

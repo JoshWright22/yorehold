@@ -6,6 +6,7 @@
 |---|---|
 | `rules/` | Plain C# with no Godot types: content loading, rules, World, AI, saves. Its own project (`Yorehold.Rules.csproj`). |
 | `rules/content/` | One type per content kind (ruleset, conditions, effects, actions, classes, creatures, maps, chapters...) and the code that reads it from JSON. |
+| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions), `EffectHost` and the effect runner, `Grid`, `Sight` and `Positioning`. |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
 | `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. |

@@ -34,9 +34,15 @@ builds, passes `check.ps1` and is committed.
   - Default: content is read from folders only. `.yore` archives, the save signature, the merchant `inventory` form and a `tileMap` `delta` wait for the steps that need them (P10).
   - Default: map lights and markers stay in cells and object areas in world units (64 a cell), as the files write them. Walls and indoor areas are built in P2/P3.
   - Default: `DiceText` only checks that dice text can be rolled. Rolling is P2.
-- [ ] **P2. Core rules.** Seeded RNG, dice, checks and DCs, proficiency ranks, modifiers,
+- [x] **P2. Core rules.** Seeded RNG, dice, checks and DCs, proficiency ranks, modifiers,
   conditions with durations, the effect step list, grid helpers (distance, reach, flanking,
   cover, line of sight). Port the C++ unit checks for these.
+  - Default: `Rng` is the C++ client's PCG32, so a seed gives the same rolls in both. A save keeps `State` and `Increment`; `Rng.Restore` carries on from them.
+  - Default: `Checks.DegreeOf` gives four degrees, a natural 1 or 20 deciding the critical ones. Attacks in effects use it. Checks and saves inside effects still compare the total to the DC, as the C++ client does.
+  - Default: the sheet is `CharacterSheet` with what these rules read: stats, HP, conditions, proficiencies, resources and a plain `Weapon`. Inventory and encumbrance (P8), death saves (P5), rests and the sheet's save format (P10) come with their steps; until then damage and healing only move HP.
+  - Default: stats and grid distances are summed in float like the C++ client so they round the same. World positions are `System.Numerics.Vector2`.
+  - Default: `Positioning` has flanking and cover, with creatures as half cover, and `PositioningRules.CoverArmorClass` the bonus. Who counts as a foe and the flanked armour class are the fight's to work out (P5).
+  - Not ported yet: the C++ check that an effect's attack rolls the same dice as the encounter's own attack. It needs the encounter (P5).
 - [ ] **P3. World and exploring.** World state from a chapter: map tiles, objects (doors, levers,
   locks, chests), regions, creatures and party; free movement with paths on the grid; vision and
   stealth (sneak, cones, checks); triggers (`onEnter`, `onFlag`). World test helpers like A3.

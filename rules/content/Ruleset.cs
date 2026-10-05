@@ -121,6 +121,57 @@ public class Ruleset
     public RestDefinition? Rest(string id) => Rests.Find(r => r.Id == id);
     public ProficiencyRank? Rank(string id) => ProficiencyRanks.Find(r => r.Id == id);
 
+    /// <summary>What an ability score adds to a roll.</summary>
+    public int AbilityModifier(int score)
+    {
+        if (ModifierTable == ModifierTable.Classic)
+        {
+            return score switch
+            {
+                <= 3 => -3,
+                <= 5 => -2,
+                <= 8 => -1,
+                <= 12 => 0,
+                <= 15 => 1,
+                <= 17 => 2,
+                _ => 3,
+            };
+        }
+        return (int)Math.Floor((score - 10) / 2.0);
+    }
+
+    /// <summary>The per-level table, for rulesets without ranks. 0 when there is no table.</summary>
+    public int ProficiencyBonus(int level)
+    {
+        return ProficiencyByLevel.Count == 0 ? 0 : ProficiencyByLevel[Math.Clamp(level, 1, ProficiencyByLevel.Count) - 1];
+    }
+
+    /// <summary>A rank's bonus, plus the level where the rank adds it. 0 for a rank that isn't there.</summary>
+    public int ProficiencyBonus(int level, string rank)
+    {
+        ProficiencyRank? found = Rank(rank);
+        return found == null ? 0 : found.Bonus + (found.AddsLevel ? Math.Max(0, level) : 0);
+    }
+
+    public int LevelForXp(int xp)
+    {
+        int level = 1;
+        foreach (int needed in XpForLevel)
+        {
+            if (xp < needed)
+            {
+                break;
+            }
+            level++;
+        }
+        return level;
+    }
+
+    public int HitDie(string characterClass)
+    {
+        return HitDieByClass.TryGetValue(characterClass, out int sides) ? sides : DefaultHitDie;
+    }
+
     public static Ruleset Read(ContentNode node)
     {
         node.RequireObject("a ruleset is a JSON object");

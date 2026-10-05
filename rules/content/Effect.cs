@@ -97,6 +97,12 @@ public class Effect
 
     public bool IsEmpty => Steps.Count == 0;
 
+    /// <summary>Runs the steps in order and says what each did.</summary>
+    public EffectResult Run(EffectHost host, EffectContext context)
+    {
+        return new EffectRun(this, host, context).Run();
+    }
+
     /// <summary>Reads a list of steps, or an object holding "effects" and "save".</summary>
     public static Effect Read(ContentNode node)
     {
