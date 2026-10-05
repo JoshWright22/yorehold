@@ -11,6 +11,13 @@ public class StealthRules
     public int BrightBonus { get; init; }
     public bool Critical { get; init; } = true;
 
+    public int LightBonus(LightLevel level) => level switch
+    {
+        LightLevel.Dark => DarkBonus,
+        LightLevel.Dim => DimBonus,
+        _ => BrightBonus,
+    };
+
     public static StealthRules Read(ContentNode node)
     {
         node.RequireObject("stealth rules are a JSON object");

@@ -7,7 +7,8 @@
 | `rules/` | Plain C# with no Godot types: content loading, rules, World, AI, saves. Its own project (`Yorehold.Rules.csproj`). |
 | `rules/content/` | One type per content kind (ruleset, conditions, effects, actions, classes, creatures, maps, chapters...) and the code that reads it from JSON. |
 | `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions), `EffectHost` and the effect runner, `Grid`, `Sight` and `Positioning`. |
-| `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. |
+| `rules/world/` | An adventure in play between fights: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. |
+| `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
 | `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. |
 | `scenes/` | Godot scenes. `Main.tscn` is the start scene. |

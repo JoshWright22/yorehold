@@ -43,9 +43,18 @@ builds, passes `check.ps1` and is committed.
   - Default: stats and grid distances are summed in float like the C++ client so they round the same. World positions are `System.Numerics.Vector2`.
   - Default: `Positioning` has flanking and cover, with creatures as half cover, and `PositioningRules.CoverArmorClass` the bonus. Who counts as a foe and the flanked armour class are the fight's to work out (P5).
   - Not ported yet: the C++ check that an effect's attack rolls the same dice as the encounter's own attack. It needs the encounter (P5).
-- [ ] **P3. World and exploring.** World state from a chapter: map tiles, objects (doors, levers,
+- [x] **P3. World and exploring.** World state from a chapter: map tiles, objects (doors, levers,
   locks, chests), regions, creatures and party; free movement with paths on the grid; vision and
   stealth (sneak, cones, checks); triggers (`onEnter`, `onFlag`). World test helpers like A3.
+  - Default: `World` takes typed calls (`Go`, `Interact`, `Sneak`, `SetFlags`) that return false with a `Refusal`. JSON intents and the co-op checks come with saves and online (P10, P14).
+  - Default: heroes are a plain build from their class file (tens across, class proficiencies, HP from the hit die) until P7 builds them from choices, so dice rolled after the party is made don't match the C++ client yet. Creatures take their stat block without rolled abilities.
+  - Default: creatures carry item ids for keys, and chests keep their contents on the object, until inventories, piles and looting come in P8. Weight doesn't slow walking until then either.
+  - Default: an enemy noticing the party wakes its encounter, stops everyone, ends sneaking and sets `FightGroup`; P5 starts the fight from there.
+  - Default: the win condition fires once when all its flags are set. The C++ check never fired, since it waited for the chapter not to be cleared while those same flags clear it.
+  - Default: trigger and win dialogue and cutscenes go out as `Talk` and `Cutscene` events with the content path; P10 opens them.
+  - Default: a map is one region. The framework's streaming of several regions isn't ported; no chapter uses it.
+  - Default: paths use a heap that breaks ties like the C++ client's `std::priority_queue`, so routes match cell for cell.
+  - Default: a sprung trap logs saves, damage, healing and conditions only; the fight's full log comes with P5.
 - [ ] **P4. Play screen, first look.** Draw the chapter map (floors, walls, objects, lights),
   party and creatures, camera pan and zoom, click to move, fog from party vision. Screenshot run.
 - [ ] **P5. Combat rules.** Initiative, shared turns, free move plus two actions, all generic
