@@ -6,6 +6,7 @@
 
 #include <yorehold/framework/graphics/Renderer.h>
 #include <yorehold/framework/assets/FileSystem.h>
+#include <yorehold/framework/rpg/QuestJournal.h>
 #include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/save/SaveFile.h>
 #include <yorehold/framework/ui/Ui.h>
@@ -57,6 +58,11 @@ void CreateScreen::openPackage(const std::string& path)
 
     // Undo steps point into the editors, so the history is emptied before they go.
     history_.clear();
+    story_.reset();
+    storySaved_.clear();
+    storyError_.clear();
+    storyFresh_ = false;
+    storyPanel_.reset();
     cutscenes_.clear();
     cutsceneErrors_.clear();
     cutscene_.clear();
@@ -282,13 +288,18 @@ EncountersEditor* CreateScreen::encountersEditor()
 
 std::vector<std::string> CreateScreen::dialogueFiles()
 {
+    return dialogueFilesOf(chapter_);
+}
+
+std::vector<std::string> CreateScreen::dialogueFilesOf(const std::string& folder)
+{
     std::set<std::string> found;
-    if (!package_ || chapter_.empty())
+    if (!package_ || folder.empty())
         return {};
     yh::FileSystem files;
     if (ContentPackage::mount(files, packagePath_, "package"))
     {
-        for (const std::string& path : files.list(chapter_ + "/dialogue"))
+        for (const std::string& path : files.list(folder + "/dialogue"))
             if (path.ends_with(".json"))
                 found.insert(path);
         // What chapter.json names, looked for in the chapter folder first and then at the root, as the game does.
@@ -298,13 +309,13 @@ std::vector<std::string> CreateScreen::dialogueFiles()
             const std::string path = entry[key].get<std::string>();
             if (path.empty() || yh::FileSystem::normalize(path) != path)
                 return;
-            const std::string local = chapter_ + "/" + path;
+            const std::string local = folder + "/" + path;
             if (files.exists(local))
                 found.insert(local);
             else if (files.exists(path))
                 found.insert(path);
         };
-        if (const auto text = files.readText(chapter_ + "/chapter.json"))
+        if (const auto text = files.readText(folder + "/chapter.json"))
             if (const nlohmann::json j = nlohmann::json::parse(*text, nullptr, false); j.is_object())
             {
                 // Without its own, a chapter uses the package's dialogue/surrender.json if there is one.
@@ -327,7 +338,7 @@ std::vector<std::string> CreateScreen::dialogueFiles()
     }
     // Made here and not saved yet.
     for (const auto& [path, tab] : dialogues_)
-        if (tab->saved.empty() && path.starts_with(chapter_ + "/"))
+        if (tab->saved.empty() && path.starts_with(folder + "/"))
             found.insert(path);
     return {found.begin(), found.end()};
 }
@@ -546,6 +557,135 @@ CutsceneEditor* CreateScreen::cutsceneEditor()
     // Compared in the editor's own form, so a hand-written file isn't rewritten until it is changed.
     tab->saved = tab->editor.toJson();
     return &cutscenes_.emplace(cutscene_, std::move(tab)).first->second->editor;
+}
+
+StoryEditor* CreateScreen::storyEditor()
+{
+    if (!package_)
+        return nullptr;
+    if (story_)
+        return story_.get();
+    if (!storyError_.empty())
+        return nullptr;
+    yh::FileSystem files;
+    if (!ContentPackage::mount(files, packagePath_, "package"))
+    {
+        storyError_ = "Couldn't open " + packagePath_;
+        return nullptr;
+    }
+    auto editor = std::make_unique<StoryEditor>(history_);
+    if (const std::optional<std::string> text = files.readText("story.json"))
+    {
+        std::string error;
+        if (!editor->load(*text, &error))
+        {
+            storyError_ = "story.json: " + error;
+            return nullptr;
+        }
+    }
+    else
+        editor->create();
+    // Compared in the editor's own form, so the file is only written once something changed.
+    storySaved_ = editor->toJson();
+    editor->setCatalog(storyCatalog());
+    storyFresh_ = true;
+    story_ = std::move(editor);
+    return story_.get();
+}
+
+StoryEditor::Catalog CreateScreen::storyCatalog()
+{
+    StoryEditor::Catalog catalog;
+    if (!package_)
+        return catalog;
+    yh::FileSystem all;
+    all.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
+    all.mountFolder(YH_GAME_ASSETS, "game");
+    yh::FileSystem files;
+    if (!ContentPackage::mount(files, packagePath_, "package") || !ContentPackage::mount(all, packagePath_, "package"))
+        return catalog;
+    // A path a chapter names, in the chapter folder first and then from the root, as the game finds it.
+    auto resolve = [&](const std::string& folder, const std::string& named) {
+        if (named.empty() || yh::FileSystem::normalize(named) != named)
+            return std::string();
+        return files.exists(folder + "/" + named) ? folder + "/" + named : files.exists(named) ? named : std::string();
+    };
+    // Creature levels for the XP each fight is worth, the way Encounters mode proposes it.
+    yh::Compendium shared;
+    std::string problem;
+    shared.load(all, "", &problem);
+    const int perLevel = EncountersEditor::Catalog{}.xpPerLevel;
+
+    for (const std::string& folder : package_->chapters)
+    {
+        const std::optional<std::string> text = files.readText(folder + "/chapter.json");
+        const nlohmann::json j = text ? nlohmann::json::parse(*text, nullptr, false) : nlohmann::json();
+        if (!j.is_object())
+            continue;
+        StoryEditor::Catalog::Chapter chapter;
+        chapter.folder = folder;
+        chapter.id = j.value("id", leaf(folder));
+        chapter.title = j.contains("title") && j["title"].is_string() ? j["title"].get<std::string>() : std::string();
+
+        // Groups as Encounters mode has them if it is open, so ones not saved yet count.
+        if (const auto open = encounters_.find(folder); open != encounters_.end())
+        {
+            const EncountersEditor& editor = open->second->editor;
+            for (size_t g = 0; g < editor.groups().size(); g++)
+                chapter.groups.push_back({editor.groups()[g].id, editor.proposedXp(g), static_cast<int>(editor.groups()[g].creatures.size())});
+        }
+        else
+        {
+            yh::Compendium local = shared;
+            local.load(all, folder, &problem);
+            for (const nlohmann::json& e : j.value("encounters", nlohmann::json::array()))
+            {
+                if (!e.is_object() || !e.contains("id") || !e["id"].is_string())
+                    continue;
+                StoryEditor::Catalog::Group group{e["id"].get<std::string>(), 0, 0};
+                int levels = 0;
+                for (const nlohmann::json& p : e.value("creatures", nlohmann::json::array()))
+                {
+                    const std::string id = p.is_object() && p.contains("creature") && p["creature"].is_string() ? p["creature"].get<std::string>() : std::string();
+                    const auto found = local.creatures.find(id);
+                    levels += found == local.creatures.end() ? 1 : std::max(1, found->second.level);
+                    group.creatures++;
+                }
+                group.xp = levels * perLevel;
+                chapter.groups.push_back(std::move(group));
+            }
+        }
+
+        chapter.dialogues = dialogueFilesOf(folder);
+        if (j.contains("quests") && j["quests"].is_string())
+            if (const std::string path = resolve(folder, j["quests"].get<std::string>()); !path.empty())
+                if (const auto quests = files.readText(path))
+                    if (const std::optional<yh::QuestJournal> journal = yh::QuestJournal::fromJson(*quests))
+                        for (const yh::Quest& quest : journal->quests)
+                            chapter.quests.push_back({quest.id, quest.title});
+        // The ending as Cutscene mode has it if it is open.
+        if (const auto hooks = hooks_.find(folder); hooks != hooks_.end())
+            chapter.ending = hooks->second->cleared().empty() ? std::string() : hooks->second->resolve(hooks->second->cleared());
+        else if (const nlohmann::json endings = j.value("endings", nlohmann::json::object()); endings.is_object() && endings.contains("cleared") && endings["cleared"].is_string())
+            chapter.ending = resolve(folder, endings["cleared"].get<std::string>());
+        catalog.chapters.push_back(std::move(chapter));
+    }
+
+    // Travel between chapters, by chapter id; "from" and "to" may be ids or objects with one.
+    if (const auto text = files.readText("adventure.json"))
+        if (const nlohmann::json j = nlohmann::json::parse(*text, nullptr, false); j.is_object())
+        {
+            catalog.adventure = true;
+            auto idOf = [](const nlohmann::json& side) {
+                if (side.is_string())
+                    return side.get<std::string>();
+                return side.is_object() && side.contains("chapter") && side["chapter"].is_string() ? side["chapter"].get<std::string>() : std::string();
+            };
+            for (const nlohmann::json& t : j.value("transitions", nlohmann::json::array()))
+                if (t.is_object() && t.contains("from") && t.contains("to"))
+                    catalog.travel.emplace_back(idOf(t["from"]), idOf(t["to"]));
+        }
+    return catalog;
 }
 
 CompendiumEditor* CreateScreen::compendiumEditor()
@@ -787,6 +927,20 @@ bool CreateScreen::save()
             }
         changed.push_back({tab->path, text, [t = tab.get(), text] { t->saved = text; }});
     }
+    if (story_)
+    {
+        std::string text = story_->toJson();
+        if (text != storySaved_)
+        {
+            for (const StoryEditor::Problem& wrong : story_->problems())
+                if (wrong.error)
+                {
+                    status_ = "story.json not saved: " + wrong.text;
+                    return false;
+                }
+            changed.push_back({"story.json", text, [this, text] { storySaved_ = text; }});
+        }
+    }
     std::vector<size_t> definitions;
     if (compendium_)
         for (const size_t entry : compendium_->changed())
@@ -825,6 +979,8 @@ bool CreateScreen::save()
         written++;
     }
     history_.markSaved();
+    // Saved groups, conversations and endings change what the story graph can point at.
+    storyFresh_ = false;
     status_ = written == 0 ? "Nothing to save" : written == 1 ? "Saved 1 file" : "Saved " + std::to_string(written) + " files";
     validate();
     return true;
@@ -892,6 +1048,11 @@ void CreateScreen::validate()
     for (const auto& [chapter, hooks] : hooks_)
         for (const CutsceneHooks::Problem& problem : hooks->problems())
             validations_.push_back({chapter + "/chapter.json", leaf(chapter) + ": " + problem.text, problem.error});
+    if (!storyError_.empty())
+        validations_.push_back({"story.json", storyError_, true});
+    if (story_)
+        for (const StoryEditor::Problem& problem : story_->problems())
+            validations_.push_back({"story.json", "story: " + problem.text, problem.error});
     if (!compendiumError_.empty())
         validations_.push_back({"create/compendium.json", compendiumError_, true});
     for (const std::string& why : compendiumSkipped_)
@@ -950,7 +1111,7 @@ void CreateScreen::draw(yh::Renderer& renderer)
     ui_.begin(renderer, input_);
     // Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z) and Ctrl+S; a text box being typed in keeps its own.
     if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_) && !DialoguePanel::typing(ui_) && !compendiumPanel_.typing(ui_)
-        && !CutscenePanel::typing(ui_))
+        && !CutscenePanel::typing(ui_) && !StoryPanel::typing(ui_))
     {
         if (input_.keyPressed(SDLK_Z))
             input_.shiftDown() ? redo() : undo();
@@ -1000,7 +1161,12 @@ void CreateScreen::drawTabs(yh::Renderer& renderer, const yh::Rect& area)
     for (const auto& [mode, name] : modes)
     {
         if (ui_.toggle({x, area.y + 5, 122, 30}, name, currentMode_ == mode))
+        {
+            // Story mode looks at the other modes' work, so it reads it again on the way in.
+            if (mode == Mode::Story && currentMode_ != mode)
+                storyFresh_ = false;
             currentMode_ = mode;
+        }
         x += 126;
     }
 
@@ -1073,35 +1239,23 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
         return;
     }
 
-    if (!ui_.theme.font)
-        return;
-
-    // Draw placeholder for each mode
-    std::string modeText;
-    switch (currentMode_)
+    if (currentMode_ == Mode::Story)
     {
-    case Mode::Map:
-        break;
-    case Mode::Encounters:
-        break;
-    case Mode::Dialogue:
-        break;
-    case Mode::Compendium:
-        break;
-    case Mode::Cutscene:
-        break;
-    case Mode::Story:
-        modeText = "Story Editor (chapters, transitions, flags, quests)";
-        break;
-    case Mode::None:
-        modeText = "No mode selected";
-        break;
+        if (StoryEditor* editor = storyEditor())
+        {
+            if (!storyFresh_)
+            {
+                editor->setCatalog(storyCatalog());
+                storyFresh_ = true;
+            }
+            storyPanel_.draw(*editor, ui_, input_, renderer, area);
+        }
+        else
+            ui_.label({area.x + 20, area.y + 20}, storyError_.empty() ? std::string("Nothing to edit.") : storyError_, ui_.theme.bad);
+        return;
     }
 
-    const std::string subtitle = "Package: " + (package_->name.empty() ? "(unnamed)" : package_->name);
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 20}, subtitle, yh::Color{200, 200, 200, 255});
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 50}, modeText, yh::Color{150, 150, 150, 255});
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editor coming in G7", yh::Color{100, 100, 100, 255});
+    ui_.label({area.x + 20, area.y + 20}, "No mode picked", ui_.theme.textDim);
 }
 
 void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)

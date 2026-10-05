@@ -33,6 +33,7 @@ rulesets/yorehold/             the game's rules (built in; see Rulesets)
 rulesets/my-rules.json         optional custom rules, as one file or a folder like the above
 ui/theme.json                  colors and frame styling
 create/compendium.json         the game's own: the forms of Create's Compendium mode
+story.json                     optional story graph from Create's Story mode; the game doesn't read it
 design/                        optional game/UI design documents
 dialogues/                     optional dialogue documents
 chapters/goblin-keep/
@@ -220,6 +221,40 @@ Under the timeline is when this file plays. Chapter cleared, Party wiped and Cha
 The right column is the picked step: its seconds, whether the next step waits for it, and its own fields. Camera has where it looks in world units, the zoom (0 keeps it) and the ease. Caption and title have the line, and a button to turn one into the other. Fade has the colour as r, g, b and how solid (0 fades back in), with To black and Back in. Bars go in or out. An event has a name; the game knows `finished`.
 
 The validation list checks each opened file and the chapter's triggers. Errors stop a save: anything the game would refuse to load, a trigger id that isn't a-z, 0-9, - and _, and a cutscene the chapter names that isn't there. Warnings don't: no steps, a caption or title with no line or no time, an ease the game doesn't know, a camera aimed outside the map, an event the game does nothing with, and two triggers with one id. Fields this mode has no tool for are written back as they were. A file is only rewritten once something in it changed, and undo and redo are the same history as the other modes.
+
+### Planning the story in Create
+
+Create > Story is the adventure as a graph: scenes, fights, conversations, quests and endings, with links for how the story gets from one to the next and notes for the writer. It is kept in `story.json` at the package root. The game doesn't play it; a node points at the chapter, encounter group, conversation file, quest or ending cutscene that does.
+
+```json
+{
+  "format": 1,
+  "nodes": [
+    {"id": "keep", "kind": "scene", "title": "The keep", "text": "notes", "at": [0, 0], "chapter": "chapters/goblin-keep"},
+    {"id": "entry-hall", "kind": "encounter", "title": "entry-hall", "at": [250, 0], "chapter": "chapters/goblin-keep", "group": "entry-hall", "xp": 50},
+    {"id": "wren", "kind": "dialogue", "title": "wren", "at": [250, 74], "chapter": "chapters/goblin-keep", "dialogue": "chapters/goblin-keep/dialogue/wren.json"},
+    {"id": "rescue", "kind": "quest", "title": "Find Tobb", "at": [250, 148], "quest": "rescue", "steps": ["entry-hall"]},
+    {"id": "cave", "kind": "scene", "title": "The cave", "at": [500, 0], "map": {"width": 32, "height": 20}},
+    {"id": "end", "kind": "ending", "title": "Ending", "at": [250, 222], "chapter": "chapters/goblin-keep", "cutscene": "chapters/goblin-keep/ending.json"}
+  ],
+  "links": [{"from": "keep", "to": "entry-hall", "text": "They go in", "when": ["gate-open"]}],
+  "dismissed": ["ending|chapters/goblin-keep"]
+}
+```
+
+A node has a unique `id` (a-z, 0-9, - and _), a `kind` (`scene`, `encounter`, `dialogue`, `quest` or `ending`), a `title`, the writer's `text` and where it sits, `at`. `chapter` is a chapter folder; empty means it isn't made yet. What it points at is named after its kind: `group`, `dialogue`, `quest` or `cutscene`. Fights and quests can have `xp`, quests `steps`, and a scene with no chapter yet the `map` it should get. A link has `from` and `to` node ids, optional `text` and `when` flags. `dismissed` lists suggestions turned down. Fields Create has no tool for are kept. A file with a higher `format` than the game knows doesn't open.
+
+The left column adds nodes of each kind, lists them, and under that lists the suggestions with Take and Not this, or Take all. The middle is the graph: drag a node to move it, drag the background (or with the right button) to look around, click a link to pick it. Link to... then a click on another node links the picked one to it; Esc stops. Del removes the picked node or link. The right column is the picked node (kind, id, title, notes, chapter, what it points at, XP, steps, map size, its links) or link (where it goes, its words and flags).
+
+Suggestions come from the package and the graph:
+- a scene for each chapter, and a node for each encounter group, conversation file, quest and chapter ending the graph doesn't show yet, linked from that chapter's scene. A new scene is linked to the others the way `adventure.json` travels between them
+- XP for a fight, 25 for each level of each creature in its group, as in Encounters mode
+- steps for a quest, from the titles of the nodes it links to
+- a map for a scene with no chapter: 24 by 16, and 8 by 4 more for each fight linked from it
+
+Taking one is one undo step, and Take all is one too. One turned down is saved in `dismissed` and doesn't come back until Bring back. Taking a map suggestion only records the size on the scene; making the chapter is still done by hand.
+
+The validation list warns about a node with no title, a chapter or a group, file, quest or cutscene the package doesn't have, a node with no links, an ending the story goes on from, and a link between two scenes that `adventure.json` has no transition for. None of them stops a save. `story.json` is only written once something in it changed, and undo and redo are the same history as the other modes.
 
 ## Adventures
 

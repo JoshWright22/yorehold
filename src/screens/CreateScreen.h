@@ -6,6 +6,7 @@
 #include "screens/DialogueEditor.h"
 #include "screens/EncountersEditor.h"
 #include "screens/MapEditor.h"
+#include "screens/StoryEditor.h"
 
 #include <yorehold/framework/editor/History.h>
 #include <yorehold/framework/ui/Ui.h>
@@ -85,11 +86,17 @@ public:
     // Where the chapter plays its cutscenes, from its chapter.json. Null if that can't be read.
     CutsceneHooks* cutsceneHooks();
 
+    // The package's story graph, story.json at its root, read the first time it is asked for (an
+    // empty one if there is none, written once something is in it). Null if it can't be read.
+    StoryEditor* storyEditor();
+    // What the package has for the graph to point at, read again from the files and the open editors.
+    StoryEditor::Catalog storyCatalog();
+
     // One history for the whole package: every mode's edits go on it.
     yh::History& history() { return history_; }
     void undo();
     void redo();
-    // Writes every changed map, chapter, conversation, cutscene and definition back to its file. False (and `status()` says why) if
+    // Writes every changed map, chapter, conversation, cutscene, definition and the story back to its file. False (and `status()` says why) if
     // the package is a .yore, which can't be written to, or a file would no longer load.
     bool save();
     const std::string& status() const { return status_; }
@@ -150,6 +157,8 @@ private:
     void drawCutscene(yh::Renderer& renderer, const yh::Rect& area);
     DialogueEditor::Catalog dialogueCatalog(const std::string& path);
     void drawDialogue(yh::Renderer& renderer, const yh::Rect& area);
+    // A chapter's conversation files, as dialogueFiles() lists them for the current one.
+    std::vector<std::string> dialogueFilesOf(const std::string& chapter);
     void validate();
     void drawTabs(yh::Renderer& renderer, const yh::Rect& area);
     void drawContent(yh::Renderer& renderer, const yh::Rect& area);
@@ -187,6 +196,11 @@ private:
     CutscenePanel cutscenePanel_;
     std::map<std::string, std::unique_ptr<CutsceneHooks>> hooks_; // by chapter folder
     std::map<std::string, std::string> hookErrors_;
+    std::unique_ptr<StoryEditor> story_;
+    std::string storySaved_; // the JSON as last read or written, in the editor's form
+    std::string storyError_;
+    bool storyFresh_ = false; // its catalog was read since the last save or mode change
+    StoryPanel storyPanel_;
     std::string listedCutsceneChapter_;
     std::vector<std::string> listedCutscenes_;
     std::string listedChapter_;          // the chapter `listed_` is for; empty = list again
