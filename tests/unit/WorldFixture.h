@@ -43,6 +43,17 @@ public:
     // Steps until `done` holds or `limitSeconds` have passed; true if it held.
     bool stepUntil(const std::function<bool()>& done, double limitSeconds);
 
+    // Every rest can be taken anywhere and costs no supplies, for tests about what a rest does
+    // rather than where it is taken.
+    void freeRests()
+    {
+        for (yh::RestDefinition& rest : rules_.rests)
+        {
+            rest.campOnly = false;
+            rest.supplyCost = 0;
+        }
+    }
+
     // A creature's sheet, to set a situation up (wounds, conditions) before sending intents at it.
     yh::Character& sheet(size_t creature) { return creatures_[creature].sheet; }
 

@@ -3,7 +3,6 @@
 #include "World.h"
 
 #include <algorithm>
-#include <deque>
 
 std::string World::exitMarkerAt(yh::Cell cell) const
 {
@@ -55,6 +54,7 @@ void World::travel(const std::string& toChapter, const std::string& entryMarker)
         flags.erase(local);
     const std::map<std::string, int> rests = restsUsed_;
     const std::set<std::string> fired = firedTriggers_;
+    yh::Stash stash = stash_;
     const std::vector<std::optional<PartyPick>> picks = partyPicks_;
     std::vector<std::optional<PartyPick>> along;
     for (const Creature& hero : heroes)
@@ -81,31 +81,13 @@ void World::travel(const std::string& toChapter, const std::string& entryMarker)
     flags_ = std::move(flags);
     restsUsed_ = rests;
     firedTriggers_.insert(fired.begin(), fired.end()); // trigger ids are per adventure too
+    stash_ = std::move(stash);
 
     // Everyone stands at the entry: the first hero on the marker, the rest on the nearest free squares.
-    const yh::Cell entry = *map().marker(entryMarker); // Adventure::load checked it
-    std::vector<yh::Cell> taken;
-    std::deque<yh::Cell> open{entry};
-    std::set<std::pair<int, int>> seen{{entry.x, entry.y}};
-    for (size_t i = 0; i < heroCount_ && !open.empty();)
-    {
-        const yh::Cell c = open.front();
-        open.pop_front();
-        if (walkable(c) && !occupied(c, i))
-        {
-            tokens_.tokens[i].position = grid_.center(c);
-            tokens_.tokens[i].path.clear();
-            i++;
-        }
-        for (const yh::Cell n : {yh::Cell{c.x + 1, c.y}, yh::Cell{c.x - 1, c.y}, yh::Cell{c.x, c.y + 1}, yh::Cell{c.x, c.y - 1}})
-            if (map().inside(n) && map().walkable(n) && seen.insert({n.x, n.y}).second)
-                open.push_back(n);
-    }
+    gatherAt(*map().marker(entryMarker)); // Adventure::load checked it
     heroMarker_.clear();
     for (size_t i = 0; i < heroCount_; i++)
         heroMarker_.push_back(exitMarkerAt(cellOf(i)));
-    for (size_t i = 0; i < heroCount_; i++)
-        lastAt_[i] = tokens_.tokens[i].position;
 
     fallenConditions();
     say("The party goes on to " + chapter_->title + ".");

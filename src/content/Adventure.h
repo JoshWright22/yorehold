@@ -44,6 +44,9 @@ struct Adventure
     // Story flags that are tracked across the entire adventure, set by dialogue or encounters
     std::vector<std::string> flags; // all possible flags, pre-declared
 
+    // The chapter folder the party makes camp in; empty = the shared chapters/camp.
+    std::string camp;
+
     // Loads adventure.json from the root. The file must list chapter folders; Chapter::load
     // is called for each to verify it exists and is valid, and every transition must name chapters
     // in the list and markers on their maps. All chapters seat the same number of heroes and are

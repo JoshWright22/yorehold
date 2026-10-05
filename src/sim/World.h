@@ -14,6 +14,7 @@
 #include <yorehold/framework/rpg/Dialogue.h>
 #include <yorehold/framework/rpg/QuestJournal.h>
 #include <yorehold/framework/rpg/Random.h>
+#include <yorehold/framework/rpg/Stash.h>
 #include <yorehold/framework/rpg/Stealth.h>
 #include <yorehold/framework/rpg/Tactics.h>
 
@@ -149,6 +150,19 @@ public:
     bool wiping() const { return pendingWipe_; }
     bool chapterCleared() const;
     int restsLeft(const yh::RestDefinition& rest) const;
+    // A rest can be taken now: uses left, at camp if the ruleset says so, and enough supplies.
+    bool canRest(const yh::RestDefinition& rest, std::string* why = nullptr) const;
+
+    // Camp (WorldCamp.cpp): a small map the party goes to between fights from wherever it is
+    // ("camp"), unless the chapter forbids it, and leaves for the same place ("leave-camp"). The
+    // adventure names its camp, else the shared chapters/camp. The stash ("stash", "unstash"),
+    // revival for coins ("revive") and campOnly rests are only there.
+    bool atCamp() const;
+    bool canMakeCamp(std::string* why = nullptr) const;
+    bool canLeaveCamp() const { return atCamp() && !campReturn_.empty(); }
+    const yh::Stash& stash() const { return stash_; }
+    int suppliesHeld() const; // supply points in the stash and the packs of heroes who aren't dead
+    bool canRevive(size_t payer, size_t target, std::string* why = nullptr) const;
 
     // Companions: party management
     // Maximum party members: 4 player characters + 2 companions
@@ -471,6 +485,34 @@ protected:
     void travel(const std::string& toChapter, const std::string& entryMarker);
     std::optional<Adventure> adventure_;
     std::vector<std::string> heroMarker_; // host: the exit marker each hero stood on last frame
+
+    // Camp (WorldCamp.cpp).
+    std::string homeFolder_; // the chapter loadChapter opened
+    std::string campFolder_; // where the party makes camp; empty = nowhere
+    yh::Stash stash_;
+    std::string campReturn_; // the chapter the party left for camp, as stateJson; empty = not away
+    // A chapter's files, with a camp's seats made to fit `heroes`.
+    std::unique_ptr<Chapter> loadChapterFor(const std::string& folder, size_t heroes, std::string* error) const;
+    bool knownFolder(const std::string& folder) const; // a chapter a save may put the party in
+    void gatherAt(yh::Cell entry); // the heroes on and around a cell
+    // What stays with the party when the map changes under it.
+    struct Carried
+    {
+        std::vector<Creature> heroes;
+        std::vector<yh::Color> colors; // their tokens'
+        std::set<std::string> flags, fired, companions;
+        std::map<std::string, int> rests, approval;
+        uint64_t rolls = 0;
+        yh::Stash stash;
+    };
+    Carried carry() const;
+    void putBack(Carried carried);
+    void makeCamp();
+    void leaveCamp();
+    static yh::Item takeEntry(yh::Character& sheet, size_t index); // a whole inventory entry out, the rest still worn
+    void toStash(size_t hero, size_t item);
+    void fromStash(size_t hero, size_t item);
+    void revive(size_t payer, size_t target);
     void dropLoot();       // after a win: the dead enemies' gear and loot, where they fell
     nlohmann::json pilesJson() const;
     std::vector<Pile> pilesFrom(const nlohmann::json& saved) const; // throws for loot that doesn't fit the chapter

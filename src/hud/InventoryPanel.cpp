@@ -188,6 +188,53 @@ void hud::inventoryPanel(Hud& hud)
     ui.label({x, bottom - 34}, "Click gear to equip, or Use to consume.   I or Esc: close", ui.theme.textDim);
 }
 
+// At camp: the selected hero's pack on the left, the shared stash on the right. A click moves the
+// whole entry across.
+void hud::stashPanel(Hud& hud)
+{
+    World& world = hud.world;
+    yh::Ui& ui = hud.ui;
+    const yh::Rect screen = hud.renderer.bounds();
+    const size_t hero = world.leaderIndex();
+    if (hero >= world.heroCount())
+        return;
+    const yh::Character& sheet = world.creatures()[hero].sheet;
+    const yh::Rect area{screen.w / 2 - 420, screen.h * 0.12f, 840, screen.h * 0.72f};
+    ui.panel(area);
+    hud.panels.push_back(area);
+    const float line = ui.lineHeight();
+    const float half = (area.w - 60) / 2;
+    const float left = area.x + 20, right = left + half + 20, top = area.y + 16;
+    ui.label({left, top}, sheet.name + ": pack", ui.theme.accent);
+    ui.label({right, top}, "Stash   (supplies " + std::to_string(world.stash().supplies()) + ")", ui.theme.accent);
+    const float listTop = top + line + 10;
+    const size_t rows = static_cast<size_t>(std::max(1.0f, std::floor((area.y + area.h - 70 - listTop) / 42)));
+    const bool mine = world.mine(hero) && !sheet.down();
+
+    float y = listTop;
+    if (sheet.inventory.empty())
+        ui.label({left, y}, "Nothing.", ui.theme.textDim);
+    for (size_t i = 0; i < sheet.inventory.size() && i < rows; i++, y += 42)
+        if (ui.button({left, y, half, 36}, itemLabel(sheet.inventory[i]) + (sheet.inventory[i].equipped ? "  (worn)" : ""), mine))
+        {
+            world.act("stash", nlohmann::json{{"hero", hero}, {"item", i}}.dump());
+            return; // the lists just changed under this frame's rows
+        }
+    y = listTop;
+    const std::vector<yh::Item>& stored = world.stash().items;
+    if (stored.empty())
+        ui.label({right, y}, "Empty.", ui.theme.textDim);
+    for (size_t i = 0; i < stored.size() && i < rows; i++, y += 42)
+        if (ui.button({right, y, half, 36}, itemLabel(stored[i]), mine))
+        {
+            world.act("unstash", nlohmann::json{{"hero", hero}, {"item", i}}.dump());
+            return;
+        }
+    ui.label({left, area.y + area.h - 34}, "Click an item to move it across.   Esc: close", ui.theme.textDim);
+    if (ui.button({area.x + area.w - 120, area.y + area.h - 46, 100, 36}, "Close"))
+        hud.stashOpen = false;
+}
+
 void hud::lootPanel(Hud& hud)
 {
     World& world = hud.world;

@@ -125,6 +125,7 @@ void betweenFights(const Check& check)
     auto saved = nlohmann::json::parse(world.stateJson());
     saved["creatures"][1]["concentration"]["holds"][0]["who"] = 99;
     check(!peer.restoreState(saved.dump()), "A save holding a spell on a creature that isn't there is refused");
+    world.freeRests();
     check(world.send("rest", {{"rest", 1}}) && world.sheet(1).resources.at("slots-1").current == 2
         && !world.creatures()[1].concentration.active() && !world.sheet(2).hasCondition("slowed"),
         "A long rest restores spell slots and ends concentration");
@@ -257,6 +258,7 @@ void preparing(const Check& check)
 
     // Once a fight has started, only the long rest opens it again.
     world.creatures_[0].mayPrepare = false;
+    world.freeRests();
     check(!world.send("prepare", {{"hero", 0}, {"spells", {"flame-fan", "mire"}}}) && world.refusal.find("long rest") != std::string::npos,
         "The choice waits for a long rest");
     check(world.send("rest", {{"rest", 0}}) && !world.creatures()[0].mayPrepare, "A short rest does not open it");

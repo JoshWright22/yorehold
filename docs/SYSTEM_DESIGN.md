@@ -504,6 +504,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 
 47. Travel between chapters: any standing hero stepping onto an open exit between fights moves the whole party, no vote or prompt. Every chapter of an adventure seats the same number of heroes. Heroes keep their sheets; rests taken, flags and fired triggers carry, except a chapter's `localFlags`. Companions don't travel yet (F4). The adventure's level range only checks chapter levels for now.
 
+48. Camp: the party goes from anywhere between fights (a chapter can say no) and comes back to the same spot with the chapter as it was left; the long rest is only taken there, costs 40 supplies, has no other limit and gives the two short rests back. Supplies come from the stash first, then the heroes' packs. A supplies item is worth 10 and costs 5 sp; the keep's storeroom chest has four. Anyone at camp can take from the stash ("give but not take" is about each other's packs). Revival at camp costs 200 gp from the selected hero and brings the hero back at 1 HP. Nobody holds a spell on the way to camp. Camp has no NPCs yet; companions come with F4.
+
 ### Structure choices made in this document
 
 These shape the code and are the costly ones to change later.

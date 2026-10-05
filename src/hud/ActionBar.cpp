@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL_timer.h>
 
+#include <nlohmann/json.hpp>
+
 #include <algorithm>
 #include <cstdio>
 
@@ -137,19 +139,65 @@ void hud::exploreBar(Hud& hud)
         [](const World::Creature& c) { return c.sheet.hp < c.sheet.maxHp(); });
     float y = 10 + world.heroCount() * 66.0f + 4;
     const auto& rests = world.rules().rests;
+    const int supplies = world.suppliesHeld();
     for (size_t i = 0; i < rests.size(); i++, y += 46)
     {
         const yh::RestDefinition& r = rests[i];
+        // Rests kept for camp only show there; the way to camp is the button below.
+        if (r.campOnly && !world.atCamp())
+        {
+            y -= 46;
+            continue;
+        }
         const int left = world.restsLeft(r);
         std::string text = r.name.empty() ? r.id : r.name;
         if (i == 0)
             text += " (R)";
         if (left >= 0)
             text += "  " + std::to_string(left) + " left";
+        if (r.supplyCost > 0)
+            text += "  " + std::to_string(supplies) + "/" + std::to_string(r.supplyCost) + " supplies";
         const yh::Rect button{10, y, 280, 40};
-        if (ui.button(button, text, hurt && left != 0))
+        if (ui.button(button, text, (hurt || world.atCamp()) && world.canRest(r)))
             world.act("rest", nlohmann::json{{"rest", i}}.dump());
         hud.panels.push_back(button);
+    }
+    // Camp: going there and back, the stash, and bringing back the dead.
+    if (world.atCamp())
+    {
+        if (world.canLeaveCamp())
+        {
+            const yh::Rect leave{10, y, 280, 40};
+            if (ui.button(leave, "Leave camp"))
+                world.act("leave-camp");
+            hud.panels.push_back(leave);
+            y += 46;
+        }
+        const yh::Rect stash{10, y, 280, 40};
+        if (ui.toggle(stash, "Stash (" + std::to_string(world.stash().items.size()) + ")", hud.stashOpen))
+            hud.stashOpen = !hud.stashOpen;
+        hud.panels.push_back(stash);
+        y += 46;
+        const size_t payer = world.leaderIndex();
+        for (size_t i = 0; i < world.heroCount() && world.rules().revivePrice > 0; i++)
+        {
+            if (!creatures[i].sheet.death.dead)
+                continue;
+            const yh::Rect revive{10, y, 280, 40};
+            if (ui.button(revive, "Revive " + creatures[i].sheet.name + " (" + World::coinText(world.rules().revivePrice) + ")",
+                    world.canRevive(payer, i)))
+                world.act("revive", nlohmann::json{{"hero", payer}, {"target", i}}.dump());
+            hud.panels.push_back(revive);
+            y += 46;
+        }
+    }
+    else if (world.canMakeCamp())
+    {
+        const yh::Rect camp{10, y, 280, 40};
+        if (ui.button(camp, "Make camp"))
+            world.act("camp");
+        hud.panels.push_back(camp);
+        y += 46;
     }
     const yh::Rect sneak{10, y, 280, 40};
     if (ui.button(sneak, world.sneakingMine() ? "Stop sneaking (C)" : "Sneak (C)"))

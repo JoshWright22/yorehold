@@ -1,34 +1,45 @@
 {
   "name": "Camp",
-  "tiles": {
-    "grass": { "art": "grass" }
+  "lighting": {
+    "mode": "mood",
+    "ambient": "dim",
+    "brightFraction": 0.5,
+    "carried": 0,
+    "sight": 10.5
   },
-  "legend": { ".": "grass" },
+  "tiles": {
+    "grass": { "art": "grass" },
+    "dirt": { "art": "dirt" },
+    "tree": { "art": "tree", "walkable": false, "blocksSight": true }
+  },
+  "legend": { ".": "grass", ",": "dirt", "T": "tree" },
   "layers": [
     {
       "name": "ground",
       "rows": [
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "...................."
+        "TTTTTTTTTTTTTTTTTTTT",
+        "TTTT..TTTTTT...TTTTT",
+        "TT..............TTTT",
+        "TT...............TTT",
+        "T.......,,,.......TT",
+        "T......,,,,,......TT",
+        "T......,,,,,.......T",
+        "TT......,,,........T",
+        "TT.................T",
+        "TTT...............TT",
+        "TTT..............TTT",
+        "TTTT..T.........TTTT",
+        "TTTTTTT....TTTTTTTTT",
+        "TTTTTTTT..TTTTTTTTTT",
+        "TTTTTTTTTTTTTTTTTTTT"
       ]
     }
   ],
   "markers": {
-    "rest": [4, 3],
-    "entry": [5, 5],
-    "exit": [5, 14]
-  }
+    "rest": [9, 5],
+    "entry": [9, 9]
+  },
+  "lights": [
+    { "at": [9.5, 5.5], "color": [255, 160, 80], "radius": 6, "flame": true }
+  ]
 }

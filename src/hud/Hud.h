@@ -25,6 +25,7 @@ struct Hud
     std::optional<std::pair<size_t, size_t>>& consuming; // hero and inventory entry whose target is being picked
     size_t& inventoryPage;
     std::optional<std::string>& casting; // spell panel: the spell whose target is being picked
+    bool& stashOpen;               // at camp: the stash panel is open
     bool inSession = false;       // co-op: cards show who plays each hero
     bool guest = false;            // joined someone else's game: only the host can start it again
 };
@@ -37,13 +38,14 @@ void initiativeStrip(Hud& hud); // top: the turn order in a fight
 void combatBar(Hud& hud);       // bottom left in a fight: movement, actions left, and a button for each action the acting creature has
 // The aimed action a click on an enemy uses for `creature`: `armed` if it has it, else its first.
 const yh::ActionDefinition* armedAction(const World& world, size_t creature, const std::string& armed);
-void exploreBar(Hud& hud);      // under the cards between fights: rests and sneaking; Try again once it's over
+void exploreBar(Hud& hud);      // under the cards between fights: rests, camp and sneaking; Try again once it's over
 void dialoguePanel(Hud& hud);   // the conversation going on, with its replies
 // The active quests (top right), or with `open` the whole journal.
 void journalPanel(Hud& hud, bool open, yh::Font* title);
 void inventoryPanel(Hud& hud);  // I: what the selected (or acting) hero carries, to put on, put away or hand over
 // Between fights, beside something to take: a button to open it (E), or its contents once open.
 void lootPanel(Hud& hud);
+void stashPanel(Hud& hud);      // at camp: the selected hero's pack and the shared stash, items moved by clicking
 void merchantPanel(Hud& hud);
 void spellPanel(Hud& hud);      // K: the selected (or acting) hero's slots and spells; casts the helpful ones between fights
 

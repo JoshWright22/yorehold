@@ -146,6 +146,8 @@ struct Chapter
     // Story flags that stay behind when the party travels on to another chapter of the adventure.
     // Every other flag goes with them.
     std::vector<std::string> localFlags;
+    // The party may go to camp from here between fights ("camp": false in the file forbids it).
+    bool campAllowed = true;
 
     // Triggers that fire dialogue or cutscenes on chapter events: onEnter (at start),
     // onFlag (when flags change), onWipe (defeat), onComplete (chapter completion).

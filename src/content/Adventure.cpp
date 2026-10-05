@@ -112,6 +112,15 @@ std::optional<Adventure> Adventure::load(const yh::FileSystem& files, const std:
         for (const std::string& flag : adventure.flags)
             if (flag.empty() || flag.size() > 64)
                 return fail("story flags are 1 to 64 characters");
+        adventure.camp = doc.value("camp", std::string{});
+        if (!adventure.camp.empty())
+        {
+            std::string problem;
+            if (adventure.hasFolder(adventure.camp))
+                return fail("the camp is its own chapter, not one of the adventure's");
+            if (!Chapter::load(files, adventure.camp, &problem))
+                return fail("camp " + adventure.camp + ": " + problem);
+        }
 
         // Every chapter must load; their maps say which markers exist.
         std::vector<Chapter> chapters;

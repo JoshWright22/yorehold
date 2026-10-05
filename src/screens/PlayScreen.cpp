@@ -155,7 +155,7 @@ bool PlayScreen::handle(const SDL_Event& event)
             armed_.clear();
             return true;
         }
-        journalOpen_ = inventoryOpen_ = spellsOpen_ = false;
+        journalOpen_ = inventoryOpen_ = spellsOpen_ = stashOpen_ = false;
         casting_.reset();
         giving_.reset();
         looting_.reset();
@@ -320,7 +320,7 @@ void PlayScreen::show(World::Event& event)
         log_.clear();
         cutscene_ = {};
         cutsceneDone_ = false;
-        journalOpen_ = inventoryOpen_ = spellsOpen_ = false;
+        journalOpen_ = inventoryOpen_ = spellsOpen_ = stashOpen_ = false;
         casting_.reset();
         armed_.clear();
         giving_.reset();
@@ -726,7 +726,7 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     uiRects_.clear();
     const yh::Rect screen = renderer.bounds();
     Hud hud{world_, renderer, ui_, input_, uiRects_, armed_, giving_, looting_, trading_, tradePage_, consuming_, inventoryPage_, casting_,
-        table.inSession, table.guest};
+        stashOpen_, table.inSession, table.guest};
 
     if (!table.netStatus.empty())
         ui_.label({screen.w / 2 - 160, screen.h - 58}, table.netStatus, ui_.theme.textDim);
@@ -755,6 +755,12 @@ void PlayScreen::drawHud(yh::Renderer& renderer)
     if (spellsOpen_ && !world_.talk())
     {
         hud::spellPanel(hud);
+        if (!log_.empty()) ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
+        return;
+    }
+    if (stashOpen_ && world_.atCamp() && !world_.talk() && !world_.fighting())
+    {
+        hud::stashPanel(hud);
         if (!log_.empty()) ui_.label({20, screen.h - 42}, log_.back(), ui_.theme.text);
         return;
     }

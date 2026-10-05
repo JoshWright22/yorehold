@@ -100,7 +100,7 @@ One file per id. Filenames must match `id`, which uses lowercase letters, digits
 
 | Kind | Fields |
 |---|---|
-| Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `weight` (lb), `value` (cp), `quantity`, `magic`, `modifiers` |
+| Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `weight` (lb), `value` (cp), `quantity`, `magic`, `supplies` (camp supply points per unit), `modifiers` |
 | Class | `id`, `name`, `description`, `hitDie`, `bonusHp`, `speed`, `proficiencies`, starting `items` ids |
 | Creature | `id`, `name`, `description`, `hp`, `armorClass`, `speed`, fixed `abilities`, `proficiencies`, `items`, `loot`, `token` |
 
@@ -160,6 +160,7 @@ A creature placement may set `facing`: the direction it looks until it notices t
 - `chapters`: array of chapter folder paths (e.g., `"chapters/chapter-one"`)
 - `transitions`: how chapters connect when the party reaches markers
 - `flags`: adventure-wide story flags that track across chapters
+- `camp`: optional chapter folder the party makes camp in (see Camp, supplies and the stash)
 
 A `transition` specifies how to move from one chapter to another:
 
@@ -205,6 +206,20 @@ In play, a chapter the file lists belongs to the adventure. Between fights, a he
 
 The game's built-in files carry a test adventure in `adventure.json`: `chapters/chapter-one` and `chapters/chapter-two`, with a way there, a way back and a way back that opens once `chapter_two_complete` is set. It is test content, not story.
 
+## Camp, supplies and the stash
+
+Between fights the party can make camp from wherever it is (the Make camp button), unless the chapter's `chapter.json` says `"camp": false`. Camp is a chapter of its own: `camp` in `adventure.json` names the folder (it must load, and can't be one of the adventure's chapters); without it every chapter uses the shared `chapters/camp`, a clearing. A camp chapter needs a `party` list like any chapter but seats as many heroes as come, the extra ones on the first seat's square; they arrive on its `entry` marker if the map has one. Camp is drawn and played like any map, so it can have NPCs and dialogue.
+
+The chapter the party left is kept as it was: Leave camp puts them back where they stood, with the same doors open, enemies down and chests taken. Heroes, flags, rests taken and the stash go both ways. A save made at camp loads at camp and still knows the way back.
+
+At camp only:
+
+- The rests the ruleset marks `campOnly` (the long rest). Its `supplyCost` comes from supplies in the stash first, then from what the heroes who aren't dead carry, in party order and cheapest first. Whole units are used, so a cost that doesn't divide evenly takes a little more.
+- The stash: one shared list of items. The selected hero puts a whole entry in or takes one out (Stash button). Worn items come off first; the magic item limit still counts.
+- Revival: a dead hero comes back for the ruleset's `revivePrice`, paid by the selected hero, with `reviveHp`. Rests never bring back the dead.
+
+An item's `supplies` is how many supply points each unit is worth (0 = not food). The shipped `supplies` item is worth 10 and costs 5 sp, so a long rest takes four. The keep's storeroom chest holds four.
+
 ## Rulesets
 
 The game's rules are a folder, `rulesets/yorehold/`, and every number the rules use is in it. Changing a number there changes the game; nothing in the code repeats it. `ruleset.json` is the framework's ruleset format:
@@ -229,8 +244,9 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `feetPerSquare` | Size of a map square. |
 | `carryPerStrength` | Pounds carried per point of the first ability. |
 | `magicItemLimit` | Magic items one character may carry (0 = no limit). Held here until inventory rules use it. |
-| `rests` | Each has `id`, `name`, `perAdventure` (0 = unlimited), a `recovery` and optional `restores`, the resources it refills (`"slots-*"` for every spell slot). The first is the one R takes. The long rest restores spell slots; both rests restore `focus`. |
+| `rests` | Each has `id`, `name`, `perAdventure` (uses, 0 = unlimited), a `recovery` and optional `restores`, the resources it refills (`"slots-*"` for every spell slot). Optional `supplyCost` (supply points it uses up), `campOnly` (only at camp) and `resets` (rest ids whose uses come back). The first is the one R takes. The long rest restores spell slots and is taken at camp for 40 supplies, as often as supplies last, and gives back the 2 short rests; both rests restore `focus`. |
 | `afterVictory`, `reviveAfterVictory` | A `recovery` for the winners of a fight, and the HP downed winners get back up with (0 = they stay down). |
+| `revivePrice`, `reviveHp` | What bringing a dead hero back at camp costs, in copper (0 = it can't be bought; 20000 = 200 gp), and the HP they come back with (0 = full; 1 here). |
 | `defaultHitDie`, `hitDieByClass`, `hitDieAbility` | Sides of the hit die, by class name, and the ability added per die. |
 | `conditions` | Optional list of conditions written inline; a ruleset folder keeps them as files instead (see Conditions). |
 
@@ -296,7 +312,7 @@ name condition files. Modern/classic do not enable these rules.
 Sheets save `death: {saves, successes, failures, stable, dead}`. Old sheets without the object
 use their original class/creature eligibility and begin with no counters. Creature files may
 opt into saves with `deathSaves: true`; the default is immediate death. Ordinary healing, rests
-and victory recovery cannot revive a dead character. Help gets an adjacent downed ally up with
+and victory recovery cannot revive a dead character; paying at camp can. Help gets an adjacent downed ally up with
 1 HP; healing effects and potions remove dying/stable state and reset the counters.
 
 The provisional Potion action costs one action, consumes one `potions` resource from its user

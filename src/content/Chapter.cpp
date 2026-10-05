@@ -473,6 +473,8 @@ std::optional<Chapter> Chapter::load(const yh::FileSystem& files, std::string_vi
         }
         c.completeWhen = flagsFrom(j, "completeWhen");
         c.localFlags = flagsFrom(j, "localFlags");
+        if (j.contains("camp") && !j.at("camp").is_boolean()) throw std::invalid_argument("camp is true or false");
+        c.campAllowed = j.value("camp", true);
         if (j.contains("onWipe"))
         {
             const auto& wipe = j.at("onWipe");

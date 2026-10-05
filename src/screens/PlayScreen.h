@@ -108,5 +108,6 @@ private:
     size_t inventoryPage_ = 0;
     bool spellsOpen_ = false;
     std::optional<std::string> casting_; // spell panel: the spell waiting for its target
+    bool stashOpen_ = false; // at camp: the shared stash beside the selected hero's pack
     std::string armed_; // the aimed action picked on the action bar (see hud::armedAction)
 };

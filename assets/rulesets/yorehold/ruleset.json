@@ -68,11 +68,14 @@
   "magicItemLimit": 3,
 
   "rests": [
-    { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 }, "restores": ["focus"], "supplyCost": 0 },
-    { "id": "long", "name": "Long rest", "perAdventure": 1, "recovery": { "kind": "full", "reviveDowned": true }, "restores": ["slots-*", "focus"], "supplyCost": 40, "reviveDead": true }
+    { "id": "short", "name": "Short rest", "perAdventure": 2, "recovery": { "kind": "hitDice", "amount": 0 }, "restores": ["focus"] },
+    { "id": "long", "name": "Long rest", "perAdventure": 0, "recovery": { "kind": "full", "reviveDowned": true }, "restores": ["slots-*", "focus"],
+      "supplyCost": 40, "campOnly": true, "resets": ["short"] }
   ],
   "afterVictory": { "kind": "none" },
   "reviveAfterVictory": 1,
+  "revivePrice": 20000,
+  "reviveHp": 1,
   "defaultHitDie": 8,
   "hitDieAbility": "con",
   "hitDieByClass": { "Barbarian": 12, "Fighter": 10, "Cleric": 8, "Rogue": 8, "Wizard": 6 }

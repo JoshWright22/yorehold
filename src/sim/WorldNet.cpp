@@ -389,9 +389,39 @@ std::optional<std::string> World::validate(yh::PlayerId player, std::string_view
         if (type == "rest")
         {
             const size_t index = j.at("rest").get<size_t>();
-            if (!calm || talk_ || index >= rules_.rests.size() || restsLeft(rules_.rests[index]) == 0)
+            if (!calm || talk_ || index >= rules_.rests.size() || !canRest(rules_.rests[index], &reason))
                 return std::nullopt;
             return accepted;
+        }
+        if (type == "camp")
+            return canMakeCamp(&reason) ? std::optional(std::string("{}")) : std::nullopt;
+        if (type == "leave-camp")
+            return calm && !talk_ && canLeaveCamp() ? std::optional(std::string("{}")) : std::nullopt;
+        if (type == "stash" || type == "unstash")
+        {
+            // At camp, between fights: a whole inventory entry into the shared stash, or one out of it.
+            const size_t hero = j.at("hero").get<size_t>();
+            const size_t item = j.at("item").get<size_t>();
+            if (!calm || talk_ || !atCamp() || hero >= heroCount_ || !mayAct(player, hero) || creatures_[hero].sheet.down())
+                return std::nullopt;
+            if (type == "stash")
+                return item < creatures_[hero].sheet.inventory.size() ? std::optional(nlohmann::json{{"hero", hero}, {"item", item}}.dump()) : std::nullopt;
+            if (item >= stash_.items.size())
+                return std::nullopt;
+            if (stash_.items[item].magic && !creatures_[hero].sheet.roomForMagic(rules_, stash_.items[item].quantity))
+            {
+                reason = magicLimitText(hero);
+                return std::nullopt;
+            }
+            return nlohmann::json{{"hero", hero}, {"item", item}}.dump();
+        }
+        if (type == "revive")
+        {
+            const size_t hero = j.at("hero").get<size_t>();
+            const size_t target = j.at("target").get<size_t>();
+            if (!mayAct(player, hero) || !canRevive(hero, target, &reason))
+                return std::nullopt;
+            return nlohmann::json{{"hero", hero}, {"target", target}}.dump();
         }
         if (type == "buy" || type == "sell")
         {
@@ -731,21 +761,7 @@ void World::apply(const yh::NetCommand& command)
         }
         else
         {
-            const size_t index = j.at("item").get<size_t>();
-            from.unequip(index);
-            const yh::Item item = from.inventory[index];
-            // Later items move up a place: take their modifiers off and put them back under their new index.
-            std::vector<bool> worn;
-            for (size_t i = index + 1; i < from.inventory.size(); i++)
-            {
-                worn.push_back(from.inventory[i].equipped);
-                from.unequip(i);
-            }
-            from.inventory.erase(from.inventory.begin() + static_cast<std::ptrdiff_t>(index));
-            for (size_t i = 0; i < worn.size(); i++)
-                if (worn[i])
-                    from.equip(index + i);
-            from.hp = std::min(from.hp, from.maxHp());
+            const yh::Item item = takeEntry(from, j.at("item").get<size_t>());
             addTo(to, item);
             say(from.name + " gives " + item.name + " to " + to.name + ".");
         }
@@ -754,6 +770,16 @@ void World::apply(const yh::NetCommand& command)
         consume(j.at("hero").get<size_t>(), j.at("item").get<size_t>(), j.at("target").get<size_t>());
     else if (type == "rest")
         rest(rules_.rests[j.at("rest").get<size_t>()]);
+    else if (type == "camp")
+        makeCamp();
+    else if (type == "leave-camp")
+        leaveCamp();
+    else if (type == "stash")
+        toStash(j.at("hero").get<size_t>(), j.at("item").get<size_t>());
+    else if (type == "unstash")
+        fromStash(j.at("hero").get<size_t>(), j.at("item").get<size_t>());
+    else if (type == "revive")
+        revive(j.at("hero").get<size_t>(), j.at("target").get<size_t>());
     else if (type == "buy" || type == "sell")
     {
         const size_t npc = j.at("npc").get<size_t>(), item = j.at("item").get<size_t>();
@@ -843,6 +869,7 @@ uint64_t World::checksum() const
             mix(static_cast<unsigned char>(ch));
     mix(rolls_);
     mixText(merchantsJson().dump());
+    mixText(stash_.toJson());
     mixText(map().objects().toJson());
     if (encounter_ && !encounter_->finished() && encounter_->started())
     {

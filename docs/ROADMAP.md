@@ -91,7 +91,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
   traps and chests work through Interact; the text map stays as an import.
 - [x] **F2. `adventure.json`.** Several chapters, transitions between markers, adventure-wide
   flags, level range. A two-chapter test adventure (test content, not shipped as story).
-- [ ] **F3. Camp, supplies and long rests.** A camp map, the stash, rest costs, revival at camp.
+- [x] **F3. Camp, supplies and long rests.** A camp map, the stash, rest costs, revival at camp.
 - [ ] **F4. Companions.** Joining through dialogue, approval, the party cap.
 - [x] **F5. Triggers.** `onEnter`, `onFlag`, `onWipe` for cutscenes and dialogue; non-combat
   completion.

@@ -1,6 +1,7 @@
 #include "World.h"
 
 #include <yorehold/framework/animation/Cutscene.h>
+#include <yorehold/framework/assets/FileSystem.h>
 
 #include <algorithm>
 
@@ -51,6 +52,10 @@ bool World::loadChapter(const std::string& folder, std::string* error)
             }
         }
     }
+    homeFolder_ = folder;
+    // The adventure's own camp, else the shared one if the content has it.
+    campFolder_ = adventure_ && !adventure_->camp.empty() ? adventure_->camp
+        : chapterFiles_.exists("chapters/camp/chapter.json") ? "chapters/camp" : "";
     return true;
 }
 
@@ -91,6 +96,8 @@ void World::newAdventure(uint64_t seed)
     pendingTalk_.reset();
     rolls_ = 0;
     pendingStep_.reset();
+    stash_ = {};
+    campReturn_.clear();
 
     heroCount_ = 0;
     piles_.clear();

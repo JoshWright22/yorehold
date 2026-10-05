@@ -551,12 +551,24 @@ void contentTests(const fs::path& scratch)
         // Spell slots and focus points coming back on rests are new with spells; the keep had no casting.
         check(renamed.rests.size() == 2 && renamed.rests[1].restores == std::vector<std::string>{"slots-*", "focus"}
             && renamed.rests[0].restores == std::vector<std::string>{"focus"}, "A long rest restores spell slots; both rests restore focus");
+        // Camp is new since the keep: the long rest is taken there for supplies, as often as they
+        // last, and gives the short rests back; the dead come back there for coins.
+        check(renamed.rests[1].campOnly && renamed.rests[1].supplyCost == 40 && renamed.rests[1].perAdventure == 0
+            && renamed.rests[1].resets == std::vector<std::string>{"short"} && !renamed.rests[0].campOnly && renamed.rests[0].supplyCost == 0
+            && renamed.revivePrice == 20000 && renamed.reviveHp == 1, "The long rest is taken at camp for 40 supplies; revival there costs 200 gp");
         for (json* set : {&mine, &theirs})
         {
             set->erase("conditions");
+            set->erase("revivePrice");
+            set->erase("reviveHp");
             for (json& rest : set->at("rests"))
             {
                 rest.erase("restores");
+                rest.erase("supplyCost");
+                rest.erase("campOnly");
+                rest.erase("resets");
+                if (rest.at("id") == "long")
+                    rest.erase("perAdventure");
                 if (rest.at("recovery").at("kind") == "full")
                     rest.at("recovery").erase("fraction");
             }
@@ -1335,6 +1347,7 @@ void worldItemTests(const std::function<void(bool, const char*)>& check);
 void worldSpellTests(const std::function<void(bool, const char*)>& check);
 void worldObjectTests(const std::function<void(bool, const char*)>& check);
 void worldTravelTests(const std::function<void(bool, const char*)>& check);
+void worldCampTests(const std::function<void(bool, const char*)>& check);
 
 int main()
 {
@@ -1356,6 +1369,7 @@ int main()
         worldSpellTests(check);
         worldObjectTests(check);
         worldTravelTests(check);
+        worldCampTests(check);
         libraryTests(scratch.path);
         mapTests();
         gameErrorTests();

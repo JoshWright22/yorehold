@@ -48,6 +48,10 @@ std::string World::stateJson() const
     data["objects"] = nlohmann::json::parse(map().objects().toJson());
     data["companionApproval"] = companionApproval_;
     data["companionParty"] = std::vector<std::string>(companionParty_.begin(), companionParty_.end());
+    if (!stash_.empty())
+        data["stash"] = nlohmann::json::parse(stash_.toJson());
+    if (!campReturn_.empty())
+        data["campReturn"] = campReturn_;
     for (size_t i = 0; i < creatures_.size(); i++)
     {
         const yh::Token& token = tokens_.tokens[i];
@@ -96,15 +100,15 @@ bool World::restoreState(std::string_view text, std::string* problem)
     try
     {
         const nlohmann::json data = nlohmann::json::parse(text);
-        // The party may have travelled on to another chapter of the adventure since it started.
-        if (const std::string folder = data.value("chapterFolder", chapter_->folder);
-            folder != chapter_->folder && adventure_ && adventure_->hasFolder(folder))
+        // The party may have travelled on to another chapter of the adventure since it started, or be at camp.
+        if (const std::string folder = data.value("chapterFolder", chapter_->folder); folder != chapter_->folder && knownFolder(folder))
         {
-            std::optional<Chapter> other = Chapter::load(chapterFiles_, folder, &error);
+            const nlohmann::json heroes = data.value("choices", nlohmann::json::array());
+            std::unique_ptr<Chapter> other = loadChapterFor(folder, heroes.is_array() ? heroes.size() : 0, &error);
             if (!other)
                 throw std::runtime_error(error);
             previous = std::move(chapter_);
-            chapter_ = std::make_unique<Chapter>(std::move(*other));
+            chapter_ = std::move(other);
             rules_ = chapter_->rules;
         }
         const std::string checkpoint = data.value("checkpoint", std::string{});
@@ -126,7 +130,26 @@ bool World::restoreState(std::string_view text, std::string* problem)
             || fogData.at("cellSize") != GameMap::cellSize)
             throw std::runtime_error("the map has changed since this save");
         std::optional<yh::FogOfWar> fog = yh::FogOfWar::fromJson(data.at("fog").dump(), &error);
-        if (!fog || !saved.is_array() || saved.size() != creatures_.size())
+        // Who each saved creature should be: the creatures as they are, or for a save in another
+        // chapter that chapter's seats, encounter creatures and NPCs, in the order newAdventure makes them.
+        struct Slot
+        {
+            int team = 0;
+            bool npc = false;
+            bool saves = true; // death saves, for sheets saved before they were kept
+        };
+        std::vector<Slot> slots;
+        if (previous)
+        {
+            slots.resize(chapter_->party.size());
+            for (const Chapter::Encounter& encounter : chapter_->encounters)
+                slots.insert(slots.end(), encounter.creatures.size(), Slot{1, false, true});
+            slots.insert(slots.end(), chapter_->npcs.size(), Slot{2, true, true});
+        }
+        else
+            for (const Creature& c : creatures_)
+                slots.push_back({c.team, c.npc >= 0, c.sheet.death.saves});
+        if (!fog || !saved.is_array() || saved.size() != slots.size())
             throw std::runtime_error(fog ? "the map has changed since this save" : error);
         // Check all state before applying any of it, including positions and recovery counters.
         const auto seed = data.at("seed").get<uint64_t>();
@@ -163,6 +186,17 @@ bool World::restoreState(std::string_view text, std::string* problem)
                 || !std::equal(authored.begin(), authored.end(), objects->all().begin(), [](const auto& a, const auto& b) { return a.first == b.first; }))
                 throw std::runtime_error("the map's objects have changed since this save");
         }
+        // The camp stash and the way back from camp. Older saves have neither.
+        yh::Stash stash;
+        if (data.contains("stash"))
+        {
+            std::optional<yh::Stash> read = yh::Stash::fromJson(data.at("stash").dump(), &error);
+            if (!read) throw std::runtime_error("saved stash: " + error);
+            stash = std::move(*read);
+        }
+        const std::string campReturn = data.value("campReturn", std::string{});
+        if (!campReturn.empty() && chapter_->folder != campFolder_)
+            throw std::runtime_error("a way back from camp saved outside camp");
         std::vector<yh::CharacterChoices> choices;
         std::vector<yh::Character> sheets;
         std::vector<yh::Vec2> positions;
@@ -184,7 +218,7 @@ bool World::restoreState(std::string_view text, std::string* problem)
             std::optional<yh::Character> sheet = yh::Character::fromJson(c.at("sheet").dump(), &error);
             if (!sheet || !sheet->checkProficiencyRanks(rules_, &error))
                 throw std::runtime_error(error);
-            if (!c.at("sheet").contains("death")) sheet->death.saves = creatures_[sheets.size()].sheet.death.saves;
+            if (!c.at("sheet").contains("death")) sheet->death.saves = slots[sheets.size()].saves;
             if (rules_.death.enabled && (sheet->death.failures > rules_.death.failures || sheet->death.successes > rules_.death.successes
                 || (!sheet->death.dead && sheet->death.failures == rules_.death.failures)
                 || (!sheet->death.stable && !sheet->death.dead && sheet->death.successes == rules_.death.successes)))
@@ -213,9 +247,9 @@ bool World::restoreState(std::string_view text, std::string* problem)
             dropped.push_back(c.value("dropped", !piles && sheets.back().down()));
             sneaking.push_back(c.value("sneaking", false) && sneaking.size() < heroCount_ && !sheets.back().down()); // older saves have none
             // Only an NPC's side can change (a peaceful one the party attacked), or an enemy's that gave up.
-            const int team = c.value("team", creatures_[teams.size()].team);
+            const int team = c.value("team", slots[teams.size()].team);
             surrendered.push_back(c.value("surrendered", false) && team == 2 && teams.size() >= heroCount_);
-            if (team != creatures_[teams.size()].team && !(creatures_[teams.size()].npc >= 0 && (team == 1 || team == 2)) && !surrendered.back())
+            if (team != slots[teams.size()].team && !(slots[teams.size()].npc && (team == 1 || team == 2)) && !surrendered.back())
                 throw std::runtime_error("saved creature is on the wrong side");
             teams.push_back(team);
         }
@@ -234,6 +268,8 @@ bool World::restoreState(std::string_view text, std::string* problem)
             objectsChanged();
         }
         fights_ = fights;
+        stash_ = std::move(stash);
+        campReturn_ = campReturn;
         restsUsed_ = std::move(rests);
         flags_ = std::move(flags);
         // Restore which triggers have already fired (older saves: none)

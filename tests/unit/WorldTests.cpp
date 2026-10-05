@@ -303,6 +303,7 @@ void conditionsInPlay(const Check& check)
     // Downed is a hero at 0 HP: a short rest leaves them down, a long one gets them up; resting ends Frightened and Slowed.
     world.sheet(0).addCondition(rules, "frightened");
     world.sheet(1).hp = 0;
+    world.freeRests();
     check(world.send("rest", {{"rest", 0}}), "The party takes a short rest");
     check(world.sheet(1).hasCondition("downed") && world.sheet(1).hasFlag(rules, "cantAct") && !world.sheet(1).hasCondition("hidden")
             && !world.sheet(0).hasCondition("downed") && !world.sheet(0).hasCondition("frightened"),

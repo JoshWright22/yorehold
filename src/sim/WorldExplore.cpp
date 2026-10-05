@@ -274,11 +274,22 @@ void World::chooseReply(size_t index, size_t hero)
 
 void World::rest(const yh::RestDefinition& rest)
 {
-    if (restsLeft(rest) == 0 || (encounter_ && !encounter_->finished()) || partyDown())
+    if (!canRest(rest))
         return;
     restsUsed_[rest.id]++;
+    for (const std::string& other : rest.resets)
+        restsUsed_.erase(other);
     restRandom_ = nextRandom(0x5eedull);
     say("The party takes a " + (rest.name.empty() ? rest.id : rest.name) + ".");
+    if (rest.supplyCost > 0)
+    {
+        std::vector<yh::Character*> packs;
+        for (size_t i = 0; i < heroCount_; i++)
+            if (!creatures_[i].sheet.death.dead)
+                packs.push_back(&creatures_[i].sheet);
+        yh::spendSupplies(stash_, packs, rest.supplyCost);
+        say("It uses " + std::to_string(rest.supplyCost) + " supplies; " + std::to_string(suppliesHeld()) + " left.");
+    }
     endAllConcentration(); // nobody holds a spell through a rest
     for (size_t i = 0; i < heroCount_; i++)
     {
@@ -336,7 +347,7 @@ void World::autoExplore()
     // Use the first rest that still has uses (short before long).
     for (size_t i = 0; i < rules_.rests.size(); i++)
     {
-        if (hurt && restsLeft(rules_.rests[i]) != 0)
+        if (hurt && canRest(rules_.rests[i]))
         {
             act("rest", nlohmann::json{{"rest", i}}.dump());
             break;
