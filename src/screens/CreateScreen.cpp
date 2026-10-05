@@ -21,8 +21,8 @@ namespace fs = std::filesystem;
 
 void PackageHistory::push(std::string json, std::string description)
 {
-    // Truncate future if we're not at the end
-    if (current_ < states_.size() - 1)
+    // a new edit after an undo drops the redo states
+    if (current_ + 1 < states_.size())
         states_.erase(states_.begin() + current_ + 1, states_.end());
 
     states_.push_back({std::move(json), std::move(description)});
@@ -99,7 +99,7 @@ void CreateScreen::loadPackageFromFile(const std::string& path)
             {"id", package->id},
             {"revision", package->revision},
             {"ruleset", package->ruleset},
-            {"requires", package->requires},
+            {"requires", package->needs},
             {"chapters", package->chapters},
             {"defaultChapter", package->defaultChapter}
         };
@@ -125,7 +125,7 @@ void CreateScreen::createNewPackage()
         .id = "", // will be set on export
         .revision = 0,
         .ruleset = "",
-        .requires = {},
+        .needs = {},
         .defaultChapter = "",
         .chapters = {}
     };
@@ -160,7 +160,7 @@ void CreateScreen::savePackageState()
         {"id", package_->id},
         {"revision", package_->revision},
         {"ruleset", package_->ruleset},
-        {"requires", package_->requires},
+        {"requires", package_->needs},
         {"chapters", package_->chapters},
         {"defaultChapter", package_->defaultChapter}
     };
@@ -405,6 +405,4 @@ void CreateScreen::drawToolbar(yh::Renderer& renderer, const yh::Rect& area)
         if (table.export_package && !packagePath_.empty())
             table.export_package(packagePath_);
     }
-
-    ui_.end();
 }

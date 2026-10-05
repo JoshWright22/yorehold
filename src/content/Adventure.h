@@ -51,6 +51,6 @@ struct Adventure
     // Returns the chapter that comes after `currentChapter` when exiting at `marker`, or empty
     // if there is no transition. If `when` flags are not met, this returns empty (the transition
     // is not available yet).
-    std::optional<const std::string&> nextChapter(std::string_view currentChapter, std::string_view marker,
+    std::optional<std::string> nextChapter(std::string_view currentChapter, std::string_view marker,
         const std::vector<std::string>& setFlags) const;
 };

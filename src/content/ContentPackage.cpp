@@ -45,7 +45,7 @@ std::optional<ContentPackage> ContentPackage::load(const yh::FileSystem& files, 
         p.id = j.value("id", "");
         p.revision = j.value("revision", 0);
         p.ruleset = j.value("ruleset", "");
-        p.requires = j.value("requires", std::vector<std::string>{});
+        p.needs =j.value("requires", std::vector<std::string>{});
         p.chapters = j.value("chapters", std::vector<std::string>{});
         // Packages of definitions only (classes, items, creatures, rulesets) have no chapters.
         p.defaultChapter = p.chapters.empty() ? j.value("defaultChapter", "") : j.at("defaultChapter").get<std::string>();

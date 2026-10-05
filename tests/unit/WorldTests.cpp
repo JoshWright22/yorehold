@@ -345,8 +345,6 @@ void conditionsInPlay(const Check& check)
         "A new condition is one more file");
 }
 
-}
-
 // Companion approval and recruitment.
 void companionApproval(const Check& check)
 {
@@ -359,7 +357,7 @@ void companionApproval(const Check& check)
         {"party", {{{"name", "Ana"}, {"class", "fighter"}, {"color", {220, 90, 80}}, {"at", {1, 1}}}}},
         {"npcs", {{{"id", "helper"}, {"name", "Helper"}, {"color", {100, 200, 100}}, {"at", {5, 5}},
                    {"dialogue", "dialogue.json"}, {"creature", "commoner"}, {"approvalStart", 0}, {"approvalJoinThreshold", 10}}}},
-        {"encounters", {}},
+        {"encounters", nlohmann::json::array()},
         {"victoryText", "Done."},
         {"defeatText", "Lost."},
         {"resumeText", "Back."},
@@ -369,15 +367,17 @@ void companionApproval(const Check& check)
         {"name", "Yard"},
         {"tiles", {{"grass", {{"art", "grass"}}}}},
         {"legend", {{".", "grass"}}},
-        {"layers", {{{"name", "ground"}, {"rows", {".......", ".......", "......."}}}}}
+        {"layers", {{{"name", "ground"}, {"rows", {".......", ".......", ".......", ".......", ".......", ".......", "......."}}}}}
     };
-    const nlohmann::json dialogue{
-        {"id", "helper-talk"},
-        {"start", "greet"},
-        {"nodes", {{{"id", "greet"}, {"speaker", "Helper"}, {"text", "Hello there."},
-                    {"choices", {{{"id", "hire"}, {"text", "Join us?"}, {"next", "joined"}}}}}},
-                   {{"id", "joined"}, {"speaker", "Helper"}, {"text", "Yes, let's go."}}}}
-    };
+    const nlohmann::json dialogue = nlohmann::json::parse(R"({
+        "id": "helper-talk",
+        "start": "greet",
+        "nodes": [
+            {"id": "greet", "speaker": "Helper", "text": "Hello there.",
+             "choices": [{"id": "hire", "text": "Join us?", "next": "joined"}]},
+            {"id": "joined", "speaker": "Helper", "text": "Yes, let's go."}
+        ]
+    })");
     WorldFixture world;
     std::string error;
     const bool loaded = world.loadJson("chapters/companion-yard",
@@ -386,7 +386,10 @@ void companionApproval(const Check& check)
          {"chapters/companion-yard/dialogue.json", dialogue.dump()}}, 5, &error);
     check(loaded, "The companion test chapter loads");
     if (!loaded)
+    {
+        std::fprintf(stderr, "%s\n", error.c_str());
         return;
+    }
 
     check(world.companionCount() == 0, "No companions in the party initially");
     check(world.partyMemberCount() == 1, "Party has 1 member (the fighter)");
@@ -415,6 +418,8 @@ void companionApproval(const Check& check)
     check(!world.isCompanionInParty(0), "Helper not in party yet");
     check(world.maxPartyMembers == 6, "Max party size is 6");
     check(world.maxPlayerCharacters == 4, "Max player characters is 4");
+}
+
 }
 
 void worldPlayTests(const Check& check)

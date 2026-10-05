@@ -105,7 +105,7 @@ std::optional<Adventure> Adventure::load(const yh::FileSystem& files, const std:
             if (!chapter)
             {
                 if (error)
-                    *error = chapterFolder + ": " + (*error ? *error : "failed to load");
+                    *error = chapterFolder + ": " + (error->empty() ? std::string("failed to load") : *error);
                 return {};
             }
         }
@@ -120,7 +120,7 @@ std::optional<Adventure> Adventure::load(const yh::FileSystem& files, const std:
     }
 }
 
-std::optional<const std::string&> Adventure::nextChapter(std::string_view currentChapter,
+std::optional<std::string> Adventure::nextChapter(std::string_view currentChapter,
     std::string_view marker, const std::vector<std::string>& setFlags) const
 {
     for (const auto& trans : transitions)

@@ -474,7 +474,6 @@ void PlayScreen::drawWorld(yh::Renderer& renderer)
         else if (surface.id == "ice")
             color = yh::Color{180, 220, 255, 70};
         renderer.fillCircle(centre, radius, color);
-        renderer.drawCircle(centre, radius, yh::Color{color.r, color.g, color.b, 200}, 1);
     }
 
     tokens.draw(renderer, camera_, grid);

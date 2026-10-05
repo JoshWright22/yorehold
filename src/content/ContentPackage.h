@@ -20,7 +20,7 @@ struct ContentPackage
     std::string id; // unique identifier across versions; empty for built-in or unnamed packages
     int revision = 0; // version number for updates; 0 = not versioned
     std::string ruleset; // for adventures: which ruleset version this requires; empty = game's own ruleset
-    std::vector<std::string> requires; // package ids/revisions this depends on
+    std::vector<std::string> needs; // package ids/revisions this depends on
     std::string defaultChapter; // empty when the package has no chapters (classes, items... only)
     std::string theme;
     std::vector<std::string> chapters;

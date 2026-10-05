@@ -27,7 +27,7 @@ public:
     void clear() { states_.clear(); current_ = 0; }
     void push(std::string json, std::string description);
     bool canUndo() const { return current_ > 0; }
-    bool canRedo() const { return current_ < states_.size() - 1; }
+    bool canRedo() const { return current_ + 1 < states_.size(); }
     std::optional<std::string> undo();
     std::optional<std::string> redo();
 
