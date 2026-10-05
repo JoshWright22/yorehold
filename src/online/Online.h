@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AccountServer.h"
+
 #include <yorehold/framework/net/Http.h>
 
 #include <nlohmann/json.hpp>
@@ -8,10 +10,11 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 // The account server (yorehold-server): signs this install in and checks the server is one this
 // build can talk to. Playing never waits on it; without a server the game is simply offline.
-class Online
+class Online : public AccountServer
 {
 public:
     // The server's major.minor must match; patch versions are free to differ.
@@ -36,9 +39,13 @@ public:
     int configVersion() const { return configVersion_; }
     void refreshConfig();
 
-    using Answer = std::function<void(std::optional<nlohmann::json>)>;
+    using Answer = AccountServer::Answer;
     // Calls one of the server's functions as the signed-in player. Nothing = it failed.
     void rpc(std::string_view id, const nlohmann::json& payload, Answer answer);
+
+    // AccountServer. The account is only known once the server has said who we are.
+    std::string account() const override { return state_ == State::SignedIn ? userId_ : std::string(); }
+    void call(std::string_view id, const nlohmann::json& payload, Answer answer) override { rpc(id, payload, std::move(answer)); }
 
 private:
     void signIn();

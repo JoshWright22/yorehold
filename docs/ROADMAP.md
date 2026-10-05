@@ -119,6 +119,7 @@ Each step is sized to be one or a few commits. Numbers come from data, never fro
 
 - [ ] **H1. Characters and saves in account storage.** Server RPCs and client sync, newest wins
   with a backup.
+  Blocked: built and checked against stand-ins on both sides (`npm test` in the server, `AccountSyncTests` in the client), but never run against a live server. Needs one sign-in with two save folders to tick.
 - [ ] **H2. Content registry.** Publish, get, search; files on local disk in development.
 - [ ] **H3. Votes and scores.**
 - [ ] **H4. Library browser in the game.** Search, install, update.

@@ -414,6 +414,24 @@ The game ships human, elf, dwarf and halfling; acolyte, criminal, farmhand, sage
 
 The player's characters live in `characters/` beside the save, one file each, written by the game in the save envelope (`"format": "yorehold.character"`, `"version": 1`). The data holds `choices` (the framework's character choices, FRAMEWORK.md), `inventory` (items as a sheet writes them), `coins`, and `away`: the file name of the adventure save the character is playing in, empty when free. `characters/graveyard/` holds characters that can't be played any more; the game lists them after the others and never writes to them. A save names each hero's library file in `library` (empty for heroes made for that adventure; older saves have none).
 
+## Account sync files
+
+With a server set and the player signed in, the game keeps the adventure saves (`adventure.json`, `adventure-<package>-<chapter>.json`) and the character files the same as the copies on the account. A pass runs at sign-in, after the game writes or removes one of those files, and every 30 seconds. Without a server nothing changes: the files are the truth, and whatever was done offline is sent at the next sign-in. Test runs (`YOREHOLD_SEED`) never sync.
+
+- On the account a save's id is its file name without `.json`, a character's is the same, and a graveyard character's is `graveyard.<name>`. A file whose name isn't an id the server takes (1 to 64 of letters, digits, `_`, `-`, `.`, not starting with `.`), that isn't JSON, or that is over the server's limit (256 KB for a character, 1 MB for a save) is left alone and named on stderr.
+- Per file the newest change wins, by the file's modified time against the account's. A file received from the account is given the time of the change it holds. On a tie the account's copy is taken.
+- A file removed here is deleted on the account, and a file deleted on another install is removed here, unless the other side changed it since: then the changed copy comes back.
+- `sync-backup/characters/<id>.json` and `sync-backup/saves/<id>.json` hold the last file a pass replaced or removed, one per id. The account keeps the copy each write replaced as well (the server's README, "Characters" and "Saves").
+- `sync.json` is how a pass knows what changed since the last one. It can be deleted: the next pass compares times instead, and takes the account's copy where they match.
+
+```json
+{ "format": "yorehold.sync", "version": 1, "account": "<user id>",
+  "characters": { "ser-ada": { "revision": 4, "hash": "9f2c1e0b7a6d5c43" } },
+  "saves": { "adventure": { "revision": 2, "hash": "" } } }
+```
+
+`revision` is the account's revision of the record when the two last matched, and `hash` is the file's contents then (`""` = no file: it was deleted). Signing in to a different account starts the list over.
+
 Characters are made and levelled up under Play > Characters, always with the game's own ruleset (`rulesets/yorehold`), the built-in classes plus those of installed packages, and the ruleset's races, backgrounds and feats. The score methods' numbers are `scoreMethods` in `ruleset.json` (FRAMEWORK.md, "Character choices").
 
 ## Proficiency ranks

@@ -4,6 +4,7 @@
 #include "content/CharacterDraft.h"
 #include "content/CharacterLibrary.h"
 #include "content/ContentPackage.h"
+#include "online/AccountSync.h"
 #include "online/Online.h"
 #include "screens/CreateScreen.h"
 #include "screens/PlayScreen.h"
@@ -199,6 +200,10 @@ private:
     std::string netStatus_;
     Online online_;
     std::string onlineStatus_; // the last one printed
+    // Mirrors the saves and characters to the account. Off in test runs and without a server.
+    AccountSync accountSync_{online_};
+    int syncPassesSeen_ = 0;
+    int syncChangesSeen_ = 0;
     double syncTimer_ = 0;
     std::string lastSync_;
     Menu menu_ = Menu::Main;

@@ -318,8 +318,8 @@ Server API, all under Nakama RPCs with JSON bodies:
 | Area | Calls | Storage |
 |---|---|---|
 | Accounts | device login now; email and link later | Nakama users |
-| Characters | list, put, delete | storage collection `characters`, owner-only |
-| Saves | list, put, get | collection `saves`, one row per adventure per account |
+| Characters | list, get, put, delete; a revision and a modified time per record | storage collection `characters`, owner-only; the copy a write replaced in `characters_backup` |
+| Saves | list, get, put, delete; a revision and a modified time per record | collection `saves`, one row per adventure per account; the copy a write replaced in `saves_backup` |
 | Registry | publish (metadata + file to object storage), get, search, list by kind and tag | Postgres table `content`, files in R2-compatible storage (local disk in dev) |
 | Votes | up, down, clear; one per account per item | table `votes`; score cached on `content` |
 | Canon | nominate, sign off, flag, list queue | tables `approvers`, `signoffs` |
@@ -328,6 +328,11 @@ Server API, all under Nakama RPCs with JSON bodies:
 | Reports | report, block, ban | tables `reports`, `bans` |
 
 The game works fully offline; online adds sync, the library browser and co-op over the internet.
+
+Sync (`src/online/AccountSync`) mirrors the save files and `characters/` to the account. It talks to
+the server through `AccountServer` (who is signed in, and one call), which `Online` implements and
+the unit checks replace with a stand-in. Files and `sync.json` are in CONTENT.md, "Account sync
+files"; the RPCs are in the server's README.
 
 ### Web (todo)
 
@@ -558,6 +563,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 55. Story mode (G7): the graph is its own file, `story.json` at the package root, since no file the game plays has room for notes and positions; the game doesn't read it. Accepting a suggestion only changes the graph: a scene's map suggestion records a size (24 by 16, 8 by 4 more for each fight linked from it) and doesn't make the chapter yet, and a link between scenes doesn't write `adventure.json`, it only warns when that file can't travel that way. XP suggestions use Encounters mode's 25 per creature level; a quest gets no XP of its own. New nodes for a chapter go in a column beside its scene. Nothing in the graph stops a save; every problem is a warning.
 
 56. Voice lines (G8): a node's recording is named after its conversation and node, `voice/<conversation id>.<node id>.wav` (or `.ogg`), so the dialogue format needs no new field; writers copy recordings into `voice/` by hand, with no file picker yet. Only nodes are voiced, not the players' replies. A word starts at the DTW time of the token before it, not its own: measured on 20 synthesized lines that is 90 ms off on average with base.en against 139 ms. A heard word that differs from the written one keeps its time and is flagged unless at most half its letters differ, and one written word may take two heard pieces of a name. A recording that stops early pairs with the first of two same words. base.en ships: tiny.en hears as well on clear speech and is more than twice as fast, but real recordings are noisier and the cost is a once-only wait at import. ggml is built for the machine that builds it (whisper.cpp's default), which needs a check before release builds go to other machines.
+
+57. Account sync (H1): newest wins by the file's modified time against the account's, the account's copy on a tie; a delete is kept on the account as a marker so other installs remove the file too, and loses to a copy changed since. One backup per record on each side (`sync-backup/` here, `*_backup` on the server), not a history. A save's id on the account is its file name. A pass runs at sign-in, after a write and every 30 seconds (`AccountSync::interval`); a save that arrives while its adventure is being played is overwritten by the next autosave and stays as the account's backup.
 
 ### Structure choices made in this document
 

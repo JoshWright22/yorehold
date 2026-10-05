@@ -124,6 +124,9 @@ void YoreholdGame::connectOnline()
         saveSettings();
     }
     online_.connect(address, key ? key : settings_.serverKey, settings_.deviceId);
+    // Test runs never touch the player's files, so they have nothing to sync.
+    if (!testRun_)
+        accountSync_.setFolder(stateDir());
 }
 
 // ---------------------------------------------------------------- content library
@@ -487,6 +490,22 @@ void YoreholdGame::step(double deltaSeconds)
         if (SDL_getenv("YOREHOLD_PRINT_LOG"))
             std::printf("[online] %s\n", onlineStatus_.c_str());
     }
+    accountSync_.update(deltaSeconds);
+    if (accountSync_.passes() != syncPassesSeen_)
+    {
+        syncPassesSeen_ = accountSync_.passes();
+        for (const std::string& problem : accountSync_.problems())
+            std::fprintf(stderr, "Account sync: %s\n", problem.c_str());
+        if (SDL_getenv("YOREHOLD_PRINT_LOG") && !accountSync_.summary().empty())
+            std::printf("[online] %s\n", accountSync_.summary().c_str());
+    }
+    if (accountSync_.localChanges() != syncChangesSeen_)
+    {
+        // A save may have arrived from another device, or been finished there.
+        syncChangesSeen_ = accountSync_.localChanges();
+        if (onTitle() && chapter_)
+            hasSave_ = Save::format().readFile(savePath()).has_value();
+    }
     // The title and pause menus freeze the world, except in co-op, where it carries on for everyone else.
     const bool pauseMenu = menu_ == Menu::Pause || (menu_ == Menu::Settings && settingsBack_ == Menu::Pause);
     if (!chapter_ || (menu_ != Menu::None && !(inSession() && pauseMenu)))
@@ -521,6 +540,7 @@ void YoreholdGame::finishAdventure()
         std::remove(savePath().c_str());
         std::remove((savePath() + ".bak").c_str());
         hasSave_ = false;
+        accountSync_.request();
     }
     play_.stopCutscene();
     if (host_)
@@ -604,13 +624,17 @@ void YoreholdGame::writeBackCharacters(bool finished)
         if (!written)
             say("Couldn't write " + hero.sheet.name + " back to the character library: " + error);
     }
+    accountSync_.request();
 }
 
 void YoreholdGame::writeSave(const std::string& state)
 {
     std::string error;
     if (Save::format().writeFile(savePath(), state, &error))
+    {
         hasSave_ = true;
+        accountSync_.request();
+    }
     else
         say("Couldn't save: " + error);
 }

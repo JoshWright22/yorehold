@@ -402,6 +402,7 @@ void YoreholdGame::releaseCharacters()
             if (!CharacterLibrary::write(charactersDir(), entry, &error))
                 std::fprintf(stderr, "Characters: %s\n", error.c_str());
         }
+    accountSync_.request();
 }
 
 void YoreholdGame::startParty()
@@ -531,6 +532,7 @@ void YoreholdGame::finishDraft()
     {
         notice_ = levelling ? entry.choices.name + " is now level " + std::to_string(entry.choices.level()) + "." : "Saved " + entry.choices.name + ".";
         noticeBad_ = false;
+        accountSync_.request();
     }
     loadCharacters();
     menu_ = forParty ? Menu::Party : Menu::Characters;
