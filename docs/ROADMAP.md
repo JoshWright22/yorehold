@@ -69,6 +69,10 @@ builds, passes `check.ps1` and is committed.
   opportunity attacks, downed and death, the AI scorer (including flee and surrender).
 - [ ] **P6. Combat on screen.** Action bar, initiative strip, party cards, targeting with ranges
   and areas, hit and damage text, the log. A scripted fight in a screenshot run. First demo.
+  - Layout follows Baldur's Gate 3: the hotbar bottom centre with action, bonus and movement
+    pips and End Turn beside it, party portraits with HP down the left, the initiative strip of
+    portraits top centre, the combat log bottom right, hit chance at the cursor when targeting,
+    tooltips on every action. Our own art and names, the same arrangement and feel.
 - [ ] **P7. Characters.** Character files hold choices, the sheet is computed; class tables 1 to
   20; character library with graveyard; create and level-up screens; starting an adventure.
 - [ ] **P8. Items.** Inventory and hands, loot and containers, weight and the magic item limit,
