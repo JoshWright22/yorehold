@@ -1,6 +1,7 @@
 #pragma once
 
 #include "content/ContentPackage.h"
+#include "screens/DialogueEditor.h"
 #include "screens/EncountersEditor.h"
 #include "screens/MapEditor.h"
 
@@ -51,6 +52,17 @@ public:
     // That chapter's encounters, the same way. They stand on its map, so they need it too.
     EncountersEditor* encountersEditor();
 
+    // The conversation files of that chapter: its dialogue/ folder, those its chapter.json names
+    // and the package's declared ones, plus any made with newDialogue() and not saved yet.
+    std::vector<std::string> dialogueFiles();
+    // The file Dialogue mode shows; empty until one is picked or there is none.
+    const std::string& dialogue() const { return dialogue_; }
+    bool openDialogue(const std::string& path);
+    // A new conversation in the chapter's dialogue/ folder, open and written at the next save.
+    std::string newDialogue();
+    // The open file's conversation, loaded the first time it is asked for. Null if it can't be read.
+    DialogueEditor* dialogueEditor();
+
     // One history for the whole package: every mode's edits go on it.
     yh::History& history() { return history_; }
     void undo();
@@ -94,7 +106,18 @@ private:
         std::string saved; // the JSON as last read or written, in the editor's form
     };
 
+    // One conversation file.
+    struct DialogueTab
+    {
+        explicit DialogueTab(yh::History& history) : editor(history) {}
+        DialogueEditor editor;
+        std::string path;  // "chapters/keep/dialogue/wren.json"
+        std::string saved; // the JSON as last read or written, in the editor's form; empty = not on disk yet
+    };
+
     void loadPackageFromFile(const std::string& path);
+    DialogueEditor::Catalog dialogueCatalog(const std::string& path);
+    void drawDialogue(yh::Renderer& renderer, const yh::Rect& area);
     void validate();
     void drawTabs(yh::Renderer& renderer, const yh::Rect& area);
     void drawContent(yh::Renderer& renderer, const yh::Rect& area);
@@ -117,6 +140,12 @@ private:
     // The encounter editors ask the map editors where someone can stand: drop these first.
     std::map<std::string, std::unique_ptr<EncountersTab>> encounters_;
     std::map<std::string, std::string> encounterErrors_;
+    std::map<std::string, std::unique_ptr<DialogueTab>> dialogues_; // by path, from any chapter
+    std::map<std::string, std::string> dialogueErrors_;
+    std::string dialogue_;
+    DialoguePanel dialoguePanel_;
+    std::string listedChapter_;           // the chapter `listed_` is for; empty = list again
+    std::vector<std::string> listed_;     // its dialogueFiles(), so the folder isn't read every frame
     Mode currentMode_ = Mode::None;
     std::string status_; // the last save or load, shown in the toolbar
 

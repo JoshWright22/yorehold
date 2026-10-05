@@ -184,6 +184,16 @@ What can be placed are the game's own creatures, AI profiles and items plus the 
 
 Undo and redo are the same history as Map mode. Save writes `chapter.json` only once something in it has changed, and writes nothing at all while a creature is on a wall or a taken cell or names something the package doesn't have: the status line says which.
 
+### Writing dialogue in Create
+
+Create > Dialogue edits the chapter's conversation files, in the framework's dialogue format. The bar at the top steps through them: every `.json` in the chapter's `dialogue/` folder, the files its `chapter.json` names (NPC `dialogue`, `surrender`, trigger and `winCondition` dialogue, or the package's `dialogue/surrender.json` when the chapter has no `surrender` of its own) and the package's declared `dialogues`. New starts `dialogue/conversation.json` in the chapter, written at the next save. It isn't used until an NPC or trigger in `chapter.json` names it.
+
+The left column is the conversation's id and its nodes; `>` marks the start, and Start here moves it. The middle is the picked node: its id (replies and checks that led to it follow a rename), speaker and line, the whole line as it reads, and its replies with where each goes, what it needs and what it does. Add reply, Up, Down and Remove work on the list, and Del removes the picked reply. A node with no replies is the last line.
+
+The right column is the picked reply, or the node's own flags and actions when none is picked. A reply has an id, its words and either Goes to (a node or "end") or a Skill check with what it rolls, the difficulty and where a pass and a fail go. Ticking Skill check moves Goes to into the pass; unticking moves the pass back. "New node after it" makes a node and points the reply (or the check's empty way) at it in one step. Needs flags and Hidden if are `require` and `forbid`. Sets flags, Clears flags and Does are `set`, `clear` and `do`, separated by commas. Recruit, Dismiss, Approve +1 and Approve -1 add the companion actions; the approve buttons step one `approve N` up or down instead of adding another.
+
+The validation list checks each opened file. Errors stop a save: anything the game would refuse to load, and an action the game would do nothing with, like `approve` without a number or `recruit tam`. Warnings don't: a node nothing leads to, a node with no line, a skill the chapter's ruleset doesn't have, an action the game doesn't know, `approve tam 2` for someone who isn't a companion in this chapter, and `recruit`, `dismiss` or a bare `approve` in a file no companion NPC uses. Fields this mode has no tool for are written back as they were. A file is only rewritten once something in it changed, and undo and redo are the same history as the other modes.
+
 ## Adventures
 
 `adventure.json` at the content root ties chapters together into a playable journey. It defines:

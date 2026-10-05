@@ -6,6 +6,7 @@
 
 #include <yorehold/framework/graphics/Renderer.h>
 #include <yorehold/framework/assets/FileSystem.h>
+#include <yorehold/framework/rpg/Ruleset.h>
 #include <yorehold/framework/save/SaveFile.h>
 #include <yorehold/framework/ui/Ui.h>
 
@@ -56,6 +57,12 @@ void CreateScreen::openPackage(const std::string& path)
 
     // Undo steps point into the editors, so the history is emptied before they go.
     history_.clear();
+    dialogues_.clear();
+    dialogueErrors_.clear();
+    dialogue_.clear();
+    dialoguePanel_.reset();
+    listedChapter_.clear();
+    listed_.clear();
     encounters_.clear();
     encounterErrors_.clear();
     maps_.clear();
@@ -260,6 +267,162 @@ EncountersEditor* CreateScreen::encountersEditor()
     return tab ? &tab->editor : nullptr;
 }
 
+std::vector<std::string> CreateScreen::dialogueFiles()
+{
+    std::set<std::string> found;
+    if (!package_ || chapter_.empty())
+        return {};
+    yh::FileSystem files;
+    if (ContentPackage::mount(files, packagePath_, "package"))
+    {
+        for (const std::string& path : files.list(chapter_ + "/dialogue"))
+            if (path.ends_with(".json"))
+                found.insert(path);
+        // What chapter.json names, looked for in the chapter folder first and then at the root, as the game does.
+        auto named = [&](const nlohmann::json& entry, const char* key) {
+            if (!entry.is_object() || !entry.contains(key) || !entry[key].is_string())
+                return;
+            const std::string path = entry[key].get<std::string>();
+            if (path.empty() || yh::FileSystem::normalize(path) != path)
+                return;
+            const std::string local = chapter_ + "/" + path;
+            if (files.exists(local))
+                found.insert(local);
+            else if (files.exists(path))
+                found.insert(path);
+        };
+        if (const auto text = files.readText(chapter_ + "/chapter.json"))
+            if (const nlohmann::json j = nlohmann::json::parse(*text, nullptr, false); j.is_object())
+            {
+                // Without its own, a chapter uses the package's dialogue/surrender.json if there is one.
+                named(j.contains("surrender") ? j : nlohmann::json{{"surrender", "dialogue/surrender.json"}}, "surrender");
+                named(j.value("winCondition", nlohmann::json::object()), "dialogue");
+                for (const char* list : {"npcs", "triggers"})
+                    for (const nlohmann::json& entry : j.value(list, nlohmann::json::array()))
+                        named(entry, "dialogue");
+                for (const nlohmann::json& e : j.value("encounters", nlohmann::json::array()))
+                {
+                    named(e, "surrender");
+                    if (e.is_object())
+                        for (const nlohmann::json& p : e.value("creatures", nlohmann::json::array()))
+                            named(p, "surrender");
+                }
+            }
+        for (const std::string& path : package_->dialogues)
+            if (files.exists(path))
+                found.insert(path);
+    }
+    // Made here and not saved yet.
+    for (const auto& [path, tab] : dialogues_)
+        if (tab->saved.empty() && path.starts_with(chapter_ + "/"))
+            found.insert(path);
+    return {found.begin(), found.end()};
+}
+
+DialogueEditor::Catalog CreateScreen::dialogueCatalog(const std::string& path)
+{
+    DialogueEditor::Catalog catalog;
+    yh::FileSystem all;
+    all.mountFolder(YH_FRAMEWORK_ASSETS, "framework");
+    all.mountFolder(YH_GAME_ASSETS, "game");
+    ContentPackage::mount(all, packagePath_, "package");
+    const std::optional<std::string> text = all.readText(chapter_ + "/chapter.json");
+    nlohmann::json chapter = text ? nlohmann::json::parse(*text, nullptr, false) : nlohmann::json();
+    if (!chapter.is_object())
+        chapter = nlohmann::json::object();
+
+    // What a check can roll comes from the chapter's ruleset, picked the way the game picks it.
+    // One that can't be read leaves "modern"; the package's own checks report it.
+    const std::string defaultRuleset = all.exists("rulesets/yorehold/ruleset.json") ? "rulesets/yorehold" : "modern";
+    const std::string named = chapter.value("ruleset", defaultRuleset);
+    yh::Ruleset rules = named == "classic" ? yh::Ruleset::classic() : yh::Ruleset::modern();
+    if (named != "classic" && named != "modern")
+        for (const std::string& where : {chapter_ + "/" + named + "/ruleset.json", named + "/ruleset.json", chapter_ + "/" + named, named})
+            if (all.exists(where))
+            {
+                if (const auto ruleText = all.readText(where))
+                    if (std::optional<yh::Ruleset> read = yh::Ruleset::fromJson(*ruleText))
+                        rules = std::move(*read);
+                break;
+            }
+    for (const yh::SkillDefinition& skill : rules.skills)
+        catalog.skills.push_back(skill.id);
+    for (const yh::AbilityDefinition& ability : rules.abilities)
+        catalog.skills.push_back(ability.id);
+
+    // Who can join, and whether the one talking in this file is one of them.
+    for (const nlohmann::json& npc : chapter.value("npcs", nlohmann::json::array()))
+    {
+        if (!npc.is_object() || !npc.contains("id") || !npc["id"].is_string())
+            continue;
+        if (!npc.contains("companion") && !npc.contains("approvalStart") && !npc.contains("approvalJoinThreshold"))
+            continue;
+        catalog.companions.insert(npc["id"].get<std::string>());
+        const std::string file = npc.value("dialogue", std::string());
+        if (!file.empty() && (path == chapter_ + "/" + file || path == file))
+            catalog.companion = true;
+    }
+    return catalog;
+}
+
+bool CreateScreen::openDialogue(const std::string& path)
+{
+    if (path != dialogue_)
+    {
+        dialogue_ = path;
+        dialoguePanel_.reset();
+    }
+    return dialogueEditor() != nullptr;
+}
+
+std::string CreateScreen::newDialogue()
+{
+    if (!package_ || chapter_.empty())
+        return {};
+    yh::FileSystem files;
+    ContentPackage::mount(files, packagePath_, "package");
+    std::string id = "conversation";
+    for (int n = 2; files.exists(chapter_ + "/dialogue/" + id + ".json") || dialogues_.contains(chapter_ + "/dialogue/" + id + ".json"); n++)
+        id = "conversation-" + std::to_string(n);
+    const std::string path = chapter_ + "/dialogue/" + id + ".json";
+    auto tab = std::make_unique<DialogueTab>(history_);
+    tab->editor.create(id, dialogueCatalog(path));
+    tab->path = path;
+    dialogues_.emplace(path, std::move(tab));
+    dialogueErrors_.erase(path);
+    listedChapter_.clear();
+    openDialogue(path);
+    return path;
+}
+
+DialogueEditor* CreateScreen::dialogueEditor()
+{
+    if (!package_ || dialogue_.empty())
+        return nullptr;
+    if (const auto found = dialogues_.find(dialogue_); found != dialogues_.end())
+        return &found->second->editor;
+    if (dialogueErrors_.contains(dialogue_))
+        return nullptr;
+    yh::FileSystem files;
+    if (!ContentPackage::mount(files, packagePath_, "package"))
+    {
+        dialogueErrors_[dialogue_] = "Couldn't open " + packagePath_;
+        return nullptr;
+    }
+    const std::optional<std::string> text = files.readText(dialogue_);
+    auto tab = std::make_unique<DialogueTab>(history_);
+    std::string error;
+    if (!text || !tab->editor.load(*text, &error, dialogueCatalog(dialogue_)))
+    {
+        dialogueErrors_[dialogue_] = dialogue_ + ": " + (text ? error : std::string("missing"));
+        return nullptr;
+    }
+    tab->path = dialogue_;
+    // Compared in the editor's own form, so a hand-written file isn't rewritten until it is changed.
+    tab->saved = tab->editor.toJson();
+    return &dialogues_.emplace(dialogue_, std::move(tab)).first->second->editor;
+}
+
 void CreateScreen::undo()
 {
     const std::string label(history_.undoLabel());
@@ -322,9 +485,24 @@ bool CreateScreen::save()
         if (text != tab->saved)
             changed.push_back({tab->path, std::move(text), &tab->saved});
     }
+    for (auto& [path, tab] : dialogues_)
+    {
+        std::string text = tab->editor.toJson();
+        if (text == tab->saved)
+            continue;
+        for (const DialogueEditor::Problem& wrong : tab->editor.problems())
+            if (wrong.error)
+            {
+                status_ = leaf(path) + " not saved: " + wrong.text;
+                return false;
+            }
+        changed.push_back({tab->path, std::move(text), &tab->saved});
+    }
     int written = 0;
     for (File& file : changed)
     {
+        // A new conversation may be the first thing in its folder.
+        fs::create_directories((fs::path(packagePath_) / file.path).parent_path(), problem);
         if (!yh::writeFileAtomically((fs::path(packagePath_) / file.path).string(), file.text, false, &error))
         {
             status_ = file.path + " not saved: " + error;
@@ -386,6 +564,11 @@ void CreateScreen::validate()
     for (const auto& [chapter, tab] : encounters_)
         for (const EncountersEditor::Problem& problem : tab->editor.problems())
             validations_.push_back({tab->path, leaf(chapter) + ": " + problem.text, problem.error});
+    for (const auto& [path, why] : dialogueErrors_)
+        validations_.push_back({path, why, true});
+    for (const auto& [path, tab] : dialogues_)
+        for (const DialogueEditor::Problem& problem : tab->editor.problems())
+            validations_.push_back({path, leaf(path) + ": " + problem.text, problem.error});
 
     // If chapters exist and we can validate them, do so
     if (packagePath_.empty())
@@ -432,7 +615,7 @@ void CreateScreen::draw(yh::Renderer& renderer)
 
     ui_.begin(renderer, input_);
     // Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z) and Ctrl+S; a text box being typed in keeps its own.
-    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_))
+    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_) && !DialoguePanel::typing(ui_))
     {
         if (input_.keyPressed(SDLK_Z))
             input_.shiftDown() ? redo() : undo();
@@ -534,6 +717,12 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
         return;
     }
 
+    if (currentMode_ == Mode::Dialogue)
+    {
+        drawDialogue(renderer, area);
+        return;
+    }
+
     if (!ui_.theme.font)
         return;
 
@@ -546,7 +735,6 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     case Mode::Encounters:
         break;
     case Mode::Dialogue:
-        modeText = "Dialogue Editor (conversations, choices, triggers)";
         break;
     case Mode::Compendium:
         modeText = "Compendium Editor (classes, items, creatures, races)";
@@ -565,7 +753,57 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     const std::string subtitle = "Package: " + (package_->name.empty() ? "(unnamed)" : package_->name);
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 20}, subtitle, yh::Color{200, 200, 200, 255});
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 50}, modeText, yh::Color{150, 150, 150, 255});
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G4-G7", yh::Color{100, 100, 100, 255});
+    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G5-G7", yh::Color{100, 100, 100, 255});
+}
+
+void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)
+{
+    if (chapter_.empty())
+    {
+        ui_.label({area.x + 20, area.y + 20}, "This package has no chapter to write conversations for.", ui_.theme.textDim);
+        return;
+    }
+    if (listedChapter_ != chapter_)
+    {
+        listed_ = dialogueFiles();
+        listedChapter_ = chapter_;
+        if (std::find(listed_.begin(), listed_.end(), dialogue_) == listed_.end())
+            openDialogue(listed_.empty() ? std::string() : listed_.front());
+    }
+
+    // Which file: the arrows step through the chapter's, New starts another.
+    const float bar = 40;
+    renderer.fillRect({area.x, area.y, area.w, bar}, yh::Color{36, 37, 46, 255});
+    const yh::Rect row{area.x + 8, area.y + 5, std::min(area.w - 120, 560.0f), 30};
+    const bool back = ui_.button({row.x, row.y, 28, row.h}, "<", listed_.size() > 1);
+    const bool on = ui_.button({row.x + row.w - 28, row.y, 28, row.h}, ">", listed_.size() > 1);
+    if (back || on)
+    {
+        const auto at = std::find(listed_.begin(), listed_.end(), dialogue_);
+        const size_t index = at == listed_.end() ? 0 : static_cast<size_t>(at - listed_.begin());
+        openDialogue(listed_[(index + (back ? listed_.size() - 1 : 1)) % listed_.size()]);
+    }
+    const std::string shown = dialogue_.starts_with(chapter_ + "/") ? dialogue_.substr(chapter_.size() + 1) : dialogue_;
+    ui_.label({row.x + 38, row.y + 5}, dialogue_.empty() ? std::string("No conversations yet") : shown,
+        dialogue_.empty() ? ui_.theme.textDim : ui_.theme.text);
+    if (!listed_.empty())
+        ui_.label({row.x + row.w + 10, row.y + 5}, std::to_string(listed_.size()) + (listed_.size() == 1 ? " file" : " files"), ui_.theme.textDim);
+    if (ui_.button({area.x + area.w - 98, row.y, 90, row.h}, "New"))
+        newDialogue();
+
+    const yh::Rect body{area.x, area.y + bar, area.w, area.h - bar};
+    if (dialogue_.empty())
+    {
+        ui_.label({body.x + 20, body.y + 20}, "This chapter has no conversations. New starts one in its dialogue folder.", ui_.theme.textDim);
+        return;
+    }
+    if (DialogueEditor* editor = dialogueEditor())
+    {
+        dialoguePanel_.draw(*editor, ui_, input_, renderer, body);
+        return;
+    }
+    const auto why = dialogueErrors_.find(dialogue_);
+    ui_.label({body.x + 20, body.y + 20}, why != dialogueErrors_.end() ? why->second : std::string("This file can't be read."), ui_.theme.bad);
 }
 
 void CreateScreen::drawValidationList(yh::Renderer& renderer, const yh::Rect& area)
