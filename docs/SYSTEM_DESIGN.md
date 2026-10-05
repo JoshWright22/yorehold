@@ -76,12 +76,13 @@ tests/unit/    WorldFixture: load a chapter, send intents, step time, read state
 The Create screen lets authors design and build content packages (adventures, rulesets, item collections). It sits at `src/screens/CreateScreen.h/cpp` and includes:
 
 - **Package management**: Open an existing package folder or .yore file, or create a new one (a folder under `create/` in the state directory). The last opened package path is saved to `settings.lastCreatePackage` and offered on the Create menu.
-- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story. Map (G2), Encounters (G3), Dialogue (G4) and Compendium (G5) are built; the rest are placeholders until G6-G7.
+- **Mode tabs**: Map, Encounters, Dialogue, Compendium, Cutscene, Story. Map (G2), Encounters (G3), Dialogue (G4), Compendium (G5) and Cutscene (G6) are built; Story is a placeholder until G7.
 - **Shared undo/redo**: One `yh::History` for the whole package. Each mode's commands record on it, and Ctrl+Z/Ctrl+Y or the toolbar step through them whichever mode or chapter they were made in. Save (Ctrl+S) writes what changed and marks the history saved.
 - **Map mode** (`src/screens/MapEditor.h/cpp`): `MapEditor` is the model and its commands (paint, fill, layers, resize, lights, markers, kits), with no drawing, so tests and other layouts use it as it is. `MapEditorPanel` is the desktop layout over it. The map being edited is a `GameMap`, changed in place; the Create screen keeps one editor per opened chapter. Tile strokes record one cell at a time; everything else records what the layers, objects, lights and markers were before and after.
 - **Encounters mode** (`src/screens/EncountersEditor.h/cpp`): the same two parts. `EncountersEditor` holds a chapter's groups and the commands on them (place, move, remove, name, facing, AI, group id, line, flags, XP, loot) and writes them back into the `chapter.json` it read, leaving every other field as it was. `EncountersPanel` draws them over the chapter's map. It asks the chapter's `MapEditor` where someone can stand, so a wall painted in Map mode counts at once. Each command records the groups before and after.
 - **Dialogue mode** (`src/screens/DialogueEditor.h/cpp`): the same two parts again. `DialogueEditor` is one conversation file in the framework's dialogue format and the commands on it (nodes, start, speaker, line, replies, where they go, checks, needed and hidden-by flags, set, clear and `do` actions), writing back fields it has no tool for. `DialoguePanel` is the layout. The Create screen lists the chapter's conversation files and keeps one editor per file opened, on the shared history. Each command records the whole conversation before and after.
 - **Compendium mode** (`src/screens/CompendiumEditor.h/cpp`): `CompendiumEditor` holds every definition file of the package (root, chapters' own folders, ruleset folders) and the commands on them (set a field from typed text, add, copy). Its forms are data, the framework's `yh::FormSchema` read from `create/compendium.json`, and each file is also checked by the game's own reader for its kind. `CompendiumPanel` is the layout. One editor for the package, loaded the first time the tab is opened; each command records the entries before and after.
+- **Cutscene mode** (`src/screens/CutsceneEditor.h/cpp`): `CutsceneEditor` is one file in the framework's cutscene format and the commands on it (add, move, copy, remove and change steps), plus the timing and the frame at any moment worked out the way `yh::Cutscene` plays it, so the preview and the tests share it. `CutsceneHooks` is the part of a `chapter.json` that says when cutscenes play (triggers, `endings.cleared`, `onWipe`, `winCondition`); at save it is put on top of what Encounters mode writes for the same file. `CutscenePanel` is the layout. One editor per file opened and one hooks part per chapter, on the shared history; each command records the whole file or the hooks before and after.
 - **Validation list**: Real-time validation of the package manifest and file structure. Errors are highlighted; warnings are dimmed. Invalid packages cannot be playtested or exported.
 - **Playtest**: Loads the package and plays a chapter in-game to test rules, encounters, and dialogue (G1 is placeholder; actual playtest hooks come in later steps).
 - **Export**: Saves the package as a .yore file or folder for sharing. Only valid packages can be exported.
@@ -347,11 +348,13 @@ Next.js (App Router, TypeScript), talking only to the server API.
 Inside the client, one screen with modes that share one open package, one undo history
 (`yh::History`) and one Playtest button. Writers can move between modes at any time.
 
-- Done: the shell (G1), Map mode (G2), Encounters mode (G3), Dialogue mode (G4) and Compendium
-  mode (G5). Still to add in Map mode: importing a painted image, new tile types, and autotiled
-  walls. Still to add in Encounters mode: reinforcements. Still to add in Dialogue mode: a graph
-  view and voice lines (G8). Still to add in Compendium mode: renaming and deleting entries, and
-  forms for the nested parts (level tables, effects) in place of their JSON boxes.
+- Done: the shell (G1), Map mode (G2), Encounters mode (G3), Dialogue mode (G4), Compendium
+  mode (G5) and Cutscene mode (G6). Still to add in Map mode: importing a painted image, new tile
+  types, and autotiled walls. Still to add in Encounters mode: reinforcements. Still to add in
+  Dialogue mode: a graph view and voice lines (G8). Still to add in Compendium mode: renaming and
+  deleting entries, and forms for the nested parts (level tables, effects) in place of their JSON
+  boxes. Still to add in Cutscene mode: dragging steps on the timeline, renaming and deleting
+  files, and previewing from where the party stands.
 
 | Mode | Does |
 |---|---|
@@ -526,6 +529,8 @@ These were open; each is the provisional answer and is data or a small switch wh
 52. Dialogue mode (G4): nodes and replies are lists, not a graph, until Story mode (G7) brings a node graph. The files listed are the chapter's `dialogue/` folder, the ones its `chapter.json` names and the package's declared `dialogues`. New makes `dialogue/conversation.json` in the chapter and does not hook it to an NPC or trigger; that stays a `chapter.json` edit. A new reply says "..." and ends the conversation; a new node takes the last node's speaker. An action the game can't carry out (`approve` with no number, `recruit tam`) stops a save; an unknown action, `recruit` in a file no companion uses, an unreached node or a skill the ruleset lacks is only a warning.
 
 53. Compendium mode (G5): the forms are data in `create/compendium.json`, one per kind, with nested parts (level tables, effects, loot, tokens) edited as JSON text for now. The id is the file name and can't be renamed, and nothing is deleted from here. New entries go in the root folder of their kind, or the first ruleset folder for ruleset kinds; chapters' own files are listed and edited where they are. Wrong types, ranges, missing required fields and anything the game's reader refuses stop a save; a name the lists don't know is only a warning, since another package may carry it.
+
+54. Cutscene mode (G6): steps are a list with a timeline under the preview, not dragged on the timeline yet. The preview frames a 1280 x 720 screen and starts from the middle of the map at zoom 1, since in play it starts from the party. New makes `cutscenes/cutscene.json` in the chapter, and triggers it adds are called `cutscene-N`. The only event offered is `finished`, the one the game acts on; others are warnings. A trigger that also opens a conversation keeps it when its cutscene is removed. A missing file or a bad trigger id stops a save; an unknown ease or event, an empty caption or a camera off the map is only a warning.
 
 ### Structure choices made in this document
 

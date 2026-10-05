@@ -207,6 +207,20 @@ Add makes an entry from the form's defaults with the id typed above it (or `new-
 
 The validation list checks every entry. Errors stop a save: a field of the wrong type or out of range, a missing required field, an `id` that isn't the file name, and anything the game's reader refuses. A name the lists don't offer (an item another package carries, an AI written as an object) is only a warning. A file is only rewritten once it changed, and undo and redo are the same history as the other modes.
 
+### Making cutscenes in Create
+
+Create > Cutscene edits the chapter's cutscene files, in the framework's cutscene format (its steps are listed with `endings.cleared` below). The bar at the top steps through them: every `.json` in the chapter's `cutscenes/` folder, the files its `chapter.json` plays (`endings.cleared`, `onWipe`, triggers and `winCondition`) and the package's declared `cutscenes`. New starts `cutscenes/cutscene.json` in the chapter (bars in, an empty caption, bars out), written at the next save.
+
+The left column is the steps in order, each with the second it starts at; a step pulled in starts together with the one above it (the one above has "The next step waits for it" off). The buttons under it add a camera, caption, title, pause, fade, bars or event step after the picked one, and move, copy or remove it. Del removes the picked step too.
+
+The middle is a preview of what the players see at one moment: the chapter's map through the camera, with the bars, fade, captions and titles drawn the way the game draws them on a 1280 x 720 screen. It starts from the middle of the map at zoom 1, since in play it starts from wherever the party is. Whole map shows the full map with the camera's frame on it instead. Play (or Space) runs it, `|<` goes back to the start, and the timeline under it shows when each step runs: click a step to pick it, or click or drag on the bar to jump. With a camera step picked, a click on the preview aims it there.
+
+Under the timeline is when this file plays. Chapter cleared, Party wiped and Chapter won set `endings.cleared`, `onWipe.cutscene` and `winCondition.cutscene` to this file (Chapter won only once the chapter has a `winCondition`). Add trigger adds a trigger that plays it; pick one to change its id and its flags (empty plays it when the chapter starts). Remove trigger takes it away, or only its cutscene when it also opens a conversation. These are written into `chapter.json` along with whatever Encounters mode changed there, and the rest of the file is left as it was.
+
+The right column is the picked step: its seconds, whether the next step waits for it, and its own fields. Camera has where it looks in world units, the zoom (0 keeps it) and the ease. Caption and title have the line, and a button to turn one into the other. Fade has the colour as r, g, b and how solid (0 fades back in), with To black and Back in. Bars go in or out. An event has a name; the game knows `finished`.
+
+The validation list checks each opened file and the chapter's triggers. Errors stop a save: anything the game would refuse to load, a trigger id that isn't a-z, 0-9, - and _, and a cutscene the chapter names that isn't there. Warnings don't: no steps, a caption or title with no line or no time, an ease the game doesn't know, a camera aimed outside the map, an event the game does nothing with, and two triggers with one id. Fields this mode has no tool for are written back as they were. A file is only rewritten once something in it changed, and undo and redo are the same history as the other modes.
+
 ## Adventures
 
 `adventure.json` at the content root ties chapters together into a playable journey. It defines:

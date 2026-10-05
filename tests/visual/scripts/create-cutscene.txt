@@ -1,0 +1,9 @@
+10 move 573 20
+11 down left
+12 up left
+40 move 120 185
+41 down left
+42 up left
+60 key Space
+61 keyup Space
+70 move 600 700

@@ -2,6 +2,7 @@
 
 #include "content/ContentPackage.h"
 #include "screens/CompendiumEditor.h"
+#include "screens/CutsceneEditor.h"
 #include "screens/DialogueEditor.h"
 #include "screens/EncountersEditor.h"
 #include "screens/MapEditor.h"
@@ -71,11 +72,24 @@ public:
     // Where Add puts a new entry of each kind; a ruleset kind has none without a ruleset folder.
     const std::map<std::string, std::string>& compendiumFolders() const { return compendiumFolders_; }
 
+    // The cutscene files of the chapter: its cutscenes/ folder, those its chapter.json names and
+    // the package's declared ones, plus any made with newCutscene() and not saved yet.
+    std::vector<std::string> cutsceneFiles();
+    // The file Cutscene mode shows; empty until one is picked or there is none.
+    const std::string& cutscene() const { return cutscene_; }
+    bool openCutscene(const std::string& path);
+    // A new cutscene in the chapter's cutscenes/ folder, open and written at the next save.
+    std::string newCutscene();
+    // The open file, loaded the first time it is asked for. Null if it can't be read.
+    CutsceneEditor* cutsceneEditor();
+    // Where the chapter plays its cutscenes, from its chapter.json. Null if that can't be read.
+    CutsceneHooks* cutsceneHooks();
+
     // One history for the whole package: every mode's edits go on it.
     yh::History& history() { return history_; }
     void undo();
     void redo();
-    // Writes every changed map, chapter, conversation and definition back to its file. False (and `status()` says why) if
+    // Writes every changed map, chapter, conversation, cutscene and definition back to its file. False (and `status()` says why) if
     // the package is a .yore, which can't be written to, or a file would no longer load.
     bool save();
     const std::string& status() const { return status_; }
@@ -123,7 +137,17 @@ private:
         std::string saved; // the JSON as last read or written, in the editor's form; empty = not on disk yet
     };
 
+    // One cutscene file.
+    struct CutsceneTab
+    {
+        explicit CutsceneTab(yh::History& history) : editor(history) {}
+        CutsceneEditor editor;
+        std::string path;  // "chapters/keep/cutscenes/intro.json"
+        std::string saved; // the JSON as last read or written, in the editor's form; empty = not on disk yet
+    };
+
     void loadPackageFromFile(const std::string& path);
+    void drawCutscene(yh::Renderer& renderer, const yh::Rect& area);
     DialogueEditor::Catalog dialogueCatalog(const std::string& path);
     void drawDialogue(yh::Renderer& renderer, const yh::Rect& area);
     void validate();
@@ -157,7 +181,15 @@ private:
     std::string compendiumError_;
     std::vector<std::string> compendiumSkipped_; // files that couldn't be opened, and why
     CompendiumPanel compendiumPanel_;
-    std::string listedChapter_;           // the chapter `listed_` is for; empty = list again
+    std::map<std::string, std::unique_ptr<CutsceneTab>> cutscenes_; // by path, from any chapter
+    std::map<std::string, std::string> cutsceneErrors_;
+    std::string cutscene_;
+    CutscenePanel cutscenePanel_;
+    std::map<std::string, std::unique_ptr<CutsceneHooks>> hooks_; // by chapter folder
+    std::map<std::string, std::string> hookErrors_;
+    std::string listedCutsceneChapter_;
+    std::vector<std::string> listedCutscenes_;
+    std::string listedChapter_;          // the chapter `listed_` is for; empty = list again
     std::vector<std::string> listed_;     // its dialogueFiles(), so the folder isn't read every frame
     Mode currentMode_ = Mode::None;
     std::string status_; // the last save or load, shown in the toolbar

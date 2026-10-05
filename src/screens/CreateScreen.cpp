@@ -57,6 +57,14 @@ void CreateScreen::openPackage(const std::string& path)
 
     // Undo steps point into the editors, so the history is emptied before they go.
     history_.clear();
+    cutscenes_.clear();
+    cutsceneErrors_.clear();
+    cutscene_.clear();
+    cutscenePanel_.reset();
+    hooks_.clear();
+    hookErrors_.clear();
+    listedCutsceneChapter_.clear();
+    listedCutscenes_.clear();
     compendium_.reset();
     compendiumFolders_.clear();
     compendiumError_.clear();
@@ -428,6 +436,118 @@ DialogueEditor* CreateScreen::dialogueEditor()
     return &dialogues_.emplace(dialogue_, std::move(tab)).first->second->editor;
 }
 
+CutsceneHooks* CreateScreen::cutsceneHooks()
+{
+    if (!package_ || chapter_.empty())
+        return nullptr;
+    if (const auto found = hooks_.find(chapter_); found != hooks_.end())
+        return found->second.get();
+    if (hookErrors_.contains(chapter_))
+        return nullptr;
+    // Mounted once: the hooks ask what exists every frame.
+    auto files = std::make_shared<yh::FileSystem>();
+    if (!ContentPackage::mount(*files, packagePath_, "package"))
+    {
+        hookErrors_[chapter_] = "Couldn't open " + packagePath_;
+        return nullptr;
+    }
+    const std::string path = chapter_ + "/chapter.json";
+    const std::optional<std::string> text = files->readText(path);
+    auto hooks = std::make_unique<CutsceneHooks>(history_);
+    std::string error;
+    auto exists = [files, this](const std::string& p) { return files->exists(p) || cutscenes_.contains(p); };
+    if (!text || !hooks->load(*text, chapter_, exists, &error))
+    {
+        hookErrors_[chapter_] = path + ": " + (text ? error : std::string("missing"));
+        return nullptr;
+    }
+    return hooks_.emplace(chapter_, std::move(hooks)).first->second.get();
+}
+
+std::vector<std::string> CreateScreen::cutsceneFiles()
+{
+    std::set<std::string> found;
+    if (!package_ || chapter_.empty())
+        return {};
+    yh::FileSystem files;
+    if (ContentPackage::mount(files, packagePath_, "package"))
+    {
+        for (const std::string& path : files.list(chapter_ + "/cutscenes"))
+            if (path.ends_with(".json"))
+                found.insert(path);
+        if (CutsceneHooks* hooks = cutsceneHooks())
+            for (const std::string& path : hooks->named())
+                if (files.exists(path))
+                    found.insert(path);
+        for (const std::string& path : package_->cutscenes)
+            if (files.exists(path))
+                found.insert(path);
+    }
+    // Made here and not saved yet.
+    for (const auto& [path, tab] : cutscenes_)
+        if (tab->saved.empty() && path.starts_with(chapter_ + "/"))
+            found.insert(path);
+    return {found.begin(), found.end()};
+}
+
+bool CreateScreen::openCutscene(const std::string& path)
+{
+    if (path != cutscene_)
+    {
+        cutscene_ = path;
+        cutscenePanel_.reset();
+    }
+    return cutsceneEditor() != nullptr;
+}
+
+std::string CreateScreen::newCutscene()
+{
+    if (!package_ || chapter_.empty())
+        return {};
+    yh::FileSystem files;
+    ContentPackage::mount(files, packagePath_, "package");
+    std::string id = "cutscene";
+    for (int n = 2; files.exists(chapter_ + "/cutscenes/" + id + ".json") || cutscenes_.contains(chapter_ + "/cutscenes/" + id + ".json"); n++)
+        id = "cutscene-" + std::to_string(n);
+    const std::string path = chapter_ + "/cutscenes/" + id + ".json";
+    auto tab = std::make_unique<CutsceneTab>(history_);
+    tab->editor.create();
+    tab->path = path;
+    cutscenes_.emplace(path, std::move(tab));
+    cutsceneErrors_.erase(path);
+    listedCutsceneChapter_.clear();
+    openCutscene(path);
+    return path;
+}
+
+CutsceneEditor* CreateScreen::cutsceneEditor()
+{
+    if (!package_ || cutscene_.empty())
+        return nullptr;
+    if (const auto found = cutscenes_.find(cutscene_); found != cutscenes_.end())
+        return &found->second->editor;
+    if (cutsceneErrors_.contains(cutscene_))
+        return nullptr;
+    yh::FileSystem files;
+    if (!ContentPackage::mount(files, packagePath_, "package"))
+    {
+        cutsceneErrors_[cutscene_] = "Couldn't open " + packagePath_;
+        return nullptr;
+    }
+    const std::optional<std::string> text = files.readText(cutscene_);
+    auto tab = std::make_unique<CutsceneTab>(history_);
+    std::string error;
+    if (!text || !tab->editor.load(*text, &error))
+    {
+        cutsceneErrors_[cutscene_] = cutscene_ + ": " + (text ? error : std::string("missing"));
+        return nullptr;
+    }
+    tab->path = cutscene_;
+    // Compared in the editor's own form, so a hand-written file isn't rewritten until it is changed.
+    tab->saved = tab->editor.toJson();
+    return &cutscenes_.emplace(cutscene_, std::move(tab)).first->second->editor;
+}
+
 CompendiumEditor* CreateScreen::compendiumEditor()
 {
     if (!package_)
@@ -567,7 +687,7 @@ bool CreateScreen::save()
     struct File
     {
         std::string path, text;
-        std::string* saved;
+        std::function<void()> done; // marks it saved, once written
     };
     std::vector<File> changed;
     std::string error;
@@ -581,24 +701,78 @@ bool CreateScreen::save()
             status_ = tab->path + " not saved: " + error;
             return false;
         }
-        changed.push_back({tab->path, std::move(text), &tab->saved});
+        changed.push_back({tab->path, text, [t = tab.get(), text] { t->saved = text; }});
     }
-    for (auto& [chapter, tab] : encounters_)
+    // A chapter.json is Encounters mode's groups with Cutscene mode's triggers and endings on top.
+    std::set<std::string> chapters;
+    for (const auto& [chapter, tab] : encounters_)
+        chapters.insert(chapter);
+    for (const auto& [chapter, hooks] : hooks_)
+        chapters.insert(chapter);
+    for (const std::string& chapter : chapters)
     {
-        std::string text = tab->editor.toJson();
-        const auto map = maps_.find(chapter);
-        const bool mapChanged = map != maps_.end() && map->second->editor.toJson() != map->second->saved;
-        if (text == tab->saved && !mapChanged)
+        const auto found = encounters_.find(chapter);
+        EncountersTab* tab = found == encounters_.end() ? nullptr : found->second.get();
+        const auto hooked = hooks_.find(chapter);
+        CutsceneHooks* hooks = hooked == hooks_.end() ? nullptr : hooked->second.get();
+        const std::string ownText = tab ? tab->editor.toJson() : std::string();
+        const bool groupsChanged = tab && ownText != tab->saved;
+        if (tab)
+        {
+            const auto map = maps_.find(chapter);
+            const bool mapChanged = map != maps_.end() && map->second->editor.toJson() != map->second->saved;
+            // A wall painted over a creature counts too, though only the map changed.
+            if (groupsChanged || mapChanged)
+                for (const EncountersEditor::Problem& wrong : tab->editor.problems())
+                    if (wrong.error)
+                    {
+                        status_ = leaf(chapter) + " not saved: " + wrong.text;
+                        return false;
+                    }
+        }
+        const bool hooksChanged = hooks && hooks->changed();
+        if (!groupsChanged && !hooksChanged)
             continue;
-        // A wall painted over a creature counts too, though only the map changed.
-        for (const EncountersEditor::Problem& wrong : tab->editor.problems())
-            if (wrong.error)
+        if (hooks)
+            for (const CutsceneHooks::Problem& wrong : hooks->problems())
+                if (wrong.error)
+                {
+                    status_ = leaf(chapter) + " not saved: " + wrong.text;
+                    return false;
+                }
+        std::string text = ownText;
+        if (!tab)
+        {
+            yh::FileSystem files;
+            const std::optional<std::string> onDisk = ContentPackage::mount(files, packagePath_, "package") ? files.readText(chapter + "/chapter.json") : std::nullopt;
+            if (!onDisk)
             {
-                status_ = leaf(chapter) + " not saved: " + wrong.text;
+                status_ = chapter + "/chapter.json can't be read";
                 return false;
             }
-        if (text != tab->saved)
-            changed.push_back({tab->path, std::move(text), &tab->saved});
+            text = *onDisk;
+        }
+        if (hooks)
+            text = hooks->applyTo(text);
+        changed.push_back({chapter + "/chapter.json", std::move(text), [tab, hooks, ownText] {
+            if (tab)
+                tab->saved = ownText;
+            if (hooks)
+                hooks->markSaved();
+        }});
+    }
+    for (auto& [path, tab] : cutscenes_)
+    {
+        std::string text = tab->editor.toJson();
+        if (text == tab->saved)
+            continue;
+        for (const CutsceneEditor::Problem& wrong : tab->editor.problems())
+            if (wrong.error)
+            {
+                status_ = leaf(path) + " not saved: " + wrong.text;
+                return false;
+            }
+        changed.push_back({tab->path, text, [t = tab.get(), text] { t->saved = text; }});
     }
     for (auto& [path, tab] : dialogues_)
     {
@@ -611,7 +785,7 @@ bool CreateScreen::save()
                 status_ = leaf(path) + " not saved: " + wrong.text;
                 return false;
             }
-        changed.push_back({tab->path, std::move(text), &tab->saved});
+        changed.push_back({tab->path, text, [t = tab.get(), text] { t->saved = text; }});
     }
     std::vector<size_t> definitions;
     if (compendium_)
@@ -635,7 +809,7 @@ bool CreateScreen::save()
             status_ = file.path + " not saved: " + error;
             return false;
         }
-        *file.saved = std::move(file.text);
+        file.done();
         written++;
     }
     for (const size_t entry : definitions)
@@ -708,6 +882,16 @@ void CreateScreen::validate()
     for (const auto& [path, tab] : dialogues_)
         for (const DialogueEditor::Problem& problem : tab->editor.problems())
             validations_.push_back({path, leaf(path) + ": " + problem.text, problem.error});
+    for (const auto& [path, why] : cutsceneErrors_)
+        validations_.push_back({path, why, true});
+    for (const auto& [path, tab] : cutscenes_)
+        for (const CutsceneEditor::Problem& problem : tab->editor.problems())
+            validations_.push_back({path, leaf(path) + ": " + problem.text, problem.error});
+    for (const auto& [chapter, why] : hookErrors_)
+        validations_.push_back({chapter, why, true});
+    for (const auto& [chapter, hooks] : hooks_)
+        for (const CutsceneHooks::Problem& problem : hooks->problems())
+            validations_.push_back({chapter + "/chapter.json", leaf(chapter) + ": " + problem.text, problem.error});
     if (!compendiumError_.empty())
         validations_.push_back({"create/compendium.json", compendiumError_, true});
     for (const std::string& why : compendiumSkipped_)
@@ -752,6 +936,9 @@ bool CreateScreen::update(double deltaSeconds)
         autoValidateTimer_ = 0;
         validate();
     }
+    if (currentMode_ == Mode::Cutscene)
+        if (const auto found = cutscenes_.find(cutscene_); found != cutscenes_.end())
+            cutscenePanel_.update(found->second->editor, deltaSeconds);
     return true;
 }
 
@@ -762,7 +949,8 @@ void CreateScreen::draw(yh::Renderer& renderer)
 
     ui_.begin(renderer, input_);
     // Ctrl+Z, Ctrl+Y (or Ctrl+Shift+Z) and Ctrl+S; a text box being typed in keeps its own.
-    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_) && !DialoguePanel::typing(ui_) && !compendiumPanel_.typing(ui_))
+    if (input_.shortcutDown() && !ui_.editing("map-marker") && !EncountersPanel::typing(ui_) && !DialoguePanel::typing(ui_) && !compendiumPanel_.typing(ui_)
+        && !CutscenePanel::typing(ui_))
     {
         if (input_.keyPressed(SDLK_Z))
             input_.shiftDown() ? redo() : undo();
@@ -879,6 +1067,12 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
         return;
     }
 
+    if (currentMode_ == Mode::Cutscene)
+    {
+        drawCutscene(renderer, area);
+        return;
+    }
+
     if (!ui_.theme.font)
         return;
 
@@ -895,7 +1089,6 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     case Mode::Compendium:
         break;
     case Mode::Cutscene:
-        modeText = "Cutscene Editor (animations, camera, effects)";
         break;
     case Mode::Story:
         modeText = "Story Editor (chapters, transitions, flags, quests)";
@@ -908,7 +1101,7 @@ void CreateScreen::drawContent(yh::Renderer& renderer, const yh::Rect& area)
     const std::string subtitle = "Package: " + (package_->name.empty() ? "(unnamed)" : package_->name);
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 20}, subtitle, yh::Color{200, 200, 200, 255});
     ui_.theme.font->draw(renderer, {area.x + 20, area.y + 50}, modeText, yh::Color{150, 150, 150, 255});
-    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editors coming in G6-G7", yh::Color{100, 100, 100, 255});
+    ui_.theme.font->draw(renderer, {area.x + 20, area.y + 80}, "Mode editor coming in G7", yh::Color{100, 100, 100, 255});
 }
 
 void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)
@@ -959,6 +1152,58 @@ void CreateScreen::drawDialogue(yh::Renderer& renderer, const yh::Rect& area)
     }
     const auto why = dialogueErrors_.find(dialogue_);
     ui_.label({body.x + 20, body.y + 20}, why != dialogueErrors_.end() ? why->second : std::string("This file can't be read."), ui_.theme.bad);
+}
+
+void CreateScreen::drawCutscene(yh::Renderer& renderer, const yh::Rect& area)
+{
+    if (chapter_.empty())
+    {
+        ui_.label({area.x + 20, area.y + 20}, "This package has no chapter to make cutscenes for.", ui_.theme.textDim);
+        return;
+    }
+    if (listedCutsceneChapter_ != chapter_)
+    {
+        listedCutscenes_ = cutsceneFiles();
+        listedCutsceneChapter_ = chapter_;
+        if (std::find(listedCutscenes_.begin(), listedCutscenes_.end(), cutscene_) == listedCutscenes_.end())
+            openCutscene(listedCutscenes_.empty() ? std::string() : listedCutscenes_.front());
+    }
+
+    // Which file: the arrows step through the chapter's, New starts another.
+    const float bar = 40;
+    renderer.fillRect({area.x, area.y, area.w, bar}, yh::Color{36, 37, 46, 255});
+    const yh::Rect row{area.x + 8, area.y + 5, std::min(area.w - 120, 560.0f), 30};
+    const bool back = ui_.button({row.x, row.y, 28, row.h}, "<", listedCutscenes_.size() > 1);
+    const bool on = ui_.button({row.x + row.w - 28, row.y, 28, row.h}, ">", listedCutscenes_.size() > 1);
+    if (back || on)
+    {
+        const auto at = std::find(listedCutscenes_.begin(), listedCutscenes_.end(), cutscene_);
+        const size_t index = at == listedCutscenes_.end() ? 0 : static_cast<size_t>(at - listedCutscenes_.begin());
+        openCutscene(listedCutscenes_[(index + (back ? listedCutscenes_.size() - 1 : 1)) % listedCutscenes_.size()]);
+    }
+    const std::string shown = cutscene_.starts_with(chapter_ + "/") ? cutscene_.substr(chapter_.size() + 1) : cutscene_;
+    ui_.label({row.x + 38, row.y + 5}, cutscene_.empty() ? std::string("No cutscenes yet") : shown, cutscene_.empty() ? ui_.theme.textDim : ui_.theme.text);
+    if (!listedCutscenes_.empty())
+        ui_.label({row.x + row.w + 10, row.y + 5}, std::to_string(listedCutscenes_.size()) + (listedCutscenes_.size() == 1 ? " file" : " files"), ui_.theme.textDim);
+    if (ui_.button({area.x + area.w - 98, row.y, 90, row.h}, "New"))
+        newCutscene();
+
+    const yh::Rect body{area.x, area.y + bar, area.w, area.h - bar};
+    if (cutscene_.empty())
+    {
+        ui_.label({body.x + 20, body.y + 20}, "This chapter has no cutscenes. New starts one in its cutscenes folder.", ui_.theme.textDim);
+        return;
+    }
+    if (CutsceneEditor* editor = cutsceneEditor())
+    {
+        // The map as it is being drawn, under the preview and for the camera warnings.
+        MapTab* map = mapTab();
+        editor->setBounds(map ? std::optional<yh::Rect>(map->editor.map().map().worldBounds()) : std::nullopt);
+        cutscenePanel_.draw(*editor, cutsceneHooks(), cutscene_, map ? &map->editor.map() : nullptr, ui_, input_, renderer, body);
+        return;
+    }
+    const auto why = cutsceneErrors_.find(cutscene_);
+    ui_.label({body.x + 20, body.y + 20}, why != cutsceneErrors_.end() ? why->second : std::string("This file can't be read."), ui_.theme.bad);
 }
 
 void CreateScreen::drawValidationList(yh::Renderer& renderer, const yh::Rect& area)
