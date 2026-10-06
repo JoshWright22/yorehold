@@ -303,7 +303,7 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -400.0
+offset_left = -500.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = 46.0
@@ -331,7 +331,18 @@ toggle_mode = true
 theme_type_variation = &"PickButton"
 text = "Gear (I)"
 
+[node name="Spells" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Spells (K)"
+
 [node name="Gear" parent="." instance=ExtResource("11")]
+visible = false
+layout_mode = 1
+
+[node name="Spells" parent="." instance=ExtResource("11")]
 visible = false
 layout_mode = 1
 

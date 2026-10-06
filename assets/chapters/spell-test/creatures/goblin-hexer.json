@@ -1,0 +1,18 @@
+{
+  "id": "goblin-hexer",
+  "name": "Goblin hexer",
+  "description": "A goblin with a bag of bones and a few sparks.",
+  "hp": 9,
+  "armorClass": 12,
+  "speed": 30,
+  "dcAbility": "int",
+  "proficiencyRanks": { "dc": "trained" },
+  "darkvision": 60,
+  "spells": ["spark", "chill-bite"],
+  "loot": { "coins": "3d6" },
+  "token": {
+    "color": [150, 120, 60],
+    "size": 0.36
+  },
+  "ai": "cunning"
+}

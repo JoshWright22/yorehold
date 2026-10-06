@@ -150,7 +150,7 @@ public sealed class BookPage
                 EffectKind.Damage => $"{(step.Type.Length > 0 ? Capital(step.Type) + " damage" : "Damage")} {Dice(step.Amount)}{when}{onSave}",
                 EffectKind.Heal => $"Heals {Dice(step.Amount)}{when}",
                 EffectKind.TempHp => $"{Dice(step.Amount)} temporary HP{when}",
-                EffectKind.Condition => step.Remove ? $"Ends {Words(step.Id)}{when}" : $"{Capital(Words(step.Id))}{(step.Duration > 0 ? $" for {step.Duration} rounds" : "")}{when}",
+                EffectKind.Condition => step.Remove ? $"Ends {Words(step.Id)}{when}" : $"{Capital(Words(step.Id))}{(step.Duration == 1 ? " for 1 round" : step.Duration > 0 ? $" for {step.Duration} rounds" : "")}{when}",
                 EffectKind.Surface => $"Leaves {Words(step.Id)}{(step.Size > 0 ? $" ({step.Size:0.#} squares)" : "")}",
                 EffectKind.Light => "Gives light",
                 EffectKind.Move => $"Moves the target{(step.Size > 0 ? $" {step.Size:0.#} squares" : "")}",

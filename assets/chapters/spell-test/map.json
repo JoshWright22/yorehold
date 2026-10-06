@@ -1,0 +1,39 @@
+{
+  "name": "Spell Test",
+  "lighting": {
+    "mode": "mood",
+    "ambient": "bright"
+  },
+  "tiles": {
+    "floor": { "art": "dirt" },
+    "wall": { "art": "wall", "walkable": false, "blocksSight": true }
+  },
+  "legend": { ".": "floor", "#": "wall" },
+  "layers": [
+    {
+      "name": "ground",
+      "rows": [
+        "####################",
+        "#..................#",
+        "#........#.........#",
+        "#........#.........#",
+        "#........#.........#",
+        "#........#.........#",
+        "#........#.........#",
+        "####################"
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "kit": "dart-trap",
+      "at": [9, 1],
+      "name": "a flame vent",
+      "trap": {
+        "detectDc": 30,
+        "disarmDc": 12,
+        "effect": { "effects": [{ "do": "surface", "id": "fire", "size": 1, "duration": 3 }] }
+      }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ namespace Yorehold;
 /// The player's side of a fight: which action is picked, what the pointer is over, and turning
 /// hotbar presses, keys and taps on the map into World calls. A tap with nothing picked moves, or
 /// strikes an enemy (walking up first). With an action picked a tap on a creature uses it there,
-/// and a right click or Escape puts it away. The number keys pick hotbar slots, Space ends the turn.
+/// one aimed at a square goes where the tap is, and a right click or Escape puts it away. The number keys pick hotbar slots, Space ends the turn.
 /// On a touch screen the first tap on a square shows what it would do and a second one does it,
 /// since a finger has no hover. Every rule is the World's; a refusal floats up where the tap was.
 /// </summary>
@@ -152,6 +152,23 @@ public partial class FightControl : Node
         Aim.LabelAt = _touch ? _camera.WorldToScreen(w.Grid.Center(cell).ToGodot()) : _pointer;
         int? target = CreatureAt(w, cell);
 
+        if (action != null && action.Target == ActionTarget.Point)
+        {
+            // the area follows the pointer, with a ring on everyone it would land on
+            if (w.ValidAim(me, action, cell, out string why))
+            {
+                Aim.Hit.AddRange(w.CreaturesIn(me, action, cell));
+                float feet = w.Grid.Distance(w.CellOf(me), cell) * w.Rules.FeetPerSquare;
+                Aim.Label = $"{action.Name}: {(int)MathF.Round(feet)} ft, {Aim.Hit.Count} in it";
+            }
+            else
+            {
+                Aim.AimBad = true;
+                Aim.Label = why.Length > 0 ? why.TrimEnd('.') : "Can't go there";
+                Aim.LabelBad = true;
+            }
+            return;
+        }
         if (action != null)
         {
             if (action.Target != ActionTarget.Creature || target is not int aimed || w.OrderIndex(aimed) == null)
@@ -218,7 +235,8 @@ public partial class FightControl : Node
         if (Aim.Action.Length > 0 && w.FindAction(Aim.Action) is ActionDefinition action)
         {
             // an enemy out of range is walked up to; everything else is used from here or refused
-            bool done = target is int aimed
+            bool done = action.Target == ActionTarget.Point ? w.Use(action.Id, null, cell)
+                : target is int aimed
                 ? action.Side == ActionSide.Ally || action.Target != ActionTarget.Creature ? w.Use(action.Id, aimed) : w.Attack(aimed, action.Id)
                 : w.Use(action.Id);
             if (done)

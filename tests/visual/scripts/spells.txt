@@ -1,0 +1,50 @@
+# spell test chapter, before any fight: the spell panel, preparing a spell and a cast between fights
+# run with -Chapter chapters/spell-test
+20 key K
+40 shot .dev/p9-spells.png
+# Wynn swaps Mire for Glass skin
+50 button Mire
+52 down left
+53 up left
+60 button Unprepare
+62 down left
+63 up left
+70 button Glass_skin
+72 down left
+73 up left
+80 button Prepare
+82 down left
+83 up left
+95 shot .dev/p9-spells-prepared.png
+# the cantrips tab, narrowed to what can be cast now
+100 button Cantrips
+102 down left
+103 up left
+110 button Castable
+112 down left
+113 up left
+120 shot .dev/p9-spells-cantrips.png
+# Bo puts his shield away in Gear, then casts Mend on Ana from his list
+130 button Bo
+132 down left
+133 up left
+135 key K
+140 key I
+150 button Shield
+152 down left
+153 up left
+160 button Put_away
+162 down left
+163 up left
+170 key K
+180 button All
+182 down left
+183 up left
+190 button Mend
+192 down left
+193 up left
+200 shot .dev/p9-spells-mend.png
+210 button Cast_on_Ana
+212 down left
+213 up left
+230 shot .dev/p9-spells-cast.png

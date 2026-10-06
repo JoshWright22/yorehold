@@ -113,8 +113,15 @@ builds, passes `check.ps1` and is committed.
   - Default: one gear panel (I) for everything: the hero's pack, and a pile or shop beside them as other sources in its head. Clicking a chest, a sack or a merchant walks the leader beside it and opens the panel there; a locked chest is tried first.
   - Default: a shop puts what it buys back as a new stock line, as in the C++ client. What a hero takes stacks with the same unworn thing.
   - Default: the dead leave a sack in the corner of their square, since their token lies over the middle.
-- [ ] **P9. Magic.** Spell files and casting, slots, prepared and spontaneous casters, focus
+- [x] **P9. Magic.** Spell files and casting, slots, prepared and spontaneous casters, focus
   points, starter lists, surfaces; the spell panel; AI uses abilities.
+  - Default: a spell is an action: it joins the hotbar after the ruleset's general ones. One aimed at a square is aimed on the map with the squares the rules would cover, orange where it can go and red where it can't, and a ring on everyone it would land on.
+  - Default: the spell panel (K) lists the hero's whole list, prepared or not, with tabs by level and Focus and chips for Castable, Concentration, Area and Helps. Between fights it casts helping spells with a button per party member; in a fight Use now picks the spell on the hotbar.
+  - Default: a surface's size is a radius in squares around its cell and a round between fights is six seconds. Starting a turn in one deals its damage; slowing and slipping aren't read yet. Surfaces are tinted squares under the tokens, fire in red since amber is the aimed area.
+  - Default: creatures may list `spells`. The AI casts the one worth most when it beats a strike (worth is about HP per action, a slot costs 1.5 a level so they're kept), walks only as far as it must to get a foe in range, and looks again after any walk. The C++ AI never cast spells.
+  - Default: `chapters/spell-test` (not in the adventure) has two casters, a fighter, two goblins, a goblin hexer and a flame vent that lays fire, for `spells.txt` and `spell-fight.txt` (`-Chapter chapters/spell-test`).
+  - Default: rests that give slots back and open preparing again come with camp (P10), and so does saving concentration, slots and surfaces.
+  - Not ported: the C++ SurfacesTest's save check (P10). Its other checks are in `WorldSpellTests.Surfaces` in this port's terms.
 - [ ] **P10. Adventure.** `adventure.json`, chapter transitions, camp and long rests, companions
   and approval, dialogue and its panel, journal, cutscenes, saves (seeded, deterministic).
 - [ ] **P11. Menus and settings.** Title, load, settings, key bindings, credits with the Godot

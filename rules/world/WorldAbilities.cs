@@ -59,6 +59,62 @@ public sealed partial class World
         return best;
     }
 
+    /// <summary>
+    /// A caster with nobody in reach of its spells: the nearest square it can walk to this turn
+    /// with a foe in range and in sight of a spell worth more there than walking up and swinging.
+    /// Null when one is in range already, or no spell is worth the walk.
+    /// </summary>
+    public Cell? ApproachToCast(int me)
+    {
+        if (PickAbility(me) != null)
+        {
+            return null;
+        }
+        CharacterSheet sheet = Creatures[me].Sheet;
+        float swing = Math.Max(1, Average(sheet.DamageDice(Rules)));
+        var aimed = new List<(ActionDefinition Action, int Foe)>();
+        foreach (ActionDefinition action in ActionsOf(me))
+        {
+            if (SpellOf(action) is not SpellDefinition spell || action.Target == ActionTarget.Self || action.Side == ActionSide.Ally
+                || action.Range <= 1 || !CanUse(me, action, out _))
+            {
+                continue;
+            }
+            foreach (int foe in Foes(me))
+            {
+                float worth = WorthOn(me, action, foe) - (spell.Spends.Count > 0 ? 1 : spell.Level * 1.5f);
+                if (worth > 0.5f && worth > HitChance(me, foe) * swing)
+                {
+                    aimed.Add((action, foe));
+                }
+            }
+        }
+        if (aimed.Count == 0)
+        {
+            return null;
+        }
+        Cell? best = null;
+        float bestCost = float.MaxValue;
+        foreach ((Cell cell, float cost) in ReachableCells())
+        {
+            if (cost >= bestCost)
+            {
+                continue;
+            }
+            foreach ((ActionDefinition action, int foe) in aimed)
+            {
+                Cell there = CellOf(foe);
+                if (Grid.Distance(cell, there) <= action.Range + 0.01f && Sight.LineOfSight(Grid.Center(cell), Grid.Center(there), Map.Walls))
+                {
+                    best = cell;
+                    bestCost = cost;
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
     // Who and where an action could be aimed at from here.
     private IEnumerable<(int? Target, Cell? At)> Aims(int me, ActionDefinition action)
     {

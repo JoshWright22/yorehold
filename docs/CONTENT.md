@@ -28,6 +28,8 @@ What the port reads so far, and where it differs:
 - A creature file may list `"spells": ["spark"]`, ids from the ruleset's `spells/`. It casts them with
   the slots and `focus` its `resources` give it, and the game plays them when one is worth more than a
   strike. An unknown id fails the load.
+- `chapters/spell-test` is a test chapter outside the adventure, for the spell screenshot runs. Its own
+  `creatures/goblin-hexer.json` casts Spark and Chill bite.
 - A merchant is read from `stock` only. The saved `inventory` form comes with saves.
 - A map's `tileMap` may not carry a `delta`: saved changes come with saves.
 - The save signature of a chapter is not worked out yet; it comes with saves.

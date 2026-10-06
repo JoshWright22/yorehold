@@ -690,6 +690,14 @@ public sealed partial class World
                     _enemyTimer = 0;
                     return;
                 }
+                // Nobody in reach of a spell that beats its swing: it walks only as far as it must to cast.
+                if (!Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight" && ApproachToCast(me) is Cell spot && spot != _standing && MoveTo(spot))
+                {
+                    _enemyTimer = 0;
+                    _enemyTarget = null;
+                    _enemyStep = EnemyStep.Walk;
+                    return;
+                }
                 var who = new List<int>();
                 TacticalView view = TacticalViewOf(me, who);
                 TacticalChoice choice = Tactics.Decide(profile, view, Grid, random);
@@ -729,6 +737,13 @@ public sealed partial class World
                     return;
                 }
                 _enemyTimer = 0;
+                // having walked, a spell may beat the swing it came for; then it thinks again
+                if (!Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight" && PickAbility(me) is AbilityChoice cast
+                    && cast.Value >= StrikeWorth(me) && Use(cast.Action.Id, cast.Target, cast.At))
+                {
+                    _enemyStep = EnemyStep.Think;
+                    return;
+                }
                 _enemyStep = _enemyTarget is int aimed && Adjacent(me, aimed) && CanUse(me, StrikeAction) ? EnemyStep.Strike : EnemyStep.Wait;
                 return;
             case EnemyStep.Strike:

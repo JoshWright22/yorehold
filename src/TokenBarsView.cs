@@ -71,7 +71,7 @@ public partial class TokenBarsView : Node2D
             {
                 DrawArc(at, r * 1.25f + pulse, 0, Mathf.Tau, 48, new Color(ring.R, ring.G, ring.B, 0.8f), 2.5f, true);
             }
-            if (_aim.Target == i)
+            if (_aim.Target == i || _aim.Hit.Contains(i))
             {
                 DrawArc(at, r * 1.25f, 0, Mathf.Tau, 48, ring, 5, true);
             }

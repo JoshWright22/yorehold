@@ -1,0 +1,24 @@
+# spell test chapter: walk through the gap at the top and fight the goblins with spells
+# run with -Chapter chapters/spell-test
+10 cell 10 1
+11 down left
+12 up left
+# Wynn goes first: Mire from the hotbar, aimed on Gik, with Nok in the burst too
+200 move 1080 660
+201 down left
+202 up left
+210 creature Gik
+225 shot .dev/p9-fight-aim.png
+# out of range: the area turns red
+230 cell 17 1
+245 shot .dev/p9-fight-aim-bad.png
+250 creature Gik
+255 down left
+256 up left
+280 shot .dev/p9-fight-cast.png
+# the spell panel in the fight, then end the turn and let the goblins and the hexer go
+290 key K
+305 shot .dev/p9-fight-panel.png
+310 key K
+320 key Space
+600 shot .dev/p9-fight-hexer.png

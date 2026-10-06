@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://src/PlayScreen.cs" id="1"]
 [ext_resource type="Script" path="res://src/MapView.cs" id="2"]
@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://src/FightControl.cs" id="14"]
 [ext_resource type="PackedScene" path="res://scenes/hud/PlayHud.tscn" id="15"]
 [ext_resource type="PackedScene" path="res://scenes/characters/CharacterScreen.tscn" id="16"]
+[ext_resource type="Script" path="res://src/SurfacesView.cs" id="17"]
 
 [sub_resource type="CanvasItemMaterial" id="Material_multiply"]
 blend_mode = 3
@@ -29,6 +30,9 @@ script = ExtResource("2")
 
 [node name="Objects" type="Node2D" parent="."]
 script = ExtResource("3")
+
+[node name="Surfaces" type="Node2D" parent="."]
+script = ExtResource("17")
 
 [node name="Tokens" type="Node2D" parent="."]
 script = ExtResource("4")

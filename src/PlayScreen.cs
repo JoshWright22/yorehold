@@ -124,6 +124,7 @@ public partial class PlayScreen : Node2D
         _hud.SetTitle(world.Chapter.Title);
         _map.Build(world);
         _objects.Bind(world);
+        GetNode<SurfacesView>("Surfaces").Bind(world);
         _tokens.Build(world);
         _lighting.Build(world);
         _fog.Bind(world);
@@ -134,6 +135,7 @@ public partial class PlayScreen : Node2D
             _fight.Bind(world, _camera, _hud.Panels, _floaters);
             _hud.Panels.MenuPressed += Menu;
             _hud.Panels.ItemOrdered += Order;
+            _hud.Panels.SpellOrdered += Order;
         }
         _camera.Bounds = new Rect2(0, 0, map.Width * GameMap.CellSize, map.Height * GameMap.CellSize);
         _camera.JumpTo(world.Tokens.Tokens[0].Position.ToGodot(), 1);
@@ -191,6 +193,7 @@ public partial class PlayScreen : Node2D
         {
             Key.C => "Sheet",
             Key.I => "Gear",
+            Key.K => "Spells",
             _ => null,
         };
         if (key.Keycode == Key.Escape && _hud.Panels is PlayHud open && open.OpenPanel.Length > 0 && !_world.Fighting)
@@ -442,6 +445,35 @@ public partial class PlayScreen : Node2D
         if (!done)
         {
             _hud.Panels?.GearRefused(w.Refusal.Length > 0 ? w.Refusal : "Not now.");
+        }
+    }
+
+    // What the spell panel asked for. Use now puts the panel away and picks the spell on the hotbar,
+    // so it is aimed on the map like any other action.
+    private void Order(SpellOrder order)
+    {
+        if (_world == null || _hud.Panels is not PlayHud panels)
+        {
+            return;
+        }
+        World w = _world;
+        bool done = true;
+        switch (order.Kind)
+        {
+            case SpellOrderKind.Prepare:
+                done = w.Prepare(order.Hero, order.Prepared ?? System.Array.Empty<string>());
+                break;
+            case SpellOrderKind.Cast:
+                done = w.Cast(order.Hero, order.Spell, order.Target);
+                break;
+            case SpellOrderKind.Aim:
+                panels.TogglePanel("Spells");
+                _fight.PickAction(order.Spell);
+                break;
+        }
+        if (!done)
+        {
+            panels.SpellRefused(w.Refusal.Length > 0 ? w.Refusal : "Not now.");
         }
     }
 

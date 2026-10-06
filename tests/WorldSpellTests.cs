@@ -379,6 +379,19 @@ public class WorldSpellTests
         Assert.True(w.CurrentCreature == 5 && w.PickAbility(5) is AbilityChoice pick && pick.Action.Id == "spark" && pick.Value > w.StrikeWorth(5),
             "Empty handed, Spark is worth more than a punch");
         Assert.True(world.StepUntil(() => world.Said("Zed casts Spark"), 10), "The hexer casts it on its turn");
+
+        // From across the hall it walks only into Spark's range, and casts instead of dashing in to punch.
+        using WorldFixture far = Hall(21, f =>
+        {
+            f["creatures/goblin-hexer.json"] = """{"id":"goblin-hexer","name":"Goblin hexer","hp":7,"armorClass":12,"speed":30,"spells":["spark"]}""";
+            f["chapters/spell-hall/chapter.json"] = f["chapters/spell-hall/chapter.json"].Replace("\"creature\":\"goblin\",\"name\":\"Zed\",\"at\":[3,6]", "\"creature\":\"goblin-hexer\",\"name\":\"Zed\",\"at\":[12,6]");
+        });
+        World h = far.World;
+        Sheet(h, 5).Stats.SetBase("dex", 9000);
+        far.Fight();
+        Assert.True(h.CurrentCreature == 5 && h.PickAbility(5) == null && h.ApproachToCast(5) is Cell spot && h.Grid.Distance(spot, h.CellOf(0)) <= 6.01f);
+        Assert.True(far.StepUntil(() => far.Said("Zed casts Spark"), 10) && !far.Said("Zed dashes") && !far.Said("Zed attacks"),
+            "The hexer steps into range and casts");
     }
 
     [Fact]

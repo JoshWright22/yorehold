@@ -18,6 +18,10 @@ public sealed class FightAim
     public Cell? Hover { get; set; }
     /// <summary>The creature a click would act on.</summary>
     public int? Target { get; set; }
+    /// <summary>An action aimed at a square: who its area would land on there.</summary>
+    public List<int> Hit { get; } = new();
+    /// <summary>An action aimed at a square can't go where the pointer is.</summary>
+    public bool AimBad { get; set; }
     /// <summary>Where a click on Hover would walk, from the square stood on.</summary>
     public List<Cell> Path { get; } = new();
     /// <summary>Squares of movement that walk would use.</summary>
@@ -32,6 +36,8 @@ public sealed class FightAim
     {
         Hover = null;
         Target = null;
+        Hit.Clear();
+        AimBad = false;
         Path.Clear();
         PathCost = 0;
         Label = "";

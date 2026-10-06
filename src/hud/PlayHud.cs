@@ -35,6 +35,8 @@ public partial class PlayHud : Control
     public event Action<string>? MenuPressed;
     /// <summary>Something pressed on the gear panel.</summary>
     public event Action<ItemOrder>? ItemOrdered;
+    /// <summary>Something pressed on the spell panel.</summary>
+    public event Action<SpellOrder>? SpellOrdered;
 
     // the scene has all of these
     private VBoxContainer _party = null!;
@@ -73,6 +75,9 @@ public partial class PlayHud : Control
     private DataPanel _gearView = null!;
     private Button _gearButton = null!;
     private GearPanel _gear = null!;
+    private DataPanel _spellsView = null!;
+    private Button _spellsButton = null!;
+    private SpellPanel _spells = null!;
 
     private readonly Dictionary<string, string> _icons = new();
     private readonly List<PartyCard> _partyCards = new();
@@ -129,6 +134,12 @@ public partial class PlayHud : Control
         _gear = new GearPanel(_gearView);
         _gear.Ordered += order => ItemOrdered?.Invoke(order);
         _gearView.ClosePressed += () => OpenPanel = "";
+        _spellsView = GetNode<DataPanel>("Spells");
+        _spellsButton = GetNode<Button>("Menu/Spells");
+        _spells = new SpellPanel(_spellsView);
+        _spells.Ordered += order => SpellOrdered?.Invoke(order);
+        _spells.HeroPicked += hero => CreaturePressed?.Invoke(hero);
+        _spellsView.ClosePressed += () => OpenPanel = "";
         foreach (Node child in GetNode("Menu").GetChildren())
         {
             if (child is Button button)
@@ -171,6 +182,23 @@ public partial class PlayHud : Control
     public void GearRefused(string why)
     {
         _gear.Refused(why);
+    }
+
+    /// <summary>Says under the spell panel's entry why the world said no.</summary>
+    public void SpellRefused(string why)
+    {
+        _spells.Refused(why);
+    }
+
+    /// <summary>Opens the spell panel with a spell picked, for input scripts and the first look.</summary>
+    public void OpenSpells(string spell = "")
+    {
+        OpenPanel = "Spells";
+        _spellsView.Reset();
+        if (spell.Length > 0)
+        {
+            _spellsView.Pick(spell);
+        }
     }
 
     /// <summary>The action on the hotbar's slot with this place, 0 first; null when there is none.</summary>
@@ -217,7 +245,7 @@ public partial class PlayHud : Control
         ShowReaction(world);
         _defeat.Visible = world.PartyWiped;
         _defeatText.Text = world.Chapter.DefeatText;
-        ShowPanels(world, shown);
+        ShowPanels(world, shown, aim.HeroTurn);
 
         _cursor.Visible = aim.Label.Length > 0;
         if (_cursor.Visible)
@@ -225,14 +253,23 @@ public partial class PlayHud : Control
             _cursor.Text = aim.Label;
             _cursor.Modulate = aim.LabelBad ? Palette.Rose : Palette.Bone;
             _cursor.Size = Vector2.Zero;
-            _cursor.Position = aim.LabelAt + new Vector2(20, 14);
+            // kept on screen: a long refusal near the right edge would run off it
+            Vector2 room = GetViewportRect().Size - _cursor.GetCombinedMinimumSize() - new Vector2(6, 6);
+            Vector2 at = aim.LabelAt + new Vector2(20, 14);
+            _cursor.Position = new Vector2(Mathf.Clamp(at.X, 6, Mathf.Max(6, room.X)), Mathf.Clamp(at.Y, 6, Mathf.Max(6, room.Y)));
         }
         ShowTip();
     }
 
     // The hero a panel shows is the one whose turn it is, or the selected one between fights.
-    private void ShowPanels(World world, int hero)
+    private void ShowPanels(World world, int hero, bool heroTurn)
     {
+        _spellsButton.SetPressedNoSignal(OpenPanel == "Spells");
+        _spellsView.Visible = OpenPanel == "Spells" && hero < world.HeroCount;
+        if (_spellsView.Visible)
+        {
+            _spells.Refresh(world, hero, heroTurn);
+        }
         _sheetButton.SetPressedNoSignal(OpenPanel == "Sheet");
         _sheetView.Visible = OpenPanel == "Sheet" && hero < world.HeroCount;
         if (_sheetView.Visible)
