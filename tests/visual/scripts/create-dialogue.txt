@@ -1,0 +1,24 @@
+# Create on the game's own goblin keep: Dialogue mode on Tobb, a reply with a check, then a new conversation with a line and a reply.
+# check.ps1 -Shot create-dialogue-end.png -Frames 200 -Script tests\visual\scripts\create-dialogue.txt -Screen create
+20 button Open
+22 down left
+24 up left
+40 button Dialogue
+42 down left
+44 up left
+60 shot .dev/create-dialogue-node.png
+64 button 3._What
+66 down left
+68 up left
+90 shot .dev/create-dialogue-check.png
+94 button New_conversation
+96 down left
+98 up left
+110 button what_they_say
+112 down left
+114 up left
+118 text Who goes there?
+124 button Add_reply
+126 down left
+128 up left
+160 shot .dev/create-dialogue-new.png

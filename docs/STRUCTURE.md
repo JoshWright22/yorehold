@@ -11,7 +11,7 @@
 | `rules/fight/` | A fight on its own, with no map: `Encounter` (initiative, rounds, shared turn blocks, each combatant's actions, movement and reaction, death saves, its log) and `Tactics` (the AI scorer: who to hit, where to stand, when to run or give up). |
 | `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). `WorldItems` is what is carried: piles to take from (containers, chests, what the dead leave), giving, gear on and off, using things up and shops. The adventure around the chapter is `WorldTalk` (conversations through a `DialogueSession`, companions joining, leaving and approving, picking a fight with someone), `WorldTravel` (exit markers into the adventure's next chapter, camp and back, rests, the stash, revival), `WorldSave` (the save's data, restoring it, the checkpoint a wiped party returns to) and `CutsceneRun` (a cutscene's timing: camera, bars, fade, captions). |
 | `rules/app/` | What the game keeps outside an adventure: `GameSettings` (the settings file), `KeyBindings` (the actions in `ui/keys.json` and the keys the player gave them), `SaveSummary` (what a save holds, read without loading it) and `Credits` (`ui/credits.json`). |
-| `rules/create/` | Create with no screen: `History` (one undo history for the open package), `MapEditor` (a chapter's map and the commands that change it), `EncountersEditor` (a chapter's encounter groups), `CreatePackage` (opening and making packages, the chapter worked on, saving, the problems list) and `CreateJson` (how it writes files). |
+| `rules/create/` | Create with no screen: `History` (one undo history for the open package), `MapEditor` (a chapter's map and the commands that change it), `EncountersEditor` (a chapter's encounter groups), `DialogueEditor` (one conversation file), `CreatePackage` (opening and making packages, the chapter worked on, saving, the problems list; each mode's files are a part of it in its own file, like `CreateDialogues`) and `CreateJson` (how it writes files). |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
 | `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels, `src/characters/` the character screens, `src/menus/` the title and the screens behind it, `src/create/` Create. |
@@ -112,9 +112,10 @@ with buttons under it. Its owner fills it every frame; it only rebuilds what cha
 | Part | Is |
 |---|---|
 | `Start` (`DataPanel.tscn`) | with nothing open: the packages made here (`create/` in the user folder, `Places.CreateFolder`), the last one opened and the game's own content, the picked one's page, and Open, New adventure, Back to title |
-| `Editor/Top` | the mode tabs (Map, Encounters), the package's name and the chapter being worked on (a click goes to the next) |
+| `Editor/Top` | the mode tabs, the package's name and the chapter being worked on (a click goes to the next) |
 | `Editor/Body/Modes/Map` (`MapModePanel`) | the tools on the left, the map in the middle, floors, layers, size and the tool's settings on the right |
 | `Editor/Body/Modes/Encounters` (`EncountersModePanel`) | Select and Place and the groups on the left, the map in the middle, the picked group, creature or the creatures to place on the right |
+| `Editor/Body/Modes/Dialogue` (`DialogueModePanel`) | the chapter's conversation files along the top with New conversation, the nodes on the left, the picked node's line and replies in the middle, the picked reply or the node's own flags and actions on the right |
 | `Editor/Body/Problems` | `CreatePackage.Problems`, looked at once a second: errors in red stop a save, the rest are worth a look |
 | `Editor/Bar` | Undo, Redo, Save, Playtest, Close and what was done last |
 
@@ -195,7 +196,9 @@ another action), credits, a quick start, the pause list, save and quit, and load
 screen (320 frames, `-Screen title`); `title-party.txt` opens New adventure from the title and backs out (80
 frames, `-Screen title`). `create.txt` makes a new adventure in Create, paints walls, a stone floor, a light
 and a door, places two goblins, saves, playtests and comes back (470 frames, `-Screen create`), and
-`create-keep.txt` opens the game's own goblin keep in both modes (150 frames, `-Screen create`). In Create
+`create-keep.txt` opens the game's own goblin keep in both modes (150 frames, `-Screen create`).
+`create-dialogue.txt` opens Tobb's conversation in Dialogue mode, picks a reply with a check and starts a new
+conversation with a line and a reply (200 frames, `-Screen create`). In Create
 `cell X Y` goes to the cell on the editor's map. A run keeps its library in `../.dev/shot-characters`, its
 save in `../.dev/shot-saves`, its settings in `../.dev/shot-settings` and Create's packages in
 `../.dev/shot-create`, all emptied as it starts.

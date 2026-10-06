@@ -164,6 +164,8 @@ builds, passes `check.ps1` and is committed.
   - Default: the view fits the map again whenever its size changes until it is zoomed or moved by hand.
   - Not ported: the C++ `.yore` open and export buttons (folders only until P14), and dragging a light's radius as a slider (it steps by one cell and still merges into one undo step).
 - [ ] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
+  - Default: each mode's files are a part of `CreatePackage` in a file of its own (`CreateDialogues`...), on the one history, and Save checks every part before it writes any file.
+  - Default: Dialogue mode is the C++ DialogueEditor and its checks as they are. Its columns are `ToolColumn`s like the other modes; Skill check is a toggle since the theme has no tick boxes.
 - [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
   (`../yorehold-server`), through an interface tests can fake.
 - [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is

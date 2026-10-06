@@ -26,4 +26,34 @@ public static class CreateJson
 
     /// <summary>A JSON value as one line, the form undo steps keep "ai" entries in.</summary>
     public static string Compact(JsonNode? node) => node == null ? "null" : node.ToJsonString(OneLine);
+
+    public static JsonArray Texts(IEnumerable<string> texts) => new(texts.Select(t => (JsonNode?)JsonValue.Create(t)).ToArray());
+
+    /// <summary>The fields of an entry that aren't in known, as a JSON object; empty if there are none.</summary>
+    public static string ExtraOf(ContentNode entry, string[] known)
+    {
+        var rest = new JsonObject();
+        foreach (KeyValuePair<string, ContentNode> member in entry.Members())
+        {
+            if (Array.IndexOf(known, member.Key) < 0)
+            {
+                rest[member.Key] = JsonNode.Parse(member.Value.Raw());
+            }
+        }
+        return rest.Count == 0 ? "" : Compact(rest);
+    }
+
+    /// <summary>Puts back what ExtraOf kept.</summary>
+    public static void AddExtra(JsonObject entry, string extra)
+    {
+        if (extra.Length == 0)
+        {
+            return;
+        }
+        // only ExtraOf writes these, so it is an object
+        foreach (KeyValuePair<string, JsonNode?> field in JsonNode.Parse(extra)!.AsObject())
+        {
+            entry[field.Key] = field.Value?.DeepClone();
+        }
+    }
 }

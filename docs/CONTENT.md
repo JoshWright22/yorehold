@@ -77,6 +77,8 @@ What the port reads so far, and where it differs:
   creatures count. Playtest plays the open chapter with nothing saved and Escape comes back. Lights
   take one of six CC-29 colours. `-- --screen create` starts the game in Create, in place of
   `YOREHOLD_CREATE`.
+- Dialogue mode ("Writing dialogue in Create") works as described. New conversation is the button
+  for New, and Skill check is a toggle rather than a tick box.
 - The other Create modes, voice lines and account sync are described below as the C++ client has
   them. They are ported in later steps (see ROADMAP.md).
 

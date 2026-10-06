@@ -11,8 +11,11 @@ public sealed record CreateProblem(string Path, string Message, bool Error);
 /// nothing; the Create screen is a layout over it. The game's own content sits under the package,
 /// as when it is played, so its kits, creatures, AI profiles and items can be placed.
 /// </summary>
-public sealed class CreatePackage
+public sealed partial class CreatePackage
 {
+    // One file a save writes: where, what, and what marks it saved once written.
+    private sealed record Changed(string Path, string Text, Action Done);
+
     // One chapter's map and what it was when last read or written.
     private sealed class MapTab
     {
@@ -119,6 +122,7 @@ public sealed class CreatePackage
         _history.Clear();
         // what is opened next starts saved, whatever the last package was left as
         _history.MarkSaved();
+        CloseDialogues();
         _encounters.Clear();
         _encounterErrors.Clear();
         _maps.Clear();
@@ -242,7 +246,7 @@ public sealed class CreatePackage
         {
             return false;
         }
-        var changed = new List<(string Path, string Text, Action Done)>();
+        var changed = new List<Changed>();
         foreach ((string chapter, MapTab tab) in _maps)
         {
             string text = tab.Editor.ToJson();
@@ -259,7 +263,7 @@ public sealed class CreatePackage
                 Status = $"{tab.Path} not saved: {problem.Message}";
                 return false;
             }
-            changed.Add((tab.Path, text, () => tab.Saved = text));
+            changed.Add(new Changed(tab.Path, text, () => tab.Saved = text));
         }
         foreach ((string chapter, EncountersTab tab) in _encounters)
         {
@@ -277,8 +281,12 @@ public sealed class CreatePackage
             }
             if (groupsChanged)
             {
-                changed.Add((tab.Path, text, () => tab.Saved = text));
+                changed.Add(new Changed(tab.Path, text, () => tab.Saved = text));
             }
+        }
+        if (!DialoguesToSave(changed))
+        {
+            return false;
         }
         foreach ((string path, string text, Action done) in changed)
         {
@@ -333,6 +341,7 @@ public sealed class CreatePackage
         {
             found.AddRange(tab.Editor.Problems().Select(p => new CreateProblem(tab.Path, $"{Leaf(chapter)}: {p.Text}", p.Error)));
         }
+        DialogueProblems(found);
         found.AddRange(_onDisk);
         return found;
     }

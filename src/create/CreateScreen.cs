@@ -21,6 +21,7 @@ public partial class CreateScreen : Control
     {
         Map,
         Encounters,
+        Dialogue,
     }
 
     private static readonly DataColumn[] Columns = { new("Package", 220), new("Kind", 90), new("Chapters", 70, true) };
@@ -35,8 +36,10 @@ public partial class CreateScreen : Control
     private Control _editor = null!;
     private MapModePanel _map = null!;
     private EncountersModePanel _encounters = null!;
+    private DialogueModePanel _dialogue = null!;
     private Button _mapTab = null!;
     private Button _encountersTab = null!;
+    private Button _dialogueTab = null!;
     private Label _name = null!;
     private Button _chapter = null!;
     private RichTextLabel _problems = null!;
@@ -62,6 +65,8 @@ public partial class CreateScreen : Control
         _encounters = GetNode<EncountersModePanel>("Editor/Body/Modes/Encounters");
         _mapTab = GetNode<Button>("Editor/Top/Row/Map");
         _encountersTab = GetNode<Button>("Editor/Top/Row/Encounters");
+        _dialogue = GetNode<DialogueModePanel>("Editor/Body/Modes/Dialogue");
+        _dialogueTab = GetNode<Button>("Editor/Top/Row/Dialogue");
         _name = GetNode<Label>("Editor/Top/Row/Name");
         _chapter = GetNode<Button>("Editor/Top/Row/Chapter");
         _problems = GetNode<RichTextLabel>("Editor/Body/Problems/Rows/Text");
@@ -72,6 +77,7 @@ public partial class CreateScreen : Control
 
         _mapTab.Pressed += () => _mode = Mode.Map;
         _encountersTab.Pressed += () => _mode = Mode.Encounters;
+        _dialogueTab.Pressed += () => _mode = Mode.Dialogue;
         _chapter.Pressed += NextChapter;
         _undo.Pressed += () => _package.Undo();
         _redo.Pressed += () => _package.Redo();
@@ -103,14 +109,20 @@ public partial class CreateScreen : Control
 
         _mapTab.SetPressedNoSignal(_mode == Mode.Map);
         _encountersTab.SetPressedNoSignal(_mode == Mode.Encounters);
+        _dialogueTab.SetPressedNoSignal(_mode == Mode.Dialogue);
         _map.Visible = _mode == Mode.Map;
         _encounters.Visible = _mode == Mode.Encounters;
+        _dialogue.Visible = _mode == Mode.Dialogue;
         _name.Text = _package.Manifest!.Name + (_package.IsGameContent ? "   the game's own content" : "");
         _chapter.Text = "Chapter: " + (_package.Chapter.Length == 0 ? "none" : CreatePackage.Leaf(_package.Chapter));
         _chapter.Disabled = _package.Chapters.Count < 2;
         if (_mode == Mode.Map)
         {
             _map.Present(_package.MapEditor(), _package.MapError);
+        }
+        else if (_mode == Mode.Dialogue)
+        {
+            _dialogue.Present(_package);
         }
         else
         {
@@ -324,7 +336,7 @@ public partial class CreateScreen : Control
 
     private void FillStart()
     {
-        _start.SetHead("Create", "maps and encounters for your own adventures");
+        _start.SetHead("Create", "maps, encounters and conversations for your own adventures");
         _start.SetSources(Array.Empty<(string, string)>(), "");
         _start.SetTabs(new[] { "All", "Made here", "The game's" });
         _start.SetChips(Array.Empty<string>());
