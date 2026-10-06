@@ -29,10 +29,10 @@ public partial class ActionSlot : TipButton
         ActionId = id;
         Usable = usable;
         _icon.Show(shape, name.Length > 0 ? name[..1] : "?");
-        _icon.Modulate = usable ? Colors.White : new Color(1, 1, 1, 0.28f);
+        _icon.Grey(!usable);
         _key.Text = key;
-        _cost.Show(cost, cost);
-        _cost.Modulate = usable ? Colors.White : new Color(1, 1, 1, 0.4f);
+        // a greyed action's cost shows as spent pips, not as see-through ones
+        _cost.Show(cost, usable ? cost : 0);
         _armed.Visible = armed;
     }
 }

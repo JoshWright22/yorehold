@@ -53,7 +53,7 @@ public partial class MoveBarView : Control
         for (int i = 1; i < (int)_max; i++)
         {
             float x = 1 + inner * i / _max;
-            DrawLine(new Vector2(x, 1), new Vector2(x, Size.Y - 1), Palette.Faded(Palette.Ink, 0.6f), 1);
+            DrawLine(new Vector2(x, 1), new Vector2(x, Size.Y - 1), Palette.Ink, 1);
         }
         DrawRect(box, Rim, false, 1);
     }

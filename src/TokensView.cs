@@ -71,8 +71,7 @@ public partial class TokensView : Node2D
             {
                 continue;
             }
-            Color color = token.Color.ToGodot();
-            color.A = 150 / 255.0f;
+            Color color = Palette.Nearest(token.Color.ToGodot());
             Vector2 from = token.Position.ToGodot();
             foreach (System.Numerics.Vector2 to in token.Path)
             {

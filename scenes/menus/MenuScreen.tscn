@@ -32,6 +32,7 @@ offset_left = 64.0
 offset_top = 52.0
 offset_right = 464.0
 offset_bottom = 104.0
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(0.8275, 0.6275, 0.4078, 1)
 theme_override_font_sizes/font_size = 38
 text = "YOREHOLD"
@@ -59,8 +60,7 @@ offset_left = 70.0
 offset_top = 146.0
 offset_right = 384.0
 offset_bottom = 164.0
-theme_override_colors/font_color = Color(0.8275, 0.6275, 0.4078, 1)
-theme_override_font_sizes/font_size = 12
+theme_type_variation = &"CapsLabel"
 text = "CONTENTS"
 
 [node name="Entries" type="VBoxContainer" parent="Title"]

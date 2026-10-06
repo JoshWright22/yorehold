@@ -37,13 +37,13 @@ public partial class InitiativeCard : TipButton
         WorldCreature who = world.Creatures[creature];
         CharacterSheet sheet = who.Sheet;
         _portrait.Show(sheet.Name, world.Tokens.Tokens[creature].Color.ToGodot(), sheet.Down);
-        _side.Color = who.Team == 0 ? PartyColor : EnemyColor;
+        // a card that has had its turn greys its side strip instead of going see-through
+        _side.Color = done && !current ? Palette.Slate : who.Team == 0 ? PartyColor : EnemyColor;
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
         _turn.Visible = current;
         _ready.Visible = ready && !current;
         CustomMinimumSize = current ? CurrentSize : NormalSize;
-        Modulate = done && !current ? new Color(1, 1, 1, 0.55f) : Colors.White;
 
         TipTitle = sheet.Name;
         TipMeta = HudText.Health(world, sheet);

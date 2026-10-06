@@ -38,9 +38,11 @@ public partial class ObjectsView : Node2D
                 continue;
             }
             var at = new Vector2((float)lamp.X, (float)lamp.Y) * GameMap.CellSize;
-            float flicker = 1 + 0.15f * Mathf.Sin((float)_time * 11 + i * 1.7f);
-            DrawCircle(at, 10 * flicker, Color.Color8(255, 140, 50));
-            DrawCircle(at, 5 * flicker, Color.Color8(255, 235, 170));
+            // a square flame that jumps a pixel or two, flat like the tiles
+            float flicker = Mathf.Round(2 * Mathf.Sin((float)_time * 11 + i * 1.7f));
+            DrawRect(new Rect2(at.X - 6, at.Y - 8 - flicker, 12, 14 + flicker), Palette.Amber);
+            DrawRect(new Rect2(at.X - 3, at.Y - 3 - flicker, 6, 8 + flicker), Palette.Straw);
+            DrawRect(new Rect2(at.X - 6, at.Y + 6, 12, 3), Palette.Iron);
         }
 
         int team = _world.ViewTeam();
@@ -61,35 +63,27 @@ public partial class ObjectsView : Node2D
             }
             else if (o.HasDoor)
             {
-                if (o.Open)
-                {
-                    DrawRect(inner, Color.Color8(110, 75, 40), false, 3);
-                }
-                else
-                {
-                    DrawRect(inner, Color.Color8(120, 80, 42));
-                    DrawRect(inner, Color.Color8(45, 28, 14), false, 3);
-                }
-                if (o.Locked)
-                {
-                    DrawCircle(centre, 6, Color.Color8(225, 195, 80));
-                }
+                DrawDoor(inner, o.Open, o.Locked);
             }
             else if (o.Has("lever"))
             {
-                DrawRect(new Rect2(centre.X - 10, centre.Y + 6, 20, 8), Color.Color8(70, 70, 76));
-                DrawLine(new Vector2(centre.X, centre.Y + 8), new Vector2(centre.X + 10, centre.Y - 14), Color.Color8(150, 120, 80), 4);
+                DrawRect(new Rect2(centre.X - 10, centre.Y + 6, 20, 8), Palette.Iron);
+                DrawRect(new Rect2(centre.X - 10, centre.Y + 6, 20, 2), Palette.Slate);
+                DrawLine(new Vector2(centre.X, centre.Y + 8), new Vector2(centre.X + 10, centre.Y - 14), Palette.Leather, 4);
+                DrawRect(new Rect2(centre.X + 7, centre.Y - 17, 6, 6), Palette.Red);
             }
             else if (o.Trap != null)
             {
-                Color mark = o.TrapArmed ? Color.Color8(220, 60, 50) : Color.Color8(110, 100, 95);
-                float r = Mathf.Min(area.Size.X, area.Size.Y) * 0.3f;
+                Color mark = o.TrapArmed ? Palette.Red : Palette.Smoke;
+                float r = Mathf.Round(Mathf.Min(area.Size.X, area.Size.Y) * 0.3f);
                 DrawLine(centre - new Vector2(r, r), centre + new Vector2(r, r), mark, 4);
                 DrawLine(centre + new Vector2(-r, r), centre + new Vector2(r, -r), mark, 4);
             }
             else
             {
-                DrawRect(new Rect2(area.Position + new Vector2(8, 8), area.Size - new Vector2(16, 16)), Color.Color8(100, 90, 80));
+                var block = new Rect2(area.Position + new Vector2(8, 8), area.Size - new Vector2(16, 16));
+                DrawRect(block, Palette.Slate);
+                DrawRect(block, Palette.Ink, false, 2);
             }
         }
         DrawPiles(team);
@@ -119,17 +113,49 @@ public partial class ObjectsView : Node2D
         }
     }
 
-    // dull once emptied, a gold dot under it while locked
+    // planks across a shut door, only its frame once open, a brass lock while locked
+    private void DrawDoor(Rect2 inner, bool open, bool locked)
+    {
+        if (open)
+        {
+            DrawRect(inner, Palette.Rust, false, 3);
+            return;
+        }
+        DrawRect(inner, Palette.Leather);
+        bool across = inner.Size.X >= inner.Size.Y;
+        for (float at = 8; at < (across ? inner.Size.X : inner.Size.Y); at += 8)
+        {
+            if (across)
+            {
+                DrawRect(new Rect2(inner.Position.X + at, inner.Position.Y, 1, inner.Size.Y), Palette.Rust);
+            }
+            else
+            {
+                DrawRect(new Rect2(inner.Position.X, inner.Position.Y + at, inner.Size.X, 1), Palette.Rust);
+            }
+        }
+        DrawRect(inner, Palette.Ink, false, 2);
+        if (locked)
+        {
+            Vector2 c = inner.GetCenter();
+            DrawRect(new Rect2(c.X - 4, c.Y - 4, 8, 8), Palette.Amber);
+            DrawRect(new Rect2(c.X - 1, c.Y - 2, 2, 4), Palette.Ink);
+        }
+    }
+
+    // dull once emptied, a brass lock under it while locked
     private void DrawChest(Vector2 centre, bool empty, bool locked)
     {
         const float cell = GameMap.CellSize;
+        var box = new Rect2(Mathf.Round(centre.X - cell * 0.3f), Mathf.Round(centre.Y - cell * 0.2f), Mathf.Round(cell * 0.6f), Mathf.Round(cell * 0.42f));
+        DrawRect(box, empty ? Palette.Iron : Palette.Leather);
+        // the lid's edge, a third of the way down
+        DrawRect(new Rect2(box.Position.X, box.Position.Y + Mathf.Round(box.Size.Y / 3), box.Size.X, 2), empty ? Palette.Ink : Palette.Rust);
+        DrawRect(box, Palette.Ink, false, 2);
+        DrawRect(new Rect2(centre.X - 4, centre.Y - 5, 8, 8), empty ? Palette.Slate : Palette.Straw);
         if (locked)
         {
-            DrawCircle(centre + new Vector2(0, cell * 0.3f), 5, Color.Color8(225, 195, 80));
+            DrawRect(new Rect2(centre.X - 4, box.End.Y + 2, 8, 6), Palette.Amber);
         }
-        var box = new Rect2(centre.X - cell * 0.3f, centre.Y - cell * 0.2f, cell * 0.6f, cell * 0.42f);
-        DrawRect(box, empty ? Color.Color8(70, 60, 50) : Color.Color8(140, 95, 45));
-        DrawRect(box, Color.Color8(30, 20, 10), false, 2);
-        DrawRect(new Rect2(centre.X - 4, centre.Y - 5, 8, 8), empty ? Color.Color8(50, 45, 40) : Color.Color8(235, 200, 90));
     }
 }

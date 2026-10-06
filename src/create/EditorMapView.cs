@@ -51,6 +51,16 @@ public partial class EditorMapView : Control
         MouseFilter = MouseFilterEnum.Stop;
         FocusMode = FocusModeEnum.Click;
         AddToGroup("create_map");
+        // the marks modes draw over the map are see-through; this snaps the whole view to CC-29
+        // the way the play screen's palette pass does
+        var snap = new ColorRect
+        {
+            Name = "Snap",
+            MouseFilter = MouseFilterEnum.Ignore,
+            Material = new ShaderMaterial { Shader = GD.Load<Shader>("res://scenes/palette.gdshader") },
+        };
+        AddChild(snap);
+        snap.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         // until the view is zoomed or moved by hand, a new size fits the map again, so the first
         // frames of the layout don't leave it fitted to a size it no longer has
         Resized += () =>

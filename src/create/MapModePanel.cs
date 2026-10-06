@@ -241,7 +241,7 @@ public partial class MapModePanel : HBoxContainer
                     }
                     if (!usable)
                     {
-                        tile.Modulate = Palette.Faded(Palette.Bone, 0.45f);
+                        tile.ThemeTypeVariation = "GreyButton";
                     }
                 }
                 break;
@@ -505,8 +505,8 @@ public partial class MapModePanel : HBoxContainer
             EditorLight light = _editor.Lights[i];
             Vector2 centre = view.ToLocal(new Vector2((float)light.X, (float)light.Y) * GameMap.CellSize);
             Color color = Palette.Nearest(Color.Color8(light.Color.R, light.Color.G, light.Color.B));
-            view.DrawCircle(centre, (float)light.Radius * cell, Palette.Faded(color, 0.1f));
-            view.DrawArc(centre, (float)light.Radius * cell, 0, Mathf.Tau, 48, Palette.Faded(color, 0.5f), 1);
+            // the reach as a ring only: a see-through fill snaps to odd colours over the dark
+            view.DrawArc(centre, (float)light.Radius * cell, 0, Mathf.Tau, 48, color, 1);
             view.DrawCircle(centre, cell * 0.24f, Palette.Ink);
             view.DrawCircle(centre, cell * 0.18f, color);
             if (_light == i)

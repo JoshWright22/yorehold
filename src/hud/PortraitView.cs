@@ -16,12 +16,13 @@ public partial class PortraitView : Control
 
     public void Show(string name, Color color, bool down)
     {
-        if (name == _name && color == _color && down == _down)
+        if (name == _name && Palette.Nearest(color) == _color && down == _down)
         {
             return;
         }
         _name = name;
-        _color = color;
+        // token colours come from content, so they land on the palette here like on the map
+        _color = Palette.Nearest(color);
         _down = down;
         QueueRedraw();
     }

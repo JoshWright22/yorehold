@@ -40,9 +40,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -200.0
-offset_top = 8.0
+offset_top = 54.0
 offset_right = 200.0
-offset_bottom = 130.0
+offset_bottom = 176.0
 grow_horizontal = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
@@ -333,6 +333,7 @@ theme_type_variation = &"TitleLabel"
 [node name="Text" type="Label" parent="Talk/Rows"]
 custom_minimum_size = Vector2(620, 0)
 layout_mode = 2
+theme_type_variation = &"BookLabel"
 theme_override_font_sizes/font_size = 17
 autowrap_mode = 3
 

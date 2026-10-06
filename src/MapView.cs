@@ -12,7 +12,7 @@ public partial class MapView : Node2D
 {
     private const int Block = 8;
 
-    [Export] public Color GridColor { get; set; } = new(0, 0, 0, 45 / 255.0f);
+    [Export] public Color GridColor { get; set; } = Palette.Faded(Palette.Ink, 0.2f);
 
     private readonly List<Rid> _items = new();
     private ImageTexture? _atlas;

@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://src/PlayScreen.cs" id="1"]
 [ext_resource type="Script" path="res://src/MapView.cs" id="2"]
@@ -18,9 +18,14 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/CharacterScreen.tscn" id="16"]
 [ext_resource type="Script" path="res://src/SurfacesView.cs" id="17"]
 [ext_resource type="Script" path="res://src/CutsceneView.cs" id="18"]
+[ext_resource type="Shader" path="res://scenes/lighting.gdshader" id="19"]
+[ext_resource type="Shader" path="res://scenes/palette.gdshader" id="20"]
 
-[sub_resource type="CanvasItemMaterial" id="Material_multiply"]
-blend_mode = 3
+[sub_resource type="ShaderMaterial" id="Material_lighting"]
+shader = ExtResource("19")
+
+[sub_resource type="ShaderMaterial" id="Material_palette"]
+shader = ExtResource("20")
 
 [node name="PlayScreen" type="Node2D" groups=["play_screen"]]
 script = ExtResource("1")
@@ -74,7 +79,7 @@ visible = false
 layer = 1
 
 [node name="LightMap" type="TextureRect" parent="Shading"]
-material = SubResource("Material_multiply")
+material = SubResource("Material_lighting")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -101,8 +106,20 @@ script = ExtResource("13")
 [node name="Floaters" type="Node2D" parent="Overlay"]
 script = ExtResource("6")
 
-[node name="Hud" type="CanvasLayer" parent="."]
+[node name="Palette" type="CanvasLayer" parent="."]
 layer = 3
+
+[node name="Snap" type="ColorRect" parent="Palette"]
+material = SubResource("Material_palette")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Hud" type="CanvasLayer" parent="."]
+layer = 4
 script = ExtResource("8")
 
 [node name="Title" type="Label" parent="Hud"]
@@ -116,17 +133,14 @@ theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 24
 
 [node name="Banner" type="Label" parent="Hud"]
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 160.0
-offset_bottom = 220.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(0.8275, 0.6275, 0.4078, 1)
+offset_left = 110.0
+offset_top = 48.0
+offset_right = 710.0
+offset_bottom = 74.0
+theme_override_colors/font_color = Color(0.9294, 0.8824, 0.6196, 1)
 theme_override_colors/font_outline_color = Color(0.1294, 0.1294, 0.1373, 1)
-theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 42
-horizontal_alignment = 1
-vertical_alignment = 1
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
 
 [node name="Panels" parent="Hud" instance=ExtResource("15")]
 

@@ -3,7 +3,7 @@ using Godot;
 namespace Yorehold;
 
 /// <summary>
-/// What sits on top of the map: the chapter title, a banner across the middle and the panels
+/// What sits on top of the map: the chapter title, a short line under it for news and the panels
 /// (PlayHud: party cards, the log and everything a fight adds).
 /// </summary>
 public partial class Hud : CanvasLayer
@@ -61,9 +61,8 @@ public partial class Hud : CanvasLayer
         {
             return;
         }
+        // no fade: a half seen line is a colour off the palette
         _bannerLeft -= delta;
-        // fades over its last half second
-        _banner.Modulate = new Color(1, 1, 1, (float)Mathf.Clamp(_bannerLeft / 0.5, 0, 1));
         _banner.Visible = _bannerLeft > 0;
     }
 }

@@ -136,6 +136,7 @@ public sealed class CampPanel
         CharacterSheet sheet = world.Creatures[hero].Sheet;
         var actions = new List<DataAction>();
         var page = new BookPage();
+        string? whole = null;
         if (picked == "camp")
         {
             if (world.AtCamp)
@@ -171,14 +172,13 @@ public sealed class CampPanel
         }
         else if (picked.StartsWith("stash:", StringComparison.Ordinal) && int.TryParse(picked[6..], out int s) && s < world.Stash.Items.Count)
         {
-            Item item = world.Stash.Items[s];
-            page.Title(item.Name).Sub("in the stash").Rule().Text(item.Definition.Description);
+            // the same page the gear panel gives it, so its numbers and use are there too
+            whole = GearPanel.Page(world, world.Stash.Items[s], world.Stash.Items[s].Value);
             actions.Add(new DataAction($"take:{s}", $"{sheet.Name} takes it", !sheet.Down, $"{sheet.Name} can't."));
         }
         else if (picked.StartsWith("pack:", StringComparison.Ordinal) && int.TryParse(picked[5..], out int p) && p < sheet.Inventory.Count)
         {
-            Item item = sheet.Inventory[p];
-            page.Title(item.Name).Sub(item.Equipped ? "worn" : "in the pack").Rule().Text(item.Definition.Description);
+            whole = GearPanel.Page(world, sheet.Inventory[p], sheet.Inventory[p].Value);
             actions.Add(new DataAction($"store:{p}", "Put in the stash", !sheet.Death.Dead, $"{sheet.Name} can't."));
         }
         else if (picked.StartsWith("dead:", StringComparison.Ordinal) && int.TryParse(picked[5..], out int dead) && dead < world.HeroCount)
@@ -192,7 +192,7 @@ public sealed class CampPanel
         {
             page.Note("Pick a rest, the camp or something in the stash.");
         }
-        _view.SetEntry(page.ToString(), actions, "");
+        _view.SetEntry(whole ?? page.ToString(), actions, "");
     }
 
     private void Act(string id)

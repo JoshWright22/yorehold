@@ -16,7 +16,7 @@ public partial class LightingView : Node2D
     private const int Block = 8;
 
     [Export] public PackedScene? LightScene { get; set; }
-    [Export] public Color CarriedColor { get; set; } = Color.Color8(255, 215, 160);
+    [Export] public Color CarriedColor { get; set; } = Palette.Sand;
 
     private readonly List<Rid> _ground = new();
     private readonly List<LightView> _carried = new();

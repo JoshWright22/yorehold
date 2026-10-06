@@ -9,6 +9,20 @@ namespace Yorehold;
 public partial class ActionIcon : Control
 {
     [Export] public Color Ink { get; set; } = Palette.Sand;
+    /// <summary>The fill inside a shape, a darker palette colour rather than the ink seen through.</summary>
+    [Export] public Color Soft { get; set; } = Palette.Rust;
+
+    /// <summary>Greyed: drawn in slate and iron instead of its own colours.</summary>
+    public void Grey(bool grey)
+    {
+        Color ink = grey ? Palette.Slate : Palette.Sand, soft = grey ? Palette.Iron : Palette.Rust;
+        if (ink != Ink || soft != Soft)
+        {
+            Ink = ink;
+            Soft = soft;
+            QueueRedraw();
+        }
+    }
 
     private string _shape = "";
     private string _letter = "";
@@ -36,13 +50,13 @@ public partial class ActionIcon : Control
 
     private void Stroke(float width, params Vector2[] points)
     {
-        DrawPolyline(points, Ink, width, true);
+        DrawPolyline(points, Ink, width);
     }
 
     public override void _Draw()
     {
         float w = Mathf.Max(2, Size.X * 0.09f);
-        Color soft = new(Ink.R, Ink.G, Ink.B, 0.35f);
+        Color soft = Soft;
         switch (_shape)
         {
             case "sword":
@@ -95,8 +109,8 @@ public partial class ActionIcon : Control
                 Stroke(w * 1.4f, P(0.82f, 0.18f), P(0.82f, 0.82f));
                 break;
             case "rings":
-                DrawArc(P(0.38f, 0.5f), Size.X * 0.22f, 0, Mathf.Tau, 32, Ink, w, true);
-                DrawArc(P(0.62f, 0.5f), Size.X * 0.22f, 0, Mathf.Tau, 32, Ink, w, true);
+                DrawArc(P(0.38f, 0.5f), Size.X * 0.22f, 0, Mathf.Tau, 32, Ink, w);
+                DrawArc(P(0.62f, 0.5f), Size.X * 0.22f, 0, Mathf.Tau, 32, Ink, w);
                 break;
             case "up":
                 Stroke(w * 1.2f, P(0.5f, 0.86f), P(0.5f, 0.2f));
@@ -108,7 +122,7 @@ public partial class ActionIcon : Control
                 break;
             case "flask":
                 DrawCircle(P(0.5f, 0.62f), Size.X * 0.24f, soft);
-                DrawArc(P(0.5f, 0.62f), Size.X * 0.24f, 0, Mathf.Tau, 32, Ink, w, true);
+                DrawArc(P(0.5f, 0.62f), Size.X * 0.24f, 0, Mathf.Tau, 32, Ink, w);
                 Stroke(w, P(0.42f, 0.4f), P(0.42f, 0.16f), P(0.58f, 0.16f), P(0.58f, 0.4f));
                 break;
             default:

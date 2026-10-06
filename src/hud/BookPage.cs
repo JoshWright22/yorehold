@@ -43,7 +43,7 @@ public sealed class BookPage
     {
         if (value.Length > 0)
         {
-            _text.Append($"[b]{Escape(label)}[/b] {Escape(value)}\n");
+            _text.Append($"[b]{Escape(label)}[/b] {Value(value)}\n");
         }
         return this;
     }
@@ -51,7 +51,7 @@ public sealed class BookPage
     /// <summary>Several stats on one line, apart.</summary>
     public BookPage Stats(params (string Label, string Value)[] stats)
     {
-        List<string> parts = stats.Where(s => s.Value.Length > 0).Select(s => $"[b]{Escape(s.Label)}[/b] {Escape(s.Value)}").ToList();
+        List<string> parts = stats.Where(s => s.Value.Length > 0).Select(s => $"[b]{Escape(s.Label)}[/b] {Value(s.Value)}").ToList();
         if (parts.Count > 0)
         {
             _text.Append(string.Join("   ", parts)).Append('\n');
@@ -109,7 +109,7 @@ public sealed class BookPage
         }
         foreach (string cell in cells)
         {
-            _text.Append($"[cell expand=1][center]{Escape(cell)}[/center][/cell]");
+            _text.Append($"[cell expand=1][center]{Value(cell)}[/center][/cell]");
         }
         _text.Append("[/table]\n");
         return this;
@@ -125,6 +125,13 @@ public sealed class BookPage
 
     /// <summary>Content text with its square brackets kept from being read as bbcode.</summary>
     public static string Escape(string text) => text.Replace("[", "[lb]");
+
+    // numbers on a page are in the monospace face, like a rule book's tables
+    private static string Value(string text)
+    {
+        bool number = text.Length > 0 && (char.IsDigit(text[0]) || (text.Length > 1 && (text[0] == '+' || text[0] == '-') && char.IsDigit(text[1])));
+        return number ? $"[code]{Escape(text)}[/code]" : Escape(text);
+    }
 
     /// <summary>"Slashing damage 1d8, half on a save": what an effect's steps do, in a line each.</summary>
     public static List<string> EffectLines(Effect effect)

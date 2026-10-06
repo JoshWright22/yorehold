@@ -123,8 +123,8 @@ public partial class MenuScreen : CanvasLayer
         _load.View.Visible = page == Page.Load;
         _settings.View.Visible = page == Page.Settings;
         _credits.View.Visible = page == Page.Credits;
-        // the title has the screen to itself; over a game the map shows through, darkened toward ink
-        _back.Color = _home == Page.Title ? Palette.Ink : Palette.Faded(Palette.Ink, 0.82f);
+        // flat ink over a game too: a see-through veil would put the map in colours off the palette
+        _back.Color = Palette.Ink;
         Say("");
     }
 

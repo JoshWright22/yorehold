@@ -238,7 +238,7 @@ public partial class DataPanel : PanelContainer
             var button = new TipButton { Text = action.Label, FocusMode = FocusModeEnum.None };
             if (!action.Enabled)
             {
-                button.Modulate = Palette.Faded(Palette.Bone, 0.55f);
+                button.ThemeTypeVariation = "GreyButton";
             }
             button.Clicked += _ =>
             {
@@ -317,7 +317,7 @@ public partial class DataPanel : PanelContainer
             string arrow = column == _sortColumn ? (_sortDown ? " ▾" : " ▴") : "";
             var button = new Button
             {
-                Text = c.Title + arrow,
+                Text = c.Title.ToUpperInvariant() + arrow,
                 ThemeTypeVariation = "ColumnButton",
                 CustomMinimumSize = new Vector2(c.Width, 0),
                 SizeFlagsHorizontal = column == 0 ? SizeFlags.ExpandFill : SizeFlags.Fill,
@@ -428,8 +428,8 @@ public partial class DataPanel : PanelContainer
                 label.CustomMinimumSize = new Vector2(column.Width, 0);
                 label.SizeFlagsHorizontal = c == 0 ? SizeFlags.ExpandFill : SizeFlags.Fill;
                 label.HorizontalAlignment = column.Number ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-                label.ThemeTypeVariation = row.Dim ? "DimLabel" : c == 0 ? "" : "CellLabel";
-                label.AddThemeFontSizeOverride("font_size", 14);
+                label.ThemeTypeVariation = row.Dim ? "DimLabel" : c == 0 ? "" : column.Number ? "NumberLabel" : "CellLabel";
+                label.AddThemeFontSizeOverride("font_size", column.Number ? 13 : 14);
             }
         }
         _count.Text = shown.Count == _rows.Count ? $"{_rows.Count} {(_rows.Count == 1 ? "entry" : "entries")}" : $"{shown.Count} of {_rows.Count}";

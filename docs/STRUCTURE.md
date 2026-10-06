@@ -55,15 +55,16 @@ turns taps into `World` calls. It draws through its children, one script each:
 
 | Node | Does |
 |---|---|
-| `Map` (`MapView`) | tiles from `TileArt` (the C++ placeholder painters) and grid lines, in blocks of 8 by 8 cells |
+| `Map` (`MapView`) | tiles from `TileArt` (flat CC-29 placeholder tiles with a few marks each) and grid lines, in blocks of 8 by 8 cells |
 | `Objects` (`ObjectsView`) | doors, levers, chests, sacks the dead left, found traps and lamp flames |
 | `Tokens` (`TokensView`) | one `Token.tscn` (`TokenView`) per creature, and the heroes' paths |
 | `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, drags and pinches; a click or tap that isn't a drag comes out as `Tapped` |
 | `LightMap` (SubViewport) and `Lighting` (`LightingView`) | the light map: white ground under the ambient colour, `Light.tscn` lamps and carried lights, walls as occluders |
-| `Shading/LightMap` | multiplies the light map over the world, like the C++ lighting pass |
+| `Shading/LightMap` | the light map over the world (`scenes/lighting.gdshader`): each colour steps down a ramp of darker CC-29 colours per band of lost light, ending in 352b42 or 212123, so shadow never goes muddy or black |
 | `Overlay/Fog` (`FogView`), `Overlay/Floaters` | fog of war from the party's view, words that float up (damage big and red, healing green, a miss pale) |
 | `Overlay/FightGround` (`FightGroundView`) | on a hero's turn: the squares in reach, the path a click would walk, a picked action's range and area |
 | `Overlay/TokenBars` (`TokenBarsView`) | in a fight: HP bars over tokens, a ring on whose turn it is and on who can be targeted |
+| `Palette/Snap` | snaps everything under it to the nearest CC-29 colour (`scenes/palette.gdshader`), so fog, the fight overlay and text edges on the map stay in the palette. Create's map has the same pass |
 | `Fight` (`FightControl`) | the player's side of a fight: the picked action, what the pointer is over (`FightAim`), taps and keys into `World` calls |
 | `Hud` | chapter title, banner, and `Panels` (`scenes/hud/PlayHud.tscn`) |
 | `Hud/Cutscene` (`CutsceneView`) | plays a cutscene from `CutsceneRun`: steers the camera, draws the bars, fade, captions and titles with the panels hidden. A click, Space, Enter or Escape skips it |
@@ -83,9 +84,14 @@ writes one too and F9 loads it. When the World goes to another chapter (travel, 
 ## The panels
 
 `scenes/hud/PlayHud.tscn` with `src/hud/PlayHud.cs` is every panel over the map, laid out with containers and
-anchors and styled by `scenes/hud/hud-theme.tres` (dark panels, a thin leather trim; the type variations in it
-are the bars, frames, tabs, chips, rows, the book page and label styles). Every colour in the theme and in the
-panels' own drawing is from the CC-29 palette, named in `src/hud/Palette.cs`. `PlayScreen` hands it the `World` and the `FightAim` each frame. It
+anchors and styled by `scenes/hud/hud-theme.tres` (flat opaque panels, a 1 px leather trim, corners of 2 px at
+most, no shadows; the type variations in it are the bars, frames, tabs, chips, rows, the book page and label
+styles). Headings and column titles are small capitals in the book face, entry text is the book face (Georgia,
+or the system serif) and numbers the monospace one (Consolas, or the system monospace); both are system fonts,
+so nothing is shipped for them. Every colour in the theme and in the panels' own drawing is from the CC-29
+palette, named in `src/hud/Palette.cs`, and nothing is see-through: a greyed thing uses `GreyButton` or slate,
+never a faded alpha. `PaletteTests` reads the scenes, the theme, the shaders and `src/` and fails on any other
+colour. `PlayScreen` hands it the `World` and the `FightAim` each frame. It
 only shows them and raises an event when something is pressed; `FightControl` does the acting.
 
 | Part | Is |

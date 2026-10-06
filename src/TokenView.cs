@@ -9,7 +9,7 @@ namespace Yorehold;
 /// </summary>
 public partial class TokenView : Node2D
 {
-    [Export] public Color SelectionColor { get; set; } = Color.Color8(255, 196, 64);
+    [Export] public Color SelectionColor { get; set; } = Palette.Straw;
 
     private Token _token = new();
     private bool _dead;
@@ -32,24 +32,25 @@ public partial class TokenView : Node2D
         if (_dead)
         {
             float x = r * 0.7f;
-            DrawCircle(Vector2.Zero, r, _hero ? Color.Color8(90, 90, 100) : Color.Color8(70, 30, 25));
-            DrawLine(new Vector2(-x, -x), new Vector2(x, x), Color.Color8(20, 10, 10), 5);
-            DrawLine(new Vector2(-x, x), new Vector2(x, -x), Color.Color8(20, 10, 10), 5);
+            DrawCircle(Vector2.Zero, r, _hero ? Palette.Slate : Palette.Rust);
+            DrawLine(new Vector2(-x, -x), new Vector2(x, x), Palette.Ink, 5);
+            DrawLine(new Vector2(-x, x), new Vector2(x, -x), Palette.Ink, 5);
             return;
         }
         if (_token.Selected)
         {
-            DrawArc(Vector2.Zero, r * 1.12f, 0, Mathf.Tau, 48, SelectionColor, 4, true);
+            DrawArc(Vector2.Zero, r * 1.12f, 0, Mathf.Tau, 48, SelectionColor, 4);
         }
-        DrawCircle(Vector2.Zero, r, Color.Color8(20, 20, 24));
-        DrawCircle(Vector2.Zero, r * 0.9f, _token.Color.ToGodot());
+        // content colours land on the nearest palette colour like everything else on the map
+        DrawCircle(Vector2.Zero, r, Palette.Ink);
+        DrawCircle(Vector2.Zero, r - 2, Palette.Nearest(_token.Color.ToGodot()));
         if (_token.Name.Length > 0)
         {
             Font font = ThemeDB.FallbackFont;
             int size = Mathf.Max(8, (int)(r * 0.9f));
             string initial = _token.Name[..1];
             Vector2 measure = font.GetStringSize(initial, HorizontalAlignment.Left, -1, size);
-            DrawString(font, new Vector2(-measure.X / 2, font.GetAscent(size) / 2 - 1), initial, HorizontalAlignment.Left, -1, size, Color.Color8(20, 20, 24));
+            DrawString(font, new Vector2(-measure.X / 2, font.GetAscent(size) / 2 - 1), initial, HorizontalAlignment.Left, -1, size, Palette.Ink);
         }
     }
 }
