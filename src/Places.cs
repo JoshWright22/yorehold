@@ -47,6 +47,9 @@ public static class Places
         return ProjectSettings.GlobalizePath("user://create");
     }
 
+    /// <summary>What account sync keeps the same as the account: the saves and the characters, with sync.json and sync-backup/ in the user folder.</summary>
+    public static Rules.SyncFolders SyncFolders() => new(SavesFolder(), CharactersFolder(), ProjectSettings.GlobalizePath("user://"));
+
     /// <summary>The game's own content folder, which Create lays under every package.</summary>
     public static string GameContent() => ProjectSettings.GlobalizePath("res://assets");
 

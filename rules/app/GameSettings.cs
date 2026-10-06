@@ -7,7 +7,7 @@ namespace Yorehold.Rules;
 /// The player's settings file, settings.json, with the C++ client's field names so one file works
 /// in both. Reading never fails: a missing, broken or wrong-typed value keeps its default, since
 /// settings must not stop the game from starting. Fields this port has no use for yet (the co-op
-/// name and address, the server, the skin) are kept as they were read and written back.
+/// name and address, the skin) are kept as they were read and written back.
 /// </summary>
 public sealed class GameSettings
 {
@@ -35,6 +35,11 @@ public sealed class GameSettings
     public bool ReactionPrompts { get; set; } = true;
     /// <summary>The package folder Create had open last.</summary>
     public string LastCreatePackage { get; set; } = "";
+    /// <summary>The account server, like http://127.0.0.1:7350; "" plays offline.</summary>
+    public string Server { get; set; } = "";
+    public string ServerKey { get; set; } = "";
+    /// <summary>Names this install to the server; made up on first use.</summary>
+    public string DeviceId { get; set; } = "";
     /// <summary>Key bindings that differ from the shipped ones: action id to key names.</summary>
     public Dictionary<string, List<string>> Keys { get; } = new();
 
@@ -73,6 +78,10 @@ public sealed class GameSettings
         settings.Lighting = Math.Max(0, Array.IndexOf(LightingNames, Text(j, "lighting", "map")));
         settings.TimeOfDay = Math.Max(0, Array.IndexOf(TimeNames, Text(j, "timeOfDay", "map")));
         settings.LastCreatePackage = Text(j, "lastCreatePackage", "");
+        // the C++ client's limits
+        settings.Server = Clip(Text(j, "server", ""), 253);
+        settings.ServerKey = Clip(Text(j, "serverKey", ""), 128);
+        settings.DeviceId = Clip(Text(j, "deviceId", ""), 128);
         if (j["keys"] is JsonObject keys)
         {
             foreach (KeyValuePair<string, JsonNode?> binding in keys)
@@ -128,6 +137,9 @@ public sealed class GameSettings
             ["sharedFog"] = SharedFog,
             ["reactionPrompts"] = ReactionPrompts,
             ["lastCreatePackage"] = LastCreatePackage,
+            ["server"] = Server,
+            ["serverKey"] = ServerKey,
+            ["deviceId"] = DeviceId,
         };
         var keys = new JsonObject();
         foreach (KeyValuePair<string, List<string>> binding in Keys.OrderBy(k => k.Key, StringComparer.Ordinal))
@@ -164,8 +176,10 @@ public sealed class GameSettings
     private static readonly string[] Known =
     {
         "zoomToCursor", "edgeScroll", "cameraFollows", "panSpeed", "fullscreen", "lighting", "timeOfDay", "sharedFog",
-        "reactionPrompts", "lastCreatePackage", "keys",
+        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId",
     };
+
+    private static string Clip(string text, int longest) => text.Length > longest ? text[..longest] : text;
 
     private static bool Bool(JsonObject j, string key, bool fallback)
     {

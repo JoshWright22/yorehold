@@ -11,7 +11,7 @@ public sealed partial class World
     public AiProfile AiFor(int index)
     {
         WorldCreature c = Creatures[index];
-        Func<string, AiProfile?> lookup = Chapter.Compendium.AiNamed;
+        Func<string, AiProfile?> lookup = name => _serverProfiles.GetValueOrDefault(name) ?? Chapter.Compendium.AiNamed(name);
         AiProfile profile = AiProfile.Preset("cunning")!;
         if (index < HeroCount)
         {
@@ -48,7 +48,65 @@ public sealed partial class World
                 Layer(change.Ai);
             }
         }
+        if (_serverCreatureAi.TryGetValue(c.CreatureId, out ContentNode server))
+        {
+            Layer(server);
+        }
         return profile;
+    }
+
+    private readonly Dictionary<string, AiProfile> _serverProfiles = new();
+    private readonly Dictionary<string, ContentNode> _serverCreatureAi = new();
+
+    /// <summary>
+    /// The account server's "ai" config: {"profiles": {"coward": {...}}, "creatures": {"goblin": "coward"}}.
+    /// Profiles add to (or replace) the ones in the files; creatures put a last layer on a kind of
+    /// creature. Anything that doesn't read is skipped, so a bad config never stops a fight.
+    /// </summary>
+    public void ApplyServerAi(System.Text.Json.Nodes.JsonNode? config)
+    {
+        _serverProfiles.Clear();
+        _serverCreatureAi.Clear();
+        if (config is not System.Text.Json.Nodes.JsonObject j)
+        {
+            return;
+        }
+        if (j["profiles"] is System.Text.Json.Nodes.JsonObject profiles)
+        {
+            AiProfile? Lookup(string name) => _serverProfiles.GetValueOrDefault(name) ?? Chapter.Compendium.AiNamed(name);
+            var blank = new AiProfile { Base = "custom" };
+            // server profiles can build on each other; a few passes settle any order
+            for (int pass = 0; pass < 4; pass++)
+            {
+                foreach (KeyValuePair<string, System.Text.Json.Nodes.JsonNode?> entry in profiles)
+                {
+                    if (_serverProfiles.ContainsKey(entry.Key) || entry.Value is not System.Text.Json.Nodes.JsonObject written)
+                    {
+                        continue;
+                    }
+                    try
+                    {
+                        AiProfile profile = AiProfile.Read(ContentNode.Parse("server ai", written.ToJsonString()), Lookup, blank);
+                        _serverProfiles[entry.Key] = profile with { Base = entry.Key };
+                    }
+                    catch (ContentException)
+                    {
+                    }
+                }
+            }
+        }
+        if (j["creatures"] is System.Text.Json.Nodes.JsonObject creatures)
+        {
+            foreach (KeyValuePair<string, System.Text.Json.Nodes.JsonNode?> entry in creatures)
+            {
+                // a profile name or an object, as the C++ client takes them
+                if (entry.Value is System.Text.Json.Nodes.JsonObject
+                    || (entry.Value is System.Text.Json.Nodes.JsonValue v && v.GetValueKind() == System.Text.Json.JsonValueKind.String))
+                {
+                    _serverCreatureAi[entry.Key] = ContentNode.Parse("server ai", entry.Value.ToJsonString());
+                }
+            }
+        }
     }
 
     // Walking distance from every cell to the nearest standing foe of team.

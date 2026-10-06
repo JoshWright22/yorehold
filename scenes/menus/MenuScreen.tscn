@@ -105,6 +105,20 @@ offset_bottom = -18.0
 grow_vertical = 0
 theme_type_variation = &"DimLabel"
 
+[node name="Online" type="Label" parent="Title"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = -40.0
+offset_right = 1216.0
+offset_bottom = -18.0
+grow_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"DimLabel"
+horizontal_alignment = 2
+
 [node name="Load" parent="." instance=ExtResource("3")]
 visible = false
 

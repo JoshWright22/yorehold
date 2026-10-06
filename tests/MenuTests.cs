@@ -74,7 +74,7 @@ public class MenuTests
     [Fact]
     public void SettingsKeepWhatThisPortDoesNotRead()
     {
-        // the C++ client's file: co-op name, server and skin have to survive a save from here
+        // the C++ client's file: co-op name and skin have to survive a save from here
         GameSettings settings = GameSettings.Parse("""{"controls": "foundry", "playerName": "Rook", "skin": "Paper", "panSpeed": 700}""");
         settings.PanSpeed = 800;
         JsonObject written = JsonNode.Parse(settings.ToJson())!.AsObject();

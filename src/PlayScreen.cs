@@ -44,6 +44,7 @@ public partial class PlayScreen : Node2D
     public string LoadProblem { get; private set; } = "";
 
     private World? _world;
+    private int _serverAiSeen; // the server's config version last put on the world (0 = none yet)
     // the scene file has all of these and _Ready fetches them before anything else runs
     private MapView _map = null!;
     private ObjectsView _objects = null!;
@@ -285,6 +286,11 @@ public partial class PlayScreen : Node2D
             Refresh();
             return;
         }
+        if (App.Online.ConfigVersion != _serverAiSeen)
+        {
+            _serverAiSeen = App.Online.ConfigVersion;
+            _world.ApplyServerAi(App.Online.Config["ai"]);
+        }
         _world.Update(delta);
         if (!_clearedWritten && _world.ChapterCleared())
         {
@@ -425,7 +431,7 @@ public partial class PlayScreen : Node2D
             string path = Places.SaveFile();
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
             World.SaveFile.WriteFile(path, System.Text.Json.Nodes.JsonNode.Parse(state)!);
-            WriteBack(SaveName);
+            WriteBack(SaveName); // which asks for a sync pass too
         }
         catch (System.Exception error) when (error is System.IO.IOException or System.UnauthorizedAccessException)
         {
@@ -509,6 +515,7 @@ public partial class PlayScreen : Node2D
                 GD.PushWarning($"Couldn't write {hero.Library} back: {error.Message}");
             }
         }
+        App.FilesWritten();
     }
 
     private void FitLightMap()

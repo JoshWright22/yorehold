@@ -53,6 +53,7 @@ public partial class Main : Node
 
     public override void _Process(double delta)
     {
+        App.UpdateOnline(delta);
         // the game waits while a menu is over it
         if (_play != null)
         {

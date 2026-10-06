@@ -173,7 +173,16 @@ builds, passes `check.ps1` and is committed.
   - Default: voice lines are the C++ voice file, token joining, matching and importer with their checks, as a Voice view in Dialogue mode. Recordings are read as WAV (PCM or float), mixed to mono and resampled by straight lines. Imports go through `IVoiceTranscriber`, so tests use a stand-in.
   - Blocked: listening to a recording. The build has no speech model (the C++ client built whisper.cpp in and fetched a 57 MB model at configure time). Picking a C# binding (Whisper.net or a wrapper of our own), where the model ships and how it exports to phones is Josh's call; until then Import is greyed and says why, and OGG recordings wait for it too.
   - Not done, as in the C++ client: a graph view and playing a recording in Dialogue mode, renaming and deleting compendium entries, dragging steps on the timeline, making a chapter from a scene's map suggestion, the `yorehold-voice` command.
-- [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
+- [x] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
   (`../yorehold-server`), through an interface tests can fake.
+  - Default: `rules/online` is the C++ Online and AccountSync call for call: device sign-in with no password, protocol 0.1, sync passes at sign-in, after a write and every 30 seconds, newest wins with a backup. The C++ AccountSyncTests are ported whole with the same stand-in server; sign-in is tested against a stand-in for the network.
+  - Default: the network sits behind `IWebTransport`, whose answers are handed over when the game polls each frame, so nothing from another thread touches the game.
+  - Default: sync uses the port's own folders (`saves/`, `characters/`), with `sync.json` and `sync-backup/` in the user folder. Screenshot runs sign in as `yorehold-test-run` and never sync.
+  - Default: the server and its key are set on a new Account tab in Settings, by Off, This computer (`http://127.0.0.1:7350`) or pasting from the clipboard, since the panels have no text boxes. `YOREHOLD_SERVER`, `YOREHOLD_SERVER_KEY` and `YOREHOLD_DEVICE` win over the settings like in the C++ client.
+  - Default: the title shows the sign-in status bottom right, as the C++ client did. Connection errors are put in plain words ("nothing answers at that address").
+  - Default: the server's `ai` config is read at sign-in and every minute and put on the World as a last layer, as the C++ client's `applyServerAi`.
+  - Blocked: never run against a live server, same as the C++ client's H1. Needs one sign-in with two installs to call it done.
+  - Not ported: the C++ client's LAN co-op (host and join), so Join co-op stays off the title, and `.yore` archives with the content signature. The content registry, votes and completions were never in the C++ client either.
+  - Not done: `.uid` files for `rules/online` and the two test files. The editor makes them when it next opens the project.
 - [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is
   still experimental in Godot 4.

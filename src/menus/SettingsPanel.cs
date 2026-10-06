@@ -48,7 +48,29 @@ public sealed class SettingsPanel
             s => OnOff(s.SharedFog), new[] { "On", "Off" }, (s, i) => s.SharedFog = i == 0),
         new("reactionPrompts", "Ask before a reaction", "Game", "A hero's reaction waits for you to use it or pass. Off takes it at once.",
             s => OnOff(s.ReactionPrompts), new[] { "On", "Off" }, (s, i) => s.ReactionPrompts = i == 0),
+        new("server", "Account server", "Account",
+            "Where your characters and saves are kept besides this machine, so another install signed in to the same account gets them. Off plays offline. "
+            + $"This computer is a server run here for development ({LocalServer}). Paste address takes one like https://example.org:7350 from the clipboard.",
+            s => s.Server.Length == 0 ? "Off" : s.Server, new[] { "Off", "This computer", "Paste address" },
+            (s, i) => s.Server = i == 0 ? "" : i == 1 ? LocalServer : s.Server),
+        new("serverKey", "Server key", "Account", "The key the server was started with, which lets this game sign in. Paste key takes it from the clipboard. It is kept in the settings file and never shown.",
+            s => s.ServerKey.Length == 0 ? "none" : "set", new[] { "Paste key", "Clear" }, (s, i) => s.ServerKey = i == 1 ? "" : s.ServerKey),
     };
+
+    private const string LocalServer = "http://127.0.0.1:7350";
+    private const string AccountRow = "acct:status";
+
+    /// <summary>One word for how the account stands, for the title's settings page.</summary>
+    public static string AccountWord()
+    {
+        return App.Online.State switch
+        {
+            OnlineState.SignedIn => "signed in",
+            OnlineState.Connecting => "connecting",
+            OnlineState.Failed => "offline",
+            _ => "off",
+        };
+    }
 
     public DataPanel View { get; }
     /// <summary>Waiting for the key to bind.</summary>
@@ -79,7 +101,7 @@ public sealed class SettingsPanel
         int changed = Settings.Count(s => s.Value(now) != s.Value(defaults)) + keys.Overrides().Count;
         View.SetHead("Settings", changed == 0 ? "everything as shipped" : $"{changed} changed");
         View.SetSources(Array.Empty<(string, string)>(), "");
-        View.SetTabs(new[] { "All", "Camera", "Display", "Game", "Keys" });
+        View.SetTabs(new[] { "All", "Camera", "Display", "Game", "Account", "Keys" });
         View.SetChips(new[] { "Changed" });
         View.SetColumns(Columns);
 
@@ -99,6 +121,18 @@ public sealed class SettingsPanel
                 Tags = tags,
                 Search = setting.Description,
             });
+            if (setting.Id == "serverKey")
+            {
+                rows.Add(new DataRow
+                {
+                    Key = AccountRow,
+                    Cells = new[] { "Sign-in", "Account", AccountWord() },
+                    Sort = new IComparable?[] { rows.Count },
+                    Tags = new HashSet<string> { "Account" },
+                    Search = "account sync online status " + App.Online.Status,
+                    Dim = App.Online.State == OnlineState.Off,
+                });
+            }
         }
         foreach (KeyAction action in keys.Actions)
         {
@@ -132,6 +166,10 @@ public sealed class SettingsPanel
             var page = new BookPage().Title(found.Name).Sub(found.Group.ToLowerInvariant()).Rule();
             page.Stats(("Now", value), ("Shipped", found.Value(defaults)));
             page.Gap().Text(found.Description);
+            if (found.Group == "Account" && System.Environment.GetEnvironmentVariable("YOREHOLD_SERVER") != null)
+            {
+                page.Gap().Note("YOREHOLD_SERVER is set, so the game signs in there whatever this says.");
+            }
             var actions = new List<DataAction>();
             for (int i = 0; i < found.Options.Length; i++)
             {
@@ -155,6 +193,10 @@ public sealed class SettingsPanel
                 new("default", "Shipped keys", keys.Changed(action.Id), "It has its shipped keys."),
             };
             View.SetEntry(page.ToString(), actions, _said);
+        }
+        else if (picked == AccountRow)
+        {
+            View.SetEntry(AccountPage(), AccountActions(), _said);
         }
         else
         {
@@ -200,8 +242,27 @@ public sealed class SettingsPanel
         _said = "";
         if (id.StartsWith("option:", StringComparison.Ordinal) && Array.Find(Settings, s => "set:" + s.Id == picked) is Setting setting)
         {
-            setting.Set(App.Settings, int.Parse(id[7..]));
+            int option = int.Parse(id[7..]);
+            if (setting.Options[option].StartsWith("Paste", StringComparison.Ordinal) && !Paste(setting.Id))
+            {
+                return;
+            }
+            setting.Set(App.Settings, option);
             App.Save();
+            return;
+        }
+        if (picked == AccountRow)
+        {
+            switch (id)
+            {
+                case "reconnect":
+                    App.ConnectOnline(true);
+                    break;
+                case "sync":
+                    App.Sync.Request();
+                    _said = "A pass runs now.";
+                    break;
+            }
             return;
         }
         if (!picked.StartsWith("key:", StringComparison.Ordinal))
@@ -225,6 +286,68 @@ public sealed class SettingsPanel
                 App.Save();
                 break;
         }
+    }
+
+    // The panels have no text boxes, so an address or a key comes from the clipboard. False with
+    // a reason said when what is there can't be one.
+    private bool Paste(string id)
+    {
+        string text = DisplayServer.ClipboardGet().Trim();
+        if (id == "server")
+        {
+            bool web = Uri.TryCreate(text, UriKind.Absolute, out Uri? address) && address.Scheme is "http" or "https" && text.Length <= 253;
+            if (!web)
+            {
+                _said = text.Length == 0 ? "The clipboard is empty." : "The clipboard doesn't hold an address starting with http:// or https://.";
+                return false;
+            }
+            App.Settings.Server = text;
+            return true;
+        }
+        if (text.Length is 0 or > 128 || text.Any(char.IsWhiteSpace))
+        {
+            _said = text.Length == 0 ? "The clipboard is empty." : "The clipboard doesn't hold a key (one word, up to 128 characters).";
+            return false;
+        }
+        App.Settings.ServerKey = text;
+        return true;
+    }
+
+    private static string AccountPage()
+    {
+        Online online = App.Online;
+        AccountSync sync = App.Sync;
+        var page = new BookPage().Title("Sign-in").Sub("account").Rule();
+        page.Stats(("Server", online.Server.Length > 0 ? online.Server : "none"), ("Account", online.Account.Length > 0 ? online.Account : "none"));
+        page.Entry("Now", online.Status.Length > 0 ? online.Status : "Off. No server is set.");
+        page.Gap().Text("The game signs in by itself when a server is set, under a name made up for this install. It never waits on the server: "
+            + "offline you play as usual and what changed goes up later.");
+        page.Gap().Entry("Sync", "characters and saves go up at sign-in, after the game writes one and every 30 seconds. "
+            + "Where both sides changed the newer one wins; the other is kept in sync-backup.");
+        if (sync.Passes > 0)
+        {
+            string summary = sync.Summary();
+            page.Gap().Stats(("Passes", sync.Passes.ToString()), ("Last", summary.Length > 0 ? summary["Account sync: ".Length..] : "nothing to do"));
+            foreach (string problem in sync.Problems.Take(6))
+            {
+                page.Warn(problem);
+            }
+        }
+        if (ShotRunner.Running)
+        {
+            page.Gap().Note("Screenshot runs never sync the player's files.");
+        }
+        return page.ToString();
+    }
+
+    private static List<DataAction> AccountActions()
+    {
+        bool set = App.Online.State != OnlineState.Off;
+        return new List<DataAction>
+        {
+            new("reconnect", "Sign in again", set, "No server is set. Pick one under Account server."),
+            new("sync", "Sync now", App.Online.Account.Length > 0 && !App.Sync.Running && !ShotRunner.Running, "Only while signed in."),
+        };
     }
 
     private static string OnOff(bool on) => on ? "On" : "Off";

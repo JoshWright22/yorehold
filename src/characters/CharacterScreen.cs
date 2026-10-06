@@ -612,6 +612,7 @@ public partial class CharacterScreen : CanvasLayer
         try
         {
             CharacterLibrary.Write(_folder, entry);
+            App.FilesWritten();
             Notice(levelling ? $"{entry.Choices.Name} is now level {entry.Choices.Level}." : $"Saved {entry.Choices.Name}.", false);
         }
         catch (Exception error) when (error is InvalidOperationException or System.IO.IOException or UnauthorizedAccessException)

@@ -142,6 +142,7 @@ public sealed class LoadPanel
         try
         {
             System.IO.File.Delete(picked.Path);
+            App.FilesWritten();
         }
         catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException)
         {

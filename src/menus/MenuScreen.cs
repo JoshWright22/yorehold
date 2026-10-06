@@ -58,6 +58,7 @@ public partial class MenuScreen : CanvasLayer
     private RichTextLabel _page = null!;
     private Label _notice = null!;
     private Label _foot = null!;
+    private Label _online = null!;
     private LoadPanel _load = null!;
     private SettingsPanel _settings = null!;
     private CreditsPanel _credits = null!;
@@ -71,6 +72,7 @@ public partial class MenuScreen : CanvasLayer
     private List<SaveSummary> _saves = new();
     private string _contentLine = "";
     private Adventure? _adventure;
+    private int _syncChangesSeen;
 
     public override void _Ready()
     {
@@ -83,6 +85,7 @@ public partial class MenuScreen : CanvasLayer
         _page = GetNode<RichTextLabel>("Title/Page/Text");
         _notice = GetNode<Label>("Title/Notice");
         _foot = GetNode<Label>("Title/Foot");
+        _online = GetNode<Label>("Title/Online");
         _load = new LoadPanel(GetNode<DataPanel>("Load"));
         _settings = new SettingsPanel(GetNode<DataPanel>("Settings"));
         _credits = new CreditsPanel(GetNode<DataPanel>("Credits"));
@@ -133,6 +136,12 @@ public partial class MenuScreen : CanvasLayer
 
     public override void _Process(double delta)
     {
+        // a save may have arrived from another device, or been finished there
+        if (App.Sync.LocalChanges != _syncChangesSeen)
+        {
+            _syncChangesSeen = App.Sync.LocalChanges;
+            ReadSaves();
+        }
         switch (Showing)
         {
             case Page.Title:
@@ -293,6 +302,7 @@ public partial class MenuScreen : CanvasLayer
         _sub.Text = paused ? "The adventure waits." : $"Version {Rules.Version.Text}";
         _heading.Text = paused ? "GAME" : "CONTENTS";
         _foot.Text = _contentLine;
+        _online.Text = paused ? "" : App.Online.Status;
         if (_picked < 0 || _picked >= _list.Count)
         {
             _picked = _list.FindIndex(e => e.Enabled);
@@ -367,7 +377,8 @@ public partial class MenuScreen : CanvasLayer
     }
 
     private void Press(int index)
-    {        if (index < 0 || index >= _list.Count)
+    {
+        if (index < 0 || index >= _list.Count)
         {
             return;
         }
@@ -445,10 +456,11 @@ public partial class MenuScreen : CanvasLayer
                 }
                 break;
             case "settings":
-                page.Sub("camera, display, game and keys").Rule();
+                page.Sub("camera, display, game, account and keys").Rule();
                 page.Stat("Lighting", SettingsPanel.LightingWords[Math.Clamp(App.Settings.Lighting, 0, 3)]);
                 page.Stat("Pan speed", App.Settings.PanSpeed.ToString("0"));
                 page.Stat("Keys changed", App.Keys.Overrides().Count.ToString());
+                page.Stat("Account", SettingsPanel.AccountWord());
                 break;
             case "credits":
                 page.Sub("who made what").Rule().Text("The game, the engine it runs on and every library inside it, each with its licence.");

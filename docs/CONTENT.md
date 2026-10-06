@@ -60,10 +60,14 @@ What the port reads so far, and where it differs:
 - `settings.json` in the game's user folder is the player's settings, with the C++ client's field names
   (`zoomToCursor`, `edgeScroll`, `cameraFollows`, `panSpeed` 200 to 3000, `fullscreen`, `lighting`
   `map`/`off`/`mood`/`rules`, `timeOfDay` `map`/`day`/`dusk`/`night`, `sharedFog`, `reactionPrompts`,
-  `lastCreatePackage`) and one more, `keys`: action id to key names, only for the actions the player
-  moved off their shipped keys. A missing or wrong value keeps its default and never stops the game.
-  Fields this port doesn't use yet (`controls`, `playerName`, `joinAddress`, `skin`, `server`...) are
-  written back as they were read.
+  `lastCreatePackage`, `server` up to 253 characters, `serverKey` and `deviceId` up to 128) and one
+  more, `keys`: action id to key names, only for the actions the player moved off their shipped keys.
+  A missing or wrong value keeps its default and never stops the game. Fields this port doesn't use yet
+  (`controls`, `playerName`, `joinAddress`, `skin`...) are written back as they were read.
+- Account sync ("Account sync files" below) works as described there, with the port's folders: saves
+  from `saves/`, characters from `characters/` and `characters/graveyard/`, and `sync.json` and
+  `sync-backup/` in the user folder itself. Screenshot runs never sync, and files left alone are named
+  in Godot's warnings.
 - Character files ("Character files" below) are read and written in the same envelope and shape, so a
   library made by the C++ client opens here. The choices inside are FRAMEWORK.md's character choices.
   Until saves (P10) nothing marks a character `away`; its copy goes back to the file when the chapter

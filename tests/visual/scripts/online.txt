@@ -1,0 +1,26 @@
+# online: the account settings with no server, then pointed at this computer where nothing listens,
+# so the sign-in fails and says why on the page and the title
+# run with -Screen title -Frames 700
+20 button Settings
+21 down left
+22 up left
+30 button Account
+31 down left
+32 up left
+40 button Sign-in
+41 down left
+42 up left
+50 shot .dev/p14-account-off.png
+55 button Account_server
+56 down left
+57 up left
+65 button This_computer
+66 down left
+67 up left
+75 button Sign-in
+76 down left
+77 up left
+500 shot .dev/p14-account-offline.png
+510 key Escape
+511 keyup Escape
+530 shot .dev/p14-title.png
