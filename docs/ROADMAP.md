@@ -163,13 +163,16 @@ builds, passes `check.ps1` and is committed.
   - Default: content colours (creature tokens, lights, heroes and NPCs) are drawn in Create as the nearest CC-29 colour. Tiles are still the placeholder painters, as in play.
   - Default: the view fits the map again whenever its size changes until it is zoomed or moved by hand.
   - Not ported: the C++ `.yore` open and export buttons (folders only until P14), and dragging a light's radius as a slider (it steps by one cell and still merges into one undo step).
-- [ ] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
+- [x] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
   - Default: each mode's files are a part of `CreatePackage` in a file of its own (`CreateDialogues`...), on the one history, and Save checks every part before it writes any file.
   - Default: Dialogue mode is the C++ DialogueEditor and its checks as they are. Its columns are `ToolColumn`s like the other modes; Skill check is a toggle since the theme has no tick boxes.
   - Default: Compendium mode ports the framework's form schema into `rules/create/Form.cs` and reads the same `create/compendium.json`. Its list is a `DataPanel` (a tab per kind and All, chips for changed, errors and a chapter's own) with the form where the book page goes, since it is the most database-like of the modes.
   - Default: the port's own readers check each entry, so an entry is refused here exactly when the game would refuse it. Every shipped definition opens with no errors.
   - Default: Cutscene mode is the C++ CutsceneEditor and CutsceneHooks with their checks. The preview is the editor's own map view steered to the frame's camera, with the bars, captions and titles drawn over it, and the fade in ink at the file's alpha like play.
   - Default: Story mode is the C++ StoryEditor with its suggestions and checks. What the graph can point at is read again on the way into the tab and after a save, and from the other modes' open editors, as in the C++ client.
+  - Default: voice lines are the C++ voice file, token joining, matching and importer with their checks, as a Voice view in Dialogue mode. Recordings are read as WAV (PCM or float), mixed to mono and resampled by straight lines. Imports go through `IVoiceTranscriber`, so tests use a stand-in.
+  - Blocked: listening to a recording. The build has no speech model (the C++ client built whisper.cpp in and fetched a 57 MB model at configure time). Picking a C# binding (Whisper.net or a wrapper of our own), where the model ships and how it exports to phones is Josh's call; until then Import is greyed and says why, and OGG recordings wait for it too.
+  - Not done, as in the C++ client: a graph view and playing a recording in Dialogue mode, renaming and deleting compendium entries, dragging steps on the timeline, making a chapter from a scene's map suggestion, the `yorehold-voice` command.
 - [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
   (`../yorehold-server`), through an interface tests can fake.
 - [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is

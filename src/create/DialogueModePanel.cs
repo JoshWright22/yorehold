@@ -28,6 +28,9 @@ public partial class DialogueModePanel : VBoxContainer
     private ToolColumn _nodes = null!;
     private ToolColumn _node = null!;
     private ToolColumn _reply = null!;
+    private Button _voiceView = null!;
+    private VoicePanel _voice = null!;
+    private bool _voicing;
 
     private int _picked;
     private int? _choice;
@@ -47,6 +50,10 @@ public partial class DialogueModePanel : VBoxContainer
         _on = Small(row, ">", () => Step(1));
         _count = new Label { ThemeTypeVariation = "DimLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
         row.AddChild(_count);
+        // the recorded lines of the same conversation, in place of its nodes
+        _voiceView = new Button { Text = "Voice", ToggleMode = true, ThemeTypeVariation = "TabButton", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(90, 26) };
+        _voiceView.Toggled += on => _voicing = on;
+        row.AddChild(_voiceView);
         Button made = Small(row, "New conversation", () =>
         {
             _package?.NewDialogue();
@@ -62,6 +69,8 @@ public partial class DialogueModePanel : VBoxContainer
         _nodes = Column(200, false);
         _node = Column(0, true);
         _reply = Column(300, false);
+        _voice = new VoicePanel { SizeFlagsVertical = SizeFlags.ExpandFill, Visible = false };
+        AddChild(_voice);
     }
 
     /// <summary>The package whose chapter's conversations are shown. Called every frame.</summary>
@@ -94,13 +103,20 @@ public partial class DialogueModePanel : VBoxContainer
             _node.Invalidate();
             _reply.Invalidate();
         }
-        _body.Visible = editor != null;
+        _voiceView.SetPressedNoSignal(_voicing);
+        _body.Visible = editor != null && !_voicing;
+        _voice.Visible = editor != null && _voicing;
         _error.Visible = editor == null;
         _error.Text = package.Chapter.Length == 0 ? "This package has no chapter to write conversations for."
             : path.Length == 0 ? "This chapter has no conversations. New conversation starts one in its dialogue folder."
             : package.DialogueError.Length > 0 ? package.DialogueError : "This file can't be read.";
         if (editor == null)
         {
+            return;
+        }
+        if (_voicing)
+        {
+            _voice.Present(package, editor);
             return;
         }
 
@@ -122,7 +138,7 @@ public partial class DialogueModePanel : VBoxContainer
 
     public override void _UnhandledKeyInput(InputEvent @event)
     {
-        if (_editor != null && IsVisibleInTree() && @event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Delete } && _choice is int c)
+        if (_editor != null && !_voicing && IsVisibleInTree() && @event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Delete } && _choice is int c)
         {
             _editor.RemoveChoice(_picked, c);
             _choice = null;

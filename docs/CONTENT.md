@@ -87,8 +87,13 @@ What the port reads so far, and where it differs:
   and "The next step waits for it" is a toggle. The preview draws the fade in palette ink with the
   file's alpha, the way play does, whatever colour the file names.
 - Story mode ("Planning the story in Create") works as described, with `story.json` in the same format.
-- The other Create modes, voice lines and account sync are described below as the C++ client has
-  them. They are ported in later steps (see ROADMAP.md).
+- Voice lines ("Voice lines in Create") use the same voice file, `create/voice.json` and
+  `voice/vocabulary.txt`. Match to line, Use as line, Look again and the SRT and VTT copies work. This
+  port can't listen to a recording yet: it has no speech model, so Import is greyed and says so. When
+  it can, recordings are read as WAV (PCM or float); OGG waits for that step too. There is no
+  `yorehold-voice` command.
+- Account sync is described below as the C++ client has it. It is ported in a later step (see
+  ROADMAP.md).
 
 Content is a folder of JSON files and assets. Copy individual definitions between projects, or zip a complete folder into a `.yore` package. `.yore` is a regular ZIP archive, mounted directly; the game does not extract it or execute code from it.
 

@@ -60,6 +60,18 @@ public class ContentFiles
         return File.ReadAllText(found);
     }
 
+    /// <summary>A file that isn't text, like a recording.</summary>
+    public byte[] ReadBytes(string path)
+    {
+        string? found = Find(path);
+        if (found == null)
+        {
+            throw new ContentException(path, "", "missing file");
+        }
+        _read.Add(path);
+        return File.ReadAllBytes(found);
+    }
+
     /// <summary>Every path read so far, so a check can tell which files nothing looked at.</summary>
     public IReadOnlyCollection<string> PathsRead => _read;
 

@@ -6,7 +6,7 @@ namespace Yorehold.Rules.Tests;
 public class ContentTests
 {
     // Files the rules don't read: they belong to the UI and to Create, and only have to be JSON here.
-    private static readonly string[] NotRules = { "create/voice.json", "ui/action-icons.json" };
+    private static readonly string[] NotRules = { "ui/action-icons.json" };
 
     [Fact]
     public void EveryShippedFileLoads()
@@ -53,6 +53,13 @@ public class ContentTests
             if (!new CompendiumEditor(new History()).SetKinds(files.ReadText("create/compendium.json"), out string error))
             {
                 throw new ContentException("create/compendium.json", "", error);
+            }
+        });
+        Try("create/voice.json", () =>
+        {
+            if (VoiceImporter.Settings.Read(files.ReadText("create/voice.json"), out string error) == null)
+            {
+                throw new ContentException("create/voice.json", "", error);
             }
         });
 

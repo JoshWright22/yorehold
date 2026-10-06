@@ -119,6 +119,7 @@ public sealed partial class CreatePackage
     /// <summary>Drops the open package and everything about it, unsaved edits too.</summary>
     public void Close()
     {
+        CloseVoice();
         _history.Clear();
         // what is opened next starts saved, whatever the last package was left as
         _history.MarkSaved();
@@ -323,6 +324,7 @@ public sealed partial class CreatePackage
         {
             return false;
         }
+        VoicesToSave(changed);
         foreach ((string path, string text, Action done) in changed)
         {
             try
@@ -379,6 +381,7 @@ public sealed partial class CreatePackage
             found.AddRange(tab.Editor.Problems().Select(p => new CreateProblem(tab.Path, $"{Leaf(chapter)}: {p.Text}", p.Error)));
         }
         DialogueProblems(found);
+        VoiceProblems(found);
         CutsceneProblems(found);
         StoryProblems(found);
         CompendiumProblems(found);

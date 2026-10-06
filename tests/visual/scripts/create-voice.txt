@@ -1,0 +1,15 @@
+# Create on the game's own goblin keep: Dialogue mode's Voice view on Tobb's lines, which have no recordings yet.
+# check.ps1 -Shot create-voice-end.png -Frames 120 -Script tests\visual\scripts\create-voice.txt -Screen create
+20 button Open
+22 down left
+24 up left
+40 button Dialogue
+42 down left
+44 up left
+56 button Voice
+58 down left
+60 up left
+80 button freed
+82 down left
+84 up left
+100 shot .dev/create-voice.png
