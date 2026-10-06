@@ -92,17 +92,24 @@ public sealed class BookPage
         return this;
     }
 
+    /// <summary>What is wrong, in red.</summary>
+    public BookPage Warn(string words)
+    {
+        _text.Append($"[color={Palette.Hex(Palette.Red)}]{Escape(words)}[/color]\n");
+        return this;
+    }
+
     /// <summary>A grid of short cells under centred headings, like the six ability scores.</summary>
     public BookPage Table(IReadOnlyList<string> headings, IReadOnlyList<string> cells)
     {
         _text.Append($"[table={headings.Count}]");
         foreach (string heading in headings)
         {
-            _text.Append($"[cell][b]{Escape(heading)}[/b][/cell]");
+            _text.Append($"[cell expand=1][center][b]{Escape(heading)}[/b][/center][/cell]");
         }
         foreach (string cell in cells)
         {
-            _text.Append($"[cell]{Escape(cell)}[/cell]");
+            _text.Append($"[cell expand=1][center]{Escape(cell)}[/center][/cell]");
         }
         _text.Append("[/table]\n");
         return this;

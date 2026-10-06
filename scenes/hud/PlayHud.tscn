@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
 [ext_resource type="Script" path="res://src/hud/PlayHud.cs" id="2"]
@@ -9,7 +9,6 @@
 [ext_resource type="Script" path="res://src/hud/PortraitView.cs" id="7"]
 [ext_resource type="Script" path="res://src/hud/PipsView.cs" id="8"]
 [ext_resource type="Script" path="res://src/hud/MoveBarView.cs" id="9"]
-[ext_resource type="PackedScene" path="res://scenes/hud/SheetView.tscn" id="10"]
 [ext_resource type="PackedScene" path="res://scenes/hud/DataPanel.tscn" id="11"]
 
 [node name="PlayHud" type="Control"]
@@ -336,14 +335,9 @@ text = "Gear (I)"
 visible = false
 layout_mode = 1
 
-[node name="Sheet" parent="." instance=ExtResource("10")]
+[node name="Sheet" parent="." instance=ExtResource("11")]
 visible = false
-layout_mode = 0
-offset_left = 104.0
-offset_top = 56.0
-offset_right = 504.0
-offset_bottom = 300.0
-mouse_filter = 2
+layout_mode = 1
 
 [node name="Tip" type="PanelContainer" parent="."]
 visible = false

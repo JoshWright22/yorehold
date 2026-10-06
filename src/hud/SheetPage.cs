@@ -1,0 +1,106 @@
+using System.Collections.Generic;
+using System.Linq;
+using Yorehold.Rules;
+
+namespace Yorehold;
+
+/// <summary>
+/// A character as a stat block on a book page: who they are, AC, HP and speed, the scores in a
+/// row, then trained skills, feats, uses, conditions and gear. The sheet panel, the library and
+/// the character screens all show it.
+/// </summary>
+public static class SheetPage
+{
+    public static string Build(Ruleset rules, Compendium compendium, CharacterSheet sheet, CharacterChoices? choices, bool carrying = true)
+    {
+        var page = new BookPage().Title(sheet.Name.Trim().Length == 0 ? "New character" : sheet.Name).Sub(Who(compendium, sheet, choices)).Rule();
+        string hp = $"{System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}" + (sheet.TempHp > 0 ? $" (+{sheet.TempHp})" : "");
+        page.Stats(("AC", sheet.ArmorClass(rules).ToString()), ("HP", hp), ("Speed", $"{sheet.SpeedFeet} ft"));
+        int xp = choices != null ? System.Math.Max(choices.Xp, sheet.Xp) : sheet.Xp;
+        string next = sheet.Level - 1 < rules.XpForLevel.Count ? $" of {rules.XpForLevel[sheet.Level - 1]}" : "";
+        page.Stats(("Hit die", sheet.HitDie), ("XP", $"{xp}{next}"));
+        page.Rule();
+        page.Table(rules.Abilities.Select(a => a.Id.ToUpperInvariant()).ToList(),
+            rules.Abilities.Select(a => sheet.AbilityScore(a.Id).ToString())
+                .Concat(rules.Abilities.Select(a => $"({SheetView.Signed(sheet.AbilityModifier(rules, a.Id))})")).ToList());
+        page.Rule();
+
+        List<string> saves = rules.Abilities.Where(a => Trained(rules, sheet, a.Id))
+            .Select(a => $"{a.Id.ToUpperInvariant()} {SheetView.Signed(sheet.CheckModifier(rules, a.Id) + sheet.ProficiencyModifier(rules, a.Id))}").ToList();
+        page.Stat("Saves", string.Join(", ", saves));
+        page.Stat("Skills", string.Join(", ", rules.Skills.Where(s => Trained(rules, sheet, s.Id)).Select(s => $"{s.Name} {SheetView.Signed(sheet.CheckModifier(rules, s.Id))}")));
+        if (sheet.WeaponItem is Item weapon)
+        {
+            page.Stat("Weapon", $"{weapon.Name}, {weapon.Definition.Damage}");
+        }
+        page.Stat("Feats", string.Join(", ", Feats(compendium, choices).Select(f => f.Name)));
+        page.Stat("Uses", string.Join(", ", sheet.Resources.Select(r => $"{Words(r.Key)} {r.Value.Current}/{r.Value.Max}")));
+        page.Stat("Conditions", string.Join(", ", sheet.Conditions.Select(c => rules.Condition(c.Id)?.Name ?? c.Id)));
+        if (carrying)
+        {
+            var gear = sheet.Inventory.Select(i => (i.Quantity > 1 ? $"{i.Name} x{i.Quantity}" : i.Name) + (i.Equipped ? (i.Held ? " (in hand)" : " (worn)") : "")).ToList();
+            if (sheet.Coins > 0)
+            {
+                gear.Add(Coins.Text(sheet.Coins));
+            }
+            page.Stat("Carrying", string.Join(", ", gear));
+        }
+        return page.ToString();
+    }
+
+    /// <summary>A page with just a name and some lines, for a seat whose hero is rolled when the adventure starts.</summary>
+    public static string Text(string title, string text)
+    {
+        var page = new BookPage().Title(title).Rule();
+        foreach (string line in text.Split('\n'))
+        {
+            page.Text(line);
+        }
+        return page.ToString();
+    }
+
+    /// <summary>"Level 1 Human Fighter, Soldier".</summary>
+    public static string Who(Compendium compendium, CharacterSheet sheet, CharacterChoices? choices)
+    {
+        string who = $"Level {sheet.Level}";
+        if (sheet.Ancestry.Length > 0)
+        {
+            who += " " + sheet.Ancestry;
+        }
+        if (sheet.ClassName.Length > 0)
+        {
+            who += " " + sheet.ClassName;
+        }
+        if (choices != null && compendium.Backgrounds.TryGetValue(choices.Background, out BackgroundDefinition? background))
+        {
+            who += ", " + background.Name;
+        }
+        return who;
+    }
+
+    /// <summary>The feats a character has from race, background and picks, in that order.</summary>
+    public static List<FeatDefinition> Feats(Compendium compendium, CharacterChoices? choices)
+    {
+        if (choices == null)
+        {
+            return new List<FeatDefinition>();
+        }
+        IEnumerable<string> ids = (compendium.Races.TryGetValue(choices.Race, out RaceDefinition? race) ? race.Feats : new List<string>())
+            .Concat(compendium.Backgrounds.TryGetValue(choices.Background, out BackgroundDefinition? b) ? b.Feats : new List<string>())
+            .Concat(choices.Levels.SelectMany(l => l.Picked("feats")));
+        return ids.Select(id => compendium.Feats.TryGetValue(id, out FeatDefinition? feat) ? feat : new FeatDefinition { Id = id, Name = id }).ToList();
+    }
+
+    public static bool Trained(Ruleset rules, CharacterSheet sheet, string id)
+    {
+        bool ranked = sheet.ProficiencyRanks.TryGetValue(id, out string? rank) && rank != rules.UntrainedRank;
+        return sheet.Proficiencies.Contains(id) || ranked;
+    }
+
+    // "second-wind" reads "Second wind"
+    public static string Words(string id)
+    {
+        string words = id.Replace('-', ' ');
+        return words.Length == 0 ? words : char.ToUpperInvariant(words[0]) + words[1..];
+    }
+}

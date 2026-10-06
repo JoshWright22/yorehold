@@ -35,6 +35,9 @@ public partial class CharacterScreen : CanvasLayer
     private Label _notice = null!;
     private HBoxContainer _buttons = null!;
     private SheetView _sheet = null!;
+    private Control _root = null!;
+    private DataPanel _library = null!;
+    private string _libraryShown = "";
 
     private World? _world;
     private Ruleset _rules = new();
@@ -63,6 +66,15 @@ public partial class CharacterScreen : CanvasLayer
         _notice = GetNode<Label>("Root/Left/Rows/Notice");
         _buttons = GetNode<HBoxContainer>("Root/Left/Rows/Buttons");
         _sheet = GetNode<SheetView>("Root/Sheet");
+        _root = GetNode<Control>("Root");
+        _library = GetNode<DataPanel>("Library");
+        _library.ClosePressed += Close;
+        _library.SourcePicked += id =>
+        {
+            Showing = id == "party" ? View.Party : View.Characters;
+            Changed();
+        };
+        _library.ActionPressed += LibraryAction;
         Visible = false;
     }
 
@@ -101,6 +113,10 @@ public partial class CharacterScreen : CanvasLayer
         if (_dirty && Visible)
         {
             Redraw();
+        }
+        if (Visible && Showing == View.Characters)
+        {
+            FillLibrary();
         }
     }
 
@@ -165,6 +181,8 @@ public partial class CharacterScreen : CanvasLayer
         Clear(_body);
         Clear(_buttons);
         _problem.Text = "";
+        _root.Visible = Showing != View.Characters;
+        _library.Visible = Showing == View.Characters;
         switch (Showing)
         {
             case View.Characters:
@@ -193,76 +211,125 @@ public partial class CharacterScreen : CanvasLayer
 
     private void DrawCharacters()
     {
-        _title.Text = "Characters";
-        ViewTabs();
-        for (int i = 0; i < _entries.Count; i++)
-        {
-            LibraryEntry entry = _entries[i];
-            string text = $"{entry.Choices.Name}  (level {entry.Choices.Level})";
-            if (entry.Retired)
-            {
-                text += "  graveyard";
-            }
-            else if (entry.Away.Length > 0)
-            {
-                text += "  away";
-            }
-            int index = i;
-            Toggle(_body, text, i == _pick, () => _pick = index);
-        }
-        if (_entries.Count == 0)
-        {
-            Dim(_body, "No characters yet. Each one can go into any adventure.");
-        }
+        _libraryShown = "";
+        FillLibrary();
+    }
 
-        LibraryEntry? chosen = _pick < _entries.Count ? _entries[_pick] : null;
-        CharacterSheet? sheet = null;
-        string problem = "";
-        if (chosen != null)
+    // The library as a data panel: the characters as rows, the graveyard and those away as tabs,
+    // and the picked one's stat block on the right with New character and Level up under it.
+    private void FillLibrary()
+    {
+        _library.SetHead("Characters", _noticeText);
+        _library.SetSources(new[] { ("library", "Characters"), ("party", "New adventure") }, "library");
+        _library.SetTabs(new[] { "All", "Ready", "Away", "Graveyard" });
+        _library.SetChips(new[] { "Can level up" });
+        _library.SetColumns(new DataColumn[] { new("Name", 150), new("Class", 120), new("Level", 50, true), new("XP", 60, true), new("State", 80) });
+        var rows = new List<DataRow>();
+        foreach (LibraryEntry entry in _entries)
         {
-            sheet = CharacterBuild.Build(_rules, _compendium, chosen.Choices, out problem);
-            _sheet.ShowSheet(_rules, _compendium, sheet, chosen.Choices, problem);
-            if (sheet != null)
+            string state = entry.Retired ? "Graveyard" : entry.Away.Length > 0 ? "Away" : "Ready";
+            var tags = new HashSet<string> { state };
+            if (CanLevel(entry))
             {
-                ShowCarried(chosen);
+                tags.Add("Can level up");
             }
+            string classes = string.Join(" / ", entry.Choices.Levels.Select(l => ClassName(l.ClassId)).Distinct());
+            rows.Add(new DataRow
+            {
+                Key = entry.Path,
+                Cells = new[] { entry.Choices.Name, classes, entry.Choices.Level.ToString(), entry.Choices.Xp.ToString(), state },
+                Sort = new IComparable?[] { entry.Choices.Name, classes, entry.Choices.Level, entry.Choices.Xp, state },
+                Tags = tags,
+                Dim = entry.Retired,
+            });
+        }
+        _library.SetRows(rows);
+        _library.SetFoot($"{_entries.Count(e => !e.Retired)} in the library, {_entries.Count(e => e.Retired)} in the graveyard");
+
+        int picked = _entries.FindIndex(e => e.Path == _library.Picked);
+        if (picked >= 0)
+        {
+            _pick = picked;
+        }
+        LibraryEntry? chosen = picked >= 0 ? _entries[picked] : null;
+        string signature = (chosen?.Path ?? "") + "|" + _entries.Count + "|" + _noticeText;
+        if (signature == _libraryShown)
+        {
+            return;
+        }
+        _libraryShown = signature;
+        string page;
+        string note = "";
+        if (chosen == null)
+        {
+            page = SheetPage.Text("No character picked", "No characters yet. Each one can go into any adventure. Make one with New character.");
+        }
+        else if (Carried(chosen) is CharacterSheet sheet)
+        {
+            page = SheetPage.Build(_rules, _compendium, sheet, chosen.Choices);
+            note = chosen.Retired ? "In the graveyard: kept to look at, never played again."
+                : chosen.Away.Length > 0 ? "Away in an adventure until it ends."
+                : !CanLevel(chosen) ? "Levels up when its XP reaches the next level." : "";
         }
         else
         {
-            _sheet.ShowText("No character picked", "Make one with New character.");
+            CharacterBuild.Build(_rules, _compendium, chosen.Choices, out string problem);
+            page = new BookPage().Title(chosen.Choices.Name).Rule().Warn(problem.Length == 0 ? "This character can't be built here." : problem).ToString();
         }
-        bool canLevel = chosen != null && !chosen.Retired && chosen.Away.Length == 0 && sheet != null
-            && _rules.LevelForXp(chosen.Choices.Xp) > chosen.Choices.Level;
-        if (chosen is { Retired: false } && chosen.Away.Length > 0)
+        var actions = new List<DataAction>
         {
-            Dim(_body, "Away in an adventure until it ends.");
-        }
-        else if (chosen is { Retired: true })
+            new("new", "New character", _compendium.Classes.Count > 0, "There are no classes to pick from."),
+            new("level", "Level up", chosen != null && CanLevel(chosen), note.Length > 0 ? note : "Pick a character first."),
+            new("close", "Close (Esc)"),
+        };
+        _library.SetEntry(page, actions, "");
+        if (note.Length > 0)
         {
-            Dim(_body, "In the graveyard: kept to look at, never played again.");
+            _library.ShowWarning(note);
         }
-        else if (chosen != null && !canLevel)
-        {
-            Dim(_body, "Levels up when its XP reaches the next level.");
-        }
+    }
 
-        Push(_buttons, "New character", _compendium.Classes.Count > 0, () => NewCharacter(View.Characters));
-        Push(_buttons, "Level up", canLevel, () =>
+    private bool CanLevel(LibraryEntry entry)
+    {
+        return !entry.Retired && entry.Away.Length == 0 && _rules.LevelForXp(entry.Choices.Xp) > entry.Choices.Level
+            && CharacterBuild.Build(_rules, _compendium, entry.Choices) != null;
+    }
+
+    private void LibraryAction(string id)
+    {
+        LibraryEntry? chosen = _pick < _entries.Count && _entries[_pick].Path == _library.Picked ? _entries[_pick] : null;
+        switch (id)
         {
-            _draftBack = View.Characters;
-            _draft = CharacterDraft.LevelUp(_rules, _compendium, chosen!.Choices);
-            Showing = View.Draft;
-        });
-        Push(_buttons, "Close (Esc)", true, Close);
+            case "new":
+                NewCharacter(View.Characters);
+                break;
+            case "level" when chosen != null:
+                _draftBack = View.Characters;
+                _draft = CharacterDraft.LevelUp(_rules, _compendium, chosen.Choices);
+                Showing = View.Draft;
+                break;
+            case "close":
+                Close();
+                return;
+        }
+        Changed();
+    }
+
+    private void ShowCarried(LibraryEntry entry)
+    {
+        if (Carried(entry) is CharacterSheet sheet)
+        {
+            _sheet.ShowSheet(_rules, _compendium, sheet, entry.Choices, "");
+        }
     }
 
     // A library file keeps its own gear, which the sheet built from choices doesn't know.
-    private void ShowCarried(LibraryEntry entry)
+    private CharacterSheet? Carried(LibraryEntry entry)
     {
         CharacterSheet? sheet = CharacterBuild.Build(_rules, _compendium, entry.Choices);
         if (sheet == null)
         {
-            return;
+            return null;
         }
         for (int i = sheet.Inventory.Count - 1; i >= 0; i--)
         {
@@ -280,7 +347,7 @@ public partial class CharacterScreen : CanvasLayer
             }
         }
         sheet.Coins = entry.Coins;
-        _sheet.ShowSheet(_rules, _compendium, sheet, entry.Choices, "");
+        return sheet;
     }
 
     private void NewCharacter(View back)

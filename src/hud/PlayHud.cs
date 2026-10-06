@@ -67,7 +67,8 @@ public partial class PlayHud : Control
     private Label _tipBody = null!;
     private Label _tipWarning = null!;
     private Label _cursor = null!;
-    private SheetView _sheet = null!;
+    private DataPanel _sheetView = null!;
+    private SheetPanel _sheet = null!;
     private Button _sheetButton = null!;
     private DataPanel _gearView = null!;
     private Button _gearButton = null!;
@@ -118,7 +119,10 @@ public partial class PlayHud : Control
         _tipBody = GetNode<Label>("Tip/Rows/Body");
         _tipWarning = GetNode<Label>("Tip/Rows/Warning");
         _cursor = GetNode<Label>("Cursor");
-        _sheet = GetNode<SheetView>("Sheet");
+        _sheetView = GetNode<DataPanel>("Sheet");
+        _sheet = new SheetPanel(_sheetView);
+        _sheet.HeroPicked += hero => CreaturePressed?.Invoke(hero);
+        _sheetView.ClosePressed += () => OpenPanel = "";
         _sheetButton = GetNode<Button>("Menu/Sheet");
         _gearView = GetNode<DataPanel>("Gear");
         _gearButton = GetNode<Button>("Menu/Gear");
@@ -230,12 +234,10 @@ public partial class PlayHud : Control
     private void ShowPanels(World world, int hero)
     {
         _sheetButton.SetPressedNoSignal(OpenPanel == "Sheet");
-        _sheet.Visible = OpenPanel == "Sheet" && hero < world.HeroCount;
-        if (_sheet.Visible)
+        _sheetView.Visible = OpenPanel == "Sheet" && hero < world.HeroCount;
+        if (_sheetView.Visible)
         {
-            WorldCreature c = world.Creatures[hero];
-            _sheet.ShowSheet(world.Rules, world.Chapter.Compendium, c.Sheet, c.Choices, "");
-            _sheet.Size = Vector2.Zero; // shrinks to what the lines need
+            _sheet.Refresh(world, hero);
         }
         _gearButton.SetPressedNoSignal(OpenPanel == "Gear");
         _gearView.Visible = OpenPanel == "Gear" && hero < world.HeroCount;

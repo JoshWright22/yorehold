@@ -62,7 +62,7 @@ only shows them and raises an event when something is pressed; `FightControl` do
 | `Defeat` | the chapter's defeat text once the party is wiped |
 | `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |
 | `Menu` | the buttons along the top right: Characters, and one per panel (Sheet, C; Gear, I). A panel's key or button opens it and again closes it, so does Escape between fights; one is open at a time |
-| `Sheet` (`SheetView.tscn`) | the hero's sheet: who they are, HP, AC, speed and XP, scores, skills, feats, uses and gear. It shows the acting hero in a fight and the selected one between fights |
+| `Sheet` (`DataPanel.tscn`, filled by `SheetPanel`) | the sheet panel (C): the hero's abilities, skills, feats, uses and conditions as rows by type, with their stat block (`SheetPage`) on the right and the picked row spelled out under it. The heroes are buttons in its head. It shows the acting hero in a fight and the selected one between fights |
 | `Gear` (`DataPanel.tscn`, filled by `GearPanel`) | the gear panel (I): the hero's pack, or a pile or shop beside them, by kind of item, with the picked item's page and what can be done with it (put on, use, give, take, buy, sell). What is pressed goes out as an `ItemOrder` and `PlayScreen` does it |
 
 `DataPanel` is the data screens' shared look: a tab bar, search box and filter chips over tight rows that sort
@@ -72,9 +72,10 @@ with buttons under it. Its owner fills it every frame; it only rebuilds what cha
 ## The character screens
 
 `scenes/characters/CharacterScreen.tscn` with `src/characters/CharacterScreen.cs`, opened by Characters on the
-menu. The left side is made again after every click from `CharacterDraft` and the library; the right is a
-`SheetView` of whatever is picked. Characters lists the library and the graveyard, with New character and
-Level up (when the XP is there). New adventure has one seat per hero the chapter places: each holds its
+menu. Characters is the library as a `DataPanel` (`Library`): every character a row, tabs for those ready, away
+and in the graveyard, a chip for who can level up, the picked one's stat block on the right with New character
+and Level up (when the XP is there) under it. The other views have the left side made again after every click
+from `CharacterDraft`, and on the right a `SheetView` (the same stat block) of whatever is picked. New adventure has one seat per hero the chapter places: each holds its
 ready-made hero until a library character or a new one takes it, and Start (or Enter) plays the chapter again
 with them. Making a character has three steps, Origin, Class and scores, Skills and feats; levelling up only
 the class and the last. The library folder is `characters/` in Godot's user folder (`Places`).
