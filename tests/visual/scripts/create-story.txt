@@ -1,0 +1,17 @@
+# Create on the game's own goblin keep: Story mode with its suggestions, every one taken, then a node picked.
+# check.ps1 -Shot create-story-end.png -Frames 160 -Script tests\visual\scripts\create-story.txt -Screen create
+20 button Open
+22 down left
+24 up left
+40 button Story
+42 down left
+44 up left
+60 shot .dev/create-story-suggested.png
+64 button Take_all
+66 down left
+68 up left
+90 shot .dev/create-story-taken.png
+94 button entry-hall
+96 down left
+98 up left
+130 shot .dev/create-story-node.png

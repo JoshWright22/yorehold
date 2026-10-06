@@ -125,6 +125,7 @@ public sealed partial class CreatePackage
         CloseDialogues();
         CloseCompendium();
         CloseCutscenes();
+        CloseStory();
         _encounters.Clear();
         _encounterErrors.Clear();
         _maps.Clear();
@@ -318,7 +319,7 @@ public sealed partial class CreatePackage
                 hooks?.MarkSaved();
             }));
         }
-        if (!CutscenesToSave(changed) || !DialoguesToSave(changed) || !CompendiumToSave(changed))
+        if (!CutscenesToSave(changed) || !DialoguesToSave(changed) || !StoryToSave(changed) || !CompendiumToSave(changed))
         {
             return false;
         }
@@ -336,6 +337,8 @@ public sealed partial class CreatePackage
             done();
         }
         _history.MarkSaved();
+        // saved groups, conversations and endings change what the story graph can point at
+        StaleStory();
         Status = changed.Count == 0 ? "Nothing to save" : changed.Count == 1 ? "Saved 1 file" : $"Saved {changed.Count} files";
         if (changed.Count > 0)
         {
@@ -377,6 +380,7 @@ public sealed partial class CreatePackage
         }
         DialogueProblems(found);
         CutsceneProblems(found);
+        StoryProblems(found);
         CompendiumProblems(found);
         found.AddRange(_onDisk);
         return found;

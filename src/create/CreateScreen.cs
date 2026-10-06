@@ -24,6 +24,7 @@ public partial class CreateScreen : Control
         Dialogue,
         Compendium,
         Cutscene,
+        Story,
     }
 
     private static readonly DataColumn[] Columns = { new("Package", 220), new("Kind", 90), new("Chapters", 70, true) };
@@ -46,6 +47,8 @@ public partial class CreateScreen : Control
     private Button _compendiumTab = null!;
     private CutsceneModePanel _cutscene = null!;
     private Button _cutsceneTab = null!;
+    private StoryModePanel _story = null!;
+    private Button _storyTab = null!;
     private Label _name = null!;
     private Button _chapter = null!;
     private RichTextLabel _problems = null!;
@@ -77,6 +80,8 @@ public partial class CreateScreen : Control
         _compendiumTab = GetNode<Button>("Editor/Top/Row/Compendium");
         _cutscene = GetNode<CutsceneModePanel>("Editor/Body/Modes/Cutscene");
         _cutsceneTab = GetNode<Button>("Editor/Top/Row/Cutscene");
+        _story = GetNode<StoryModePanel>("Editor/Body/Modes/Story");
+        _storyTab = GetNode<Button>("Editor/Top/Row/Story");
         _name = GetNode<Label>("Editor/Top/Row/Name");
         _chapter = GetNode<Button>("Editor/Top/Row/Chapter");
         _problems = GetNode<RichTextLabel>("Editor/Body/Problems/Rows/Text");
@@ -90,6 +95,15 @@ public partial class CreateScreen : Control
         _dialogueTab.Pressed += () => _mode = Mode.Dialogue;
         _compendiumTab.Pressed += () => _mode = Mode.Compendium;
         _cutsceneTab.Pressed += () => _mode = Mode.Cutscene;
+        _storyTab.Pressed += () =>
+        {
+            // Story mode looks at the other modes' work, so it reads it again on the way in
+            if (_mode != Mode.Story)
+            {
+                _package.StaleStory();
+            }
+            _mode = Mode.Story;
+        };
         _chapter.Pressed += NextChapter;
         _undo.Pressed += () => _package.Undo();
         _redo.Pressed += () => _package.Redo();
@@ -126,6 +140,8 @@ public partial class CreateScreen : Control
         _compendium.Visible = _mode == Mode.Compendium;
         _cutsceneTab.SetPressedNoSignal(_mode == Mode.Cutscene);
         _cutscene.Visible = _mode == Mode.Cutscene;
+        _storyTab.SetPressedNoSignal(_mode == Mode.Story);
+        _story.Visible = _mode == Mode.Story;
         _map.Visible = _mode == Mode.Map;
         _encounters.Visible = _mode == Mode.Encounters;
         _dialogue.Visible = _mode == Mode.Dialogue;
@@ -147,6 +163,10 @@ public partial class CreateScreen : Control
         else if (_mode == Mode.Cutscene)
         {
             _cutscene.Present(_package);
+        }
+        else if (_mode == Mode.Story)
+        {
+            _story.Present(_package.StoryEditor(), _package.StoryError);
         }
         else
         {
@@ -360,7 +380,7 @@ public partial class CreateScreen : Control
 
     private void FillStart()
     {
-        _start.SetHead("Create", "maps, encounters and conversations for your own adventures");
+        _start.SetHead("Create", "make your own adventures");
         _start.SetSources(Array.Empty<(string, string)>(), "");
         _start.SetTabs(new[] { "All", "Made here", "The game's" });
         _start.SetChips(Array.Empty<string>());

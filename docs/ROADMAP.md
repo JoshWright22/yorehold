@@ -169,6 +169,7 @@ builds, passes `check.ps1` and is committed.
   - Default: Compendium mode ports the framework's form schema into `rules/create/Form.cs` and reads the same `create/compendium.json`. Its list is a `DataPanel` (a tab per kind and All, chips for changed, errors and a chapter's own) with the form where the book page goes, since it is the most database-like of the modes.
   - Default: the port's own readers check each entry, so an entry is refused here exactly when the game would refuse it. Every shipped definition opens with no errors.
   - Default: Cutscene mode is the C++ CutsceneEditor and CutsceneHooks with their checks. The preview is the editor's own map view steered to the frame's camera, with the bars, captions and titles drawn over it, and the fade in ink at the file's alpha like play.
+  - Default: Story mode is the C++ StoryEditor with its suggestions and checks. What the graph can point at is read again on the way into the tab and after a save, and from the other modes' open editors, as in the C++ client.
 - [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
   (`../yorehold-server`), through an interface tests can fake.
 - [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is

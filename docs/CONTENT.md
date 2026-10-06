@@ -86,6 +86,7 @@ What the port reads so far, and where it differs:
 - Cutscene mode ("Making cutscenes in Create") works as described. New cutscene is the button for New,
   and "The next step waits for it" is a toggle. The preview draws the fade in palette ink with the
   file's alpha, the way play does, whatever colour the file names.
+- Story mode ("Planning the story in Create") works as described, with `story.json` in the same format.
 - The other Create modes, voice lines and account sync are described below as the C++ client has
   them. They are ported in later steps (see ROADMAP.md).
 
