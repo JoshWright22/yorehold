@@ -31,6 +31,8 @@ public partial class EditorMapView : Control
     public int LowestFloor { get; set; }
     public bool Grid { get; set; } = true;
     public bool Walls { get; set; } = true;
+    /// <summary>The owner sets the view with Look; the wheel, the middle button and the arrow keys leave it alone.</summary>
+    public bool Locked { get; set; }
     /// <summary>The cell under the pointer, if it is over the map.</summary>
     public Cell? Hover { get; private set; }
     /// <summary>Screen pixels per world unit; 0 fits the map at the next draw.</summary>
@@ -81,6 +83,19 @@ public partial class EditorMapView : Control
     /// <summary>The tile atlas, for the palette's swatches: tile id n is at (n - 1) * TileArt.Size.</summary>
     public Texture2D? Atlas => _atlas;
 
+    /// <summary>Puts the view's top-left at pan with zoom screen pixels per world unit.</summary>
+    public void Look(Vector2 pan, float zoom)
+    {
+        if (Pan == pan && Zoom == zoom)
+        {
+            return;
+        }
+        _moved = true;
+        Pan = pan;
+        Zoom = Math.Max(zoom, 0.001f);
+        QueueRedraw();
+    }
+
     public void Fit()
     {
         Zoom = 0;
@@ -110,7 +125,7 @@ public partial class EditorMapView : Control
     public override void _Process(double delta)
     {
         // the arrow keys move the view, unless a text box has them
-        if (Map == null || !IsVisibleInTree() || GetViewport().GuiGetFocusOwner() is LineEdit || Input.IsKeyPressed(Key.Ctrl))
+        if (Map == null || Locked || !IsVisibleInTree() || GetViewport().GuiGetFocusOwner() is LineEdit || Input.IsKeyPressed(Key.Ctrl))
         {
             return;
         }
@@ -135,7 +150,7 @@ public partial class EditorMapView : Control
         }
         switch (@event)
         {
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown } wheel:
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown } wheel when !Locked:
             {
                 _moved = true;
                 Vector2 before = ToWorld(wheel.Position);
@@ -171,7 +186,7 @@ public partial class EditorMapView : Control
             }
             case InputEventMouseMotion motion:
             {
-                if (_held == MouseButton.Middle)
+                if (_held == MouseButton.Middle && !Locked)
                 {
                     _moved = true;
                     Pan -= motion.Relative / Zoom;

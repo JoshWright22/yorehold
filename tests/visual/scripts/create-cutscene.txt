@@ -1,0 +1,29 @@
+# Create on the game's own goblin keep: Cutscene mode on its ending, played a little way in, then the whole map with the camera's frame, then a new cutscene.
+# check.ps1 -Shot create-cutscene-end.png -Frames 320 -Script tests\visual\scripts\create-cutscene.txt -Screen create
+20 button Open
+22 down left
+24 up left
+40 button Cutscene
+42 down left
+44 up left
+60 shot .dev/create-cutscene-start.png
+64 key Space
+200 shot .dev/create-cutscene-playing.png
+204 key Space
+208 button Whole_map
+210 down left
+212 up left
+230 shot .dev/create-cutscene-whole.png
+234 button New_cutscene
+236 down left
+238 up left
+260 button Title
+262 down left
+264 up left
+270 button Add_trigger
+272 down left
+274 up left
+278 button Chapter_cleared
+280 down left
+282 up left
+300 shot .dev/create-cutscene-new.png

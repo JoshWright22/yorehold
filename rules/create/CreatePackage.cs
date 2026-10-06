@@ -124,6 +124,7 @@ public sealed partial class CreatePackage
         _history.MarkSaved();
         CloseDialogues();
         CloseCompendium();
+        CloseCutscenes();
         _encounters.Clear();
         _encounterErrors.Clear();
         _maps.Clear();
@@ -266,26 +267,58 @@ public sealed partial class CreatePackage
             }
             changed.Add(new Changed(tab.Path, text, () => tab.Saved = text));
         }
-        foreach ((string chapter, EncountersTab tab) in _encounters)
+        // a chapter.json is Encounters mode's groups with Cutscene mode's triggers and endings on top
+        foreach (string chapter in _encounters.Keys.Union(_hooks.Keys).Distinct().OrderBy(c => c, StringComparer.Ordinal).ToList())
         {
-            string text = tab.Editor.ToJson();
-            bool groupsChanged = text != tab.Saved;
-            bool mapChanged = _maps.TryGetValue(chapter, out MapTab? map) && map.Editor.ToJson() != map.Saved;
-            // a wall painted over a creature counts too, though only the map changed
-            if (groupsChanged || mapChanged)
+            EncountersTab? tab = _encounters.GetValueOrDefault(chapter);
+            CutsceneHooks? hooks = _hooks.GetValueOrDefault(chapter);
+            string own = tab?.Editor.ToJson() ?? "";
+            bool groupsChanged = tab != null && own != tab.Saved;
+            if (tab != null)
             {
-                if (tab.Editor.Problems().FirstOrDefault(p => p.Error) is Yorehold.Rules.EncountersEditor.Problem wrong)
+                bool mapChanged = _maps.TryGetValue(chapter, out MapTab? map) && map.Editor.ToJson() != map.Saved;
+                // a wall painted over a creature counts too, though only the map changed
+                if ((groupsChanged || mapChanged) && tab.Editor.Problems().FirstOrDefault(p => p.Error) is Yorehold.Rules.EncountersEditor.Problem wrong)
                 {
                     Status = $"{Leaf(chapter)} not saved: {wrong.Text}";
                     return false;
                 }
             }
-            if (groupsChanged)
+            bool hooksChanged = hooks?.Changed == true;
+            if (!groupsChanged && !hooksChanged)
             {
-                changed.Add(new Changed(tab.Path, text, () => tab.Saved = text));
+                continue;
             }
+            if (hooks?.Problems().FirstOrDefault(p => p.Error) is CutsceneHooks.Problem broken)
+            {
+                Status = $"{Leaf(chapter)} not saved: {broken.Text}";
+                return false;
+            }
+            string text = own;
+            if (tab == null)
+            {
+                var package = new ContentFiles(PackagePath);
+                if (!package.Exists(chapter + "/chapter.json"))
+                {
+                    Status = chapter + "/chapter.json can't be read";
+                    return false;
+                }
+                text = package.ReadText(chapter + "/chapter.json");
+            }
+            if (hooks != null)
+            {
+                text = hooks.ApplyTo(text);
+            }
+            changed.Add(new Changed(chapter + "/chapter.json", text, () =>
+            {
+                if (tab != null)
+                {
+                    tab.Saved = own;
+                }
+                hooks?.MarkSaved();
+            }));
         }
-        if (!DialoguesToSave(changed) || !CompendiumToSave(changed))
+        if (!CutscenesToSave(changed) || !DialoguesToSave(changed) || !CompendiumToSave(changed))
         {
             return false;
         }
@@ -343,6 +376,7 @@ public sealed partial class CreatePackage
             found.AddRange(tab.Editor.Problems().Select(p => new CreateProblem(tab.Path, $"{Leaf(chapter)}: {p.Text}", p.Error)));
         }
         DialogueProblems(found);
+        CutsceneProblems(found);
         CompendiumProblems(found);
         found.AddRange(_onDisk);
         return found;

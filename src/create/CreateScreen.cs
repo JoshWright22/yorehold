@@ -23,6 +23,7 @@ public partial class CreateScreen : Control
         Encounters,
         Dialogue,
         Compendium,
+        Cutscene,
     }
 
     private static readonly DataColumn[] Columns = { new("Package", 220), new("Kind", 90), new("Chapters", 70, true) };
@@ -43,6 +44,8 @@ public partial class CreateScreen : Control
     private Button _dialogueTab = null!;
     private CompendiumModePanel _compendium = null!;
     private Button _compendiumTab = null!;
+    private CutsceneModePanel _cutscene = null!;
+    private Button _cutsceneTab = null!;
     private Label _name = null!;
     private Button _chapter = null!;
     private RichTextLabel _problems = null!;
@@ -72,6 +75,8 @@ public partial class CreateScreen : Control
         _dialogueTab = GetNode<Button>("Editor/Top/Row/Dialogue");
         _compendium = GetNode<CompendiumModePanel>("Editor/Body/Modes/Compendium");
         _compendiumTab = GetNode<Button>("Editor/Top/Row/Compendium");
+        _cutscene = GetNode<CutsceneModePanel>("Editor/Body/Modes/Cutscene");
+        _cutsceneTab = GetNode<Button>("Editor/Top/Row/Cutscene");
         _name = GetNode<Label>("Editor/Top/Row/Name");
         _chapter = GetNode<Button>("Editor/Top/Row/Chapter");
         _problems = GetNode<RichTextLabel>("Editor/Body/Problems/Rows/Text");
@@ -84,6 +89,7 @@ public partial class CreateScreen : Control
         _encountersTab.Pressed += () => _mode = Mode.Encounters;
         _dialogueTab.Pressed += () => _mode = Mode.Dialogue;
         _compendiumTab.Pressed += () => _mode = Mode.Compendium;
+        _cutsceneTab.Pressed += () => _mode = Mode.Cutscene;
         _chapter.Pressed += NextChapter;
         _undo.Pressed += () => _package.Undo();
         _redo.Pressed += () => _package.Redo();
@@ -118,6 +124,8 @@ public partial class CreateScreen : Control
         _dialogueTab.SetPressedNoSignal(_mode == Mode.Dialogue);
         _compendiumTab.SetPressedNoSignal(_mode == Mode.Compendium);
         _compendium.Visible = _mode == Mode.Compendium;
+        _cutsceneTab.SetPressedNoSignal(_mode == Mode.Cutscene);
+        _cutscene.Visible = _mode == Mode.Cutscene;
         _map.Visible = _mode == Mode.Map;
         _encounters.Visible = _mode == Mode.Encounters;
         _dialogue.Visible = _mode == Mode.Dialogue;
@@ -135,6 +143,10 @@ public partial class CreateScreen : Control
         else if (_mode == Mode.Compendium)
         {
             _compendium.Present(_package);
+        }
+        else if (_mode == Mode.Cutscene)
+        {
+            _cutscene.Present(_package);
         }
         else
         {
