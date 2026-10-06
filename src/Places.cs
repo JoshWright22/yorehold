@@ -35,6 +35,22 @@ public static class Places
     public static string SavesFolder() => System.IO.Path.GetDirectoryName(SaveFile())!; // SaveFile always has a folder part
 
     /// <summary>
+    /// Where Create makes new adventures and looks for the ones made before. A screenshot run has
+    /// its own under ../.dev, emptied as it starts, so New always makes the same first folder.
+    /// </summary>
+    public static string CreateFolder()
+    {
+        if (ShotRunner.Running)
+        {
+            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-create"));
+        }
+        return ProjectSettings.GlobalizePath("user://create");
+    }
+
+    /// <summary>The game's own content folder, which Create lays under every package.</summary>
+    public static string GameContent() => ProjectSettings.GlobalizePath("res://assets");
+
+    /// <summary>
     /// settings.json, the C++ client's file name. A screenshot run has its own under ../.dev,
     /// removed as it starts, so every run begins from the shipped settings and keys.
     /// </summary>

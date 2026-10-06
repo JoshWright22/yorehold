@@ -82,8 +82,10 @@ public class ContentPackage
     /// <summary>
     /// Loads everything the manifest declares, so a broken package is caught before play: each
     /// chapter, the adventure file if there is one, and the declared dialogues and cutscenes.
+    /// own is the package's folder alone when files lays it over other content, so an adventure
+    /// file underneath it isn't taken for the package's.
     /// </summary>
-    public void Validate(ContentFiles files)
+    public void Validate(ContentFiles files, ContentFiles? own = null)
     {
         if (Chapters.Count == 0)
         {
@@ -99,7 +101,7 @@ public class ContentPackage
                 throw new ContentException(folder + "/chapter.json", "id", $"duplicate chapter id {chapter.Id}");
             }
         }
-        if (files.Exists("adventure.json"))
+        if ((own ?? files).Exists("adventure.json"))
         {
             Adventure.Load(files);
         }

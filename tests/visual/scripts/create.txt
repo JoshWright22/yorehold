@@ -1,0 +1,99 @@
+# Create: the package list, a new adventure, map mode (walls, a stone floor, a light, a door),
+# encounters mode (two goblins, one picked), save, a playtest and back.
+# check.ps1 -Shot create-end.png -Frames 470 -Script tests\visual\scripts\create.txt -Screen create
+20 shot .dev/create-start.png
+24 button New_adventure
+26 down left
+28 up left
+
+# walls along a drag
+40 button Wall
+42 down left
+44 up left
+50 cell 5 5
+52 down left
+54 cell 8 5
+56 cell 10 5
+58 cell 10 8
+60 cell 10 10
+62 up left
+
+# a stone floor in a box
+70 button Fill_box
+72 down left
+74 up left
+78 button stone
+80 down left
+82 up left
+86 cell 12 3
+88 down left
+90 cell 16 6
+92 cell 17 8
+94 up left
+
+# a light in the room
+100 button Light
+102 down left
+104 up left
+108 cell 14 5
+110 down left
+112 up left
+
+# a door in the wall
+120 button Kit
+122 down left
+124 up left
+128 button Door
+130 down left
+132 up left
+136 cell 10 7
+138 down left
+140 up left
+150 cell 20 13
+160 shot .dev/create-map.png
+
+# two goblins, then the first picked
+170 button Encounters
+172 down left
+174 up left
+180 button Place
+182 down left
+184 up left
+188 button Goblin
+190 down left
+192 up left
+196 cell 15 11
+198 down left
+200 up left
+204 cell 18 12
+206 down left
+208 up left
+214 button Select
+216 down left
+218 up left
+222 cell 15 11
+224 down left
+226 up left
+236 shot .dev/create-creature.png
+
+# the group's page
+240 cell 6 12
+242 down left
+244 up left
+256 shot .dev/create-group.png
+
+# save, then play it and come back
+260 button Save
+262 down left
+264 up left
+276 shot .dev/create-saved.png
+280 button Playtest
+282 down left
+284 up left
+380 shot .dev/create-playtest.png
+384 key Escape
+386 keyup Escape
+420 button Map
+422 down left
+424 up left
+460 shot .dev/create-back.png

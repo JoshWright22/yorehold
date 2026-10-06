@@ -1,0 +1,17 @@
+# Create on the game's own goblin keep: its map, then its encounters with a group picked.
+# check.ps1 -Shot create-keep-end.png -Frames 150 -Script tests\visual\scripts\create-keep.txt -Screen create
+20 button Open
+22 down left
+24 up left
+60 shot .dev/create-keep-map.png
+64 button Encounters
+66 down left
+68 up left
+80 button Place
+82 down left
+84 up left
+100 shot .dev/create-keep-place.png
+104 button Select
+106 down left
+108 up left
+140 shot .dev/create-keep-encounters.png

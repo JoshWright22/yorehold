@@ -151,7 +151,18 @@ builds, passes `check.ps1` and is committed.
   - Default: edge panning needs the pointer within 3 px of the window's edge and stops while a button is held.
   - Default: the engine's part of the credits (its MIT licence text and every library in it) is asked of the engine at run time, so it matches the build. The game's own entries are `ui/credits.json`; it names nobody yet, that is the owner's to fill in.
   - Not done: text size, colour-blind team colours, dice speed and auto-end turn from the design's settings list. The C++ client had none of them either.
-- [ ] **P12. Create: shell, map and encounters modes.**
+- [x] **P12. Create: shell, map and encounters modes.**
+  - Default: Create's rules are `rules/create` (history, map editor, encounters editor, the open package) and port the C++ MapEditor and EncountersEditor checks; the screen only lays them out, like the C++ panels.
+  - Default: only the Map and Encounters tabs are shown. Dialogue, Compendium, Cutscene and Story come with P13 rather than as tabs that do nothing.
+  - Default: with nothing open Create is a data panel of packages: the ones made in `create/` in the user folder, the last one opened and the game's own content (whose page warns that saving writes into the game's files). Open, New adventure, Back to title.
+  - Default: New names the chapter folder and id after the package (`chapters/new-adventure`), not `chapter-one` as in the C++ client, since the package is played over the game's content and would stand in for the game's own chapter-one.
+  - Default: the problems list checks the package's files over the game's content as a playtest plays them, and only the package's own `adventure.json` (`ContentPackage.Validate` takes the package's own files for that). Editor problems follow edits at once; the files on disk are checked again on open and save.
+  - Default: Playtest saves first and plays the open chapter with `PlayScreen.Playtest` on (no save, no library write-back). Escape ends it and Create comes back as it was. The C++ client never had a playtest.
+  - Default: Close with unsaved work needs pressing twice; Escape is Close.
+  - Default: the editor has no checkboxes, sliders or drop-down menus since the theme has none: toggles, +/- buttons and < > steppers do their jobs. A light's colour is one of six CC-29 colours (Torch, Candle, White, Ember, Cold, Witchlight).
+  - Default: content colours (creature tokens, lights, heroes and NPCs) are drawn in Create as the nearest CC-29 colour. Tiles are still the placeholder painters, as in play.
+  - Default: the view fits the map again whenever its size changes until it is zoomed or moved by hand.
+  - Not ported: the C++ `.yore` open and export buttons (folders only until P14), and dragging a light's radius as a slider (it steps by one cell and still merges into one undo step).
 - [ ] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
 - [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
   (`../yorehold-server`), through an interface tests can fake.

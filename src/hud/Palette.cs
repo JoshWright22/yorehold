@@ -38,6 +38,29 @@ public static class Palette
     public static readonly Color Orchid = Color.Color8(0xcf, 0x8a, 0xcb);
     public static readonly Color Mauve = Color.Color8(0x5f, 0x55, 0x6a);
 
+    private static readonly Color[] All =
+    {
+        Bone, Ash, Smoke, Slate, Iron, Dusk, Ink, Night, Indigo, Blue, Sky, Mint, Straw, Amber, Red,
+        Plum, Shade, Rust, Leather, Sand, Lime, Leaf, Teal, Moss, Olive, Sage, Rose, Orchid, Mauve,
+    };
+
+    /// <summary>The palette colour closest to any colour, for content colours drawn on a panel.</summary>
+    public static Color Nearest(Color color)
+    {
+        Color best = Bone;
+        float distance = float.MaxValue;
+        foreach (Color c in All)
+        {
+            float d = (c.R - color.R) * (c.R - color.R) + (c.G - color.G) * (c.G - color.G) + (c.B - color.B) * (c.B - color.B);
+            if (d < distance)
+            {
+                distance = d;
+                best = c;
+            }
+        }
+        return best;
+    }
+
     /// <summary>A palette colour seen through: the same hue, less of it.</summary>
     public static Color Faded(Color color, float alpha) => new(color.R, color.G, color.B, alpha);
 

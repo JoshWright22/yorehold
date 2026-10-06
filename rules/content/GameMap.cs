@@ -270,6 +270,23 @@ public class GameMap
 
     private static MapObject PlaceObject(ContentNode entry, IReadOnlyDictionary<string, Kit> kits, int width, int height)
     {
+        return Merged(entry, kits, width, height).Placed;
+    }
+
+    /// <summary>
+    /// An "objects" entry written out in full: the kit it names with the entry's changes on it and
+    /// its "area" where it stands, so it reads back the same with no kit file. This is the form
+    /// Create saves placed kits in.
+    /// </summary>
+    public static JsonObject WholeObject(ContentNode entry, IReadOnlyDictionary<string, Kit> kits, int width, int height)
+    {
+        (MapObject placed, JsonObject whole) = Merged(entry, kits, width, height);
+        whole["area"] = new JsonArray(placed.X, placed.Y, placed.Width, placed.Height);
+        return whole;
+    }
+
+    private static (MapObject Placed, JsonObject Whole) Merged(ContentNode entry, IReadOnlyDictionary<string, Kit> kits, int width, int height)
+    {
         entry.RequireObject("each object is an object");
         JsonObject made;
         if (entry.Get("kit") is ContentNode kitName)
@@ -312,12 +329,12 @@ public class GameMap
         {
             throw entry.Fail("is outside the map");
         }
-        return new MapObject
+        return (new MapObject
         {
             Name = placed.Name, Texture = placed.Texture, X = x, Y = y, Width = placed.Width, Height = placed.Height,
             Floor = placed.Floor, Tags = placed.Tags, Weight = placed.Weight, Destroyed = placed.Destroyed, Contents = placed.Contents,
             Door = placed.Door, Durability = placed.Durability, Lock = placed.Lock, Trap = placed.Trap, Light = placed.Light,
-        };
+        }, made);
     }
 
     // JSON merge patch: objects merge field by field, null removes, anything else replaces.

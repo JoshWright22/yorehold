@@ -69,8 +69,16 @@ What the port reads so far, and where it differs:
   Until saves (P10) nothing marks a character `away`; its copy goes back to the file when the chapter
   is cleared, when a new adventure starts and when the game closes. The library is `characters/` in
   Godot's user folder.
-- Create, voice lines and account sync are described below as the C++ client has them. They are
-  ported in later steps (see ROADMAP.md).
+- Create's Map and Encounters modes ("Drawing a map in Create" and "Placing encounters in Create"
+  below) work as described, with these differences. New makes a folder under `create/` in Godot's user
+  folder and names its chapter folder after the package (`chapters/new-adventure`), so it never stands
+  in for one of the game's own chapters when the package is played over them. The problems list reads
+  the package's files over the game's content, the way a playtest plays them, so the game's classes and
+  creatures count. Playtest plays the open chapter with nothing saved and Escape comes back. Lights
+  take one of six CC-29 colours. `-- --screen create` starts the game in Create, in place of
+  `YOREHOLD_CREATE`.
+- The other Create modes, voice lines and account sync are described below as the C++ client has
+  them. They are ported in later steps (see ROADMAP.md).
 
 Content is a folder of JSON files and assets. Copy individual definitions between projects, or zip a complete folder into a `.yore` package. `.yore` is a regular ZIP archive, mounted directly; the game does not extract it or execute code from it.
 

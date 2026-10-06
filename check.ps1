@@ -6,7 +6,8 @@
 #                            -Frames N (default 300) is how long it runs, -Script file.txt drives it
 #                            (format: tests\visual\scripts, same as the C++ client's)
 #                            -Chapter chapters\goblin-keep plays that chapter instead of the scene's
-#                            -Screen title starts the run on the title (default: play, straight into the game)
+#                            -Screen title starts the run on the title, -Screen create in Create
+#                            (default: play, straight into the game)
 # Exit code 0 and ALL OK = all good. Full output is in ..\.dev\godot-build.log, -test.log, -run.log,
 # -shot.log.
 
@@ -53,7 +54,7 @@ Write-Host 'tests ok'
 # Once per screen the game can start on: the title is what a player gets, the others sit behind it.
 $runLog = Join-Path $dev 'godot-run.log'
 Remove-Item $runLog -ErrorAction SilentlyContinue
-foreach ($startOn in 'title', 'play') {
+foreach ($startOn in 'title', 'play', 'create') {
     $job = Start-Job { param($g, $p, $s) & $g --headless --path $p --quit-after 30 -- --screen $s 2>&1 } -ArgumentList $godot, $root, $startOn
     if (-not (Wait-Job $job -Timeout 120)) { Stop-Job $job; Write-Host "FAIL: headless run timed out ($startOn)"; exit 1 }
     "--- $startOn" | Out-File $runLog -Append -Encoding utf8

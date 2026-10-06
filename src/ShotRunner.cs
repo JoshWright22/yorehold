@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Godot;
 using Yorehold.Rules;
 
@@ -76,6 +77,10 @@ public partial class ShotRunner : Node
         {
             System.IO.Directory.Delete(settings, true);
         }
+        if (System.IO.Directory.Exists(Places.CreateFolder()))
+        {
+            System.IO.Directory.Delete(Places.CreateFolder(), true);
+        }
         RenderingServer.FramePostDraw += AfterDraw;
         GD.Print($"Shot run:{_frames} frames, {_script.Count} script steps, saving {_shot}");
     }
@@ -130,7 +135,13 @@ public partial class ShotRunner : Node
                 break;
             case "cell":
             {
-                // the pointer to the middle of a map cell, wherever the camera is now
+                // the pointer to the middle of a map cell, wherever the camera is now; Create's map when it is showing
+                Cell asked = new((int)Number(step.A), (int)Number(step.B));
+                if (GetTree().GetNodesInGroup("create_map").OfType<EditorMapView>().FirstOrDefault(v => v.IsVisibleInTree()) is EditorMapView editor)
+                {
+                    MoveMouse(editor.ScreenOfCell(asked));
+                    break;
+                }
                 if (GetTree().GetFirstNodeInGroup("play_screen") is not PlayScreen screen)
                 {
                     GD.PushError($"Input script: no play screen for 'cell' on frame {step.Frame}");

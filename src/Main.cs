@@ -15,7 +15,7 @@ public partial class Main : Node
 
     private MenuScreen _menus = null!; // the scene has it
     private PlayScreen? _play;
-    private Node? _create;
+    private CreateScreen? _create;
 
     public override void _Ready()
     {
@@ -144,10 +144,46 @@ public partial class Main : Node
             _menus.Say("Create isn't in this build yet.");
             return;
         }
-        _create = CreateScene.Instantiate<Node>();
+        _create = CreateScene.Instantiate<CreateScreen>();
+        // deferred: both are asked from inside Create, which they free or hide
+        _create.Closed += () => Callable.From(() => ToTitle("")).CallDeferred();
+        _create.PlaytestAsked += (files, chapter) => Callable.From(() => Playtest(files, chapter)).CallDeferred();
         AddChild(_create);
         MoveChild(_create, 0);
         _menus.Open(MenuScreen.Page.None);
+    }
+
+    // A chapter of the package open in Create, played with nothing saved; Escape goes back to Create.
+    private void Playtest(Rules.ContentFiles files, string chapter)
+    {
+        if (_create == null || PlayScene == null)
+        {
+            return;
+        }
+        _create.Visible = false;
+        _create.ProcessMode = ProcessModeEnum.Disabled;
+        _play = PlayScene.Instantiate<PlayScreen>();
+        _play.Content = files;
+        _play.ChapterFolder = chapter;
+        _play.Playtest = true;
+        _play.PauseAsked += () => Callable.From(EndPlaytest).CallDeferred();
+        AddChild(_play);
+        MoveChild(_play, 0);
+    }
+
+    private void EndPlaytest()
+    {
+        if (_play != null)
+        {
+            RemoveChild(_play);
+            _play.QueueFree();
+            _play = null;
+        }
+        if (_create != null)
+        {
+            _create.Visible = true;
+            _create.ProcessMode = ProcessModeEnum.Inherit;
+        }
     }
 
     private void ToTitle(string notice)
