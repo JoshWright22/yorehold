@@ -18,6 +18,7 @@ public sealed partial class World
     public const string StrikeAction = "strike";
     public const string StrideAction = "stride";
     public const string EndTurnAction = "end-turn";
+    public const string InteractAction = "interact";
 
     private enum EnemyStep
     {
@@ -501,6 +502,7 @@ public sealed partial class World
             }
         }
         SetFlags(won);
+        DropLoot();
 
         if (ChapterCleared())
         {

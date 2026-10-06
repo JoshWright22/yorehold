@@ -3,7 +3,7 @@ using Yorehold.Rules;
 
 namespace Yorehold;
 
-/// <summary>Doors, levers, chests, the traps the party has found and lamp flames, drawn the way the C++ client drew them.</summary>
+/// <summary>Doors, levers, chests, what the dead left, the traps the party has found and lamp flames, drawn the way the C++ client drew them.</summary>
 public partial class ObjectsView : Node2D
 {
     private World? _world;
@@ -56,7 +56,8 @@ public partial class ObjectsView : Node2D
             var inner = new Rect2(area.Position + new Vector2(4, 4), area.Size - new Vector2(8, 8));
             if (o.Has("container"))
             {
-                DrawChest(o, centre);
+                Pile? inside = _world.Piles.Find(p => p.Object == o.Id);
+                DrawChest(centre, inside == null || inside.Empty, o.Locked);
             }
             else if (o.HasDoor)
             {
@@ -91,14 +92,38 @@ public partial class ObjectsView : Node2D
                 DrawRect(new Rect2(area.Position + new Vector2(8, 8), area.Size - new Vector2(16, 16)), Color.Color8(100, 90, 80));
             }
         }
+        DrawPiles(team);
+    }
+
+    // The chapter's containers are chests too, and what the dead left is a sack where they fell.
+    private void DrawPiles(int team)
+    {
+        const float cell = GameMap.CellSize;
+        foreach (Pile pile in _world!.Piles)
+        {
+            if (pile.Object != 0 || _world.Fog.State(team, 0, pile.At) == FogState.Unexplored || (pile.Container < 0 && pile.Empty))
+            {
+                continue;
+            }
+            var centre = new Vector2((pile.At.X + 0.5f) * cell, (pile.At.Y + 0.5f) * cell);
+            if (pile.Container >= 0)
+            {
+                DrawChest(centre, pile.Empty, false);
+                continue;
+            }
+            // in the square's corner, since the fallen token lies over the middle
+            Vector2 sack = centre + new Vector2(cell * 0.3f, cell * 0.3f);
+            DrawCircle(sack, cell * 0.15f, Palette.Rust);
+            DrawArc(sack, cell * 0.15f, 0, Mathf.Tau, 20, Palette.Ink, 2);
+            DrawLine(sack + new Vector2(-4, -cell * 0.15f), sack + new Vector2(4, -cell * 0.15f), Palette.Amber, 3);
+        }
     }
 
     // dull once emptied, a gold dot under it while locked
-    private void DrawChest(WorldObject o, Vector2 centre)
+    private void DrawChest(Vector2 centre, bool empty, bool locked)
     {
         const float cell = GameMap.CellSize;
-        bool empty = o.Contents.Count == 0;
-        if (o.Locked)
+        if (locked)
         {
             DrawCircle(centre + new Vector2(0, cell * 0.3f), 5, Color.Color8(225, 195, 80));
         }

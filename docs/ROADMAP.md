@@ -10,6 +10,11 @@ Layout: `rules/` is plain C# with no Godot types (content loading, rules, World,
 tested with xunit in `tests/`. The Godot project in the root only draws, takes input and shows UI.
 Content stays as the JSON files in `assets/`; old files keep loading.
 
+Look: panels use the CC-29 palette and nothing else (`src/hud/Palette.cs`, `scenes/hud/hud-theme.tres`).
+The fight screen keeps its hotbar and portraits. Data screens (sheet, gear, spells, library) are dense
+like a database: a tab bar of types, a search box, filter chips, tight rows sorted by any column, the
+list on the left and the full entry on the right as a book page.
+
 Order: get a playable demo early (walk a map, fight, win), then widen. Tick a box when its step
 builds, passes `check.ps1` and is committed.
 
@@ -99,8 +104,15 @@ builds, passes `check.ps1` and is committed.
   - Default: until the menus (P11) the play screen's Characters button opens both the library and New adventure; Start plays the chapter again with a new seed (the same seed in screenshot runs). Screenshot runs keep their library in `.dev/shot-characters`.
   - Default: levels from XP in play go into the hero's latest class, as in the C++ client; the level-up screen is for library characters with XP to spare.
   - Not ported yet: reading choices back off an old sheet (`choicesFromSheet`), which only older saves need (P10).
-- [ ] **P8. Items.** Inventory and hands, loot and containers, weight and the magic item limit,
+- [x] **P8. Items.** Inventory and hands, loot and containers, weight and the magic item limit,
   merchants, consumables; their panels.
+  - Default: what can be taken lies in piles: the chapter's containers and the chests on the map fill when it starts, and the dead leave theirs when a fight is won. A group's own loot table lies with the last of it to fall. Saving piles, purses and stock comes with saves (P10).
+  - Default: taking, giving and trading are between fights only. Changing gear is free then and costs what Interact costs on the hero's own turn in a fight; a consumable costs its own `use` cost. Hostile consumables wait for a fight, so they can't get round initiative.
+  - Default: a creature's gear is worn like a hero's, except armour on top of its stat block's AC, which already counts it.
+  - Default: weight slows walking between fights by the ruleset's `encumberedSpeed`, and twice the limit stops it; in a fight the squares a hero may move say the same.
+  - Default: one gear panel (I) for everything: the hero's pack, and a pile or shop beside them as other sources in its head. Clicking a chest, a sack or a merchant walks the leader beside it and opens the panel there; a locked chest is tried first.
+  - Default: a shop puts what it buys back as a new stock line, as in the C++ client. What a hero takes stacks with the same unworn thing.
+  - Default: the dead leave a sack in the corner of their square, since their token lies over the middle.
 - [ ] **P9. Magic.** Spell files and casting, slots, prepared and spontaneous casters, focus
   points, starter lists, surfaces; the spell panel; AI uses abilities.
 - [ ] **P10. Adventure.** `adventure.json`, chapter transitions, camp and long rests, companions

@@ -59,7 +59,7 @@ public partial class FloatersView : Node2D
             int fontSize = Mathf.RoundToInt(FontSize * f.Scale);
             Vector2 size = font.GetStringSize(f.Text, HorizontalAlignment.Left, -1, fontSize);
             Vector2 at = f.At + new Vector2(-size.X / 2, -30 - f.Age * 40);
-            DrawStringOutline(font, at, f.Text, HorizontalAlignment.Left, -1, fontSize, 6, new Color(0, 0, 0, color.A));
+            DrawStringOutline(font, at, f.Text, HorizontalAlignment.Left, -1, fontSize, 6, Palette.Faded(Palette.Ink, color.A));
             DrawString(font, at, f.Text, HorizontalAlignment.Left, -1, fontSize, color);
         }
     }

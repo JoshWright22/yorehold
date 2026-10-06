@@ -8,10 +8,10 @@ namespace Yorehold;
 /// </summary>
 public partial class MoveBarView : Control
 {
-    [Export] public Color Fill { get; set; } = new(0.86f, 0.7f, 0.36f);
-    [Export] public Color Preview { get; set; } = new(0.98f, 0.95f, 0.85f);
-    [Export] public Color Back { get; set; } = new(0.03f, 0.03f, 0.035f);
-    [Export] public Color Rim { get; set; } = new(0.3f, 0.25f, 0.18f);
+    [Export] public Color Fill { get; set; } = Palette.Amber;
+    [Export] public Color Preview { get; set; } = Palette.Bone;
+    [Export] public Color Back { get; set; } = Palette.Ink;
+    [Export] public Color Rim { get; set; } = Palette.Iron;
 
     private float _max = 1;
     private float _left;
@@ -53,7 +53,7 @@ public partial class MoveBarView : Control
         for (int i = 1; i < (int)_max; i++)
         {
             float x = 1 + inner * i / _max;
-            DrawLine(new Vector2(x, 1), new Vector2(x, Size.Y - 1), new Color(0, 0, 0, 0.45f), 1);
+            DrawLine(new Vector2(x, 1), new Vector2(x, Size.Y - 1), Palette.Faded(Palette.Ink, 0.6f), 1);
         }
         DrawRect(box, Rim, false, 1);
     }

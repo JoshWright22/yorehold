@@ -343,7 +343,7 @@ public partial class FightControl : Node
     {
         if (_world != null && _floaters != null && _world.Refusal.Length > 0)
         {
-            _floaters.Add(at, _world.Refusal, Color.Color8(200, 200, 210));
+            _floaters.Add(at, _world.Refusal, Palette.Ash);
         }
     }
 

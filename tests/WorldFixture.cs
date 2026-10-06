@@ -133,7 +133,12 @@ public sealed class WorldFixture : IDisposable
         return done();
     }
 
-    public bool Said(string text) => Log.Any(line => line.Contains(text, StringComparison.Ordinal));
+    /// <summary>Whether a log line so far has the text, counting lines from calls made straight on World.</summary>
+    public bool Said(string text)
+    {
+        TakeEvents();
+        return Log.Any(line => line.Contains(text, StringComparison.Ordinal));
+    }
 
     /// <summary>The events of one kind so far, by their text.</summary>
     public List<string> EventsOf(WorldEventKind kind) => Events.Where(e => e.Kind == kind).Select(e => e.Text).ToList();

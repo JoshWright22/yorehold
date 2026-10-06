@@ -149,10 +149,49 @@ public sealed class CharacterSheet
     public int SpeedFeet => Stats.Integer("speed");
     public bool Down => Hp <= 0;
 
+    /// <summary>Squares moved in a turn: the speed, less for someone carrying too much (see Encumbrance).</summary>
     public int SpeedSquares(Ruleset rules)
     {
-        return SpeedFeet / Math.Max(1, rules.FeetPerSquare);
+        int squares = SpeedFeet / Math.Max(1, rules.FeetPerSquare);
+        return Encumbrance(rules) switch
+        {
+            2 => 0,
+            1 => squares > 0 ? Math.Max(1, (int)(squares * (float)rules.EncumberedSpeed)) : 0,
+            _ => squares,
+        };
     }
+
+    /// <summary>Pounds carried, worn or not. Coins weigh nothing.</summary>
+    public float CarriedWeight() => Inventory.Sum(i => (float)i.Weight * i.Quantity);
+
+    /// <summary>The first ability (strength) times the ruleset's pounds per point.</summary>
+    public float CarryCapacity(Ruleset rules)
+    {
+        string strength = rules.Abilities.Count == 0 ? "str" : rules.Abilities[0].Id;
+        return AbilityScore(strength) * rules.CarryPerStrength;
+    }
+
+    /// <summary>How weighed down: 0 free, 1 slowed, 2 can't move, by the ruleset's shares of capacity.</summary>
+    public int Encumbrance(Ruleset rules)
+    {
+        float capacity = CarryCapacity(rules);
+        if (capacity <= 0)
+        {
+            return 0;
+        }
+        float share = CarriedWeight() / capacity;
+        if (rules.ImmobileAt > 0 && share > rules.ImmobileAt)
+        {
+            return 2;
+        }
+        return rules.EncumberedAt > 0 && share > rules.EncumberedAt ? 1 : 0;
+    }
+
+    /// <summary>Magic items carried, worn or not, each of a stack.</summary>
+    public int MagicItems() => Inventory.Where(i => i.Magic).Sum(i => Math.Max(1, i.Quantity));
+
+    /// <summary>Whether more magic items still fit under the ruleset's limit (always, where it has none).</summary>
+    public bool RoomForMagic(Ruleset rules, int more = 1) => rules.MagicItemLimit <= 0 || MagicItems() + more <= rules.MagicItemLimit;
 
     public int ArmorClass(Ruleset rules)
     {

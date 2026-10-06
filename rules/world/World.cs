@@ -25,8 +25,8 @@ public sealed class WorldCreature
     public string CreatureId { get; init; } = "";
     /// <summary>Radians: where an enemy looks until it notices the party.</summary>
     public float Facing { get; set; }
-    /// <summary>Item ids it carries. Only keys are read from it until inventories come (P8).</summary>
-    public List<string> Items { get; } = new();
+    /// <summary>It died and left what it carried as a pile.</summary>
+    public bool Dropped { get; set; }
 
     /// <summary>The "ai" entries of its encounter and placement, laid over its creature file's in that order.</summary>
     public List<ContentNode> AiLayers { get; } = new();
@@ -200,6 +200,8 @@ public sealed partial class World
         FiredTriggers.Clear();
         _trapsLookedAt.Clear();
         Map.ResetObjects();
+        FillContainers();
+        FillMerchants();
         LightLevels.Ambient = Chapter.Map.Lighting.Ambient;
         LightLevels.BrightFraction = (float)Chapter.Map.Lighting.BrightFraction;
         LightLevels.SetFixed(Map.Lights, Map.Walls);
@@ -231,7 +233,6 @@ public sealed partial class World
                     Facing = FacingOf(placement),
                 };
                 creature.AiLayers.AddRange(new[] { Chapter.Encounters[group].Ai, placement.Ai }.OfType<ContentNode>());
-                creature.Items.AddRange(definition.Items);
                 Creatures.Add(creature);
                 Tokens.Tokens.Add(new Token
                 {
@@ -303,10 +304,17 @@ public sealed partial class World
     /// <summary>Everyone on the move takes their next steps.</summary>
     public void Walk(double deltaSeconds)
     {
-        // A sneaking hero is slower. In a fight the squares they may move already say so.
+        // A sneaking hero is slower, and so is one carrying too much. In a fight the squares they
+        // may move already say so.
         for (int i = 0; i < HeroCount; i++)
         {
-            Tokens.Tokens[i].Pace = !Fighting && Creatures[i].Sneaking ? (float)StealthRules.SneakSpeed : 1.0f;
+            float pace = !Fighting && Creatures[i].Sneaking ? (float)StealthRules.SneakSpeed : 1.0f;
+            int weighed = Fighting ? 0 : Creatures[i].Sheet.Encumbrance(Rules);
+            if (weighed > 0)
+            {
+                pace = weighed == 2 ? 0 : pace * (float)Rules.EncumberedSpeed;
+            }
+            Tokens.Tokens[i].Pace = pace;
         }
         Tokens.Advance(Grid, Walkable, deltaSeconds);
         WatchTraps();
@@ -682,7 +690,7 @@ public sealed partial class World
         }
         else
         {
-            List<string> keys = Creatures[hero].Items.Concat(sheet.Inventory.Select(i => i.Id)).Select(item => "key:" + item).ToList();
+            List<string> keys = sheet.Inventory.Select(item => "key:" + item.Id).ToList();
             bool wasLocked = o.IsLocked;
             Interaction result = Map.Interact(id, keys);
             if (result == Interaction.Locked && o.Lock != null && o.Lock.Dc > 0)

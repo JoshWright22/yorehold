@@ -33,6 +33,8 @@ public partial class PlayHud : Control
     public event Action<bool>? ReactionAnswered;
     /// <summary>A button on the menu along the top right, by its node name ("Characters").</summary>
     public event Action<string>? MenuPressed;
+    /// <summary>Something pressed on the gear panel.</summary>
+    public event Action<ItemOrder>? ItemOrdered;
 
     // the scene has all of these
     private VBoxContainer _party = null!;
@@ -67,6 +69,9 @@ public partial class PlayHud : Control
     private Label _cursor = null!;
     private SheetView _sheet = null!;
     private Button _sheetButton = null!;
+    private DataPanel _gearView = null!;
+    private Button _gearButton = null!;
+    private GearPanel _gear = null!;
 
     private readonly Dictionary<string, string> _icons = new();
     private readonly List<PartyCard> _partyCards = new();
@@ -115,6 +120,11 @@ public partial class PlayHud : Control
         _cursor = GetNode<Label>("Cursor");
         _sheet = GetNode<SheetView>("Sheet");
         _sheetButton = GetNode<Button>("Menu/Sheet");
+        _gearView = GetNode<DataPanel>("Gear");
+        _gearButton = GetNode<Button>("Menu/Gear");
+        _gear = new GearPanel(_gearView);
+        _gear.Ordered += order => ItemOrdered?.Invoke(order);
+        _gearView.ClosePressed += () => OpenPanel = "";
         foreach (Node child in GetNode("Menu").GetChildren())
         {
             if (child is Button button)
@@ -139,6 +149,24 @@ public partial class PlayHud : Control
     public void TogglePanel(string name)
     {
         OpenPanel = OpenPanel == name ? "" : name;
+        if (OpenPanel == "Gear")
+        {
+            _gear.Source = GearPanel.Pack;
+        }
+    }
+
+    /// <summary>Opens the gear panel on a pile ("pile:2") or a shop ("shop:0") beside the hero.</summary>
+    public void OpenGear(string source)
+    {
+        OpenPanel = "Gear";
+        _gear.Source = source;
+        _gearView.Reset();
+    }
+
+    /// <summary>Says under the gear panel's entry why the world said no.</summary>
+    public void GearRefused(string why)
+    {
+        _gear.Refused(why);
     }
 
     /// <summary>The action on the hotbar's slot with this place, 0 first; null when there is none.</summary>
@@ -191,7 +219,7 @@ public partial class PlayHud : Control
         if (_cursor.Visible)
         {
             _cursor.Text = aim.Label;
-            _cursor.Modulate = aim.LabelBad ? new Color(1, 0.55f, 0.5f) : Colors.White;
+            _cursor.Modulate = aim.LabelBad ? Palette.Rose : Palette.Bone;
             _cursor.Size = Vector2.Zero;
             _cursor.Position = aim.LabelAt + new Vector2(20, 14);
         }
@@ -208,6 +236,12 @@ public partial class PlayHud : Control
             WorldCreature c = world.Creatures[hero];
             _sheet.ShowSheet(world.Rules, world.Chapter.Compendium, c.Sheet, c.Choices, "");
             _sheet.Size = Vector2.Zero; // shrinks to what the lines need
+        }
+        _gearButton.SetPressedNoSignal(OpenPanel == "Gear");
+        _gearView.Visible = OpenPanel == "Gear" && hero < world.HeroCount;
+        if (_gearView.Visible)
+        {
+            _gear.Refresh(world, hero);
         }
     }
 

@@ -239,11 +239,13 @@ public partial class ShotRunner : Node
         }
     }
 
-    // The first button on screen whose words start so, in tree order; a text box goes by the words it shows when empty.
+    // The first button on screen whose words start so, in tree order; a text box goes by the words it
+    // shows when empty, a list row by its first cell (its "words" meta).
     private static Control? FindButton(Node node, string words)
     {
         string shown = node switch
         {
+            Button { Text: "" } row => row.GetMeta("words", "").AsString(),
             Button button => button.Text,
             LineEdit box => box.PlaceholderText,
             _ => "",

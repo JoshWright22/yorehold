@@ -11,12 +11,12 @@ namespace Yorehold;
 /// </summary>
 public partial class FightGroundView : Node2D
 {
-    [Export] public Color ReachFill { get; set; } = new(0.75f, 0.85f, 1, 0.1f);
-    [Export] public Color ReachEdge { get; set; } = new(0.8f, 0.9f, 1, 0.7f);
-    [Export] public Color PathColor { get; set; } = new(1, 0.95f, 0.8f, 0.95f);
-    [Export] public Color EnemyRange { get; set; } = new(1, 0.42f, 0.3f, 0.85f);
-    [Export] public Color AllyRange { get; set; } = new(0.5f, 0.9f, 0.5f, 0.85f);
-    [Export] public Color AreaFill { get; set; } = new(1, 0.6f, 0.2f, 0.35f);
+    [Export] public Color ReachFill { get; set; } = Palette.Faded(Palette.Sky, 0.1f);
+    [Export] public Color ReachEdge { get; set; } = Palette.Faded(Palette.Sky, 0.7f);
+    [Export] public Color PathColor { get; set; } = Palette.Faded(Palette.Bone, 0.95f);
+    [Export] public Color EnemyRange { get; set; } = Palette.Faded(Palette.Red, 0.85f);
+    [Export] public Color AllyRange { get; set; } = Palette.Faded(Palette.Leaf, 0.85f);
+    [Export] public Color AreaFill { get; set; } = Palette.Faded(Palette.Amber, 0.35f);
 
     private World? _world;
     private FightAim? _aim;
@@ -79,9 +79,9 @@ public partial class FightGroundView : Node2D
             {
                 points[i] = w.Grid.Center(_aim.Path[i]).ToGodot();
             }
-            DrawPolyline(points, new Color(0, 0, 0, 0.5f), 7, true);
+            DrawPolyline(points, Palette.Faded(Palette.Ink, 0.6f), 7, true);
             DrawPolyline(points, PathColor, 3, true);
-            DrawCircle(points[^1], 9, new Color(0, 0, 0, 0.5f));
+            DrawCircle(points[^1], 9, Palette.Faded(Palette.Ink, 0.6f));
             DrawCircle(points[^1], 6, PathColor);
         }
     }

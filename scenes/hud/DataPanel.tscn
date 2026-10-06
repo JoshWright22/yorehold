@@ -1,0 +1,127 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
+[ext_resource type="Script" path="res://src/hud/DataPanel.cs" id="2"]
+
+[node name="DataPanel" type="PanelContainer"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -300.0
+offset_right = 480.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1")
+script = ExtResource("2")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Head" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Rows/Head"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+
+[node name="Sub" type="Label" parent="Rows/Head"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+theme_type_variation = &"DimLabel"
+clip_text = true
+
+[node name="Sources" type="HBoxContainer" parent="Rows/Head"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Close" type="Button" parent="Rows/Head"]
+layout_mode = 2
+focus_mode = 0
+text = "Close"
+
+[node name="Tabs" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Filter" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Search" type="LineEdit" parent="Rows/Filter"]
+custom_minimum_size = Vector2(220, 26)
+layout_mode = 2
+placeholder_text = "Search"
+clear_button_enabled = true
+
+[node name="Chips" type="HBoxContainer" parent="Rows/Filter"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="Body" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="List" type="VBoxContainer" parent="Rows/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Columns" type="HBoxContainer" parent="Rows/Body/List"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Scroll" type="ScrollContainer" parent="Rows/Body/List"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Items" type="VBoxContainer" parent="Rows/Body/List/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="Count" type="Label" parent="Rows/Body/List"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+
+[node name="Entry" type="VBoxContainer" parent="Rows/Body"]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Page" type="PanelContainer" parent="Rows/Body/Entry"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"PageCard"
+
+[node name="Text" type="RichTextLabel" parent="Rows/Body/Entry/Page"]
+layout_mode = 2
+theme_type_variation = &"PageText"
+bbcode_enabled = true
+scroll_active = true
+
+[node name="Actions" type="HFlowContainer" parent="Rows/Body/Entry"]
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Warning" type="Label" parent="Rows/Body/Entry"]
+visible = false
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_type_variation = &"WarnLabel"
+autowrap_mode = 3
+
+[node name="Foot" type="Label" parent="Rows"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"

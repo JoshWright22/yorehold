@@ -12,10 +12,10 @@ public partial class LogPanel : PanelContainer
     [Export] public int KeptLines { get; set; } = 200;
     [Export] public float OpenHeight { get; set; } = 210;
     [Export] public float FoldedHeight { get; set; } = 48;
-    [Export] public Color MissColor { get; set; } = new(0.62f, 0.6f, 0.57f);
-    [Export] public Color HitColor { get; set; } = new(0.98f, 0.82f, 0.62f);
-    [Export] public Color DownColor { get; set; } = new(0.95f, 0.45f, 0.38f);
-    [Export] public Color GoodColor { get; set; } = new(0.55f, 0.82f, 0.5f);
+    [Export] public Color MissColor { get; set; } = Palette.Smoke;
+    [Export] public Color HitColor { get; set; } = Palette.Straw;
+    [Export] public Color DownColor { get; set; } = Palette.Red;
+    [Export] public Color GoodColor { get; set; } = Palette.Leaf;
 
     private readonly List<string> _lines = new();
     // the scene has all of these

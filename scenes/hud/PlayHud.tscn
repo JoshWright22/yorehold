@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
 [ext_resource type="Script" path="res://src/hud/PlayHud.cs" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/hud/PipsView.cs" id="8"]
 [ext_resource type="Script" path="res://src/hud/MoveBarView.cs" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/hud/SheetView.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/hud/DataPanel.tscn" id="11"]
 
 [node name="PlayHud" type="Control"]
 layout_mode = 3
@@ -67,7 +68,7 @@ theme_override_constants/separation = 2
 [node name="Turn" type="Label" parent="Top"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0.1294, 0.1294, 0.1373, 1)
 theme_override_constants/outline_size = 6
 horizontal_alignment = 1
 
@@ -119,7 +120,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_type_variation = &"KeyLabel"
-theme_override_colors/font_color = Color(0.96, 0.94, 0.9, 1)
+theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -155,7 +156,7 @@ layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("8")
-Full = Color(0.95, 0.6, 0.25, 1)
+Full = Color(0.8275, 0.6275, 0.4078, 1)
 
 [node name="ReactionLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
 layout_mode = 2
@@ -167,7 +168,7 @@ layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("8")
-Full = Color(0.72, 0.52, 0.92, 1)
+Full = Color(0.8118, 0.5412, 0.7961, 1)
 
 [node name="MoveLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
 layout_mode = 2
@@ -186,7 +187,7 @@ script = ExtResource("9")
 custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-theme_override_colors/font_color = Color(0.93, 0.9, 0.83, 1)
+theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
 text = "30 ft"
 horizontal_alignment = 2
 
@@ -324,6 +325,17 @@ toggle_mode = true
 theme_type_variation = &"PickButton"
 text = "Sheet (C)"
 
+[node name="Gear" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Gear (I)"
+
+[node name="Gear" parent="." instance=ExtResource("11")]
+visible = false
+layout_mode = 1
+
 [node name="Sheet" parent="." instance=ExtResource("10")]
 visible = false
 layout_mode = 0
@@ -373,7 +385,7 @@ z_index = 9
 layout_mode = 0
 offset_right = 120.0
 offset_bottom = 28.0
-theme_override_colors/font_color = Color(1, 0.95, 0.82, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
+theme_override_colors/font_outline_color = Color(0.1294, 0.1294, 0.1373, 1)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 22

@@ -8,10 +8,10 @@ namespace Yorehold;
 /// </summary>
 public partial class PortraitView : Control
 {
-    [Export] public Color Back { get; set; } = new(0.11f, 0.1f, 0.12f);
+    [Export] public Color Back { get; set; } = Palette.Night;
 
     private string _name = "";
-    private Color _color = Colors.Gray;
+    private Color _color = Palette.Smoke;
     private bool _down;
 
     public void Show(string name, Color color, bool down)
@@ -39,8 +39,8 @@ public partial class PortraitView : Control
         DrawRect(new Rect2(Vector2.Zero, Size), Back);
         Vector2 middle = Size / 2;
         float r = Mathf.Min(Size.X, Size.Y) * 0.42f;
-        Color color = _down ? new Color(0.33f, 0.33f, 0.36f) : _color;
-        DrawCircle(middle, r, new Color(0.05f, 0.05f, 0.06f));
+        Color color = _down ? Palette.Slate : _color;
+        DrawCircle(middle, r, Palette.Ink);
         DrawCircle(middle, r * 0.9f, color);
         if (_name.Length > 0)
         {
@@ -49,13 +49,13 @@ public partial class PortraitView : Control
             string initial = _name[..1];
             Vector2 measure = font.GetStringSize(initial, HorizontalAlignment.Left, -1, size);
             DrawString(font, middle + new Vector2(-measure.X / 2, font.GetAscent(size) / 2 - 2), initial, HorizontalAlignment.Left, -1, size,
-                new Color(0.08f, 0.08f, 0.1f));
+                Palette.Ink);
         }
         if (_down)
         {
             float x = r * 0.6f;
-            DrawLine(middle + new Vector2(-x, -x), middle + new Vector2(x, x), new Color(0.6f, 0.15f, 0.12f), 3);
-            DrawLine(middle + new Vector2(-x, x), middle + new Vector2(x, -x), new Color(0.6f, 0.15f, 0.12f), 3);
+            DrawLine(middle + new Vector2(-x, -x), middle + new Vector2(x, x), Palette.Red, 3);
+            DrawLine(middle + new Vector2(-x, x), middle + new Vector2(x, -x), Palette.Red, 3);
         }
     }
 }

@@ -1,0 +1,24 @@
+# chapter one: the gear panel, then walk to the chest in the corner and take what is in it
+10 key I
+11 keyup I
+20 shot .dev/p8-gear.png
+30 button Healing
+32 down left
+33 up left
+40 shot .dev/p8-gear-potion.png
+50 key I
+51 keyup I
+60 cell 2 2
+61 down left
+62 up left
+200 shot .dev/p8-chest.png
+210 button Take_all
+212 down left
+213 up left
+230 shot .dev/p8-taken.png
+240 key I
+241 keyup I
+250 button Pack
+252 down left
+253 up left
+270 shot .dev/p8-pack-after.png

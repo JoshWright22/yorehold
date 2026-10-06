@@ -6,10 +6,10 @@
 |---|---|
 | `rules/` | Plain C# with no Godot types: content loading, rules, World, AI, saves. Its own project (`Yorehold.Rules.csproj`). |
 | `rules/content/` | One type per content kind (ruleset, conditions, effects, actions, classes, creatures, maps, chapters...) and the code that reads it from JSON. |
-| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions, gear and hands, spells known), `Item` (one inventory entry), `Coins`, `EffectHost` and the effect runner, `Grid`, `Sight`, `Positioning` and `SaveFormat` (the versioned file envelope). |
+| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions, gear and hands, spells known), `Item` (one inventory entry), `Coins`, `Loot` (rolling loot tables, stacking what is taken), `Merchant` (a shop's purse, prices and stock), `EffectHost` and the effect runner, `Grid`, `Sight`, `Positioning` and `SaveFormat` (the versioned file envelope). |
 | `rules/characters/` | Characters as choices: `CharacterChoices` (the file), `CharacterBuild` (choices to a sheet), `CharacterDraft` (making one or adding a level, step by step) and `CharacterLibrary` (the player's files and the graveyard). |
 | `rules/fight/` | A fight on its own, with no map: `Encounter` (initiative, rounds, shared turn blocks, each combatant's actions, movement and reaction, death saves, its log) and `Tactics` (the AI scorer: who to hit, where to stand, when to run or give up). |
-| `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). |
+| `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). `WorldItems` is what is carried: piles to take from (containers, chests, what the dead leave), giving, gear on and off, using things up and shops. |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
 | `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels, `src/characters/` the character screens. |
@@ -27,7 +27,7 @@ turns taps into `World` calls. It draws through its children, one script each:
 | Node | Does |
 |---|---|
 | `Map` (`MapView`) | tiles from `TileArt` (the C++ placeholder painters) and grid lines, in blocks of 8 by 8 cells |
-| `Objects` (`ObjectsView`) | doors, levers, chests, found traps and lamp flames |
+| `Objects` (`ObjectsView`) | doors, levers, chests, sacks the dead left, found traps and lamp flames |
 | `Tokens` (`TokensView`) | one `Token.tscn` (`TokenView`) per creature, and the heroes' paths |
 | `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, drags and pinches; a click or tap that isn't a drag comes out as `Tapped` |
 | `LightMap` (SubViewport) and `Lighting` (`LightingView`) | the light map: white ground under the ambient colour, `Light.tscn` lamps and carried lights, walls as occluders |
@@ -47,8 +47,9 @@ The input actions (`pan_left`, `pan_right`, `pan_up`, `pan_down`, `zoom_in`, `zo
 ## The panels
 
 `scenes/hud/PlayHud.tscn` with `src/hud/PlayHud.cs` is every panel over the map, laid out with containers and
-anchors and styled by `scenes/hud/hud-theme.tres` (dark panels, a thin warm trim; the type variations in it
-are the bars, frames and label styles). `PlayScreen` hands it the `World` and the `FightAim` each frame. It
+anchors and styled by `scenes/hud/hud-theme.tres` (dark panels, a thin leather trim; the type variations in it
+are the bars, frames, tabs, chips, rows, the book page and label styles). Every colour in the theme and in the
+panels' own drawing is from the CC-29 palette, named in `src/hud/Palette.cs`. `PlayScreen` hands it the `World` and the `FightAim` each frame. It
 only shows them and raises an event when something is pressed; `FightControl` does the acting.
 
 | Part | Is |
@@ -60,8 +61,13 @@ only shows them and raises an event when something is pressed; `FightControl` do
 | `Reaction` | use it or pass, with the time left, when a hero's reaction is offered |
 | `Defeat` | the chapter's defeat text once the party is wiped |
 | `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |
-| `Menu` | the buttons along the top right: Characters, and one per panel (Sheet, C). A panel's key or button opens it and again closes it; one is open at a time |
+| `Menu` | the buttons along the top right: Characters, and one per panel (Sheet, C; Gear, I). A panel's key or button opens it and again closes it, so does Escape between fights; one is open at a time |
 | `Sheet` (`SheetView.tscn`) | the hero's sheet: who they are, HP, AC, speed and XP, scores, skills, feats, uses and gear. It shows the acting hero in a fight and the selected one between fights |
+| `Gear` (`DataPanel.tscn`, filled by `GearPanel`) | the gear panel (I): the hero's pack, or a pile or shop beside them, by kind of item, with the picked item's page and what can be done with it (put on, use, give, take, buy, sell). What is pressed goes out as an `ItemOrder` and `PlayScreen` does it |
+
+`DataPanel` is the data screens' shared look: a tab bar, search box and filter chips over tight rows that sort
+by any column header, and the picked row's entry on the right as a book page (`BookPage` writes its bbcode)
+with buttons under it. Its owner fills it every frame; it only rebuilds what changed.
 
 ## The character screens
 
@@ -104,7 +110,7 @@ start with a number are skipped, so `#` notes work.
 | `shot .dev/name.png` | saves an extra picture on that frame, path from the workspace folder |
 | `cell X Y` | moves the mouse to the middle of map cell X, Y wherever the camera is |
 | `creature Name` | moves the mouse onto the token with that name, wherever it stands (underscores for spaces: `Goblin_1`) |
-| `button Words` | moves the mouse onto the first button on screen whose text starts with the words (`New_character`), or a text box by the words it shows when empty |
+| `button Words` | moves the mouse onto the first button on screen whose text starts with the words (`New_character`), a text box by the words it shows when empty, or a data panel's row by its first cell (`Healing`) |
 | `tap` | one finger down and up where the mouse is, the way a touch screen clicks |
 | `pinch F` | two fingers either side of the mouse move apart by F (below 1 pinches in) and lift |
 
@@ -116,7 +122,9 @@ time a script against a fight. The camera goes to whoever's turn it is, so a cli
 until it has settled. `tests/visual/scripts/fight.txt` plays chapter one's fight from the door to the last
 goblin with keys and clicks only (440 frames), and `fight-hud.txt` goes through the tooltips, cancelling,
 the log and a touch tap (570 frames). `characters.txt` opens the sheet, makes a character and starts the
-chapter with them (280 frames). A run keeps its library in `../.dev/shot-characters`, emptied as it starts.
+chapter with them (280 frames). `loot.txt` opens the gear panel and empties the chest in chapter one's corner
+(290 frames), `loot-fight.txt` wins the fight and takes what the goblin left (650 frames), and `shop.txt`
+sells and buys at Wren's in the goblin keep (270 frames, `-Chapter chapters\goblin-keep`). A run keeps its library in `../.dev/shot-characters`, emptied as it starts.
 
 ## C# style
 

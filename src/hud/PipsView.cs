@@ -5,9 +5,9 @@ namespace Yorehold;
 /// <summary>A row of round pips, some of them spent: actions left, what an action costs, a reaction.</summary>
 public partial class PipsView : Control
 {
-    [Export] public Color Full { get; set; } = new(0.42f, 0.78f, 0.38f);
-    [Export] public Color Spent { get; set; } = new(0.16f, 0.15f, 0.17f);
-    [Export] public Color Rim { get; set; } = new(0.03f, 0.03f, 0.035f);
+    [Export] public Color Full { get; set; } = Palette.Leaf;
+    [Export] public Color Spent { get; set; } = Palette.Night;
+    [Export] public Color Rim { get; set; } = Palette.Ink;
     [Export] public float PipSize { get; set; } = 16;
     [Export] public float Gap { get; set; } = 4;
 

@@ -1,0 +1,23 @@
+# chapter one: the fight from fight.txt, then walk to where the goblin fell and look at what it left
+10 cell 9 6
+11 down left
+12 up left
+90 cell 12 6
+91 down left
+92 up left
+305 cell 11 9
+316 down left
+317 up left
+390 key 1
+391 creature Goblin_1
+406 down left
+407 up left
+470 shot .dev/p8-goblin-sack.png
+480 creature Goblin_1
+481 down left
+482 up left
+600 shot .dev/p8-goblin-pile.png
+610 button Take_all
+612 down left
+613 up left
+630 shot .dev/p8-goblin-taken.png

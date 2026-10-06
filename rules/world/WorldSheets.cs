@@ -44,21 +44,13 @@ public static class WorldSheets
         {
             sheet.Resources[resource.Key] = resource.Value;
         }
-        sheet.Weapon = WeaponFrom(compendium, definition.Items);
-        return sheet;
-    }
-
-    // The first item that does damage, as a held weapon. Null leaves an unarmed strike.
-    private static Weapon? WeaponFrom(Compendium compendium, IEnumerable<string> items)
-    {
-        foreach (string id in items)
+        // Its gear is worn as the heroes' is, but the stat block's AC is already final: armour
+        // overriding "ac" would count twice, so what it wears on top of that is left off.
+        CharacterBuild.GiveItems(sheet, compendium, definition.Items);
+        foreach (Item item in sheet.Inventory.Where(i => i.Equipped && i.Definition.Modifiers.Any(m => m.Stat == "ac")).ToList())
         {
-            ItemDefinition? item = compendium.Item(id);
-            if (item != null && item.Damage.Length > 0)
-            {
-                return new Weapon(item.Damage, item.AttackAbility, item.Hands);
-            }
+            sheet.Unequip(sheet.Inventory.IndexOf(item));
         }
-        return null;
+        return sheet;
     }
 }

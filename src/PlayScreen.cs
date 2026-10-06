@@ -35,6 +35,8 @@ public partial class PlayScreen : Node2D
     private TokenBarsView _tokenBars = null!;
     private CharacterScreen _characters = null!;
     private (int Hero, int Object)? _pendingUse;
+    // the gear panel opens on this pile or shop ("pile:2", "shop:0") once the hero stops beside it
+    private (int Hero, string Source)? _pendingOpen;
     private int _seed;
     private bool _clearedWritten;
 
@@ -131,6 +133,7 @@ public partial class PlayScreen : Node2D
         {
             _fight.Bind(world, _camera, _hud.Panels, _floaters);
             _hud.Panels.MenuPressed += Menu;
+            _hud.Panels.ItemOrdered += Order;
         }
         _camera.Bounds = new Rect2(0, 0, map.Width * GameMap.CellSize, map.Height * GameMap.CellSize);
         _camera.JumpTo(world.Tokens.Tokens[0].Position.ToGodot(), 1);
@@ -163,6 +166,15 @@ public partial class PlayScreen : Node2D
             if (!_world.Interact(hero, id))
             {
                 Refuse(_world.Tokens.Tokens[hero].Position.ToGodot());
+                _pendingOpen = null;
+            }
+        }
+        if (_pendingUse == null && _pendingOpen is (int opener, string source) && _world.Tokens.Tokens[opener].Path.Count == 0)
+        {
+            _pendingOpen = null;
+            if (!_world.Fighting && SourceOpen(_world, opener, source))
+            {
+                _hud.Panels?.OpenGear(source);
             }
         }
         ShowEvents();
@@ -178,8 +190,15 @@ public partial class PlayScreen : Node2D
         string? panel = key.Keycode switch
         {
             Key.C => "Sheet",
+            Key.I => "Gear",
             _ => null,
         };
+        if (key.Keycode == Key.Escape && _hud.Panels is PlayHud open && open.OpenPanel.Length > 0 && !_world.Fighting)
+        {
+            open.TogglePanel(open.OpenPanel);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         if (panel != null)
         {
             Menu(panel);
@@ -301,7 +320,49 @@ public partial class PlayScreen : Node2D
         Cell cell = w.Grid.CellAt(at.ToRules());
         WorldObject? thing = w.Map.ObjectAt(cell);
         _pendingUse = null;
-        if (thing != null && w.Usable(thing) && w.Fog.State(w.ViewTeam(), 0, cell) != FogState.Unexplored)
+        _pendingOpen = null;
+        bool seen = w.Fog.State(w.ViewTeam(), 0, cell) != FogState.Unexplored;
+
+        // a merchant: walk up beside them and open their shop
+        for (int npc = 0; npc < w.Merchants.Count && seen; npc++)
+        {
+            int creature = w.NpcStart + npc;
+            Token token = w.Tokens.Tokens[creature];
+            if (w.Merchants[npc] != null && at.DistanceTo(token.Position.ToGodot()) <= token.Radius && w.Creatures[creature].Team == 2)
+            {
+                if (GoBeside(w, hero, w.CellOf(creature)))
+                {
+                    _pendingOpen = (hero, $"shop:{npc}");
+                    _camera.Following = true;
+                }
+                else
+                {
+                    Refuse(at);
+                }
+                return;
+            }
+        }
+
+        // a chest or what the dead left: walk over, open a locked one first, then look inside
+        int pile = w.Piles.FindIndex(p => !p.Empty && (thing != null && p.Object == thing.Id || p.Object == 0 && p.At == cell));
+        if (pile >= 0 && seen)
+        {
+            bool walking = thing != null && w.Piles[pile].Object == thing.Id ? w.GoNear(hero, thing.Id) : GoBeside(w, hero, cell);
+            if (!walking)
+            {
+                Refuse(at);
+                return;
+            }
+            if (w.PileLocked(pile) && thing != null)
+            {
+                _pendingUse = (hero, thing.Id);
+            }
+            _pendingOpen = (hero, $"pile:{pile}");
+            _camera.Following = true;
+            return;
+        }
+
+        if (thing != null && w.Usable(thing) && seen)
         {
             if (w.GoNear(hero, thing.Id))
             {
@@ -324,11 +385,71 @@ public partial class PlayScreen : Node2D
         }
     }
 
+    // Walks the hero onto a square next to cell (or keeps them there), the nearest one there is a way to.
+    private static bool GoBeside(World w, int hero, Cell cell)
+    {
+        Cell at = w.CellOf(hero);
+        if (System.Math.Abs(at.X - cell.X) <= 1 && System.Math.Abs(at.Y - cell.Y) <= 1)
+        {
+            return true;
+        }
+        Cell? best = null;
+        float bestDistance = float.MaxValue;
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                var beside = new Cell(cell.X + dx, cell.Y + dy);
+                float distance = w.Grid.Distance(at, beside);
+                if ((dx != 0 || dy != 0) && distance < bestDistance && w.CanGo(hero, beside))
+                {
+                    best = beside;
+                    bestDistance = distance;
+                }
+            }
+        }
+        // what the dead left lies on a square anyone can stand on
+        return best is Cell to ? w.Go(hero, to) : w.Go(hero, cell);
+    }
+
+    private static bool SourceOpen(World w, int hero, string source)
+    {
+        int index = int.Parse(source[5..]);
+        return source.StartsWith("shop:") ? w.CanTrade(hero, index) : index < w.Piles.Count && !w.Piles[index].Empty && !w.PileLocked(index);
+    }
+
+    // What the gear panel asked for, done on the World; a refusal is said under the panel's entry.
+    private void Order(ItemOrder order)
+    {
+        if (_world == null)
+        {
+            return;
+        }
+        World w = _world;
+        bool done = order.Kind switch
+        {
+            ItemOrderKind.Equip => w.Equip(order.Hero, order.Item, true),
+            ItemOrderKind.Unequip => w.Equip(order.Hero, order.Item, false),
+            ItemOrderKind.Use => w.Consume(order.Hero, order.Item, order.Target),
+            ItemOrderKind.Give => w.Give(order.Hero, order.Target, item: order.Item),
+            ItemOrderKind.Take => w.Take(order.Hero, order.Pile, item: order.Item),
+            ItemOrderKind.TakeCoins => w.Take(order.Hero, order.Pile, coins: true),
+            ItemOrderKind.TakeAll => w.Take(order.Hero, order.Pile, all: true),
+            ItemOrderKind.Buy => w.Buy(order.Hero, order.Npc, order.Item),
+            ItemOrderKind.Sell => w.Sell(order.Hero, order.Npc, order.Item),
+            _ => false,
+        };
+        if (!done)
+        {
+            _hud.Panels?.GearRefused(w.Refusal.Length > 0 ? w.Refusal : "Not now.");
+        }
+    }
+
     private void Refuse(Vector2 at)
     {
         if (_world != null && _world.Refusal.Length > 0)
         {
-            _floaters.Add(at, _world.Refusal, Color.Color8(200, 200, 210));
+            _floaters.Add(at, _world.Refusal, Palette.Ash);
         }
     }
 
@@ -392,21 +513,21 @@ public partial class PlayScreen : Node2D
     {
         if (text.StartsWith("Critical"))
         {
-            return (Color.Color8(255, 210, 90), 1.6f);
+            return (Palette.Straw, 1.6f);
         }
         if (text.Length > 0 && char.IsDigit(text[0]))
         {
-            return (Color.Color8(255, 110, 85), 1.5f);
+            return (Palette.Red, 1.5f);
         }
         if (text.Length > 1 && text[0] == '+' && char.IsDigit(text[1]))
         {
-            return (Color.Color8(120, 220, 110), 1.4f);
+            return (Palette.Leaf, 1.4f);
         }
         if (text is "Miss" or "Saved" or "Failed")
         {
-            return (Color.Color8(225, 225, 235), 1.15f);
+            return (Palette.Bone, 1.15f);
         }
-        return (Color.Color8(150, 200, 255), 1);
+        return (Palette.Sky, 1);
     }
 
     private void Refresh()

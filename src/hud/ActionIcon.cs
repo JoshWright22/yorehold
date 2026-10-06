@@ -8,7 +8,7 @@ namespace Yorehold;
 /// </summary>
 public partial class ActionIcon : Control
 {
-    [Export] public Color Ink { get; set; } = new(0.93f, 0.86f, 0.7f);
+    [Export] public Color Ink { get; set; } = Palette.Sand;
 
     private string _shape = "";
     private string _letter = "";

@@ -150,7 +150,7 @@ public class WorldTests
         Assert.True(world.Interact(0, chest));
         Assert.True(world.Said("stays locked") && box.IsLocked);
         Assert.Equal(0, w.Map.Take(chest, "coins", 50));
-        w.Creatures[0].Items.Add("cell-key");
+        w.Creatures[0].Sheet.Inventory.Add(new Item(new ItemDefinition { Id = "cell-key", Name = "Cell key" }));
         Assert.True(world.Interact(0, chest));
         Assert.True(!box.IsLocked && world.Said("unlocks"), "The key the lock names opens it");
         Assert.Equal(50, w.Map.Take(chest, "coins", 50));

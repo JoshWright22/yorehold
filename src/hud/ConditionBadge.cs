@@ -8,8 +8,8 @@ namespace Yorehold;
 /// </summary>
 public partial class ConditionBadge : Control
 {
-    [Export] public Color Back { get; set; } = new(0.3f, 0.2f, 0.34f);
-    [Export] public Color Ink { get; set; } = new(0.96f, 0.92f, 0.84f);
+    [Export] public Color Back { get; set; } = Palette.Plum;
+    [Export] public Color Ink { get; set; } = Palette.Bone;
 
     private string _letters = "";
 
@@ -32,7 +32,7 @@ public partial class ConditionBadge : Control
     public override void _Draw()
     {
         DrawRect(new Rect2(Vector2.Zero, Size), Back);
-        DrawRect(new Rect2(Vector2.Zero, Size), new Color(0, 0, 0, 0.6f), false, 1);
+        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Ink, false, 1);
         Font font = ThemeDB.FallbackFont;
         const int size = 10;
         Vector2 measure = font.GetStringSize(_letters, HorizontalAlignment.Left, -1, size);

@@ -11,11 +11,11 @@ namespace Yorehold;
 /// </summary>
 public partial class TokenBarsView : Node2D
 {
-    [Export] public Color PartyBar { get; set; } = new(0.4f, 0.76f, 0.36f);
-    [Export] public Color EnemyBar { get; set; } = new(0.82f, 0.22f, 0.18f);
-    [Export] public Color TurnRing { get; set; } = new(1, 0.82f, 0.42f);
-    [Export] public Color EnemyTarget { get; set; } = new(1, 0.4f, 0.3f);
-    [Export] public Color AllyTarget { get; set; } = new(0.5f, 0.92f, 0.5f);
+    [Export] public Color PartyBar { get; set; } = Palette.Leaf;
+    [Export] public Color EnemyBar { get; set; } = Palette.Red;
+    [Export] public Color TurnRing { get; set; } = Palette.Straw;
+    [Export] public Color EnemyTarget { get; set; } = Palette.Red;
+    [Export] public Color AllyTarget { get; set; } = Palette.Leaf;
 
     private World? _world;
     private FightAim? _aim;
@@ -78,8 +78,8 @@ public partial class TokenBarsView : Node2D
 
             float width = Mathf.Max(r * 2, 44);
             var bar = new Rect2(at.X - width / 2, at.Y - r - 18, width, 7);
-            DrawRect(bar.Grow(1.5f), new Color(0, 0, 0, 0.85f));
-            DrawRect(bar, new Color(0.14f, 0.12f, 0.12f));
+            DrawRect(bar.Grow(1.5f), Palette.Faded(Palette.Ink, 0.9f));
+            DrawRect(bar, Palette.Night);
             float share = Mathf.Clamp(who.Sheet.Hp / (float)Mathf.Max(1, who.Sheet.MaxHp), 0, 1);
             DrawRect(new Rect2(bar.Position, new Vector2(width * share, bar.Size.Y)), party ? PartyBar : EnemyBar);
         }
