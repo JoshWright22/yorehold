@@ -6,6 +6,7 @@
 #                            -Frames N (default 300) is how long it runs, -Script file.txt drives it
 #                            (format: tests\visual\scripts, same as the C++ client's)
 #                            -Chapter chapters\goblin-keep plays that chapter instead of the scene's
+#                            -Screen title starts the run on the title (default: play, straight into the game)
 # Exit code 0 and ALL OK = all good. Full output is in ..\.dev\godot-build.log, -test.log, -run.log,
 # -shot.log.
 
@@ -14,7 +15,8 @@ param(
     [string]$Shot,
     [int]$Frames = 300,
     [string]$Script,
-    [string]$Chapter
+    [string]$Chapter,
+    [string]$Screen = 'play'
 )
 
 $ErrorActionPreference = 'Continue'
@@ -48,15 +50,20 @@ Select-String -Path $testLog -Pattern '^\s*Total tests:|^(Passed|Failed)!' | For
 Write-Host 'tests ok'
 
 # A headless start catches broken scenes and scripts that only fail inside the engine.
+# Once per screen the game can start on: the title is what a player gets, the others sit behind it.
 $runLog = Join-Path $dev 'godot-run.log'
-$job = Start-Job { param($g, $p) & $g --headless --path $p --quit-after 30 2>&1 } -ArgumentList $godot, $root
-if (-not (Wait-Job $job -Timeout 120)) { Stop-Job $job; Write-Host 'FAIL: headless run timed out'; exit 1 }
-Receive-Job $job *> $runLog
-Remove-Job $job
-$errors = Select-String -Path $runLog -Pattern 'ERROR|SCRIPT ERROR|Unhandled exception'
-if ($errors) {
-    $errors | Select-Object -First 20 | ForEach-Object { $_.Line }
-    Write-Host 'FAIL: headless run'; exit 1
+Remove-Item $runLog -ErrorAction SilentlyContinue
+foreach ($startOn in 'title', 'play') {
+    $job = Start-Job { param($g, $p, $s) & $g --headless --path $p --quit-after 30 -- --screen $s 2>&1 } -ArgumentList $godot, $root, $startOn
+    if (-not (Wait-Job $job -Timeout 120)) { Stop-Job $job; Write-Host "FAIL: headless run timed out ($startOn)"; exit 1 }
+    "--- $startOn" | Out-File $runLog -Append -Encoding utf8
+    Receive-Job $job 2>&1 | ForEach-Object { "$_" } | Out-File $runLog -Append -Encoding utf8
+    Remove-Job $job
+    $errors = Select-String -Path $runLog -Pattern 'ERROR|SCRIPT ERROR|Unhandled exception'
+    if ($errors) {
+        $errors | Select-Object -First 20 | ForEach-Object { $_.Line }
+        Write-Host "FAIL: headless run ($startOn)"; exit 1
+    }
 }
 Write-Host 'run ok'
 
@@ -66,7 +73,7 @@ if ($Shot) {
     # A real window, because headless draws nothing. It sits far off screen so it never gets in the
     # way, and the fixed frame rate makes the same script give the same run every time.
     $arguments = @('--path', "`"$root`"", '--windowed', '--position', '-4000,-4000', '--resolution', '1280x720',
-        '--fixed-fps', '60', '--', '--shot', "`"$shotPath`"", '--frames', "$Frames")
+        '--fixed-fps', '60', '--', '--shot', "`"$shotPath`"", '--frames', "$Frames", '--screen', $Screen)
     if ($Script) {
         if (-not (Test-Path $Script)) { Write-Host "FAIL: script not found: $Script"; exit 1 }
         $arguments += @('--script', "`"$((Resolve-Path $Script).Path)`"")

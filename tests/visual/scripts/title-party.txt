@@ -1,0 +1,8 @@
+# title-party: New adventure from the title opens the seats; Escape there goes back to the title
+# run with -Screen title
+20 button New_adventure
+21 down left
+22 up left
+50 shot .dev/p11-party.png
+55 key Escape
+56 keyup Escape

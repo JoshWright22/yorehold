@@ -30,6 +30,17 @@ public partial class PlayCamera : Camera2D
     public Rect2 Bounds { get; set; } = new(0, 0, 1, 1);
     public Vector2? FollowTarget { get; set; }
     public bool Following { get; set; } = true;
+    /// <summary>The setting: off, the view only goes to the hero when recenter is pressed.</summary>
+    public bool FollowAllowed { get; set; } = true;
+    /// <summary>The wheel zooms on what the pointer is over; off zooms on the middle of the screen.</summary>
+    public bool ZoomToCursor { get; set; } = true;
+    /// <summary>The view pans while the pointer rests on an edge of the window.</summary>
+    public bool EdgeScroll { get; set; }
+    /// <summary>How close to the window's edge the pointer has to be, in pixels.</summary>
+    [Export] public float EdgeBand { get; set; } = 3;
+
+    // where the pointer was last seen; null until it moves and once it leaves the window
+    private Vector2? _pointer;
 
     private readonly Dictionary<int, Vector2> _touches = new();
     private bool _pressed;
@@ -82,6 +93,38 @@ public partial class PlayCamera : Camera2D
         SetZoomLevel(CurrentZoom * factor);
         Position += before - ScreenToWorld(anchor);
         Clamp();
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        // seen here and not in _UnhandledInput, since a panel under the pointer keeps the motion to itself
+        if (@event is InputEventMouseMotion motion)
+        {
+            _pointer = motion.Position;
+        }
+    }
+
+    public override void _Notification(int what)
+    {
+        if (what == NotificationWMMouseExit)
+        {
+            _pointer = null;
+        }
+    }
+
+    // Which way the pointer pushes the view from the window's edge; zero away from the edges.
+    private Vector2 EdgePush()
+    {
+        if (!EdgeScroll || _pointer is not Vector2 at || _pressed || _panButton || _touches.Count > 0)
+        {
+            return Vector2.Zero;
+        }
+        Vector2 view = GetViewportRect().Size;
+        if (at.X < 0 || at.Y < 0 || at.X > view.X || at.Y > view.Y)
+        {
+            return Vector2.Zero;
+        }
+        return new Vector2(at.X <= EdgeBand ? -1 : at.X >= view.X - EdgeBand ? 1 : 0, at.Y <= EdgeBand ? -1 : at.Y >= view.Y - EdgeBand ? 1 : 0);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -155,6 +198,10 @@ public partial class PlayCamera : Camera2D
     {
         float dt = (float)delta;
         Vector2 direction = Input.GetVector("pan_left", "pan_right", "pan_up", "pan_down");
+        if (direction == Vector2.Zero)
+        {
+            direction = EdgePush();
+        }
         if (direction != Vector2.Zero)
         {
             PanByScreen(-direction * KeyPanSpeed * dt);
@@ -171,8 +218,12 @@ public partial class PlayCamera : Camera2D
         if (Input.IsActionJustPressed("recenter"))
         {
             Following = true;
+            if (!FollowAllowed && FollowTarget is Vector2 hero)
+            {
+                Position = hero; // not following, so it goes there once
+            }
         }
-        if (Following && FollowTarget is Vector2 target)
+        if (Following && FollowAllowed && FollowTarget is Vector2 target)
         {
             Position = Position.Lerp(target, 1 - Mathf.Exp(-FollowRate * dt));
         }
@@ -211,7 +262,7 @@ public partial class PlayCamera : Camera2D
                 {
                     float notches = button.Factor > 0 ? button.Factor : 1;
                     float step = Mathf.Pow(ZoomStep, notches);
-                    ZoomBy(button.ButtonIndex == Godot.MouseButton.WheelUp ? step : 1 / step, button.Position);
+                    ZoomBy(button.ButtonIndex == Godot.MouseButton.WheelUp ? step : 1 / step, ZoomToCursor ? button.Position : GetViewportRect().Size / 2);
                 }
                 break;
         }

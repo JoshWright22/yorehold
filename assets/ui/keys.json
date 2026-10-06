@@ -1,0 +1,19 @@
+{
+  "actions": [
+    { "id": "pan_left", "name": "Pan left", "group": "Camera", "keys": ["Left", "A"], "description": "Moves the view left over the map." },
+    { "id": "pan_right", "name": "Pan right", "group": "Camera", "keys": ["Right", "D"], "description": "Moves the view right over the map." },
+    { "id": "pan_up", "name": "Pan up", "group": "Camera", "keys": ["Up", "W"], "description": "Moves the view up over the map." },
+    { "id": "pan_down", "name": "Pan down", "group": "Camera", "keys": ["Down", "S"], "description": "Moves the view down over the map." },
+    { "id": "zoom_in", "name": "Zoom in", "group": "Camera", "keys": ["Equal", "Kp Add"], "description": "Closer to the map. The mouse wheel does the same." },
+    { "id": "zoom_out", "name": "Zoom out", "group": "Camera", "keys": ["Minus", "Kp Subtract"], "description": "Further from the map. The mouse wheel does the same." },
+    { "id": "recenter", "name": "Back to the hero", "group": "Camera", "keys": ["Home"], "description": "Puts the view back on the selected hero and follows them again." },
+    { "id": "sheet", "name": "Sheet", "group": "Panels", "keys": ["C"], "description": "Opens and closes the character sheet." },
+    { "id": "gear", "name": "Gear", "group": "Panels", "keys": ["I"], "description": "Opens and closes the pack, and a chest or shop beside the hero." },
+    { "id": "spells", "name": "Spells", "group": "Panels", "keys": ["K"], "description": "Opens and closes the spell list." },
+    { "id": "journal", "name": "Journal", "group": "Panels", "keys": ["J"], "description": "Opens and closes the quests and companions." },
+    { "id": "camp", "name": "Camp", "group": "Panels", "keys": ["R"], "description": "Opens and closes rests and the camp." },
+    { "id": "end_turn", "name": "End turn", "group": "Fight", "keys": ["Space"], "description": "Ends the acting hero's turn." },
+    { "id": "save", "name": "Save", "group": "Game", "keys": ["F5"], "description": "Writes the save now. Only between fights." },
+    { "id": "load", "name": "Load", "group": "Game", "keys": ["F9"], "description": "Goes back to the last save. Only between fights." }
+  ]
+}

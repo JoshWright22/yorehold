@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {
+      "name": "Yorehold",
+      "kind": "Game",
+      "by": "",
+      "licence": "",
+      "text": "A tabletop adventure game with its own d20 rules: free movement and two actions a turn, shared turns, permadeath, and an editor for making adventures."
+    },
+    {
+      "name": "CC-29 palette",
+      "kind": "Art",
+      "by": "Alpha6",
+      "licence": "",
+      "text": "The 29 colours every screen and map is drawn in. From lospec.com/palette-list/cc-29."
+    }
+  ]
+}

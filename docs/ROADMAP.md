@@ -139,8 +139,18 @@ builds, passes `check.ps1` and is committed.
   - Default: unexplored fog and the ground off the map are ink (212123) and so is the window's clear colour. The tile painters are still the C++ placeholders and not CC-29 yet.
   - Not seen in a screenshot run: the defeat panel's button and revival at camp. Both are in the tests.
   - Not done: `.uid` files for `CutsceneView`, `CampPanel`, `JournalPanel` and `DialogueTests`. The editor makes them when it next opens the project.
-- [ ] **P11. Menus and settings.** Title, load, settings, key bindings, credits with the Godot
+- [x] **P11. Menus and settings.** Title, load, settings, key bindings, credits with the Godot
   MIT licence text.
+  - Default: the game starts on the title. `--screen play` or `--chapter` after `--` skips it, and screenshot runs do unless `-Screen title` is given, so the older scripts play as before.
+  - Default: the title is one list (Continue, New adventure, Quick start, Load, Characters, Create, Settings, Credits, Exit) with no Play page in between. Join co-op and the list of installed adventures wait for P14.
+  - Default: New adventure and Characters from the title open the character screens over the first chapter; leaving them without starting goes back to the title.
+  - Default: Escape with no panel open and no action picked is the pause list (Resume, Settings, Load, Save and quit to title). The game stands still under any menu. Save and quit saves only when the rules allow a save, so in a fight the last one stands.
+  - Default: the load screen lists `adventure.json` and its `.bak`, each loadable on its own. There is still one save; named saves are not in.
+  - Default: settings are the C++ client's file and field names. Zoom toward the pointer and reaction prompts ship on here (off there), since the camera and the fight screen were built that way. Controls presets and skins are not ported; their fields are kept in the file.
+  - Default: keys are data (`ui/keys.json`) and the settings file keeps only what the player changed. An action takes one key when rebound, and a key another action had moves over. Escape, Enter and the number keys are fixed.
+  - Default: edge panning needs the pointer within 3 px of the window's edge and stops while a button is held.
+  - Default: the engine's part of the credits (its MIT licence text and every library in it) is asked of the engine at run time, so it matches the build. The game's own entries are `ui/credits.json`; it names nobody yet, that is the owner's to fill in.
+  - Not done: text size, colour-blind team colours, dice speed and auto-end turn from the design's settings list. The C++ client had none of them either.
 - [ ] **P12. Create: shell, map and encounters modes.**
 - [ ] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
 - [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server

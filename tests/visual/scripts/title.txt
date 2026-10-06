@@ -1,0 +1,54 @@
+# title: the contents page, settings (pan speed and a key that takes another's), credits, a quick start,
+# the pause list, save and quit, then the title with a save to continue and the load screen
+# run with -Screen title
+20 shot .dev/p11-title.png
+25 button Settings
+26 down left
+27 up left
+40 button Pan_speed
+41 down left
+42 up left
+50 button Faster
+51 down left
+52 up left
+60 shot .dev/p11-settings.png
+65 button Keys
+66 down left
+67 up left
+75 button Gear
+76 down left
+77 up left
+82 button Change_key
+83 down left
+84 up left
+90 key C
+91 keyup C
+100 shot .dev/p11-keys.png
+105 key Escape
+106 keyup Escape
+115 button Credits
+116 down left
+117 up left
+125 button Engine
+126 down left
+127 up left
+135 shot .dev/p11-credits.png
+140 key Escape
+141 keyup Escape
+150 button Quick_start
+151 down left
+152 up left
+200 key Escape
+201 keyup Escape
+215 shot .dev/p11-pause.png
+220 button Save_and_quit
+221 down left
+222 up left
+240 move 200 180
+250 shot .dev/p11-title-save.png
+255 button Load
+256 down left
+257 up left
+265 shot .dev/p11-load.png
+270 key Return
+271 keyup Return

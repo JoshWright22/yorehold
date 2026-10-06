@@ -46,6 +46,9 @@ public class ContentTests
             Try(path, () => ContentNode.Read(files, path));
         }
 
+        Try("ui/keys.json", () => KeyBindings.Read(ContentNode.Read(files, "ui/keys.json")));
+        Try("ui/credits.json", () => Credits.Read(ContentNode.Read(files, "ui/credits.json")));
+
         string[] all = Directory.GetFiles(assets, "*.json", SearchOption.AllDirectories);
         Assert.True(all.Length > 0, $"no JSON files found under {assets}");
         foreach (string file in all)

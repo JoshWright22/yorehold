@@ -30,4 +30,20 @@ public static class Places
         }
         return ProjectSettings.GlobalizePath("user://saves/adventure.json");
     }
+
+    /// <summary>The folder the load screen lists.</summary>
+    public static string SavesFolder() => System.IO.Path.GetDirectoryName(SaveFile())!; // SaveFile always has a folder part
+
+    /// <summary>
+    /// settings.json, the C++ client's file name. A screenshot run has its own under ../.dev,
+    /// removed as it starts, so every run begins from the shipped settings and keys.
+    /// </summary>
+    public static string SettingsFile()
+    {
+        if (ShotRunner.Running)
+        {
+            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-settings", "settings.json"));
+        }
+        return ProjectSettings.GlobalizePath("user://settings.json");
+    }
 }

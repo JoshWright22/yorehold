@@ -99,13 +99,20 @@ public partial class FightControl : Node
         {
             return;
         }
+        if (App.Pressed(@event, "end_turn"))
+        {
+            EndTurn();
+            return;
+        }
         switch (key.Keycode)
         {
             case Key.Escape:
-                Cancel();
-                break;
-            case Key.Space:
-                EndTurn();
+                // with nothing picked Escape is left for the play screen, which opens the pause list
+                if (Aim.Action.Length > 0)
+                {
+                    Cancel();
+                    GetViewport().SetInputAsHandled();
+                }
                 break;
             case >= Key.Key0 and <= Key.Key9:
             {

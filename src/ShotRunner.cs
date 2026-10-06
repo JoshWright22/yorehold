@@ -71,8 +71,13 @@ public partial class ShotRunner : Node
         {
             System.IO.Directory.Delete(saves, true);
         }
+        string settings = System.IO.Path.GetDirectoryName(Places.SettingsFile())!;
+        if (System.IO.Directory.Exists(settings))
+        {
+            System.IO.Directory.Delete(settings, true);
+        }
         RenderingServer.FramePostDraw += AfterDraw;
-        GD.Print($"Shot run: {_frames} frames, {_script.Count} script steps, saving {_shot}");
+        GD.Print($"Shot run:{_frames} frames, {_script.Count} script steps, saving {_shot}");
     }
 
     public override void _ExitTree()

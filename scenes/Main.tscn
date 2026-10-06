@@ -1,9 +1,11 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/PlayScreen.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/menus/MenuScreen.tscn" id="3"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1")
+PlayScene = ExtResource("2")
 
-[node name="PlayScreen" parent="." instance=ExtResource("2")]
+[node name="Menus" parent="." instance=ExtResource("3")]

@@ -13,10 +13,35 @@ namespace Yorehold;
 /// </summary>
 public partial class PlayScreen : Node2D
 {
+    /// <summary>How the screen opens, as the title asked.</summary>
+    public enum StartKind
+    {
+        /// <summary>The chapter with its ready-made party.</summary>
+        Quick,
+        /// <summary>The save in StartSave.</summary>
+        Continue,
+        /// <summary>The seats first; leaving them without starting goes back to the title.</summary>
+        Party,
+        /// <summary>The character library; closing it goes back to the title.</summary>
+        Library,
+    }
+
     [Export] public string ChapterFolder { get; set; } = "chapters/chapter-one";
     [Export] public int Seed { get; set; } = 1;
-    /// <summary>A hero's reaction asks first (use it or pass) and is not just taken.</summary>
-    [Export] public bool ReactionPrompts { get; set; } = true;
+
+    public StartKind Start { get; set; } = StartKind.Quick;
+    public string StartSave { get; set; } = "";
+    /// <summary>The content the chapter is read from; null reads the game's own.</summary>
+    public ContentFiles? Content { get; set; }
+    /// <summary>A playtest from Create: nothing is saved and no character goes home to the library.</summary>
+    public bool Playtest { get; set; }
+
+    /// <summary>Escape with nothing else to close: Main opens the pause list.</summary>
+    public event System.Action? PauseAsked;
+    /// <summary>The title's character screens were closed without starting.</summary>
+    public event System.Action? TitleAsked;
+    /// <summary>Why the chapter didn't load; empty when it did.</summary>
+    public string LoadProblem { get; private set; } = "";
 
     private World? _world;
     // the scene file has all of these and _Ready fetches them before anything else runs
@@ -40,6 +65,8 @@ public partial class PlayScreen : Node2D
     private (int Hero, string Source)? _pendingOpen;
     private int _seed;
     private bool _clearedWritten;
+    private bool _fromTitle;
+    private (int Lighting, int Time) _lightingShown;
 
     public World? World => _world;
 
@@ -60,6 +87,15 @@ public partial class PlayScreen : Node2D
         _tokenBars = GetNode<TokenBarsView>("Overlay/TokenBars");
         _characters = GetNode<CharacterScreen>("Characters");
         _characters.StartPressed += Restart;
+        _characters.Closed += () =>
+        {
+            // opened from the title and left without starting: there is no game to go back to
+            if (_fromTitle)
+            {
+                _fromTitle = false;
+                TitleAsked?.Invoke();
+            }
+        };
         _cutscene = GetNode<CutsceneView>("Hud/Cutscene");
         _cutscene.Finished += () => _world?.EndCutscene();
         _camera.Tapped += Tap;
@@ -85,16 +121,94 @@ public partial class PlayScreen : Node2D
         _seed = seed;
         try
         {
-            _world = World.Load(new ContentFiles(ProjectSettings.GlobalizePath("res://assets")), folder, (ulong)seed);
+            _world = World.Load(Content ?? App.Content(), folder, (ulong)seed);
         }
         catch (ContentException e)
         {
-            GD.PushError($"Could not load {folder}: {e.Message}");
+            // a playtest of a package being edited may well not load; that is said, not an engine error
+            if (!Playtest)
+            {
+                GD.PushError($"Could not load {folder}: {e.Message}");
+            }
+            LoadProblem = e.Message;
             _hud.SetTitle($"Could not load {folder}");
             _hud.AddLog(e.Message);
             return;
         }
         Build(_world);
+        App.Changed += ApplySettings;
+        ApplySettings();
+        switch (Start)
+        {
+            case StartKind.Continue:
+                // C++ client: no save to continue starts a new adventure and says so
+                if (!System.IO.File.Exists(StartSave))
+                {
+                    _hud.AddLog("No save to continue. Starting a new adventure.");
+                }
+                else if (!_world.Load(StartSave))
+                {
+                    _hud.AddLog(_world.Refusal);
+                    LoadProblem = _world.Refusal;
+                }
+                break;
+            case StartKind.Party:
+            case StartKind.Library:
+                _fromTitle = true;
+                _characters.Open(_world, Places.CharactersFolder(), Start == StartKind.Party ? CharacterScreen.View.Party : CharacterScreen.View.Characters);
+                break;
+        }
+    }
+
+    // What the settings screen changed, onto the World and the camera.
+    private void ApplySettings()
+    {
+        GameSettings settings = App.Settings;
+        if (_world != null)
+        {
+            _world.Options.Lighting = settings.Lighting;
+            _world.Options.TimeOfDay = settings.TimeOfDay;
+            _world.Options.SharedFog = settings.SharedFog;
+            _world.Options.ReactionPrompts = settings.ReactionPrompts;
+            if ((settings.Lighting, settings.TimeOfDay) != _lightingShown)
+            {
+                _lightingShown = (settings.Lighting, settings.TimeOfDay);
+                _lighting.Build(_world); // the ambient colour comes from the time of day
+            }
+        }
+        _camera.KeyPanSpeed = settings.PanSpeed;
+        _camera.ZoomToCursor = settings.ZoomToCursor;
+        _camera.EdgeScroll = settings.EdgeScroll;
+        _camera.FollowAllowed = settings.CameraFollows;
+        _hud.Panels?.ShowKeys();
+    }
+
+    /// <summary>Loads a save from the load screen; false with the reason in the log.</summary>
+    public bool LoadFrom(string path)
+    {
+        if (_world == null || _world.Fighting)
+        {
+            return false;
+        }
+        _cutscene.Skip();
+        if (_world.Load(path))
+        {
+            return true;
+        }
+        _hud.AddLog(_world.Refusal);
+        return false;
+    }
+
+    /// <summary>Why a save can't be loaded right now; empty when it can.</summary>
+    public string LoadRefusal => _world == null ? "The chapter didn't load." : _world.Fighting ? "Not in a fight." : "";
+
+    /// <summary>Saves if the rules allow it now, for Save and quit. In a fight the last save stands.</summary>
+    public void SaveNow()
+    {
+        if (_world != null && _world.CanSave && !Playtest)
+        {
+            WriteSave(_world.StateJson().ToJsonString());
+        }
     }
 
     /// <summary>Where a cell's centre is on screen now; input scripts click cells with it.</summary>
@@ -122,7 +236,6 @@ public partial class PlayScreen : Node2D
 
     private void Build(World world)
     {
-        world.Options.ReactionPrompts = ReactionPrompts;
         _fightGround.Bind(world, _fight.Aim);
         _tokenBars.Bind(world, _fight.Aim);
         if (_hud.Panels != null)
@@ -225,20 +338,26 @@ public partial class PlayScreen : Node2D
             }
             return;
         }
-        string? panel = key.Keycode switch
+        string? panel = null;
+        foreach ((string action, string name) in PanelKeys)
         {
-            Key.C => "Sheet",
-            Key.I => "Gear",
-            Key.K => "Spells",
-            Key.J => "Journal",
-            Key.R => "Camp",
-            Key.F5 => "Save",
-            Key.F9 => "Load",
-            _ => null,
-        };
-        if (key.Keycode == Key.Escape && _hud.Panels is PlayHud open && open.OpenPanel.Length > 0 && !_world.Fighting)
+            if (App.Pressed(@event, action))
+            {
+                panel = name;
+                break;
+            }
+        }
+        if (key.Keycode == Key.Escape)
         {
-            open.TogglePanel(open.OpenPanel);
+            // Escape closes the open panel first; with nothing to close it is the pause list
+            if (_hud.Panels is PlayHud open && open.OpenPanel.Length > 0)
+            {
+                open.TogglePanel(open.OpenPanel);
+            }
+            else
+            {
+                PauseAsked?.Invoke();
+            }
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -251,9 +370,16 @@ public partial class PlayScreen : Node2D
 
     public override void _ExitTree()
     {
+        App.Changed -= ApplySettings;
         // Leaving the game takes the brought characters home, or marks them away in the save.
         WriteBack(System.IO.File.Exists(Places.SaveFile()) && _world != null && !_world.ChapterCleared() ? SaveName : "");
     }
+
+    // the bound actions that open a panel or save and load, with the menu button each one presses
+    private static readonly (string Action, string Menu)[] PanelKeys =
+    {
+        ("sheet", "Sheet"), ("gear", "Gear"), ("spells", "Spells"), ("journal", "Journal"), ("camp", "Camp"), ("save", "Save"), ("load", "Load"),
+    };
 
     private void Menu(string name)
     {
@@ -290,6 +416,10 @@ public partial class PlayScreen : Node2D
     // The autosave, through the save format's envelope (the file before it is kept as .bak).
     private void WriteSave(string state)
     {
+        if (Playtest)
+        {
+            return;
+        }
         try
         {
             string path = Places.SaveFile();
@@ -330,6 +460,7 @@ public partial class PlayScreen : Node2D
         {
             return;
         }
+        _fromTitle = false;
         WriteBack();
         _world.SetParty(picks);
         // a screenshot run keeps its seed so the same script plays the same way
@@ -344,7 +475,7 @@ public partial class PlayScreen : Node2D
     // away names the save that still holds them, as the C++ client marks them; "" brings them home.
     private void WriteBack(string away = "")
     {
-        if (_world == null)
+        if (_world == null || Playtest)
         {
             return;
         }

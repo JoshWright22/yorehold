@@ -49,6 +49,21 @@ What the port reads so far, and where it differs:
 - `ui/action-icons.json` is new: action id to the shape its hotbar icon is drawn with (`sword`, `dash`,
   `shield`, `plus`, `flask`, `hidden`, `eye`, `push`, `rings`, `up`, `hourglass`). An action it doesn't
   name gets its first letter. The rules don't read it.
+- `ui/keys.json` is new: what the keys do. `{"actions": [{"id", "name", "group", "description", "keys"}]}`,
+  one entry per thing a key can do, with the keys it ships with as names (`"C"`, `"F5"`, `"Kp Add"`, the
+  names Godot gives keys). The id is the input action the game listens for (`pan_left`, `sheet`,
+  `end_turn`). Two actions may not ship with the same key. Escape, Enter and the number keys are fixed
+  and are not listed.
+- `ui/credits.json` is new: the game's own credits. `{"entries": [{"name", "kind", "by", "licence",
+  "text"}]}`; `kind` is the tab it shows under. The engine and the libraries inside it are not in the
+  file: the credits screen asks the engine for them and their licence texts.
+- `settings.json` in the game's user folder is the player's settings, with the C++ client's field names
+  (`zoomToCursor`, `edgeScroll`, `cameraFollows`, `panSpeed` 200 to 3000, `fullscreen`, `lighting`
+  `map`/`off`/`mood`/`rules`, `timeOfDay` `map`/`day`/`dusk`/`night`, `sharedFog`, `reactionPrompts`,
+  `lastCreatePackage`) and one more, `keys`: action id to key names, only for the actions the player
+  moved off their shipped keys. A missing or wrong value keeps its default and never stops the game.
+  Fields this port doesn't use yet (`controls`, `playerName`, `joinAddress`, `skin`, `server`...) are
+  written back as they were read.
 - Character files ("Character files" below) are read and written in the same envelope and shape, so a
   library made by the C++ client opens here. The choices inside are FRAMEWORK.md's character choices.
   Until saves (P10) nothing marks a character `away`; its copy goes back to the file when the chapter
@@ -280,7 +295,7 @@ The voice file:
   "model": "base.en",
   "text": "Halt! Who goes there?",
   "words": [
-    {"text": "Halt!", "start": 0.12, "end": 0.62, "confidence": 0.94, "matched": true}
+	{"text": "Halt!", "start": 0.12, "end": 0.62, "confidence": 0.94, "matched": true}
   ]
 }
 ```
@@ -323,12 +338,12 @@ Create > Story is the adventure as a graph: scenes, fights, conversations, quest
 {
   "format": 1,
   "nodes": [
-    {"id": "keep", "kind": "scene", "title": "The keep", "text": "notes", "at": [0, 0], "chapter": "chapters/goblin-keep"},
-    {"id": "entry-hall", "kind": "encounter", "title": "entry-hall", "at": [250, 0], "chapter": "chapters/goblin-keep", "group": "entry-hall", "xp": 50},
-    {"id": "wren", "kind": "dialogue", "title": "wren", "at": [250, 74], "chapter": "chapters/goblin-keep", "dialogue": "chapters/goblin-keep/dialogue/wren.json"},
-    {"id": "rescue", "kind": "quest", "title": "Find Tobb", "at": [250, 148], "quest": "rescue", "steps": ["entry-hall"]},
-    {"id": "cave", "kind": "scene", "title": "The cave", "at": [500, 0], "map": {"width": 32, "height": 20}},
-    {"id": "end", "kind": "ending", "title": "Ending", "at": [250, 222], "chapter": "chapters/goblin-keep", "cutscene": "chapters/goblin-keep/ending.json"}
+	{"id": "keep", "kind": "scene", "title": "The keep", "text": "notes", "at": [0, 0], "chapter": "chapters/goblin-keep"},
+	{"id": "entry-hall", "kind": "encounter", "title": "entry-hall", "at": [250, 0], "chapter": "chapters/goblin-keep", "group": "entry-hall", "xp": 50},
+	{"id": "wren", "kind": "dialogue", "title": "wren", "at": [250, 74], "chapter": "chapters/goblin-keep", "dialogue": "chapters/goblin-keep/dialogue/wren.json"},
+	{"id": "rescue", "kind": "quest", "title": "Find Tobb", "at": [250, 148], "quest": "rescue", "steps": ["entry-hall"]},
+	{"id": "cave", "kind": "scene", "title": "The cave", "at": [500, 0], "map": {"width": 32, "height": 20}},
+	{"id": "end", "kind": "ending", "title": "Ending", "at": [250, 222], "chapter": "chapters/goblin-keep", "cutscene": "chapters/goblin-keep/ending.json"}
   ],
   "links": [{"from": "keep", "to": "entry-hall", "text": "They go in", "when": ["gate-open"]}],
   "dismissed": ["ending|chapters/goblin-keep"]

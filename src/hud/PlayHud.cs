@@ -191,6 +191,19 @@ public partial class PlayHud : Control
         ReadIcons();
     }
 
+    /// <summary>The menu buttons name the key each one has now, after the settings screen changed them.</summary>
+    public void ShowKeys()
+    {
+        foreach ((string button, string label, string action) in new[]
+        {
+            ("Sheet", "Sheet", "sheet"), ("Gear", "Gear", "gear"), ("Spells", "Spells", "spells"), ("Journal", "Journal", "journal"),
+            ("Camp", "Camp", "camp"), ("Save", "Save", "save"), ("Load", "Load", "load"),
+        })
+        {
+            GetNode<Button>("Menu/" + button).Text = App.WithKey(label, action);
+        }
+    }
+
     /// <summary>The panel opened from the menu (the sheet, the gear, the spells), or "" for none.</summary>
     public string OpenPanel { get; private set; } = "";
 

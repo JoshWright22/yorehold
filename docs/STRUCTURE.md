@@ -10,14 +10,38 @@
 | `rules/characters/` | Characters as choices: `CharacterChoices` (the file), `CharacterBuild` (choices to a sheet), `CharacterDraft` (making one or adding a level, step by step) and `CharacterLibrary` (the player's files and the graveyard). |
 | `rules/fight/` | A fight on its own, with no map: `Encounter` (initiative, rounds, shared turn blocks, each combatant's actions, movement and reaction, death saves, its log) and `Tactics` (the AI scorer: who to hit, where to stand, when to run or give up). |
 | `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). `WorldItems` is what is carried: piles to take from (containers, chests, what the dead leave), giving, gear on and off, using things up and shops. The adventure around the chapter is `WorldTalk` (conversations through a `DialogueSession`, companions joining, leaving and approving, picking a fight with someone), `WorldTravel` (exit markers into the adventure's next chapter, camp and back, rests, the stash, revival), `WorldSave` (the save's data, restoring it, the checkpoint a wiped party returns to) and `CutsceneRun` (a cutscene's timing: camera, bars, fade, captions). |
+| `rules/app/` | What the game keeps outside an adventure: `GameSettings` (the settings file), `KeyBindings` (the actions in `ui/keys.json` and the keys the player gave them), `SaveSummary` (what a save holds, read without loading it) and `Credits` (`ui/credits.json`). |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
-| `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels, `src/characters/` the character screens. |
-| `scenes/` | Godot scenes. `Main.tscn` is the start scene and holds `PlayScreen.tscn`. `scenes/hud/` is the panels and their theme, `scenes/characters/` the character screens. |
+| `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels, `src/characters/` the character screens, `src/menus/` the title and the screens behind it. |
+| `scenes/` | Godot scenes. `Main.tscn` is the start scene: the menus, and under them the screen the title started. `scenes/hud/` is the panels and their theme, `scenes/characters/` the character screens, `scenes/menus/` the menus. |
 | `assets/` | Content as JSON and images, same formats as the C++ client (`docs/CONTENT.md`). |
 | `docs/` | `ROADMAP.md` (order of work), `CONTENT.md` (the file formats) and this file. |
 
 `Yorehold.csproj` is the game project and leaves `rules/` and `tests/` out of its own build.
+
+## Starting and the menus
+
+`Main` (`src/Main.cs`) owns the flow. It loads the settings and keys (`App`), shows the title and starts what
+the title asks for: `PlayScreen.tscn` is made when a game starts and freed on the way back to the title. The
+game waits (its process mode is off) while a menu is over it. After `--` on the command line `--screen play`
+goes straight into the game, as does `--chapter`; with neither the game starts on the title.
+
+`scenes/menus/MenuScreen.tscn` with `src/menus/MenuScreen.cs` is every menu, on a canvas layer above the game:
+
+| Page | Is |
+|---|---|
+| Title | a contents page: the entries down the left with a fact beside each (the save's chapter, how many saves), and the picked one on the right as a book page. Continue, New adventure (the seats first), Quick start (the ready-made party), Load, Characters, Create, Settings, Credits, Exit. Up, Down and Enter work it too |
+| Pause | the same page over a game, from Escape with no panel open: Resume, Settings, Load, Save and quit to title |
+| Load (`LoadPanel`) | a `DataPanel` of the files in the saves folder, backups too, with the picked save's chapter and party. Load (or Enter) and Delete, which has to be pressed twice. A file that can't be read is listed with why |
+| Settings (`SettingsPanel`) | a `DataPanel` of every setting and every key. The picked one is explained on its page with the buttons that change it. Change key waits for the next key; a key another action had moves over and the page says so. Changes are applied and written as they are made |
+| Credits (`CreditsPanel`) | a `DataPanel` of `ui/credits.json`, the engine with its MIT licence text and every library inside it, asked of the engine itself |
+
+`App` keeps the settings (`settings.json` in the user folder, `Places.SettingsFile`) and the key bindings, and
+turns the bindings into input map actions under their ids, so the game asks `App.Pressed(event, "sheet")` and
+the camera reads `pan_left`. Only an action's keys are replaced; the gamepad bindings in `project.godot` stay.
+`App.Changed` tells the play screen, which puts lighting, time of day, the shared view and reaction prompts on
+the `World` and pan speed, zoom to the pointer, edge panning and following on the camera.
 
 ## The play screen
 
@@ -40,9 +64,10 @@ turns taps into `World` calls. It draws through its children, one script each:
 | `Hud/Cutscene` (`CutsceneView`) | plays a cutscene from `CutsceneRun`: steers the camera, draws the bars, fade, captions and titles with the panels hidden. A click, Space, Enter or Escape skips it |
 | `Characters` (`CharacterScreen`) | the character screens over everything; the world waits while they are up |
 
-The input actions (`pan_left`, `pan_right`, `pan_up`, `pan_down`, `zoom_in`, `zoom_out`, `recenter`) are in
-`project.godot`. `--chapter chapters/goblin-keep` after `--` plays another chapter than the scene's, and
-`--seed 7` another run of the dice.
+The camera's input actions (`pan_left`, `pan_right`, `pan_up`, `pan_down`, `zoom_in`, `zoom_out`, `recenter`)
+are in `project.godot` for the gamepad; their keys, and the keys for the panels, End turn, Save and Load, come
+from `ui/keys.json` and the settings. `--chapter chapters/goblin-keep` after `--` plays another chapter than the
+scene's, and `--seed 7` another run of the dice.
 
 The World says when a save is due (after a fight, a rest, a door, a conversation, travel, camp) with a `Save`
 event and the play screen writes it to `saves/adventure.json` in Godot's user folder (`Places.SaveFile`); F5
@@ -101,11 +126,13 @@ art; `assets/ui/action-icons.json` says which shape each action id gets.
 
 ## Checking
 
-`check.ps1` builds, runs the tests and starts the game headless once. `ALL OK` and exit code 0 means good.
+`check.ps1` builds, runs the tests and starts the game headless, once on the title and once straight in the
+game. `ALL OK` and exit code 0 means good.
 
 `check.ps1 -Shot name.png -Frames 120 -Script tests\visual\scripts\smoke.txt` also runs the game in a
 window kept off screen, plays the script and saves `../.dev/name.png`. Look at the picture for anything drawn.
-`-Chapter chapters\goblin-keep` plays another chapter in that run.
+`-Chapter chapters\goblin-keep` plays another chapter in that run. A run goes straight into the game;
+`-Screen title` starts it on the title.
 
 Input scripts have one step per line: a frame number, a command and its words. Lines that do not
 start with a number are skipped, so `#` notes work.
@@ -138,8 +165,11 @@ talks to Wren, then sells and buys at her shop in the goblin keep (270 frames, `
 `talk.txt` talks Tamsin round, asks her along and opens the journal (230 frames), `camp.txt` makes camp, uses
 the stash and breaks camp (270 frames), `travel.txt` saves, wins the fight, goes on into chapter two and loads
 (690 frames), and `scene.txt` sits through the trigger test's opening cutscene and conversation (620 frames,
-`-Chapter chapters\trigger-test`). A run keeps its library in `../.dev/shot-characters` and its save in
-`../.dev/shot-saves`, both emptied as it starts.
+`-Chapter chapters\trigger-test`). `title.txt` goes through the title, settings (pan speed, a key taken from
+another action), credits, a quick start, the pause list, save and quit, and loads the save from the load
+screen (320 frames, `-Screen title`); `title-party.txt` opens New adventure from the title and backs out (80
+frames, `-Screen title`). A run keeps its library in `../.dev/shot-characters`, its save in
+`../.dev/shot-saves` and its settings in `../.dev/shot-settings`, all emptied as it starts.
 
 ## C# style
 
