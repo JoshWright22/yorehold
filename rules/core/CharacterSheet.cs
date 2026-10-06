@@ -37,7 +37,7 @@ public sealed class DeathState
 /// holds raw data; whatever is derived (modifiers, AC, DCs) is worked out from it and a Ruleset
 /// each time, so nothing goes stale.
 /// </summary>
-public sealed class CharacterSheet
+public sealed partial class CharacterSheet
 {
     /// <summary>For AddCondition: last as long as the condition's own file says.</summary>
     public const int DefinedDuration = EffectStep.DefinedDuration;

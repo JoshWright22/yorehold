@@ -1,0 +1,26 @@
+# chapter one: save, win the fight past the door like fight.txt does, step on the exit marker and
+# go on into chapter two, then load the autosave made on arriving
+5 key F5
+6 keyup F5
+10 cell 9 6
+11 down left
+12 up left
+40 shot .dev/p10-saved.png
+90 cell 12 6
+91 down left
+92 up left
+305 cell 11 9
+316 down left
+317 up left
+390 key 1
+391 creature Goblin_1
+406 down left
+407 up left
+# the fight is over: on to the exit
+480 cell 12 6
+481 down left
+482 up left
+620 shot .dev/p10-chapter-two.png
+630 key F9
+631 keyup F9
+670 shot .dev/p10-loaded.png

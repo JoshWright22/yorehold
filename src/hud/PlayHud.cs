@@ -37,6 +37,14 @@ public partial class PlayHud : Control
     public event Action<ItemOrder>? ItemOrdered;
     /// <summary>Something pressed on the spell panel.</summary>
     public event Action<SpellOrder>? SpellOrdered;
+    /// <summary>Something pressed on the camp panel.</summary>
+    public event Action<CampOrder>? CampOrdered;
+    /// <summary>A reply in the conversation, by its place among those on offer.</summary>
+    public event Action<int>? ReplyPressed;
+    /// <summary>The wiped party goes back to the autosave.</summary>
+    public event Action? BackPressed;
+    /// <summary>Trade, under a merchant's replies.</summary>
+    public event Action? TradePressed;
 
     // the scene has all of these
     private VBoxContainer _party = null!;
@@ -78,6 +86,17 @@ public partial class PlayHud : Control
     private DataPanel _spellsView = null!;
     private Button _spellsButton = null!;
     private SpellPanel _spells = null!;
+    private DataPanel _journalView = null!;
+    private Button _journalButton = null!;
+    private JournalPanel _journal = null!;
+    private DataPanel _campView = null!;
+    private Button _campButton = null!;
+    private CampPanel _camp = null!;
+    private Control _talk = null!;
+    private Label _talkSpeaker = null!;
+    private Label _talkText = null!;
+    private VBoxContainer _replies = null!;
+    private string _talkShown = "";
 
     private readonly Dictionary<string, string> _icons = new();
     private readonly List<PartyCard> _partyCards = new();
@@ -117,7 +136,12 @@ public partial class PlayHud : Control
         _reactionText = GetNode<Label>("Reaction/Rows/Text");
         _reactionTime = GetNode<ProgressBar>("Reaction/Rows/Time");
         _defeat = GetNode<Control>("Defeat");
-        _defeatText = GetNode<Label>("Defeat/Text");
+        _defeatText = GetNode<Label>("Defeat/Rows/Text");
+        GetNode<Button>("Defeat/Rows/Back").Pressed += () => BackPressed?.Invoke();
+        _talk = GetNode<Control>("Talk");
+        _talkSpeaker = GetNode<Label>("Talk/Rows/Speaker");
+        _talkText = GetNode<Label>("Talk/Rows/Text");
+        _replies = GetNode<VBoxContainer>("Talk/Rows/Replies");
         _tip = GetNode<Control>("Tip");
         _tipTitle = GetNode<Label>("Tip/Rows/Title");
         _tipMeta = GetNode<Label>("Tip/Rows/Meta");
@@ -140,6 +164,16 @@ public partial class PlayHud : Control
         _spells.Ordered += order => SpellOrdered?.Invoke(order);
         _spells.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _spellsView.ClosePressed += () => OpenPanel = "";
+        _journalView = GetNode<DataPanel>("Journal");
+        _journalButton = GetNode<Button>("Menu/Journal");
+        _journal = new JournalPanel(_journalView);
+        _journalView.ClosePressed += () => OpenPanel = "";
+        _campView = GetNode<DataPanel>("Camp");
+        _campButton = GetNode<Button>("Menu/Camp");
+        _camp = new CampPanel(_campView);
+        _camp.Ordered += order => CampOrdered?.Invoke(order);
+        _camp.HeroPicked += hero => CreaturePressed?.Invoke(hero);
+        _campView.ClosePressed += () => OpenPanel = "";
         foreach (Node child in GetNode("Menu").GetChildren())
         {
             if (child is Button button)
@@ -188,6 +222,12 @@ public partial class PlayHud : Control
     public void SpellRefused(string why)
     {
         _spells.Refused(why);
+    }
+
+    /// <summary>Says under the camp panel's entry why the world said no.</summary>
+    public void CampRefused(string why)
+    {
+        _camp.Refused(why);
     }
 
     /// <summary>Opens the spell panel with a spell picked, for input scripts and the first look.</summary>
@@ -243,8 +283,9 @@ public partial class PlayHud : Control
         }
         _log.Rest(fighting ? LogAboveHotbar : LogAboveEdge);
         ShowReaction(world);
-        _defeat.Visible = world.PartyWiped;
+        _defeat.Visible = world.PartyWiped && !world.InCutscene;
         _defeatText.Text = world.Chapter.DefeatText;
+        ShowTalk(world);
         ShowPanels(world, shown, aim.HeroTurn);
 
         _cursor.Visible = aim.Label.Length > 0;
@@ -281,6 +322,92 @@ public partial class PlayHud : Control
         if (_gearView.Visible)
         {
             _gear.Refresh(world, hero);
+        }
+        _journalButton.SetPressedNoSignal(OpenPanel == "Journal");
+        _journalView.Visible = OpenPanel == "Journal";
+        if (_journalView.Visible)
+        {
+            _journal.Refresh(world);
+        }
+        _campButton.SetPressedNoSignal(OpenPanel == "Camp");
+        _campView.Visible = OpenPanel == "Camp" && hero < world.HeroCount && !world.Fighting;
+        if (_campView.Visible)
+        {
+            _camp.Refresh(world, hero);
+        }
+    }
+
+    // The conversation along the bottom, between the party cards and the log: who speaks, the line,
+    // and a numbered button per reply (1 to 9 pick them too). The buttons are only made again when
+    // the line changes, so a press isn't lost.
+    private void ShowTalk(World world)
+    {
+        DialogueSession? talk = world.Talk;
+        DialogueNode? node = talk?.Current;
+        _talk.Visible = node != null;
+        if (talk == null || node == null)
+        {
+            _talkShown = "";
+            return;
+        }
+        List<DialogueChoice> choices = talk.Choices();
+        string shown = $"{talk.Dialogue.Id}/{node.Id}/{string.Join(",", choices.Select(c => c.Id))}";
+        if (shown == _talkShown)
+        {
+            FitTalk(); // a wrapped line only knows its height a frame after it is set
+            return;
+        }
+        _talkShown = shown;
+        _talkSpeaker.Text = node.Speaker.Length > 0 ? node.Speaker : world.TalkingWith >= 0 ? world.Creatures[world.TalkingWith].Sheet.Name : "";
+        _talkSpeaker.Visible = _talkSpeaker.Text.Length > 0;
+        _talkText.Text = node.Text;
+        foreach (Node old in _replies.GetChildren())
+        {
+            _replies.RemoveChild(old);
+            old.QueueFree();
+        }
+        var lines = choices.Count == 0
+            ? new List<string> { "1. (Leave)" }
+            : choices.Select((c, i) => $"{i + 1}. {c.Text}" + (c.Check != null ? $"  [{c.Check.Skill} {c.Check.Difficulty}]" : "")).ToList();
+        for (int i = 0; i < lines.Count; i++)
+        {
+            int index = i;
+            var button = new Button
+            {
+                Text = lines[i],
+                Alignment = HorizontalAlignment.Left,
+                FocusMode = FocusModeEnum.None,
+                CustomMinimumSize = new Vector2(0, 34),
+                ThemeTypeVariation = "RowButton",
+            };
+            button.Pressed += () => ReplyPressed?.Invoke(index);
+            _replies.AddChild(button);
+        }
+        // a merchant's shop opens from the conversation, as E did beside one in the C++ client
+        int npc = world.TalkingWith >= world.NpcStart ? world.Creatures[world.TalkingWith].Npc : -1;
+        if (npc >= 0 && npc < world.Merchants.Count && world.Merchants[npc] != null)
+        {
+            var trade = new Button
+            {
+                Text = "Trade (T)",
+                Alignment = HorizontalAlignment.Left,
+                FocusMode = FocusModeEnum.None,
+                CustomMinimumSize = new Vector2(0, 34),
+                ThemeTypeVariation = "RowOddButton",
+            };
+            trade.Pressed += () => TradePressed?.Invoke();
+            _replies.AddChild(trade);
+        }
+        FitTalk();
+    }
+
+    // The conversation grows up from the bottom edge to fit the line and the replies.
+    private void FitTalk()
+    {
+        float top = _talk.OffsetBottom - _talk.GetCombinedMinimumSize().Y;
+        if (!Mathf.IsEqualApprox(_talk.OffsetTop, top))
+        {
+            _talk.OffsetTop = top;
         }
     }
 

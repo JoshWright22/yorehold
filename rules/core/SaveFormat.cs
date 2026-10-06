@@ -21,6 +21,8 @@ public sealed class SaveFormat
 
     public string Name { get; }
     public int Version { get; }
+    /// <summary>The oldest version still read; older files are refused with a message.</summary>
+    public int Oldest { get; init; } = 1;
 
     public string Write(JsonNode data)
     {
@@ -60,6 +62,10 @@ public sealed class SaveFormat
         if (version < 1 || framework < 1)
         {
             throw new InvalidDataException("bad version");
+        }
+        if (version < Oldest)
+        {
+            throw new InvalidDataException("made by an older version of the game that this one can't read");
         }
         return envelope["data"]?.ToJsonString() ?? throw new InvalidDataException("no data");
     }

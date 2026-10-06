@@ -33,7 +33,8 @@
   "triggers": [
     {
       "id": "on-start",
-      "dialogue": "dialogue/on-enter.json"
+      "dialogue": "dialogue/on-enter.json",
+      "cutscene": "intro-scene.json"
     },
     {
       "id": "on-victory",

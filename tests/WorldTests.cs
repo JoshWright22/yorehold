@@ -335,18 +335,25 @@ public class WorldTests
         Assert.Equal(new[] { "on-start" }, w.FiredTriggers);
         Assert.False(w.ChapterCleared());
 
+        Assert.True(w.Talk != null && w.TalkingWith == -1 && world.Said("Welcome to the trigger test chapter!"), "The trigger's conversation opens, with nobody in particular");
+        Assert.True(w.InCutscene && world.EventsOf(WorldEventKind.Cutscene).SequenceEqual(new[] { "chapters/trigger-test/intro-scene.json" }),
+            "and its cutscene plays");
+        w.EndCutscene();
+
         world.SetFlags("something-else");
         Assert.Single(world.EventsOf(WorldEventKind.Talk));
         world.SetFlags("enemy-defeated");
+        Assert.Single(world.EventsOf(WorldEventKind.Talk)); // the next ones wait for this one to end
+        Assert.True(w.ChapterCleared());
+        Assert.True(world.Said(w.Chapter.ClearedText));
+        Assert.Contains(w.Chapter.ClearedText, world.EventsOf(WorldEventKind.Banner));
+        Assert.True(world.Reply(0) && w.Talk?.Dialogue.Id == "on-victory" && world.Reply(0) && w.Talk?.Dialogue.Id == "chapter-complete" && world.Reply(0) && w.Talk == null);
         Assert.Equal(new[]
         {
             "chapters/trigger-test/dialogue/on-enter.json",
             "chapters/trigger-test/dialogue/on-victory.json",
             "chapters/trigger-test/dialogue/chapter-complete.json",
         }, world.EventsOf(WorldEventKind.Talk));
-        Assert.True(w.ChapterCleared());
-        Assert.True(world.Said(w.Chapter.ClearedText));
-        Assert.Contains(w.Chapter.ClearedText, world.EventsOf(WorldEventKind.Banner));
 
         world.SetFlags("enemy-defeated", "more");
         Assert.Equal(3, world.EventsOf(WorldEventKind.Talk).Count);

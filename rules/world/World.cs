@@ -12,7 +12,7 @@ public sealed class WorldCreature
         Group = group;
     }
 
-    public CharacterSheet Sheet { get; }
+    public CharacterSheet Sheet { get; set; }
     /// <summary>0 = the party, 1 = enemies, 2 = neutral NPCs.</summary>
     public int Team { get; set; }
     /// <summary>Index into the chapter's encounters (enemies that wake together); NPCs count on after them.</summary>
@@ -43,7 +43,13 @@ public sealed class WorldCreature
     /// <summary>A hero's choices, which its sheet is built from; null for everyone else.</summary>
     public CharacterChoices? Choices { get; set; }
     /// <summary>The library file a brought character came from; empty for a ready-made hero.</summary>
-    public string Library { get; init; } = "";
+    public string Library { get; set; } = "";
+    /// <summary>The conversation it offers once it gives up in a fight.</summary>
+    public string Surrender { get; init; } = "";
+    /// <summary>The companion it is, when its NPC entry makes it one; empty otherwise.</summary>
+    public string CompanionId { get; set; } = "";
+    /// <summary>A companion's conversation when they came from another chapter, where it lives.</summary>
+    public string CompanionTalk { get; set; } = "";
     /// <summary>The spell it holds in place, if any.</summary>
     public Concentration Concentration { get; set; } = new();
     /// <summary>A prepared caster may choose its spells: from the start until a fight, then after the rest the rules name.</summary>
@@ -63,7 +69,7 @@ public enum WorldEventKind
     Floater,
     /// <summary>Text across the screen for Seconds.</summary>
     Banner,
-    /// <summary>Text is the content path of a conversation to open.</summary>
+    /// <summary>Text is the content path of a conversation to open (World.Talk has it open already).</summary>
     Talk,
     /// <summary>Text is the content path of a cutscene to play.</summary>
     Cutscene,
@@ -73,6 +79,12 @@ public enum WorldEventKind
     Turn,
     /// <summary>The fight is over. Text is "victory" or "defeat".</summary>
     FightOver,
+    /// <summary>Another chapter's map took this one's place (travel, camp, a save); Text is its folder.</summary>
+    ChapterChanged,
+    /// <summary>A good moment to write the autosave; Text is the save's data.</summary>
+    Save,
+    /// <summary>A save was loaded; Text is the chapter's resume line.</summary>
+    Resumed,
 }
 
 /// <summary>A library character taking a seat in place of the chapter's ready-made hero.</summary>
@@ -131,30 +143,51 @@ public sealed partial class World
     private ulong _rolls;
     private bool _won;
 
-    public World(Chapter chapter, ulong seed)
+    public World(Chapter chapter, ulong seed, ContentFiles? files = null, Adventure? adventure = null)
     {
+        Files = files;
+        Adventure = adventure;
+        HomeFolder = chapter.Folder;
         Chapter = chapter;
         Rules = chapter.Rules.Rules;
         Map = new MapState(chapter.Map);
         Fog = new FogOfWar(Map.Width, Map.Height, GameMap.CellSize);
         LightLevels = new LightLevels(Map.Width, Map.Height, GameMap.CellSize);
+        if (files != null)
+        {
+            // The adventure's own camp, else the shared one when the content has it.
+            string camp = adventure?.Camp ?? "";
+            CampFolder = camp.Length > 0 ? camp : files.Exists("chapters/camp/chapter.json") ? "chapters/camp" : "";
+        }
         NewAdventure(seed);
     }
 
-    /// <summary>Loads the chapter in folder and starts it.</summary>
+    /// <summary>
+    /// Loads the chapter in folder and starts it. A chapter the content's adventure.json lists plays
+    /// as part of that adventure, which then has to load too.
+    /// </summary>
     public static World Load(ContentFiles files, string folder, ulong seed)
     {
-        return new World(Chapter.Load(files, folder), seed);
+        Adventure? adventure = Adventure.ListedChapters(files).Contains(folder) ? Adventure.Load(files) : null;
+        return new World(Chapter.Load(files, folder), seed, files, adventure);
     }
 
-    public Chapter Chapter { get; }
-    public Ruleset Rules { get; }
+    public Chapter Chapter { get; private set; }
+    public Ruleset Rules { get; private set; }
+    /// <summary>Where other chapters are loaded from (travel, camp, saves); null for a World made from a Chapter alone.</summary>
+    public ContentFiles? Files { get; }
+    /// <summary>The adventure the chapter belongs to, or null when it plays on its own.</summary>
+    public Adventure? Adventure { get; }
+    /// <summary>The chapter the World started in.</summary>
+    public string HomeFolder { get; }
+    /// <summary>The chapter folder the party makes camp in; empty when there is none.</summary>
+    public string CampFolder { get; } = "";
     public StealthRules StealthRules => Chapter.Rules.Stealth;
     public Grid Grid { get; } = new(GridType.Square, GameMap.CellSize);
-    public MapState Map { get; }
+    public MapState Map { get; private set; }
     public TokenMover Tokens { get; } = new();
     public FogOfWar Fog { get; private set; }
-    public LightLevels LightLevels { get; }
+    public LightLevels LightLevels { get; private set; }
     public List<WorldCreature> Creatures { get; } = new();
     public int HeroCount { get; private set; }
     /// <summary>Where the chapter's NPCs start in Creatures.</summary>
@@ -187,10 +220,30 @@ public sealed partial class World
     /// <summary>Starts the chapter again from its files. Every roll that follows comes from seed.</summary>
     public void NewAdventure(ulong seed)
     {
-        _seed = seed;
+        if (Chapter.Folder != HomeFolder && Files != null)
+        {
+            SwitchChapter(Chapter.Load(Files, HomeFolder));
+        }
         _rolls = 0;
-        _won = false;
         _events.Add(new WorldEvent(WorldEventKind.Reset));
+        Stash.Clear();
+        RestsUsed.Clear();
+        CampReturn = "";
+        Companions.Clear();
+        Begin(seed, false);
+        Checkpoint = StateJson().ToJsonString();
+    }
+
+    // The chapter's people and things as its files place them. Quiet leaves out the intro, the
+    // title and the triggers, for travel and saves, which say and fire those themselves.
+    private void Begin(ulong seed, bool quiet)
+    {
+        _seed = seed;
+        _won = false;
+        Talk = null;
+        TalkingWith = -1;
+        _pendingTalk = null;
+        _talkQueue.Clear();
         Fog = new FogOfWar(Map.Width, Map.Height, GameMap.CellSize);
         Tokens.ClearLinks();
         Tokens.Tokens.Clear();
@@ -237,6 +290,8 @@ public sealed partial class World
                 {
                     CreatureId = placement.CreatureId,
                     Facing = FacingOf(placement),
+                    Surrender = placement.Surrender.Length > 0 ? placement.Surrender
+                        : Chapter.Encounters[group].Surrender.Length > 0 ? Chapter.Encounters[group].Surrender : Chapter.Surrender,
                 };
                 creature.AiLayers.AddRange(new[] { Chapter.Encounters[group].Ai, placement.Ai }.OfType<ContentNode>());
                 Creatures.Add(creature);
@@ -271,6 +326,8 @@ public sealed partial class World
             {
                 Npc = i,
                 CreatureId = npc.Creature,
+                Surrender = Chapter.Surrender,
+                CompanionId = npc.Companion != null ? npc.Id : "",
             };
             Creatures.Add(creature);
             Tokens.Tokens.Add(new Token
@@ -287,6 +344,17 @@ public sealed partial class World
         {
             Tokens.Link(i, i - 1);
         }
+        MeetCompanions();
+        // Starting on an exit doesn't take anyone through it; stepping off and back on does.
+        _heroMarker.Clear();
+        for (int i = 0; i < HeroCount; i++)
+        {
+            _heroMarker.Add(ExitMarkerAt(CellOf(i)));
+        }
+        if (quiet)
+        {
+            return;
+        }
 
         foreach (string line in Chapter.Intro)
         {
@@ -294,6 +362,17 @@ public sealed partial class World
         }
         _events.Add(new WorldEvent(WorldEventKind.Banner, Chapter.Title) { Seconds = 3 });
         CheckTriggers(onEnterOnly: true);
+    }
+
+    // Another chapter of the adventure (or camp) takes the place of this one. Begin fills it.
+    private void SwitchChapter(Chapter next)
+    {
+        Chapter = next;
+        Rules = next.Rules.Rules;
+        Map = new MapState(next.Map);
+        Fog = new FogOfWar(Map.Width, Map.Height, GameMap.CellSize);
+        LightLevels = new LightLevels(Map.Width, Map.Height, GameMap.CellSize);
+        _events.Add(new WorldEvent(WorldEventKind.ChapterChanged, next.Folder));
     }
 
     /// <summary>One step of time: walking, traps under foot or in sight, and what the party sees (which can wake enemies).</summary>
@@ -306,6 +385,8 @@ public sealed partial class World
             TakeTurns(deltaSeconds);
         }
         UpdateVisibility();
+        WatchPendingTalk();
+        WatchExits();
     }
 
     /// <summary>Everyone on the move takes their next steps.</summary>
@@ -347,7 +428,7 @@ public sealed partial class World
         return false;
     }
 
-    /// <summary>Someone the party can talk to: an NPC standing and not fighting.</summary>
+    /// <summary>Someone the party can talk to: an NPC standing and not fighting, one who gave up, or a companion with something to say.</summary>
     public bool Talkable(int creature)
     {
         if (creature < HeroCount || creature >= Creatures.Count)
@@ -355,14 +436,19 @@ public sealed partial class World
             return false;
         }
         WorldCreature c = Creatures[creature];
-        return c.Team == 2 && !c.Sheet.Down && c.Npc >= 0;
+        if (Companion(creature))
+        {
+            return !c.Sheet.Down && DialogueFor(creature).Length > 0;
+        }
+        return c.Team == 2 && !c.Sheet.Down && (c.Npc >= 0 || (c.Surrendered && c.Surrender.Length > 0) || c.CompanionTalk.Length > 0);
     }
 
     public int? TalkerAt(Cell cell)
     {
+        // a companion walks with the party, so it doesn't stand in its way
         for (int i = HeroCount; i < Creatures.Count; i++)
         {
-            if (Talkable(i) && CellOf(i) == cell)
+            if (Talkable(i) && !Companion(i) && CellOf(i) == cell)
             {
                 return i;
             }
@@ -406,7 +492,7 @@ public sealed partial class World
     /// <summary>A hero walking to a square between fights; the others follow.</summary>
     public bool CanGo(int hero, Cell to)
     {
-        if (hero < 0 || hero >= HeroCount || Creatures[hero].Sheet.Down || Fighting || InCutscene || !Walkable(to))
+        if (hero < 0 || hero >= HeroCount || Creatures[hero].Sheet.Down || Fighting || InCutscene || Talk != null || !Walkable(to))
         {
             return false;
         }
@@ -442,6 +528,7 @@ public sealed partial class World
 
     public void SetFlags(IEnumerable<string> flags)
     {
+        var before = new SortedSet<string>(Flags, StringComparer.Ordinal);
         bool changed = false;
         foreach (string flag in flags)
         {
@@ -449,8 +536,44 @@ public sealed partial class World
         }
         if (changed)
         {
-            CheckTriggers(onEnterOnly: false);
+            FlagsChanged(before);
         }
+    }
+
+    // Companions think about it, the journal says what moved, and triggers waiting on flags fire.
+    private void FlagsChanged(IReadOnlySet<string> before)
+    {
+        CompanionFlags();
+        foreach (Quest quest in Chapter.Quests.Quests)
+        {
+            QuestProgress was = quest.Progress(before);
+            QuestProgress now = quest.Progress(Flags);
+            if (now.Status == QuestStatus.Hidden)
+            {
+                continue;
+            }
+            if (was.Status == QuestStatus.Hidden)
+            {
+                Say($"New quest: {quest.Title} (J: journal)");
+            }
+            for (int i = 0; i < quest.Objectives.Count; i++)
+            {
+                if (now.ObjectiveDone[i] && !was.ObjectiveDone[i] && now.Status != QuestStatus.Failed)
+                {
+                    Say("Done: " + quest.Objectives[i].Text);
+                }
+            }
+            if (now.Status != was.Status && now.Status == QuestStatus.Completed)
+            {
+                Say("Quest complete: " + quest.Title);
+                _events.Add(new WorldEvent(WorldEventKind.Banner, quest.Title) { Seconds = 2.5 });
+            }
+            else if (now.Status != was.Status && now.Status == QuestStatus.Failed)
+            {
+                Say("Quest failed: " + quest.Title);
+            }
+        }
+        CheckTriggers(onEnterOnly: false);
     }
 
     public bool ChapterCleared()
@@ -503,7 +626,7 @@ public sealed partial class World
     {
         if (dialogue.Length > 0)
         {
-            _events.Add(new WorldEvent(WorldEventKind.Talk, dialogue));
+            StartTalk(-1, dialogue);
         }
         if (cutscene.Length > 0)
         {
@@ -647,7 +770,7 @@ public sealed partial class World
     public bool Interact(int hero, int objectId)
     {
         Refusal = "";
-        if (Fighting || InCutscene)
+        if (Fighting || InCutscene || Talk != null)
         {
             Refusal = "Not now.";
             return false;
@@ -658,6 +781,7 @@ public sealed partial class World
             return false;
         }
         UseObject(hero, objectId);
+        RequestSave();
         return true;
     }
 
@@ -1066,7 +1190,7 @@ public sealed partial class World
             }
             token.Floor = Fog.State(view, 0, CellOf(i)) == FogState.Visible ? 0 : HiddenFloor;
         }
-        if (!Fighting && !PartyDown && !InCutscene)
+        if (!Fighting && !PartyDown && !InCutscene && Talk == null)
         {
             UpdateStealth();
         }

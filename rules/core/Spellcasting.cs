@@ -141,6 +141,14 @@ public sealed class Concentration
 
     public bool Active => Spell.Length > 0;
 
+    /// <summary>What a save kept.</summary>
+    public static Concentration Restore(string spell, IEnumerable<Hold> holds)
+    {
+        var made = new Concentration { Spell = spell };
+        made.Holds.AddRange(holds);
+        return made;
+    }
+
     /// <summary>Starts concentrating on what result left behind.</summary>
     public static Concentration Begin(string spell, EffectResult result)
     {

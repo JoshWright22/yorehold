@@ -619,6 +619,12 @@ public class WorldFightTests
         using WorldFixture world = WorldFixture.Load(folder, seed);
         World w = world.World;
         w.Options.AutoPlay = true;
+        // an opening cutscene or conversation is the player's to sit through, not the fight's
+        w.EndCutscene();
+        while (w.Talk != null)
+        {
+            w.EndTalk();
+        }
         GatherPartyAt(w, group);
         world.Fight(group);
         string name = $"{folder} encounter {w.Chapter.Encounters[group].Id}";

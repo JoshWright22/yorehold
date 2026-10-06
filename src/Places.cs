@@ -17,4 +17,17 @@ public static class Places
         }
         return ProjectSettings.GlobalizePath("user://characters");
     }
+
+    /// <summary>
+    /// The adventure's autosave, one file like the C++ client's. A screenshot run keeps its own
+    /// under ../.dev, removed as it starts, so a script always begins from the chapter's start.
+    /// </summary>
+    public static string SaveFile()
+    {
+        if (ShotRunner.Running)
+        {
+            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-saves", "adventure.json"));
+        }
+        return ProjectSettings.GlobalizePath("user://saves/adventure.json");
+    }
 }

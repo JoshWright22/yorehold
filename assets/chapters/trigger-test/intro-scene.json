@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"bars": true},
+    {"camera": [672, 672], "zoom": 1.4, "seconds": 2.5, "wait": false},
+    {"caption": "Something waits further in.", "seconds": 2.5},
+    {"title": "Trigger Test", "seconds": 2},
+    {"camera": [352, 352], "zoom": 1, "seconds": 1.5, "wait": false},
+    {"bars": false},
+    {"pause": 1.5}
+  ]
+}

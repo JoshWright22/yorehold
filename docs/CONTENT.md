@@ -30,9 +30,21 @@ What the port reads so far, and where it differs:
   strike. An unknown id fails the load.
 - `chapters/spell-test` is a test chapter outside the adventure, for the spell screenshot runs. Its own
   `creatures/goblin-hexer.json` casts Spark and Chill bite.
-- A merchant is read from `stock` only. The saved `inventory` form comes with saves.
-- A map's `tileMap` may not carry a `delta`: saved changes come with saves.
-- The save signature of a chapter is not worked out yet; it comes with saves.
+- A merchant is read from `stock` only. A save keeps each shop's purse and stock itself, so the saved
+  `inventory` form in a chapter file isn't needed.
+- A map's `tileMap` may not carry a `delta`. Nothing in play changes tiles yet; doors, chests and traps
+  are saved as objects.
+- The adventure save is `saves/adventure.json` in the game's user folder, in the `yorehold.adventure`
+  envelope at version 4, with the file before it kept as `.bak`. It holds the chapter id and folder, the
+  seed and the dice counters (so a loaded game rolls the same as one that never stopped), flags, fired
+  triggers, explored fog, objects, piles, shops, surfaces, rests used, the stash, the companion roster,
+  the way back from camp, the heroes' choices and every creature's sheet and place. The C++ client's
+  versions 1 to 3 kept sheets in another shape and are refused with a message.
+- The save signature of a chapter is not worked out yet. A save is checked against the chapter id, the
+  map's size and the counts of creatures, objects and NPCs instead, and a hero's sheet is built again from
+  their choices so a class that is gone fails by name.
+- A cutscene step with no `ease` uses `inOutCubic`, the C++ client's curve. `chapters/trigger-test` has
+  `intro-scene.json`, played by its opening trigger, for the cutscene screenshot run.
 - `ui/theme.json` and the two files in `create/` are not rules content. They only have to be JSON here.
 - `ui/action-icons.json` is new: action id to the shape its hotbar icon is drawn with (`sword`, `dash`,
   `shield`, `plus`, `flask`, `hidden`, `eye`, `push`, `rings`, `up`, `hourglass`). An action it doesn't

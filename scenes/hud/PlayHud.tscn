@@ -283,13 +283,17 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -220.0
-offset_top = -50.0
+offset_top = -70.0
 offset_right = 220.0
-offset_bottom = 50.0
+offset_bottom = 70.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Text" type="Label" parent="Defeat"]
+[node name="Rows" type="VBoxContainer" parent="Defeat"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Text" type="Label" parent="Defeat/Rows"]
 custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
@@ -298,12 +302,50 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
+[node name="Back" type="Button" parent="Defeat/Rows"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+theme_type_variation = &"EndTurnButton"
+text = "Back to the autosave"
+
+[node name="Talk" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = -260.0
+offset_right = 880.0
+offset_bottom = -10.0
+grow_vertical = 0
+
+[node name="Rows" type="VBoxContainer" parent="Talk"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Speaker" type="Label" parent="Talk/Rows"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+
+[node name="Text" type="Label" parent="Talk/Rows"]
+custom_minimum_size = Vector2(620, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 3
+
+[node name="Replies" type="VBoxContainer" parent="Talk/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
 [node name="Menu" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -500.0
+offset_left = -900.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = 46.0
@@ -337,6 +379,38 @@ focus_mode = 0
 toggle_mode = true
 theme_type_variation = &"PickButton"
 text = "Spells (K)"
+
+[node name="Journal" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Journal (J)"
+
+[node name="Camp" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Camp (R)"
+
+[node name="Save" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+text = "Save (F5)"
+
+[node name="Load" type="Button" parent="Menu"]
+layout_mode = 2
+focus_mode = 0
+text = "Load (F9)"
+
+[node name="Journal" parent="." instance=ExtResource("11")]
+visible = false
+layout_mode = 1
+
+[node name="Camp" parent="." instance=ExtResource("11")]
+visible = false
+layout_mode = 1
 
 [node name="Gear" parent="." instance=ExtResource("11")]
 visible = false

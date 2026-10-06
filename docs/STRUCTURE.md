@@ -6,10 +6,10 @@
 |---|---|
 | `rules/` | Plain C# with no Godot types: content loading, rules, World, AI, saves. Its own project (`Yorehold.Rules.csproj`). |
 | `rules/content/` | One type per content kind (ruleset, conditions, effects, actions, classes, creatures, maps, chapters...) and the code that reads it from JSON. |
-| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions, gear and hands, spells known), `Item` (one inventory entry), `Coins`, `Loot` (rolling loot tables, stacking what is taken), `Merchant` (a shop's purse, prices and stock), `EffectHost` and the effect runner, `Grid`, `Sight`, `Positioning` and `SaveFormat` (the versioned file envelope). |
+| `rules/core/` | The rules themselves: `Rng` and `Dice`, `Checks`, `StatBlock` and `CharacterSheet` (modifiers, proficiency, conditions, gear and hands, spells known), `Item` (one inventory entry), `Coins`, `Loot` (rolling loot tables, stacking what is taken), `Merchant` (a shop's purse, prices and stock), `EffectHost` and the effect runner, `Grid`, `Sight`, `Positioning`, `SaveFormat` (the versioned file envelope), `CharacterSheetJson` (a sheet as a save writes it), `Companions` (who has been met, approval, who is in the party) and `Stash` (the chest at camp and its supplies). |
 | `rules/characters/` | Characters as choices: `CharacterChoices` (the file), `CharacterBuild` (choices to a sheet), `CharacterDraft` (making one or adding a level, step by step) and `CharacterLibrary` (the player's files and the graveyard). |
 | `rules/fight/` | A fight on its own, with no map: `Encounter` (initiative, rounds, shared turn blocks, each combatant's actions, movement and reaction, death saves, its log) and `Tactics` (the AI scorer: who to hit, where to stand, when to run or give up). |
-| `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). `WorldItems` is what is carried: piles to take from (containers, chests, what the dead leave), giving, gear on and off, using things up and shops. |
+| `rules/world/` | An adventure in play: `World` (party, creatures, flags, triggers, objects in use, sight and sneaking), `WorldCharacters` (who takes each seat, levels from XP, the copy that goes back to the library), `MapState` (walls, roofs and objects as they are now), `Paths`, `TokenMover`, `FogOfWar`, `LightLevels` and `Stealth`. Fights are the `World` files beside it: `WorldFight` (starting, turns, ending, the AI's turn), `WorldActions` (the `actions/` files and what a screen asks before using one), `WorldReactions` (moving and what it sets off), `WorldPositioning` (flanking and cover) and `WorldAi` (profiles and what the AI sees). `WorldItems` is what is carried: piles to take from (containers, chests, what the dead leave), giving, gear on and off, using things up and shops. The adventure around the chapter is `WorldTalk` (conversations through a `DialogueSession`, companions joining, leaving and approving, picking a fight with someone), `WorldTravel` (exit markers into the adventure's next chapter, camp and back, rests, the stash, revival), `WorldSave` (the save's data, restoring it, the checkpoint a wiped party returns to) and `CutsceneRun` (a cutscene's timing: camera, bars, fade, captions). |
 | `tests/` | xunit tests for `rules/`, plus the content check that loads every JSON file under `assets/` into its type. `WorldFixture` builds a World from a chapter folder, from files written in the test, or from a few map rows (`WorldFixture.Small`). |
 | `tests/visual/scripts/` | Input scripts for screenshot runs. |
 | `src/` | The Godot side: drawing, input and UI. Calls into `rules/`, never the other way. `src/hud/` is the panels, `src/characters/` the character screens. |
@@ -37,11 +37,17 @@ turns taps into `World` calls. It draws through its children, one script each:
 | `Overlay/TokenBars` (`TokenBarsView`) | in a fight: HP bars over tokens, a ring on whose turn it is and on who can be targeted |
 | `Fight` (`FightControl`) | the player's side of a fight: the picked action, what the pointer is over (`FightAim`), taps and keys into `World` calls |
 | `Hud` | chapter title, banner, and `Panels` (`scenes/hud/PlayHud.tscn`) |
+| `Hud/Cutscene` (`CutsceneView`) | plays a cutscene from `CutsceneRun`: steers the camera, draws the bars, fade, captions and titles with the panels hidden. A click, Space, Enter or Escape skips it |
 | `Characters` (`CharacterScreen`) | the character screens over everything; the world waits while they are up |
 
 The input actions (`pan_left`, `pan_right`, `pan_up`, `pan_down`, `zoom_in`, `zoom_out`, `recenter`) are in
 `project.godot`. `--chapter chapters/goblin-keep` after `--` plays another chapter than the scene's, and
 `--seed 7` another run of the dice.
+
+The World says when a save is due (after a fight, a rest, a door, a conversation, travel, camp) with a `Save`
+event and the play screen writes it to `saves/adventure.json` in Godot's user folder (`Places.SaveFile`); F5
+writes one too and F9 loads it. When the World goes to another chapter (travel, camp, a load) it sends
+`ChapterChanged` or `Resumed` and the play screen builds the map views again.
 `Yorehold.slnx` builds all three. Scratch files, logs and screenshots go in `../.dev/`, never in the repo.
 
 ## The panels
@@ -59,9 +65,12 @@ only shows them and raises an event when something is pressed; `FightControl` do
 | `Bottom` | in a fight: the acting hero's portrait and HP, the hotbar (action, reaction and bonus pips, the movement bar, an `ActionSlot.tscn` per action with its key) and End Turn |
 | `Log` (`LogPanel.tscn`) | the log, bottom right; its header folds it |
 | `Reaction` | use it or pass, with the time left, when a hero's reaction is offered |
-| `Defeat` | the chapter's defeat text once the party is wiped |
+| `Defeat` | the chapter's defeat text once the party is wiped, with Back to the autosave under it |
+| `Talk` | the conversation, bottom left of the log: who speaks, the line, a numbered button per reply (1 to 9 pick them, Escape walks away) and Trade (T) under a merchant's. It grows up from the bottom edge to fit |
+| `Journal` (`DataPanel.tscn`, filled by `JournalPanel`) | the journal (J): the chapter's quests with their objectives ticked, and the companions met with their approval |
+| `Camp` (`DataPanel.tscn`, filled by `CampPanel`) | rest and camp (R): make or break camp, the ruleset's rests with what each costs and has left, and at camp the stash, the hero's pack and the dead who can be brought back. What is pressed goes out as a `CampOrder` |
 | `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |
-| `Menu` | the buttons along the top right: Characters, and one per panel (Sheet, C; Gear, I). A panel's key or button opens it and again closes it, so does Escape between fights; one is open at a time |
+| `Menu` | the buttons along the top right: Characters, one per panel (Sheet, C; Gear, I; Spells, K; Journal, J; Camp, R), then Save (F5) and Load (F9). A panel's key or button opens it and again closes it, so does Escape between fights; one is open at a time |
 | `Sheet` (`DataPanel.tscn`, filled by `SheetPanel`) | the sheet panel (C): the hero's abilities, skills, feats, uses and conditions as rows by type, with their stat block (`SheetPage`) on the right and the picked row spelled out under it. The heroes are buttons in its head. It shows the acting hero in a fight and the selected one between fights |
 | `Gear` (`DataPanel.tscn`, filled by `GearPanel`) | the gear panel (I): the hero's pack, or a pile or shop beside them, by kind of item, with the picked item's page and what can be done with it (put on, use, give, take, buy, sell). What is pressed goes out as an `ItemOrder` and `PlayScreen` does it |
 
@@ -125,7 +134,12 @@ goblin with keys and clicks only (440 frames), and `fight-hud.txt` goes through 
 the log and a touch tap (570 frames). `characters.txt` opens the sheet, makes a character and starts the
 chapter with them (280 frames). `loot.txt` opens the gear panel and empties the chest in chapter one's corner
 (290 frames), `loot-fight.txt` wins the fight and takes what the goblin left (650 frames), and `shop.txt`
-sells and buys at Wren's in the goblin keep (270 frames, `-Chapter chapters\goblin-keep`). A run keeps its library in `../.dev/shot-characters`, emptied as it starts.
+talks to Wren, then sells and buys at her shop in the goblin keep (270 frames, `-Chapter chapters\goblin-keep`).
+`talk.txt` talks Tamsin round, asks her along and opens the journal (230 frames), `camp.txt` makes camp, uses
+the stash and breaks camp (270 frames), `travel.txt` saves, wins the fight, goes on into chapter two and loads
+(690 frames), and `scene.txt` sits through the trigger test's opening cutscene and conversation (620 frames,
+`-Chapter chapters\trigger-test`). A run keeps its library in `../.dev/shot-characters` and its save in
+`../.dev/shot-saves`, both emptied as it starts.
 
 ## C# style
 

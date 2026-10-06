@@ -1,7 +1,11 @@
-# goblin keep: walk up to Wren, sell her Astra's potion and buy a ward scroll with the coins
+# goblin keep: walk up to Wren, talk, trade, sell her Astra's potion and buy a ward scroll with the coins
 10 creature Wren
 11 down left
 12 up left
+130 shot .dev/p10-wren-talk.png
+135 button Trade
+137 down left
+138 up left
 150 shot .dev/p8-shop.png
 160 button Pack
 162 down left

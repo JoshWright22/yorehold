@@ -3,8 +3,32 @@ namespace Yorehold.Rules;
 /// <summary>One step of a quest: done once all its flags are set.</summary>
 public record QuestObjective(string Id, string Text, List<string> Require);
 
+public enum QuestStatus
+{
+    Hidden,
+    Active,
+    Completed,
+    Failed,
+}
+
+/// <summary>Where a quest stands for some flags: its status and which objectives are done.</summary>
+public sealed record QuestProgress(QuestStatus Status, List<bool> ObjectiveDone);
+
 public class Quest
 {
+    /// <summary>Hidden until its require flags are set; failed once any fail flag is; done when every objective is.</summary>
+    public QuestProgress Progress(IReadOnlySet<string> flags)
+    {
+        List<bool> done = Objectives.Select(o => o.Require.All(flags.Contains)).ToList();
+        if (!Require.All(flags.Contains))
+        {
+            return new QuestProgress(QuestStatus.Hidden, done);
+        }
+        bool failed = Fail.Any(flags.Contains);
+        bool completed = Objectives.Count > 0 && done.All(d => d);
+        return new QuestProgress(failed ? QuestStatus.Failed : completed ? QuestStatus.Completed : QuestStatus.Active, done);
+    }
+
     public string Id { get; init; } = "";
     public string Title { get; init; } = "";
     public string Description { get; init; } = "";

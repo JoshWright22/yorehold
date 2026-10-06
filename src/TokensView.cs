@@ -41,6 +41,10 @@ public partial class TokensView : Node2D
             return;
         }
         World w = _world;
+        if (_views.Count != w.Tokens.Tokens.Count)
+        {
+            Build(w); // a companion came along or left with a save
+        }
         int team = w.ViewTeam();
         for (int i = 0; i < _views.Count && i < w.Tokens.Tokens.Count; i++)
         {

@@ -1,0 +1,7 @@
+# trigger test (-Chapter chapters\trigger-test): the opening cutscene, then the trigger's conversation
+70 shot .dev/p10-cutscene-caption.png
+200 shot .dev/p10-cutscene-title.png
+560 shot .dev/p10-trigger-talk.png
+570 key 1
+571 keyup 1
+600 shot .dev/p10-trigger-done.png

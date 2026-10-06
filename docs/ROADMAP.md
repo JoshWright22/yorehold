@@ -122,8 +122,23 @@ builds, passes `check.ps1` and is committed.
   - Default: `chapters/spell-test` (not in the adventure) has two casters, a fighter, two goblins, a goblin hexer and a flame vent that lays fire, for `spells.txt` and `spell-fight.txt` (`-Chapter chapters/spell-test`).
   - Default: rests that give slots back and open preparing again come with camp (P10), and so does saving concentration, slots and surfaces.
   - Not ported: the C++ SurfacesTest's save check (P10). Its other checks are in `WorldSpellTests.Surfaces` in this port's terms.
-- [ ] **P10. Adventure.** `adventure.json`, chapter transitions, camp and long rests, companions
+- [x] **P10. Adventure.** `adventure.json`, chapter transitions, camp and long rests, companions
   and approval, dialogue and its panel, journal, cutscenes, saves (seeded, deterministic).
+  - Default: a chapter that `adventure.json` lists plays as part of the adventure, any other on its own. A hero stepping onto an open exit marker takes the party on; arriving on one doesn't, they have to step off and on.
+  - Default: one World goes from chapter to chapter (travel, camp, a load) and sends `ChapterChanged`, so the play screen builds the map again and keeps everything else.
+  - Default: the save is one file, `saves/adventure.json` in the user folder, format version 4. It keeps the seed, the roll and fight counters and the stealth dice's state, so a loaded game rolls like one that never stopped. The C++ client's versions 1 to 3 are refused with a message, so `choicesFromSheet` isn't ported.
+  - Default: the game saves itself after a won fight, a rest, a door or lever, a conversation, travel and anything done at camp. F5 saves and F9 loads between fights. Nothing is saved in a fight or once the chapter is cleared.
+  - Default: a save is checked against the chapter id, the map's size and the counts of creatures, objects and NPCs, all before anything changes. The content signature and `.yore` archives wait for P14.
+  - Default: a wiped party gets Back to the autosave on the defeat panel. It goes to the last save, or the chapter's start, onto the chapter's wipe destination when nobody stands there.
+  - Default: brought library characters are marked away while the save holds them and come home when the chapter is cleared or a new adventure starts.
+  - Default: Camp (R) is a data panel with the rests anywhere and the stash, pack and revival at camp. Camp is the adventure's `camp` chapter or the shared `chapters/camp`; the chapter left behind is kept whole and Break camp puts the party back.
+  - Default: clicking anyone with something to say walks the leader up and opens the conversation along the bottom, replies on 1 to 9 and Escape to walk away. A merchant's shop opens from Trade (T) there instead of straight from the click.
+  - Default: a trigger's conversations queue up and open one after the other. A reply that needs a check rolls it for the leader.
+  - Default: a companion who joins fights on the party's side with the player taking their turns (no party card for them yet), follows between fights and goes along to the next chapter and to camp. Approval moves with flags and replies; the journal (J) shows it beside the quests.
+  - Default: cutscenes play with the panels hidden and skip on a click, Space, Enter or Escape. The fade is always to palette ink, whatever colour the file names.
+  - Default: unexplored fog and the ground off the map are ink (212123) and so is the window's clear colour. The tile painters are still the C++ placeholders and not CC-29 yet.
+  - Not seen in a screenshot run: the defeat panel's button and revival at camp. Both are in the tests.
+  - Not done: `.uid` files for `CutsceneView`, `CampPanel`, `JournalPanel` and `DialogueTests`. The editor makes them when it next opens the project.
 - [ ] **P11. Menus and settings.** Title, load, settings, key bindings, credits with the Godot
   MIT licence text.
 - [ ] **P12. Create: shell, map and encounters modes.**

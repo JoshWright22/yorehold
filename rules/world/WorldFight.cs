@@ -343,7 +343,7 @@ public sealed partial class World
         }
     }
 
-    private bool PartyMember(int creature) => creature < HeroCount;
+    private bool PartyMember(int creature) => InParty(creature);
 
     private void BeginTurn()
     {
@@ -524,6 +524,7 @@ public sealed partial class World
             return;
         }
         _events.Add(new WorldEvent(WorldEventKind.Banner, "Victory") { Seconds = 2 });
+        RequestSave();
     }
 
     // The chapter is done: its ending cutscene, or its text as a banner. Once only, like the win condition.

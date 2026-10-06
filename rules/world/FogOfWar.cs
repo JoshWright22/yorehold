@@ -100,6 +100,31 @@ public sealed class FogOfWar
         }
     }
 
+    /// <summary>What a view has explored, a '1' or '0' per cell row by row, for saves.</summary>
+    public string ExploredText(int team, int floor)
+    {
+        if (!_views.TryGetValue((team, floor), out View? view))
+        {
+            return new string('0', Width * Height);
+        }
+        return new string(view.Explored.Select(seen => seen ? '1' : '0').ToArray());
+    }
+
+    /// <summary>Puts back what ExploredText wrote. Nothing is visible until the next Update.</summary>
+    public void SetExplored(int team, int floor, string text)
+    {
+        if (text.Length != Width * Height || text.Any(c => c != '0' && c != '1'))
+        {
+            throw new ArgumentException("explored cells don't match the map");
+        }
+        View view = ViewOf(team, floor);
+        Array.Clear(view.Visible);
+        for (int i = 0; i < text.Length; i++)
+        {
+            view.Explored[i] = text[i] == '1';
+        }
+    }
+
     /// <summary>Forgets everything a team has seen.</summary>
     public void Reset(int team)
     {

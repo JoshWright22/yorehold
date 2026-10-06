@@ -1,0 +1,17 @@
+# chapter one: walk up to Tamsin and talk her round, ask her along, then look at her in the journal
+10 creature Tamsin
+11 down left
+12 up left
+100 shot .dev/p10-talk.png
+110 key 1
+111 keyup 1
+130 shot .dev/p10-talk-kind.png
+140 key 1
+141 keyup 1
+170 shot .dev/p10-joined.png
+180 key J
+181 keyup J
+190 button Tamsin
+192 down left
+193 up left
+210 shot .dev/p10-journal.png

@@ -66,6 +66,11 @@ public partial class ShotRunner : Node
         {
             System.IO.Directory.Delete(characters, true);
         }
+        string saves = System.IO.Path.GetDirectoryName(Places.SaveFile())!;
+        if (System.IO.Directory.Exists(saves))
+        {
+            System.IO.Directory.Delete(saves, true);
+        }
         RenderingServer.FramePostDraw += AfterDraw;
         GD.Print($"Shot run: {_frames} frames, {_script.Count} script steps, saving {_shot}");
     }

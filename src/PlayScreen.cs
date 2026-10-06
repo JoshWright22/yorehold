@@ -34,6 +34,7 @@ public partial class PlayScreen : Node2D
     private FightGroundView _fightGround = null!;
     private TokenBarsView _tokenBars = null!;
     private CharacterScreen _characters = null!;
+    private CutsceneView _cutscene = null!;
     private (int Hero, int Object)? _pendingUse;
     // the gear panel opens on this pile or shop ("pile:2", "shop:0") once the hero stops beside it
     private (int Hero, string Source)? _pendingOpen;
@@ -59,6 +60,8 @@ public partial class PlayScreen : Node2D
         _tokenBars = GetNode<TokenBarsView>("Overlay/TokenBars");
         _characters = GetNode<CharacterScreen>("Characters");
         _characters.StartPressed += Restart;
+        _cutscene = GetNode<CutsceneView>("Hud/Cutscene");
+        _cutscene.Finished += () => _world?.EndCutscene();
         _camera.Tapped += Tap;
         _shading.Texture = _lightMap.GetTexture();
         GetViewport().SizeChanged += FitLightMap;
@@ -119,15 +122,7 @@ public partial class PlayScreen : Node2D
 
     private void Build(World world)
     {
-        GameMap map = world.Chapter.Map;
         world.Options.ReactionPrompts = ReactionPrompts;
-        _hud.SetTitle(world.Chapter.Title);
-        _map.Build(world);
-        _objects.Bind(world);
-        GetNode<SurfacesView>("Surfaces").Bind(world);
-        _tokens.Build(world);
-        _lighting.Build(world);
-        _fog.Bind(world);
         _fightGround.Bind(world, _fight.Aim);
         _tokenBars.Bind(world, _fight.Aim);
         if (_hud.Panels != null)
@@ -136,11 +131,32 @@ public partial class PlayScreen : Node2D
             _hud.Panels.MenuPressed += Menu;
             _hud.Panels.ItemOrdered += Order;
             _hud.Panels.SpellOrdered += Order;
+            _hud.Panels.CampOrdered += Order;
+            _hud.Panels.ReplyPressed += index => _world?.Reply(index, _world.LeaderIndex());
+            _hud.Panels.BackPressed += () => _world?.ReturnFromWipe();
+            _hud.Panels.TradePressed += Trade;
         }
-        _camera.Bounds = new Rect2(0, 0, map.Width * GameMap.CellSize, map.Height * GameMap.CellSize);
-        _camera.JumpTo(world.Tokens.Tokens[0].Position.ToGodot(), 1);
+        ShowChapter(world);
         ShowEvents();
         Refresh();
+    }
+
+    // The map views for the chapter the World is in now; again whenever it goes to another.
+    private void ShowChapter(World world)
+    {
+        GameMap map = world.Chapter.Map;
+        _hud.SetTitle(world.Chapter.Title);
+        _map.Build(world);
+        _objects.Bind(world);
+        GetNode<SurfacesView>("Surfaces").Bind(world);
+        _tokens.Build(world);
+        _lighting.Build(world);
+        _fog.Bind(world);
+        _pendingUse = null;
+        _pendingOpen = null;
+        _camera.Bounds = new Rect2(0, 0, map.Width * GameMap.CellSize, map.Height * GameMap.CellSize);
+        _camera.JumpTo(world.Tokens.Tokens[world.LeaderIndex()].Position.ToGodot(), 1);
+        _camera.Following = true;
     }
 
     public override void _Process(double delta)
@@ -185,8 +201,28 @@ public partial class PlayScreen : Node2D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_world == null || _characters.IsOpen || @event is not InputEventKey { Pressed: true, Echo: false } key)
+        if (_world == null || _characters.IsOpen || _cutscene.Playing || @event is not InputEventKey { Pressed: true, Echo: false } key)
         {
+            return;
+        }
+        // In a conversation 1 to 9 pick a reply and Escape walks away; the mouse still reaches the buttons.
+        if (_world.Talk != null)
+        {
+            if (key.Keycode >= Key.Key1 && key.Keycode <= Key.Key9)
+            {
+                _world.Reply((int)(key.Keycode - Key.Key1), _world.LeaderIndex());
+                GetViewport().SetInputAsHandled();
+            }
+            else if (key.Keycode == Key.Escape)
+            {
+                _world.EndTalk();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (key.Keycode == Key.T)
+            {
+                Trade();
+                GetViewport().SetInputAsHandled();
+            }
             return;
         }
         string? panel = key.Keycode switch
@@ -194,6 +230,10 @@ public partial class PlayScreen : Node2D
             Key.C => "Sheet",
             Key.I => "Gear",
             Key.K => "Spells",
+            Key.J => "Journal",
+            Key.R => "Camp",
+            Key.F5 => "Save",
+            Key.F9 => "Load",
             _ => null,
         };
         if (key.Keycode == Key.Escape && _hud.Panels is PlayHud open && open.OpenPanel.Length > 0 && !_world.Fighting)
@@ -211,7 +251,8 @@ public partial class PlayScreen : Node2D
 
     public override void _ExitTree()
     {
-        WriteBack(); // leaving the game takes the brought characters home
+        // Leaving the game takes the brought characters home, or marks them away in the save.
+        WriteBack(System.IO.File.Exists(Places.SaveFile()) && _world != null && !_world.ChapterCleared() ? SaveName : "");
     }
 
     private void Menu(string name)
@@ -220,13 +261,65 @@ public partial class PlayScreen : Node2D
         {
             return;
         }
-        if (name == "Characters")
+        switch (name)
         {
-            WriteBack(); // so the library shows what the brought characters have now
-            _characters.Open(_world, Places.CharactersFolder(), CharacterScreen.View.Characters);
-            return;
+            case "Characters":
+                WriteBack(); // so the library shows what the brought characters have now
+                _characters.Open(_world, Places.CharactersFolder(), CharacterScreen.View.Characters);
+                return;
+            case "Save":
+                if (_world.CanSave)
+                {
+                    WriteSave(_world.StateJson().ToJsonString());
+                    _hud.Banner("Saved", 1.2);
+                }
+                else
+                {
+                    _hud.AddLog("Saves are made between fights, with nothing else going on.");
+                }
+                return;
+            case "Load":
+                LoadSave();
+                return;
         }
         _hud.Panels?.TogglePanel(name);
+    }
+
+    private const string SaveName = "adventure.json";
+
+    // The autosave, through the save format's envelope (the file before it is kept as .bak).
+    private void WriteSave(string state)
+    {
+        try
+        {
+            string path = Places.SaveFile();
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+            World.SaveFile.WriteFile(path, System.Text.Json.Nodes.JsonNode.Parse(state)!);
+            WriteBack(SaveName);
+        }
+        catch (System.Exception error) when (error is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            _hud.AddLog("Couldn't save: " + error.Message);
+        }
+    }
+
+    private void LoadSave()
+    {
+        if (_world == null || _world.Fighting)
+        {
+            _hud.AddLog("Not in a fight.");
+            return;
+        }
+        if (!System.IO.File.Exists(Places.SaveFile()))
+        {
+            _hud.AddLog("There is no save yet.");
+            return;
+        }
+        _cutscene.Skip();
+        if (!_world.Load(Places.SaveFile()))
+        {
+            _hud.AddLog(_world.Refusal);
+        }
     }
 
     // New adventure from the character screen: the brought characters so far go home first, then
@@ -248,7 +341,8 @@ public partial class PlayScreen : Node2D
 
     // Each brought character's copy goes back to its library file: choices with the XP earned,
     // what it carries and its coins. The dead go to the graveyard. Ready-made heroes stay behind.
-    private void WriteBack()
+    // away names the save that still holds them, as the C++ client marks them; "" brings them home.
+    private void WriteBack(string away = "")
     {
         if (_world == null)
         {
@@ -272,7 +366,7 @@ public partial class PlayScreen : Node2D
                 entry.Inventory.Clear();
                 entry.Inventory.AddRange(copy.Inventory);
                 entry.Coins = copy.Coins;
-                entry.Away = "";
+                entry.Away = hero.Sheet.Death.Dead ? "" : away;
                 CharacterLibrary.Write(folder, entry);
                 if (hero.Sheet.Death.Dead)
                 {
@@ -299,9 +393,9 @@ public partial class PlayScreen : Node2D
             return;
         }
         World w = _world;
-        if (w.PartyWiped)
+        if (w.PartyWiped || w.Talk != null || _cutscene.Playing)
         {
-            return; // nothing to do until saves can take the party back (P10)
+            return; // the defeat panel, the conversation or the cutscene has the screen
         }
         if (w.Fighting)
         {
@@ -326,16 +420,15 @@ public partial class PlayScreen : Node2D
         _pendingOpen = null;
         bool seen = w.Fog.State(w.ViewTeam(), 0, cell) != FogState.Unexplored;
 
-        // a merchant: walk up beside them and open their shop
-        for (int npc = 0; npc < w.Merchants.Count && seen; npc++)
+        // anyone with something to say: walk up and talk (a merchant too, whose shop opens from
+        // the talk, and a companion in the party)
+        for (int creature = w.HeroCount; creature < w.Creatures.Count && seen; creature++)
         {
-            int creature = w.NpcStart + npc;
             Token token = w.Tokens.Tokens[creature];
-            if (w.Merchants[npc] != null && at.DistanceTo(token.Position.ToGodot()) <= token.Radius && w.Creatures[creature].Team == 2)
+            if (w.Talkable(creature) && token.Floor == 0 && at.DistanceTo(token.Position.ToGodot()) <= token.Radius)
             {
-                if (GoBeside(w, hero, w.CellOf(creature)))
+                if (w.TalkTo(creature))
                 {
-                    _pendingOpen = (hero, $"shop:{npc}");
                     _camera.Following = true;
                 }
                 else
@@ -477,6 +570,46 @@ public partial class PlayScreen : Node2D
         }
     }
 
+    // Trade with the merchant being talked to: the talk ends and their shop opens.
+    private void Trade()
+    {
+        if (_world?.Talk == null || _world.TalkingWith < 0 || _world.Creatures[_world.TalkingWith].Npc < 0)
+        {
+            return;
+        }
+        int npc = _world.Creatures[_world.TalkingWith].Npc;
+        int hero = _world.LeaderIndex();
+        _world.EndTalk();
+        if (_world.CanTrade(hero, npc))
+        {
+            _hud.Panels?.OpenGear($"shop:{npc}");
+        }
+    }
+
+    // What the camp panel asked for.
+    private void Order(CampOrder order)
+    {
+        if (_world == null || _hud.Panels is not PlayHud panels)
+        {
+            return;
+        }
+        World w = _world;
+        bool done = order.Kind switch
+        {
+            CampOrderKind.MakeCamp => w.MakeCamp(),
+            CampOrderKind.LeaveCamp => w.LeaveCamp(),
+            CampOrderKind.Rest => w.Rest(order.Rest),
+            CampOrderKind.ToStash => w.ToStash(order.Hero, order.Item),
+            CampOrderKind.FromStash => w.FromStash(order.Hero, order.Item),
+            CampOrderKind.Revive => w.Revive(order.Hero, order.Target),
+            _ => false,
+        };
+        if (!done)
+        {
+            panels.CampRefused(w.Refusal.Length > 0 ? w.Refusal : "Not now.");
+        }
+    }
+
     private void Refuse(Vector2 at)
     {
         if (_world != null && _world.Refusal.Length > 0)
@@ -519,12 +652,33 @@ public partial class PlayScreen : Node2D
                     _hud.Banner(e.Text, e.Seconds);
                     break;
                 case WorldEventKind.Cutscene:
-                    // cutscenes play from P10; until then one is over as soon as it starts, so the world doesn't wait
-                    GD.Print($"Cutscene skipped for now: {e.Text}");
-                    _world.EndCutscene();
+                    if (_world.Chapter.Cutscenes.TryGetValue(e.Text, out Cutscene? cutscene))
+                    {
+                        _hud.Panels?.TogglePanel(""); // closes whatever panel was open
+                        _cutscene.Play(cutscene, _camera);
+                    }
+                    else
+                    {
+                        _world.EndCutscene(); // Chapter.Load checks them, so only a broken setup lands here
+                    }
                     break;
                 case WorldEventKind.Talk:
-                    GD.Print($"Conversation not shown yet: {e.Text}");
+                    if (_hud.Panels is PlayHud talking && talking.OpenPanel.Length > 0)
+                    {
+                        talking.TogglePanel(talking.OpenPanel);
+                    }
+                    break;
+                case WorldEventKind.ChapterChanged:
+                    ShowChapter(_world);
+                    break;
+                case WorldEventKind.Resumed:
+                    ShowChapter(_world);
+                    _hud.Banner(e.Text, 2);
+                    _hud.AddLog(e.Text);
+                    _fight.FightEnded();
+                    break;
+                case WorldEventKind.Save:
+                    WriteSave(e.Text); // a screenshot run writes its own under ../.dev
                     break;
                 case WorldEventKind.Fight:
                     _pendingUse = null;
@@ -572,6 +726,10 @@ public partial class PlayScreen : Node2D
         // in a fight the camera stays with whoever is acting, enemies too while the party sees them
         int watched = _world.Fighting && _fight.Watch is int who && who < _world.Tokens.Tokens.Count ? who : _world.LeaderIndex();
         _camera.FollowTarget = _world.Tokens.Tokens[watched].Position.ToGodot();
-        _hud.Panels?.Refresh(_world, _fight.Aim);
+        if (_hud.Panels != null)
+        {
+            _hud.Panels.Visible = !_cutscene.Playing; // a cutscene has the whole screen
+            _hud.Panels.Refresh(_world, _fight.Aim);
+        }
     }
 }

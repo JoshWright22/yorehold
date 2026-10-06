@@ -17,7 +17,7 @@ public class CutsceneStep
     public double Seconds { get; init; }
     /// <summary>False: the next step starts together with this one.</summary>
     public bool Wait { get; init; } = true;
-    public string Ease { get; init; } = "linear";
+    public string Ease { get; init; } = "inOutCubic";
     /// <summary>Camera: where it looks, in world units, and the zoom (0 keeps it).</summary>
     public double X { get; init; }
     public double Y { get; init; }
@@ -101,7 +101,7 @@ public class Cutscene
                 Kind = kind,
                 Seconds = seconds,
                 Wait = s.Bool("wait", true),
-                Ease = s.Text("ease", "linear"),
+                Ease = s.Text("ease", "inOutCubic"), // the C++ client's default curve
                 X = x,
                 Y = y,
                 Zoom = zoom,

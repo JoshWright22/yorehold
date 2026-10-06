@@ -174,6 +174,33 @@ public sealed class WorldFixture : IDisposable
 
     public bool React(bool take) => After(World.React(take));
 
+    public bool Reply(int index, int hero = -1) => After(World.Reply(index, hero));
+
+    /// <summary>Talks to someone and lands the walk over at once.</summary>
+    public bool TalkTo(int creature)
+    {
+        if (!World.TalkTo(creature))
+        {
+            TakeEvents();
+            return false;
+        }
+        FinishWalk(World.LeaderIndex());
+        Step(1.0 / 60);
+        return World.Talk != null;
+    }
+
+    /// <summary>Talks to someone, picks one reply and walks away, the way the C++ checks do it.</summary>
+    public void Say(int creature, int choice)
+    {
+        TalkTo(creature);
+        Reply(choice, 0);
+        if (World.Talk != null)
+        {
+            World.EndTalk();
+        }
+        TakeEvents();
+    }
+
     /// <summary>Ends turns until it is creature's; false if it never comes.</summary>
     public bool TurnTo(int creature)
     {
