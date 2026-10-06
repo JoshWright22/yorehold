@@ -6,7 +6,7 @@ namespace Yorehold.Rules.Tests;
 public class ContentTests
 {
     // Files the rules don't read: they belong to the UI and to Create, and only have to be JSON here.
-    private static readonly string[] NotRules = { "create/compendium.json", "create/voice.json", "ui/action-icons.json" };
+    private static readonly string[] NotRules = { "create/voice.json", "ui/action-icons.json" };
 
     [Fact]
     public void EveryShippedFileLoads()
@@ -48,6 +48,13 @@ public class ContentTests
 
         Try("ui/keys.json", () => KeyBindings.Read(ContentNode.Read(files, "ui/keys.json")));
         Try("ui/credits.json", () => Credits.Read(ContentNode.Read(files, "ui/credits.json")));
+        Try("create/compendium.json", () =>
+        {
+            if (!new CompendiumEditor(new History()).SetKinds(files.ReadText("create/compendium.json"), out string error))
+            {
+                throw new ContentException("create/compendium.json", "", error);
+            }
+        });
 
         string[] all = Directory.GetFiles(assets, "*.json", SearchOption.AllDirectories);
         Assert.True(all.Length > 0, $"no JSON files found under {assets}");

@@ -256,6 +256,21 @@ public partial class DataPanel : PanelContainer
         ShowWarning(warning);
     }
 
+    /// <summary>
+    /// Puts a control of the owner's (a form to edit the entry) where the book page is, and takes
+    /// the Close button away, for a panel that is a whole screen's body rather than a popup.
+    /// </summary>
+    public void UseForm(Control form, float width)
+    {
+        var entry = GetNode<VBoxContainer>("Rows/Body/Entry");
+        GetNode<Control>("Rows/Body/Entry/Page").Visible = false;
+        GetNode<Control>("Rows/Head/Close").Visible = false;
+        entry.CustomMinimumSize = new Vector2(width, 0);
+        form.SizeFlagsVertical = SizeFlags.ExpandFill;
+        entry.AddChild(form);
+        entry.MoveChild(form, 0);
+    }
+
     /// <summary>Says something under the entry until the entry changes, like why an action is greyed.</summary>
     public void ShowWarning(string text)
     {

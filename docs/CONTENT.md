@@ -79,6 +79,10 @@ What the port reads so far, and where it differs:
   `YOREHOLD_CREATE`.
 - Dialogue mode ("Writing dialogue in Create") works as described. New conversation is the button
   for New, and Skill check is a toggle rather than a tick box.
+- Compendium mode ("Editing definitions in Create") reads the same `create/compendium.json` with the
+  same rules. Its list is a data panel: a tab per kind (and All), search, chips for changed entries,
+  ones with errors and a chapter's own, and columns that sort. The picked entry's form is where the
+  book page would be, with New id, Add and Copy under it. A flag is a yes toggle with Clear beside it.
 - The other Create modes, voice lines and account sync are described below as the C++ client has
   them. They are ported in later steps (see ROADMAP.md).
 

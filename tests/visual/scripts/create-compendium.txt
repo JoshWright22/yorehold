@@ -1,0 +1,30 @@
+# Create on the game's own content: Compendium mode, its items with the longsword's form, then the creatures with errors only, then a new item.
+# check.ps1 -Shot create-compendium-end.png -Frames 220 -Script tests\visual\scripts\create-compendium.txt -Screen create
+20 button Open
+22 down left
+24 up left
+40 button Compendium
+42 down left
+44 up left
+60 shot .dev/create-compendium-all.png
+64 button Items
+66 down left
+68 up left
+76 button longsword
+78 down left
+80 up left
+100 shot .dev/create-compendium-item.png
+104 button Creatures
+106 down left
+108 up left
+116 button goblin
+118 down left
+120 up left
+140 shot .dev/create-compendium-creature.png
+144 button Items
+146 down left
+148 up left
+152 button Add_item
+154 down left
+156 up left
+190 shot .dev/create-compendium-new.png

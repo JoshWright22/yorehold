@@ -123,6 +123,7 @@ public sealed partial class CreatePackage
         // what is opened next starts saved, whatever the last package was left as
         _history.MarkSaved();
         CloseDialogues();
+        CloseCompendium();
         _encounters.Clear();
         _encounterErrors.Clear();
         _maps.Clear();
@@ -284,7 +285,7 @@ public sealed partial class CreatePackage
                 changed.Add(new Changed(tab.Path, text, () => tab.Saved = text));
             }
         }
-        if (!DialoguesToSave(changed))
+        if (!DialoguesToSave(changed) || !CompendiumToSave(changed))
         {
             return false;
         }
@@ -342,6 +343,7 @@ public sealed partial class CreatePackage
             found.AddRange(tab.Editor.Problems().Select(p => new CreateProblem(tab.Path, $"{Leaf(chapter)}: {p.Text}", p.Error)));
         }
         DialogueProblems(found);
+        CompendiumProblems(found);
         found.AddRange(_onDisk);
         return found;
     }

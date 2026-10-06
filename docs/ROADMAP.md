@@ -166,6 +166,8 @@ builds, passes `check.ps1` and is committed.
 - [ ] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
   - Default: each mode's files are a part of `CreatePackage` in a file of its own (`CreateDialogues`...), on the one history, and Save checks every part before it writes any file.
   - Default: Dialogue mode is the C++ DialogueEditor and its checks as they are. Its columns are `ToolColumn`s like the other modes; Skill check is a toggle since the theme has no tick boxes.
+  - Default: Compendium mode ports the framework's form schema into `rules/create/Form.cs` and reads the same `create/compendium.json`. Its list is a `DataPanel` (a tab per kind and All, chips for changed, errors and a chapter's own) with the form where the book page goes, since it is the most database-like of the modes.
+  - Default: the port's own readers check each entry, so an entry is refused here exactly when the game would refuse it. Every shipped definition opens with no errors.
 - [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
   (`../yorehold-server`), through an interface tests can fake.
 - [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is

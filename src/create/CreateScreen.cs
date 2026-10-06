@@ -22,6 +22,7 @@ public partial class CreateScreen : Control
         Map,
         Encounters,
         Dialogue,
+        Compendium,
     }
 
     private static readonly DataColumn[] Columns = { new("Package", 220), new("Kind", 90), new("Chapters", 70, true) };
@@ -40,6 +41,8 @@ public partial class CreateScreen : Control
     private Button _mapTab = null!;
     private Button _encountersTab = null!;
     private Button _dialogueTab = null!;
+    private CompendiumModePanel _compendium = null!;
+    private Button _compendiumTab = null!;
     private Label _name = null!;
     private Button _chapter = null!;
     private RichTextLabel _problems = null!;
@@ -67,6 +70,8 @@ public partial class CreateScreen : Control
         _encountersTab = GetNode<Button>("Editor/Top/Row/Encounters");
         _dialogue = GetNode<DialogueModePanel>("Editor/Body/Modes/Dialogue");
         _dialogueTab = GetNode<Button>("Editor/Top/Row/Dialogue");
+        _compendium = GetNode<CompendiumModePanel>("Editor/Body/Modes/Compendium");
+        _compendiumTab = GetNode<Button>("Editor/Top/Row/Compendium");
         _name = GetNode<Label>("Editor/Top/Row/Name");
         _chapter = GetNode<Button>("Editor/Top/Row/Chapter");
         _problems = GetNode<RichTextLabel>("Editor/Body/Problems/Rows/Text");
@@ -78,6 +83,7 @@ public partial class CreateScreen : Control
         _mapTab.Pressed += () => _mode = Mode.Map;
         _encountersTab.Pressed += () => _mode = Mode.Encounters;
         _dialogueTab.Pressed += () => _mode = Mode.Dialogue;
+        _compendiumTab.Pressed += () => _mode = Mode.Compendium;
         _chapter.Pressed += NextChapter;
         _undo.Pressed += () => _package.Undo();
         _redo.Pressed += () => _package.Redo();
@@ -110,6 +116,8 @@ public partial class CreateScreen : Control
         _mapTab.SetPressedNoSignal(_mode == Mode.Map);
         _encountersTab.SetPressedNoSignal(_mode == Mode.Encounters);
         _dialogueTab.SetPressedNoSignal(_mode == Mode.Dialogue);
+        _compendiumTab.SetPressedNoSignal(_mode == Mode.Compendium);
+        _compendium.Visible = _mode == Mode.Compendium;
         _map.Visible = _mode == Mode.Map;
         _encounters.Visible = _mode == Mode.Encounters;
         _dialogue.Visible = _mode == Mode.Dialogue;
@@ -123,6 +131,10 @@ public partial class CreateScreen : Control
         else if (_mode == Mode.Dialogue)
         {
             _dialogue.Present(_package);
+        }
+        else if (_mode == Mode.Compendium)
+        {
+            _compendium.Present(_package);
         }
         else
         {
