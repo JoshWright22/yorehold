@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- the tests set up situations through a few internal calls (an effect landing out of turn) -->
+    <InternalsVisibleTo Include="Yorehold.Rules.Tests" />
+  </ItemGroup>
+
 </Project>

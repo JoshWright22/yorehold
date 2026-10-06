@@ -166,7 +166,7 @@ public sealed class WorldFixture : IDisposable
         TakeEvents();
     }
 
-    public bool Use(string action, int? target = null) => After(World.Use(action, target));
+    public bool Use(string action, int? target = null, Cell? at = null) => After(World.Use(action, target, at));
 
     public bool MoveTo(Cell to) => After(World.MoveTo(to));
 

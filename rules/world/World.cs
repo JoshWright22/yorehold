@@ -44,6 +44,10 @@ public sealed class WorldCreature
     public CharacterChoices? Choices { get; set; }
     /// <summary>The library file a brought character came from; empty for a ready-made hero.</summary>
     public string Library { get; init; } = "";
+    /// <summary>The spell it holds in place, if any.</summary>
+    public Concentration Concentration { get; set; } = new();
+    /// <summary>A prepared caster may choose its spells: from the start until a fight, then after the rest the rules name.</summary>
+    public bool MayPrepare { get; set; } = true;
 
     /// <summary>A hero moving quietly: slower, lights covered, only noticed inside a vision cone.</summary>
     public bool Sneaking => Sheet.HasCondition(World.HiddenCondition);
@@ -200,6 +204,8 @@ public sealed partial class World
         FiredTriggers.Clear();
         _trapsLookedAt.Clear();
         Map.ResetObjects();
+        Surfaces.Clear();
+        _roundClock = 0;
         FillContainers();
         FillMerchants();
         LightLevels.Ambient = Chapter.Map.Lighting.Ambient;
@@ -294,6 +300,7 @@ public sealed partial class World
     public void Update(double deltaSeconds)
     {
         Walk(deltaSeconds);
+        SurfaceClock(deltaSeconds);
         if (Fighting)
         {
             TakeTurns(deltaSeconds);

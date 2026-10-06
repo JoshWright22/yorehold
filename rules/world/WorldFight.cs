@@ -105,6 +105,7 @@ public sealed partial class World
         {
             SetSneaking(i, false); // nobody sneaks through a fight
             _sneak[i].Reset();
+            Creatures[i].MayPrepare = false; // the day's spells are settled once fighting starts
         }
         // Everyone stops on a square of their own.
         var taken = new List<Cell>();
@@ -382,6 +383,14 @@ public sealed partial class World
         }
         ComputeReach(current.Value);
         _events.Add(new WorldEvent(WorldEventKind.Turn, Creatures[current.Value].Sheet.Name) { At = Tokens.Tokens[current.Value].Position });
+        if (SurfacesAt(CellOf(current.Value)).Count > 0)
+        {
+            SurfaceDamage(current.Value);
+            if (Encounter.Finished)
+            {
+                EndFight();
+            }
+        }
     }
 
     private void EndCurrentTurn()
@@ -395,7 +404,12 @@ public sealed partial class World
             }
             token.Path.Clear();
         }
-        Encounter!.NextTurn();
+        int round = Encounter!.Round;
+        Encounter.NextTurn();
+        if (Encounter.Round != round)
+        {
+            SurfacesAge();
+        }
         SyncLog();
         if (Encounter.Finished)
         {
@@ -668,6 +682,13 @@ public sealed partial class World
                 if (Creatures[me].BreakAs.Length == 0 && Tactics.WantsToFlee(profile, TacticalViewOf(me, new List<int>())))
                 {
                     Creatures[me].BreakAs = Tactics.PickBreak(profile, random);
+                }
+                // A spell worth more than a swing is cast from where it stands, then it thinks again.
+                if (!Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight" && PickAbility(me) is AbilityChoice spell
+                    && spell.Value >= StrikeWorth(me) && Use(spell.Action.Id, spell.Target, spell.At))
+                {
+                    _enemyTimer = 0;
+                    return;
                 }
                 var who = new List<int>();
                 TacticalView view = TacticalViewOf(me, who);

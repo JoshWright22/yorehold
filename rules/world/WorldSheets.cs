@@ -1,9 +1,8 @@
 namespace Yorehold.Rules;
 
 /// <summary>
-/// Sheets for the creatures a world starts with: they take their stat block as written. Heroes
-/// are built from their choices (CharacterBuild). Until inventories reach creatures (P8) the first
-/// weapon among their items is the one they fight with.
+/// Sheets for the creatures a world starts with: they take their stat block as written, with
+/// their items worn and their spells known. Heroes are built from their choices (CharacterBuild).
 /// </summary>
 public static class WorldSheets
 {
@@ -44,6 +43,7 @@ public static class WorldSheets
         {
             sheet.Resources[resource.Key] = resource.Value;
         }
+        sheet.Spells.AddRange(definition.Spells.Where(compendium.Spells.ContainsKey));
         // Its gear is worn as the heroes' is, but the stat block's AC is already final: armour
         // overriding "ac" would count twice, so what it wears on top of that is left off.
         CharacterBuild.GiveItems(sheet, compendium, definition.Items);

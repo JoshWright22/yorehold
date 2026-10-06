@@ -143,6 +143,13 @@ public class Compendium
                 throw new ContentException(file, "items", $"no item \"{item}\"");
             }
         }
+        foreach (CreatureDefinition creature in Creatures.Values)
+        {
+            foreach (string id in creature.Spells.Where(id => !Spells.ContainsKey(id)))
+            {
+                throw new ContentException($"creatures/{creature.Id}.json", "spells", $"no spell \"{id}\"");
+            }
+        }
         // A ruleset with no spells at all simply has no casting: shared classes still load under it.
         if (Spells.Count == 0)
         {

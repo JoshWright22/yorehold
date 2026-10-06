@@ -21,7 +21,13 @@ What the port reads so far, and where it differs:
 - Surfaces (`rulesets/yorehold/surfaces/`) are read with the ruleset. Besides `id`, `name`,
   `description`, `effects`, `duration`, `ends` and `isSpellEffect`, the fields the shipped files carry are
   kept: `damagePerRound` (dice), `damageType`, `save` (`ability`, `dc`), `onSave`, `slows`, `speed` (0 to
-  1), `slips`, `slipAbility`, `slipDc`, `extinguishes` and `extinguishedBy`. No rule uses them yet.
+  1), `slips`, `slipAbility`, `slipDc`, `extinguishes` and `extinguishedBy`. A creature that starts its
+  turn in one takes `damagePerRound` (with the save and `onSave`), and a surface laid where one it
+  `extinguishes` (or that names it in `extinguishedBy`) lies puts that one out. A surface's `size` is a
+  radius in squares; between fights a round is six seconds. Slowing and slipping are not used yet.
+- A creature file may list `"spells": ["spark"]`, ids from the ruleset's `spells/`. It casts them with
+  the slots and `focus` its `resources` give it, and the game plays them when one is worth more than a
+  strike. An unknown id fails the load.
 - A merchant is read from `stock` only. The saved `inventory` form comes with saves.
 - A map's `tileMap` may not carry a `delta`: saved changes come with saves.
 - The save signature of a chapter is not worked out yet; it comes with saves.

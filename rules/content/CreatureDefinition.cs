@@ -22,6 +22,8 @@ public class CreatureDefinition
     public bool DeathSaves { get; init; }
     public Dictionary<string, Resource> Resources { get; init; } = new();
     public List<string> Items { get; init; } = new();
+    /// <summary>Spell ids it can cast, with slots or focus from its resources like a hero's.</summary>
+    public List<string> Spells { get; init; } = new();
     public LootTable Loot { get; init; } = new();
     public CreatureToken Token { get; init; } = new(new ContentColor(200, 200, 200));
     /// <summary>A profile name or an object of changes, as written. Null = "cunning".</summary>
@@ -64,6 +66,7 @@ public class CreatureDefinition
             DeathSaves = node.Bool("deathSaves", false),
             Resources = ClassDefinition.ResourcesFrom(node),
             Items = node.Texts("items"),
+            Spells = node.Names("spells").Distinct().ToList(),
             Loot = node.Get("loot") is ContentNode loot ? LootTable.Read(loot) : new LootTable(),
             Token = token,
             Ai = ai,

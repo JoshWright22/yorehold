@@ -5,11 +5,12 @@ namespace Yorehold.Rules;
 // Actions: what the ruleset's actions/ files let a creature do on its turn, and carrying one out.
 public sealed partial class World
 {
-    public ActionDefinition? FindAction(string id) => Chapter.Rules.Action(id);
+    /// <summary>An action of the ruleset's, or a spell's (a spell may not take an action's id).</summary>
+    public ActionDefinition? FindAction(string id) => Chapter.Rules.Action(id) ?? FindSpell(id)?.Action;
 
     /// <summary>
     /// The actions a creature has, by their order: the ruleset's general ones whose resources it
-    /// carries. Spells and items add theirs later (P8, P9).
+    /// carries, and the spells on its sheet (after the general ones unless a file says otherwise).
     /// </summary>
     public List<ActionDefinition> ActionsOf(int creature)
     {
@@ -18,8 +19,10 @@ public sealed partial class World
             return new List<ActionDefinition>();
         }
         CharacterSheet sheet = Creatures[creature].Sheet;
+        IEnumerable<ActionDefinition> spells = sheet.Spells.Select(FindSpell).OfType<SpellDefinition>().Select(s => s.Action);
         return Chapter.Rules.Actions
             .Where(a => a.General && a.NeedsResources.Keys.All(sheet.Resources.ContainsKey))
+            .Concat(spells)
             .OrderBy(a => a.Order)
             .ToList();
     }
@@ -41,6 +44,10 @@ public sealed partial class World
         if (!Encounter.CanAct(ActionCost(creature, action)))
         {
             why = "not enough actions left";
+            return false;
+        }
+        if (SpellOf(action) is SpellDefinition spell && !Spellcasting.CanCast(Creatures[creature].Sheet, spell, SpellRules, out why))
+        {
             return false;
         }
         return action.Meets(Creatures[creature].Sheet, Rules, out why);
@@ -137,10 +144,11 @@ public sealed partial class World
     }
 
     /// <summary>
-    /// The creature whose turn it is uses one of its actions, aimed at a creature when the action
-    /// needs one. False with a Refusal when it can't.
+    /// The creature whose turn it is uses one of its actions, aimed at a creature or a square when
+    /// the action needs one. A spell spends the slot asked for, else the lowest that will do.
+    /// False with a Refusal when it can't.
     /// </summary>
-    public bool Use(string id, int? target = null)
+    public bool Use(string id, int? target = null, Cell? at = null, int slot = 0)
     {
         Refusal = "";
         if (!Fighting || InCutscene || CurrentCreature is not int me)
@@ -157,21 +165,37 @@ public sealed partial class World
                 : $"{Creatures[me].Sheet.Name} can't do that now.";
             return false;
         }
+        int spent = 0;
+        if (SpellOf(action) is SpellDefinition spell)
+        {
+            if (Spellcasting.SlotFor(Creatures[me].Sheet, spell, SpellRules, slot) is not int found)
+            {
+                Refusal = $"{action.Name}: no slot of level {slot} left.";
+                return false;
+            }
+            spent = found;
+        }
         if (action.Target == ActionTarget.Point)
         {
-            Refusal = $"{action.Name} is aimed at a square, which comes with spells.";
-            return false;
+            string aimWhy = "";
+            if (at is not Cell spot || !ValidAim(me, action, spot, out aimWhy))
+            {
+                Refusal = at == null ? $"{action.Name} needs a square to aim at." : aimWhy.Length > 0 ? aimWhy : $"{action.Name} can't go there.";
+                return false;
+            }
+            Perform(action, null, spot, spent);
+            return true;
         }
         if (action.Target == ActionTarget.Creature && (target is not int aimed || !ValidTarget(me, action, aimed)))
         {
             Refusal = target == null ? $"{action.Name} needs a target." : $"{action.Name} can't reach {Creatures[target.Value].Sheet.Name}.";
             return false;
         }
-        Perform(action, action.Target == ActionTarget.Creature ? target : null);
+        Perform(action, action.Target == ActionTarget.Creature ? target : null, null, spent);
         return true;
     }
 
-    private void Perform(ActionDefinition action, int? target)
+    private void Perform(ActionDefinition action, int? target, Cell? at = null, int slot = 0)
     {
         int me = CurrentCreature!.Value;
         Creatures[me].ReadiedAction = action.Readies;
@@ -181,7 +205,14 @@ public sealed partial class World
         {
             Say(action.Log.Replace("{name}", Creatures[me].Sheet.Name));
         }
-        RunActionEffect(me, action, target);
+        if (SpellOf(action) is SpellDefinition spell)
+        {
+            CastSpell(me, spell, target, at, slot);
+        }
+        else
+        {
+            RunActionEffect(me, action, target, at, slot);
+        }
         if (action.EndsTurn && !Encounter.Finished)
         {
             EndCurrentTurn();
@@ -196,23 +227,30 @@ public sealed partial class World
         }
     }
 
-    private EffectResult RunActionEffect(int me, ActionDefinition action, int? target)
+    internal EffectResult RunActionEffect(int me, ActionDefinition action, int? target, Cell? at = null, int slot = 0)
     {
         var result = new EffectResult();
         if (!action.Effect.IsEmpty)
         {
             Rng random = Fighting ? Encounter!.Random : NextRandom(0xc05eUL);
+            Cell aim = at ?? CellOf(target ?? me);
             var context = new EffectContext(Rules, random)
             {
                 Self = me,
-                Targets = new List<int> { target ?? me },
+                // an area lands on everyone it covers, from where it was aimed
+                Targets = action.Area != null ? CreaturesIn(me, action, aim) : new List<int> { target ?? me },
                 Source = action.Id,
+                Slot = slot,
                 Dc = Creatures[me].Sheet.DifficultyClass(Rules),
             };
+            _aim = aim;
             result = action.Effect.Run(new WorldEffectHost(this), context);
+            _aim = null;
             Narrate(result);
+            ConcentrationChecks(result, random);
         }
         AfterEffect(result);
+        TidyConcentration();
         return result;
     }
 
@@ -407,6 +445,16 @@ public sealed partial class World
             TurnBudget budget = _world.Encounter!.Current.Budget;
             budget.MovementLeft = Math.Max(0, budget.MovementLeft + change);
             return true;
+        }
+
+        // Where the action was aimed, else where the doer stands.
+        public override bool Surface(string id, float size, int rounds, EffectContext context)
+        {
+            if (Sheet(context.Self) == null)
+            {
+                return false;
+            }
+            return _world.AddSurface(id, _world._aim ?? _world.CellOf(context.Self), size, rounds);
         }
 
         public override bool Flag(string name, bool set, EffectContext context)
