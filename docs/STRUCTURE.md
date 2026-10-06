@@ -236,5 +236,9 @@ that checks the file on its own; what needs other files (an item a class names, 
 applies) is checked by whatever loads them together: `Compendium`, `RulesFolder`, `Chapter`, `Adventure`,
 `ContentPackage`.
 
+The game's own folder is `Places.GameContent()`: `assets/` itself from the project, and in an exported game
+a copy in `user://content` that `PackedContent` writes out of the pack each time the game starts, since
+System.IO can't read inside a .pck or an APK. Exports are `export.ps1` (`docs/EXPORT.md`).
+
 A new field goes in the type, its `Read`, a test in `tests/` and `docs/CONTENT.md`, in the same commit.
 A new file under `assets/` has to be loaded by something or `ContentTests.EveryShippedFileLoads` fails.

@@ -426,7 +426,7 @@ public partial class PlayHud : Control
 
     private void ReadIcons()
     {
-        string file = ProjectSettings.GlobalizePath(IconsFile);
+        string file = Places.ContentFile(IconsFile);
         if (!System.IO.File.Exists(file))
         {
             return; // every action then gets its first letter

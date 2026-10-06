@@ -357,7 +357,7 @@ public partial class ShotRunner : Node
         // Paths in scripts are written from the workspace folder (".dev/name.png"), one above the project.
         if (!System.IO.Path.IsPathRooted(file))
         {
-            file = System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", file);
+            file = System.IO.Path.Combine(Places.Workspace(), file);
         }
         file = System.IO.Path.GetFullPath(file);
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);

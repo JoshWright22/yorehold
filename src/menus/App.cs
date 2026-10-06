@@ -18,7 +18,7 @@ public static class App
     /// <summary>A setting or a key was changed.</summary>
     public static event Action? Changed;
 
-    public static ContentFiles Content() => new(ProjectSettings.GlobalizePath("res://assets"));
+    public static ContentFiles Content() => new(Places.GameContent());
 
     /// <summary>The account server. Off unless the settings or YOREHOLD_SERVER name one; playing never waits on it.</summary>
     public static Online Online { get; } = new(new HttpTransport());

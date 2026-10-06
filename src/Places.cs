@@ -13,7 +13,7 @@ public static class Places
     {
         if (ShotRunner.Running)
         {
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-characters"));
+            return System.IO.Path.Combine(Workspace(), ".dev", "shot-characters");
         }
         return ProjectSettings.GlobalizePath("user://characters");
     }
@@ -26,7 +26,7 @@ public static class Places
     {
         if (ShotRunner.Running)
         {
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-saves", "adventure.json"));
+            return System.IO.Path.Combine(Workspace(), ".dev", "shot-saves", "adventure.json");
         }
         return ProjectSettings.GlobalizePath("user://saves/adventure.json");
     }
@@ -42,7 +42,7 @@ public static class Places
     {
         if (ShotRunner.Running)
         {
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-create"));
+            return System.IO.Path.Combine(Workspace(), ".dev", "shot-create");
         }
         return ProjectSettings.GlobalizePath("user://create");
     }
@@ -51,7 +51,31 @@ public static class Places
     public static Rules.SyncFolders SyncFolders() => new(SavesFolder(), CharactersFolder(), ProjectSettings.GlobalizePath("user://"));
 
     /// <summary>The game's own content folder, which Create lays under every package.</summary>
-    public static string GameContent() => ProjectSettings.GlobalizePath("res://assets");
+    public static string GameContent() => PackedContent.Folder();
+
+    /// <summary>A res://assets/ path as a file System.IO can read, which an export has elsewhere.</summary>
+    public static string ContentFile(string resPath)
+    {
+        const string prefix = "res://assets/";
+        if (resPath.StartsWith(prefix))
+        {
+            return System.IO.Path.Combine(GameContent(), resPath[prefix.Length..]);
+        }
+        return ProjectSettings.GlobalizePath(resPath);
+    }
+
+    /// <summary>
+    /// The folder screenshot runs keep their files under (in .dev) and take relative paths from:
+    /// the one above the project. An exported game has no project folder, so it uses the user folder.
+    /// </summary>
+    public static string Workspace()
+    {
+        if (OS.HasFeature("template"))
+        {
+            return ProjectSettings.GlobalizePath("user://");
+        }
+        return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), ".."));
+    }
 
     /// <summary>
     /// settings.json, the C++ client's file name. A screenshot run has its own under ../.dev,
@@ -61,7 +85,7 @@ public static class Places
     {
         if (ShotRunner.Running)
         {
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", ".dev", "shot-settings", "settings.json"));
+            return System.IO.Path.Combine(Workspace(), ".dev", "shot-settings", "settings.json");
         }
         return ProjectSettings.GlobalizePath("user://settings.json");
     }

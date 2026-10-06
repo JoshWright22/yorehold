@@ -184,5 +184,11 @@ builds, passes `check.ps1` and is committed.
   - Blocked: never run against a live server, same as the C++ client's H1. Needs one sign-in with two installs to call it done.
   - Not ported: the C++ client's LAN co-op (host and join), so Join co-op stays off the title, and `.yore` archives with the content signature. The content registry, votes and completions were never in the C++ client either.
   - Not done: `.uid` files for `rules/online` and the two test files. The editor makes them when it next opens the project.
-- [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is
+- [x] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is
   still experimental in Godot 4.
+  - Default: `export.ps1 windows|android|ios` makes each build into `../.dev/export/`, out of the repo. Windows also starts the exported exe headless and can take a screenshot run of it. `docs/EXPORT.md` has the rest.
+  - Default: an exported game copies `res://assets` out of the pack to `user://content` each start and reads that, since System.IO can't open a .pck or an APK. Create's "game's own content" is that copy in an export, so saving into it lasts one run.
+  - Default: Android is arm64 only, prebuilt template (no Gradle), the game project on `net9.0` for Android builds only, ETC2/ASTC import on. The release keystore and its password are made in `export/keystore/` (git ignores it) and passed in by environment variables.
+  - Default: `icon.svg` is a placeholder icon (amber Y on ink) since Android won't export without one. The Windows exe has no icon until there is an `.ico`.
+  - Not done: the APK on a phone. No device was attached and the SDK here has no emulator; `adb install` steps are in EXPORT.md.
+  - Blocked: iOS. Godot refuses C# iOS exports off macOS (NativeAOT needs Xcode). Needs a Mac with Xcode and an Apple developer team ID; the preset is ready.
