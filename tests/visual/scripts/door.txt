@@ -1,0 +1,8 @@
+# chapter one: click the shut door, the leader walks over and opens it, then walk into the east room
+10 cell 9 6
+11 down left
+12 up left
+80 shot .dev/p4-door-open.png
+90 cell 12 6
+91 down left
+92 up left

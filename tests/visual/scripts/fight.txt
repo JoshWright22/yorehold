@@ -1,0 +1,22 @@
+# chapter one: open the door, walk into the east room and fight the goblin there
+# a click waits until the camera has settled on whoever's turn it is, or it lands on another square
+10 cell 9 6
+11 down left
+12 up left
+90 cell 12 6
+91 down left
+92 up left
+# Alice's turn: walk up beside the goblin, then the tooltip on Shove
+305 cell 11 9
+315 shot .dev/p6-fight-start.png
+316 down left
+317 up left
+360 move 730 660
+380 shot .dev/p6-tooltip.png
+# Strike with the chance to hit at the pointer: with the seed the run uses, it drops the goblin and the chapter is won
+390 key 1
+391 creature Goblin_1
+405 shot .dev/p6-targeting.png
+406 down left
+407 up left
+430 shot .dev/p6-hit.png

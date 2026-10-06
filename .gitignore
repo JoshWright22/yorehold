@@ -1,4 +1,6 @@
-build/
-out/
-.vs/
+.godot/
+bin/
+obj/
 *.user
+.vs/
+export/

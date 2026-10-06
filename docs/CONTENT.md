@@ -1,5 +1,42 @@
 # Content files and transfer
 
+## In the Godot port
+
+This file came over from the C++ client and the formats are the same: every file it describes loads
+unchanged. The readers are in `rules/content/`, one type per content kind, and the tests load every
+shipped file through them (`tests/ContentTests.cs`). Where this file says FRAMEWORK.md it means
+`../yorehold-framework/docs/FRAMEWORK.md`, which still describes effects, actions, player options,
+class level tables, spells and loot tables.
+
+What the port reads so far, and where it differs:
+
+- A bad file fails with the file, then the field, then what is wrong:
+  `items/mace.json: hands: is a whole number from 0 to 4`. Fields inside lists carry their place:
+  `chapters/pit/chapter.json: encounters[0].creatures[1].at: Nib starts on an occupied cell`.
+- Content is read from folders. `.yore` archives, the library, packing and the tools named under
+  "Validate, export and load" are not ported yet.
+- A chapter's `ruleset` is a folder or a file. The framework's built-in `modern` and `classic` sets are
+  not in the port, and a chapter naming one is refused. Content with no `rulesets/yorehold` folder under
+  it has no rules to fall back on.
+- Surfaces (`rulesets/yorehold/surfaces/`) are read with the ruleset. Besides `id`, `name`,
+  `description`, `effects`, `duration`, `ends` and `isSpellEffect`, the fields the shipped files carry are
+  kept: `damagePerRound` (dice), `damageType`, `save` (`ability`, `dc`), `onSave`, `slows`, `speed` (0 to
+  1), `slips`, `slipAbility`, `slipDc`, `extinguishes` and `extinguishedBy`. No rule uses them yet.
+- A merchant is read from `stock` only. The saved `inventory` form comes with saves.
+- A map's `tileMap` may not carry a `delta`: saved changes come with saves.
+- The save signature of a chapter is not worked out yet; it comes with saves.
+- `ui/theme.json` and the two files in `create/` are not rules content. They only have to be JSON here.
+- `ui/action-icons.json` is new: action id to the shape its hotbar icon is drawn with (`sword`, `dash`,
+  `shield`, `plus`, `flask`, `hidden`, `eye`, `push`, `rings`, `up`, `hourglass`). An action it doesn't
+  name gets its first letter. The rules don't read it.
+- Character files ("Character files" below) are read and written in the same envelope and shape, so a
+  library made by the C++ client opens here. The choices inside are FRAMEWORK.md's character choices.
+  Until saves (P10) nothing marks a character `away`; its copy goes back to the file when the chapter
+  is cleared, when a new adventure starts and when the game closes. The library is `characters/` in
+  Godot's user folder.
+- Create, voice lines and account sync are described below as the C++ client has them. They are
+  ported in later steps (see ROADMAP.md).
+
 Content is a folder of JSON files and assets. Copy individual definitions between projects, or zip a complete folder into a `.yore` package. `.yore` is a regular ZIP archive, mounted directly; the game does not extract it or execute code from it.
 
 ## Adding content to the game

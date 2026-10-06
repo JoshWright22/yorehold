@@ -1,0 +1,13 @@
+<Project Sdk="Godot.NET.Sdk/4.6.1">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Yorehold</RootNamespace>
+    <!-- The rules library and its tests build on their own; keep them out of the game project. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);rules/**;tests/**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="rules\Yorehold.Rules.csproj" />
+  </ItemGroup>
+</Project>

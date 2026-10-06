@@ -1,7 +1,0 @@
-10 move 320 20
-11 down left
-12 up left
-40 move 480 412
-41 down left
-42 up left
-60 move 600 600

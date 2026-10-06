@@ -1,0 +1,39 @@
+{
+  "id": "greeting",
+  "start": "hello",
+  "nodes": [
+    {
+      "id": "hello",
+      "speaker": "Guard",
+      "text": "Halt! Who goes there?",
+      "choices": [
+        {
+          "id": "friendly",
+          "text": "I come in peace",
+          "next": "welcome"
+        },
+        {
+          "id": "hostile",
+          "text": "Stand aside, fool!",
+          "next": "angry"
+        }
+      ]
+    },
+    {
+      "id": "welcome",
+      "speaker": "Guard",
+      "text": "Welcome, friend. You may pass.",
+      "flags": {
+        "set": ["met-guard"]
+      }
+    },
+    {
+      "id": "angry",
+      "speaker": "Guard",
+      "text": "How dare you! Prepare to face my wrath!",
+      "flags": {
+        "do": ["trigger:combat"]
+      }
+    }
+  ]
+}

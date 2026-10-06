@@ -1,0 +1,67 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
+[ext_resource type="Script" path="res://src/hud/SheetView.cs" id="2"]
+
+[node name="SheetView" type="PanelContainer"]
+custom_minimum_size = Vector2(400, 0)
+theme = ExtResource("1")
+script = ExtResource("2")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Name" type="Label" parent="Rows"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_font_sizes/font_size = 22
+text = "New character"
+
+[node name="Who" type="Label" parent="Rows"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Numbers" type="Label" parent="Rows"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Scores" type="GridContainer" parent="Rows"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+columns = 3
+
+[node name="Skills" type="Label" parent="Rows"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Feats" type="Label" parent="Rows"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Uses" type="Label" parent="Rows"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Carrying" type="Label" parent="Rows"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Problem" type="Label" parent="Rows"]
+visible = false
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_type_variation = &"WarnLabel"
+autowrap_mode = 3

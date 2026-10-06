@@ -1,0 +1,15 @@
+# camera: wheel in over a cell, pan with the keys, drag with the middle button, pinch out, then zoom all the way out
+10 cell 5 5
+11 wheel 3
+20 shot .dev/p4-zoomed-in.png
+21 key Left
+40 keyup Left
+50 move 640 360
+51 down middle
+52 move 540 300
+53 up middle
+60 shot .dev/p4-panned.png
+70 move 640 360
+71 pinch 0.5
+80 shot .dev/p4-pinched.png
+90 wheel -10

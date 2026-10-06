@@ -1,0 +1,13 @@
+{
+  "strike": "sword",
+  "stride": "dash",
+  "defend": "shield",
+  "help": "plus",
+  "potion": "flask",
+  "hide": "hidden",
+  "seek": "eye",
+  "shove": "push",
+  "grapple": "rings",
+  "interact": "up",
+  "ready": "hourglass"
+}

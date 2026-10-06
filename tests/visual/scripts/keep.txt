@@ -1,19 +1,7 @@
-2 key Return
-3 keyup Return
-5 shot .dev/keep-arrival.png
-20 move 1000 360
-21 down left
-22 up left
-200 move 1000 360
-201 down left
-202 up left
-380 move 1000 360
-381 down left
-382 up left
-560 shot .dev/keep-combat.png
-580 key Space
-581 keyup Space
-680 shot .dev/keep-next-turn.png
-700 key F6
-701 keyup F6
-720 shot .dev/keep-foundry.png
+# goblin keep by day: walk to the gate, then zoom all the way out to see the fog over the keep
+10 cell 15 14
+11 down left
+12 up left
+150 shot .dev/p4-keep-gate.png
+160 move 640 360
+161 wheel -10

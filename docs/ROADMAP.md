@@ -1,153 +1,115 @@
-# Roadmap
+# Port roadmap
 
-The order of work for [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md). Top to bottom. A step is done when its
-"done when" holds, `check.ps1` passes, and it is committed and pushed (framework before client).
-Tick the box in the same commit. If a step turns out to be blocked, write one line under it saying
-why and go on to the next.
+Yorehold moves from the C++ client (`../yorehold`, `../yorehold-framework`) to Godot 4.6 with C#.
+The C++ repos are frozen and serve as the reference: same rules, same content files, same design
+docs (`../yorehold/docs/GAME_DESIGN.md`, `SYSTEM_DESIGN.md`, `CONTENT.md`). The web game is dropped:
+the game is native only (Windows, then Android and iOS); the site keeps downloads, forms and the
+compendium.
 
-Each step is sized to be one or a few commits. Numbers come from data, never from code.
+Layout: `rules/` is plain C# with no Godot types (content loading, rules, World, AI, saves) and is
+tested with xunit in `tests/`. The Godot project in the root only draws, takes input and shows UI.
+Content stays as the JSON files in `assets/`; old files keep loading.
 
-## A. Foundation
+Order: get a playable demo early (walk a map, fight, win), then widen. Tick a box when its step
+builds, passes `check.ps1` and is committed.
 
-- [x] **A1. Stealth in the game.** Finish the sneak toggle, vision cones, checks every few metres,
-  light, and ambush for surprise, in single player and co-op.
-  Done when: unit checks cover a sneak past a watcher, getting spotted and an ambush; the keep has
-  one enemy with a set `facing`; CONTENT.md describes `rules/stealth.json` and `facing`.
-- [x] **A2. Split the simulation from the screens.** Move game state and rules out of
-  `YoreholdGame.cpp` into `src/sim/World*` with no renderer or input, as in SYSTEM_DESIGN section 2.
-  Do it in slices that each build and pass: (1) content loading into `src/content/`; (2) state and
-  save into `World`; (3) exploring; (4) combat; (5) validate/apply; (6) what is left becomes
-  `PlayScreen` plus `hud/`.
-  Done when: no file in `src/` is over 900 lines; a unit test plays the keep to victory through
-  `World` with scripted intents and no window; the scripted run and auto-play seeds give the same
-  results as before the split.
-- [x] **A3. World test helpers.** A small fixture: load a chapter from a folder or from JSON
-  strings, send intents, step time, read state. Use it in every later step.
+## P. Port
 
-## B. Rules machinery (framework first, numbers in `assets/rulesets/yorehold/`)
-
-- [x] **B1. Yorehold ruleset as a folder.** `rulesets/yorehold/ruleset.json` with the numbers the
-  game uses today (actions per turn, rests, XP table, stealth step, magic item limit). The game
-  loads it by default; `modern`/`classic` stay for tests.
-- [x] **B2. Conditions as files.** `conditions/*.json`: modifiers, flags, duration, how they end.
-  Off-guard, frightened, prone, slowed, grabbed, hidden, downed, dying, dead, shielded.
-- [x] **B3. Effects.** `yh::Effect`: the step list from SYSTEM_DESIGN section 3, parsed and
-  validated from JSON, run against a small host interface. Unit checks for each step, `when`,
-  `scale`, saves and half damage.
-- [x] **B4. Actions as files.** `actions/*.json` with cost, requirements, targeting and effects.
-  Strike, Stride and End turn move onto it with no change in play. The action bar lists whatever
-  the acting creature has.
-- [x] **B5. The other generic actions.** Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready.
-  Interact stands up; equipment and objects follow in D1 and F1.
-- [x] **B6. Reactions.** Triggers and a reaction budget; opportunity attacks when leaving reach
-  (free movement included); Ready. Players get a short prompt with a default of "take it"
-  (**default:** opportunity attacks are automatic, a setting turns the prompt on).
-- [x] **B7. Shared turns.** Neighbours in initiative on one side act as a block in any order.
-- [x] **B8. Flanking and cover.** Grid helpers in the framework; numbers in the ruleset.
-- [x] **B9. Proficiency ranks.** Level plus rank bonus for attacks, saves, skills, AC and DCs.
-- [x] **B10. Downed and death.** Death saves, stable, dead, getting up through Help, healing or a
-  potion; wipe returns to the autosave or the chapter's `onWipe`.
-
-## C. Characters
-
-- [x] **C1. Character files hold choices.** Race, background, scores, per-level picks; the sheet is
-  rebuilt from them. Migration from the current sheets in saves.
-- [x] **C2. Races, backgrounds and feats as files.** Human, elf, dwarf, halfling; six backgrounds;
-  a first set of feats per kind.
-- [x] **C3. Class level tables.** Fighter, rogue, cleric, wizard, levels 1 to 20: HP, features,
-  ranks, feats, slots. Level-up from XP, any level into any class. Build the table format and
-  levels 1 to 5 first, then fill 6 to 20 in the same format; a unit check builds each class at
-  every level.
-- [x] **C4. Character library.** `characters/` beside the save, graveyard folder, the "away" flag,
-  writing a character back at chapter end.
-- [x] **C5. Character screens.** Create (three steps, three score methods, live sheet), level up,
-  library list. Play > Characters.
-- [x] **C6. Starting an adventure.** Pick the adventure, pick or make up to four characters at its
-  recommended level, lobby with seats, then play. The keep's fixed party becomes its pregenerated
-  characters.
-
-## D. Items and economy
-
-- [x] **D1. Inventory panel and hands.** Per character, equip and swap grips through Interact.
-- [x] **D2. Loot and containers.** Creature drops, loot tables, chests as map objects, give to an
-  ally, coins.
-- [x] **D3. Weight and the magic item limit.**
-- [x] **D4. Merchants.** An NPC with stock and prices, buy and sell.
-- [x] **D5. Consumables.** Potions and scrolls as items with effects.
-
-## E. Magic
-
-- [x] **E1. Spell files and casting.** Slots, cantrips, hands as cost, targeting with area
-  templates and the ruler, saves, concentration.
-- [x] **E2. Prepared and spontaneous casters, focus points.**
-- [x] **E3. Starter lists.** About eight spells each for cleric and wizard across levels 0 to 3,
-  written fresh, each with a unit check.
-- [x] **E4. AI uses abilities.** The scorer rates every action a creature has.
-- [x] **E5. Surfaces.** Fire, grease, water, ice as effect areas on the map.
-
-## F. Adventure structure
-
-- [x] **F1. The game map on the framework's TileMap, Objects and Regions.** Doors, levers, locks,
-  traps and chests work through Interact; the text map stays as an import.
-- [x] **F2. `adventure.json`.** Several chapters, transitions between markers, adventure-wide
-  flags, level range. A two-chapter test adventure (test content, not shipped as story).
-- [x] **F3. Camp, supplies and long rests.** A camp map, the stash, rest costs, revival at camp.
-- [x] **F4. Companions.** Joining through dialogue, approval, the party cap.
-- [x] **F5. Triggers.** `onEnter`, `onFlag`, `onWipe` for cutscenes and dialogue; non-combat
-  completion.
-- [x] **F6. Package manifest fields.** `kind`, `id`, `revision`, `ruleset`, `requires`; the
-  compendium and library read them; old packages still load.
-  Done when: unit checks cover manifest loading, dependency checking, and version mismatch handling;
-  CONTENT.md describes manifest fields; ContentPackage reads and validates them;
-  the Compendium can be extended to index packages by kind and check requirements.
-
-## G. Create
-
-- [x] **G1. The shell.** Create screen with mode tabs, open/new package, shared undo, validation
-  list, Playtest and export.
-- [x] **G2. Map mode.** Tiles by layer and floor, walls, lights, markers, kits.
-- [x] **G3. Encounters mode.** Creatures, groups, facing, AI, XP, loot.
-- [x] **G4. Dialogue mode.**
-- [x] **G8. Voice lines.** A recorded line becomes words with timings in `<name>.voice.json`,
-  produced locally by whisper.cpp at import and matched to the written line. Includes a
-  measured tiny.en vs base.en comparison. See SYSTEM_DESIGN "Voice lines".
-- [x] **G5. Compendium mode.** Forms generated from each kind's fields.
-- [x] **G6. Cutscene mode.**
-- [x] **G7. Story mode.** The node graph and its suggestions.
-
-## H. Online
-
-- [ ] **H1. Characters and saves in account storage.** Server RPCs and client sync, newest wins
-  with a backup.
-  Blocked: built and checked against stand-ins on both sides (`npm test` in the server, `AccountSyncTests` in the client), but never run against a live server. Needs one sign-in with two save folders to tick.
-- [ ] **H2. Content registry.** Publish, get, search; files on local disk in development.
-- [ ] **H3. Votes and scores.**
-- [ ] **H4. Library browser in the game.** Search, install, update.
-- [ ] **H5. Internet co-op through the server relay.**
-- [x] **H6. Web site.** Next.js: home, library, content page, sign in, profile.
-- [ ] **H7. Canon review.** Approvers, sign-offs and the queue, on the server and the site.
-- [ ] **H8. Reports, blocking and bans.**
-- [ ] **H9. Completions.** Finishing an adventure is recorded on the account and shown on the
-  profile.
-- [ ] **H10. The game embedded in the site.** The browser build on `/play`, signed in through the
-  site.
-- [ ] **H11. Forums.**
-
-## I. Later
-
-- [ ] **I1. DM mode.** The DM seat, creature briefs in chapter files, live tools with a log.
-- [ ] **I2. Ruleset versions.** Migration files, the graveyard, rebuilt characters.
-- [ ] **I3. UI pass.** Once most of the game is implemented; until then screens keep the
-  placeholder look and only need to work.
-- [ ] **I4. Audio events and music states.**
-- [ ] **I5. The remaining SRD classes and races.**
-- [ ] **I7. Touch layout for Create on mobile.**
-- [ ] **I6. One CI run for Linux and macOS.**
-- [ ] **I8. Test audit.** Measure build and test time per target and per test file, find tests that
-  are slow, flaky or duplicate each other, and cut or speed up what costs more than it protects.
-  Done when: a short report (in `.dev\` or CHECKLIST) lists time per test file and what changed;
-  `check.ps1` is measurably faster; coverage of rules that matter is not lost.
-- [ ] **I8. Test audit.** Time a full check.ps1 and each test file, find the slow, flaky or
-  duplicate tests and the ones that rebuild too much, then cut or speed them up. Done when:
-  a report lists the cost of every test file, check.ps1 runs the quick checks by default, and
-  nothing that guards real behaviour was dropped.
+- [x] **P0. Tooling.** `check.ps1 -Shot name.png [-Frames N] [-Script file]`: run the game in a
+  window placed off screen, play an input script, save a screenshot to `../.dev/` and quit. A
+  content check in the test run that loads every shipped file under `assets/` and fails on errors.
+  `docs/STRUCTURE.md` for the C# style. Copy of `yorehold/assets` already in `assets/`.
+  - Default: the shot window sits at -4000,-4000 (not minimised, a minimised window may not draw) and runs at a fixed 60 fps.
+  - Default: `shot` paths inside a script are taken from the workspace folder, so `.dev/x.png` works like before.
+  - Default: the content check only parses JSON for now, strict (no comments or trailing commas). Typed loading is P1.
+  - Default: `Main` draws the version and the last input as a placeholder until P4.
+- [x] **P1. Content model.** Ruleset folder, conditions, effects, actions, races, backgrounds,
+  feats, classes, creatures, items, spells, kits, loot tables, adventure and chapter files, read
+  into C# types with System.Text.Json. Same formats as CONTENT.md; clear messages on bad files.
+  - Default: files are read by hand from `JsonElement` (no attribute mapping), so every message can name the file and the field path.
+  - Default: `docs/CONTENT.md` is a copy of the C++ client's with a "In the Godot port" section on top; FRAMEWORK.md stays in the framework repo.
+  - Default: the framework's `modern` and `classic` rulesets are not ported (numbers stay in `assets/`); a chapter naming one is refused, and content needs `rulesets/yorehold` under it.
+  - Default: the four built-in AI presets and the three basic actions are in code like the framework had them; the shipped `ai/` and `actions/` files replace them.
+  - Default: surface files keep the extra fields the shipped ones carry (damage, slipping, what puts them out) though no rule reads them yet.
+  - Default: content is read from folders only. `.yore` archives, the save signature, the merchant `inventory` form and a `tileMap` `delta` wait for the steps that need them (P10).
+  - Default: map lights and markers stay in cells and object areas in world units (64 a cell), as the files write them. Walls and indoor areas are built in P2/P3.
+  - Default: `DiceText` only checks that dice text can be rolled. Rolling is P2.
+- [x] **P2. Core rules.** Seeded RNG, dice, checks and DCs, proficiency ranks, modifiers,
+  conditions with durations, the effect step list, grid helpers (distance, reach, flanking,
+  cover, line of sight). Port the C++ unit checks for these.
+  - Default: `Rng` is the C++ client's PCG32, so a seed gives the same rolls in both. A save keeps `State` and `Increment`; `Rng.Restore` carries on from them.
+  - Default: `Checks.DegreeOf` gives four degrees, a natural 1 or 20 deciding the critical ones. Attacks in effects use it. Checks and saves inside effects still compare the total to the DC, as the C++ client does.
+  - Default: the sheet is `CharacterSheet` with what these rules read: stats, HP, conditions, proficiencies, resources and a plain `Weapon`. Inventory and encumbrance (P8), death saves (P5), rests and the sheet's save format (P10) come with their steps; until then damage and healing only move HP.
+  - Default: stats and grid distances are summed in float like the C++ client so they round the same. World positions are `System.Numerics.Vector2`.
+  - Default: `Positioning` has flanking and cover, with creatures as half cover, and `PositioningRules.CoverArmorClass` the bonus. Who counts as a foe and the flanked armour class are the fight's to work out (P5).
+  - Not ported yet: the C++ check that an effect's attack rolls the same dice as the encounter's own attack. It needs the encounter (P5).
+- [x] **P3. World and exploring.** World state from a chapter: map tiles, objects (doors, levers,
+  locks, chests), regions, creatures and party; free movement with paths on the grid; vision and
+  stealth (sneak, cones, checks); triggers (`onEnter`, `onFlag`). World test helpers like A3.
+  - Default: `World` takes typed calls (`Go`, `Interact`, `Sneak`, `SetFlags`) that return false with a `Refusal`. JSON intents and the co-op checks come with saves and online (P10, P14).
+  - Default: heroes are a plain build from their class file (tens across, class proficiencies, HP from the hit die) until P7 builds them from choices, so dice rolled after the party is made don't match the C++ client yet. Creatures take their stat block without rolled abilities.
+  - Default: creatures carry item ids for keys, and chests keep their contents on the object, until inventories, piles and looting come in P8. Weight doesn't slow walking until then either.
+  - Default: an enemy noticing the party wakes its encounter, stops everyone, ends sneaking and sets `FightGroup`; P5 starts the fight from there.
+  - Default: the win condition fires once when all its flags are set. The C++ check never fired, since it waited for the chapter not to be cleared while those same flags clear it.
+  - Default: trigger and win dialogue and cutscenes go out as `Talk` and `Cutscene` events with the content path; P10 opens them.
+  - Default: a map is one region. The framework's streaming of several regions isn't ported; no chapter uses it.
+  - Default: paths use a heap that breaks ties like the C++ client's `std::priority_queue`, so routes match cell for cell.
+  - Default: a sprung trap logs saves, damage, healing and conditions only; the fight's full log comes with P5.
+- [x] **P4. Play screen, first look.** Draw the chapter map (floors, walls, objects, lights),
+  party and creatures, camera pan and zoom, click to move, fog from party vision. Screenshot run.
+  - Default: the play screen opens `chapters/chapter-one`, the adventure's first chapter; `--chapter` picks another until the menus (P11).
+  - Default: lights go into a light map (a SubViewport with Light2D lamps and wall occluders) multiplied over the world like the C++ pass, so light stops at full and daylight doesn't blow out.
+  - Default: clicking a door, lever, locked chest or found trap walks the leader beside it (`World.GoNear`) and uses it on arrival. An unlocked chest is just walked onto until looting (P8).
+  - Default: a left drag or one finger pans, so does a middle or right drag; a press that moves under 10 px is a click. Two fingers pinch to zoom. Zoom goes from the whole map on screen to 4x.
+  - Default: cutscenes end as soon as they start and conversations are only printed until P10. A noticed party stops and waits for fights (P5).
+  - Default: tokens are discs with an initial and tiles are the C++ placeholder painters; token images and painted layer pictures are not drawn yet.
+  - Default: content is read from `res://assets` as a plain folder, which works from the project on desktop. Exports need another way in (P15).
+- [x] **P5. Combat rules.** Initiative, shared turns, free move plus two actions, all generic
+  actions (Strike, Defend, Help, Hide, Seek, Shove, Grapple, Interact, Ready), reactions and
+  opportunity attacks, downed and death, the AI scorer (including flee and surrender).
+  - Default: fights take typed calls like exploring does (`Use`, `MoveTo`, `Attack`, `ChooseTurn`, `EndTurn`, `React`, `Ambush`, `StartFight`) and answer `CurrentCreature`, `ActionsLeft`, `MovementLeft`, `UsableActions`, `ReachableCells`, `ValidTargets` and `HitChance` for the screen.
+  - Default: noticing the party starts the fight at once, so `FightGroup` is only set while one is on. Until P6 draws it the play screen stops at the first hero turn.
+  - Default: the AI plays its turns inside `Update` with the C++ pauses (think, walk, strike, wait). `Options.AutoPlay` hands it the heroes too, which is how the tests play every shipped encounter out.
+  - Default: heroes and creatures fight with the first weapon among their class or creature items until inventories (P8).
+  - Default: an action aimed at a square is refused until spells (P9). The `potion` action only shows for a sheet that carries the `potions` resource.
+  - Default: a wiped party sets `PartyWiped` and plays the `onWipe` cutscene; going back to the checkpoint and its destination come with saves (P10). Picking a fight with an NPC or someone who surrendered waits for dialogue (P10).
+  - Not ported: the C++ keep run with the scripted party, since it rests between fights (P10). The yard fight from sight to victory and the AI play-through of every encounter cover it for now.
+- [x] **P6. Combat on screen.** Action bar, initiative strip, party cards, targeting with ranges
+  and areas, hit and damage text, the log. A scripted fight in a screenshot run. First demo.
+  - Layout follows Baldur's Gate 3: the hotbar bottom centre with action, bonus and movement
+    pips and End Turn beside it, party portraits with HP down the left, the initiative strip of
+    portraits top centre, the combat log bottom right, hit chance at the cursor when targeting,
+    tooltips on every action. Our own art and names, the same arrangement and feel.
+  - Default: the panels are styled by `scenes/hud/hud-theme.tres` (flat dark boxes, a 1 px warm trim). The pixel art in `assets/ui` is the C++ client's purple theme and isn't used here.
+  - Default: portraits are the token's disc and initial, action icons are plain shapes picked by `assets/ui/action-icons.json`, conditions are two-letter badges. Art replaces them later.
+  - Default: the ruleset has no bonus actions, so that pip is hidden and a reaction pip sits beside the action pips.
+  - Default: a click on an enemy with nothing picked strikes it, walking up first. An action on oneself (Dash, Defend, Hide, Ready) is used as soon as its slot is pressed. End turn is the big button and Space, with no slot.
+  - Default: reaction prompts are on (`ReactionPrompts` on the play screen) and take the reaction when the ruleset's `promptSeconds` run out. The panel sits low in the middle so it doesn't cover who is moving.
+  - Default: on a touch screen the first tap on a square previews and the second acts. A greyed slot can be pressed and says why.
+  - Default: the party cards and the log show between fights too. The log moved from bottom left to bottom right.
+  - Default: reach, range and paths are drawn above the lighting and the fog, or they wouldn't show in a dark room. They show the map's shape under unexplored fog.
+  - Default: the area of an area action is previewed from its shape (burst, cone, line, square) around the pointer. No shipped action has one until spells (P9), so it hasn't been seen on screen.
+  - Default: a successful or failed save floats "Saved" or "Failed" from the creature, like "Miss".
+  - Not seen in a screenshot run: the defeat panel. The goblin in chapter one runs away before it can wipe a party that only ends its turns.
+- [x] **P7. Characters.** Character files hold choices, the sheet is computed; class tables 1 to
+  20; character library with graveyard; create and level-up screens; starting an adventure.
+  - Default: as in the C++ client, each seat's ready-made hero is rolled (4d6 drop the lowest) from the world seed, even when a library character takes the seat, so the dice after it don't change. This changed chapter one's fight: `fight.txt` is now Alice striking the goblin down, and `fight-hud.txt` lost its shared-turn step.
+  - Default: the sheet carries its gear (`Item`), worn as the class and background give it; the weapon is the one held in the main hand. A weapon set by hand is the fallback for sheets without gear. The gear panel, loot and weight are P8.
+  - Default: library files are the C++ client's (`yorehold.character` envelope). Until saves (P10) nothing is marked away: a brought character's copy goes back to its file when the chapter is cleared, when a new adventure starts and when the game closes, and a dead one then goes to the graveyard.
+  - Default: until the menus (P11) the play screen's Characters button opens both the library and New adventure; Start plays the chapter again with a new seed (the same seed in screenshot runs). Screenshot runs keep their library in `.dev/shot-characters`.
+  - Default: levels from XP in play go into the hero's latest class, as in the C++ client; the level-up screen is for library characters with XP to spare.
+  - Not ported yet: reading choices back off an old sheet (`choicesFromSheet`), which only older saves need (P10).
+- [ ] **P8. Items.** Inventory and hands, loot and containers, weight and the magic item limit,
+  merchants, consumables; their panels.
+- [ ] **P9. Magic.** Spell files and casting, slots, prepared and spontaneous casters, focus
+  points, starter lists, surfaces; the spell panel; AI uses abilities.
+- [ ] **P10. Adventure.** `adventure.json`, chapter transitions, camp and long rests, companions
+  and approval, dialogue and its panel, journal, cutscenes, saves (seeded, deterministic).
+- [ ] **P11. Menus and settings.** Title, load, settings, key bindings, credits with the Godot
+  MIT licence text.
+- [ ] **P12. Create: shell, map and encounters modes.**
+- [ ] **P13. Create: dialogue, compendium, cutscene, story and voice modes.**
+- [ ] **P14. Online.** Account sign-in and character/save sync against the existing Nakama server
+  (`../yorehold-server`), through an interface tests can fake.
+- [ ] **P15. Exports.** Windows build, then Android; an iOS export test early since C# on iOS is
+  still experimental in Godot 4.
