@@ -15,11 +15,10 @@ What the port reads so far, and where it differs:
   `chapters/pit/chapter.json: encounters[0].creatures[1].at: Nib starts on an occupied cell`.
 - Faces: a creature's cards and its token show the picture its `token.image` names, or else
   `portraits/<creature id>.png`, and a hero's show `portraits/<class name in lower case>.png`. Any
-  size, square is best; small pixel art is drawn sharp. Paths are taken from the game's content root
-  only for now, not from the chapter folder. With no picture the disc and initial are drawn as before.
-  The shipped faces are CC0 tiles from Dungeon Crawl Stone Soup moved onto CC-29; which tile each
-  one is and where it came from is in `portraits/CREDITS.txt`. A writer's own picture replaces one
-  by using the same file name or naming another in `token.image`.
+  size, square is best; small pixel art is drawn sharp. Paths are content paths, from the package's
+  root (not the chapter folder). With no picture the disc and initial are drawn.
+  The game ships no faces: every picture comes from the content, and a package's own pictures win
+  over the game's folder. png, jpg or webp.
 - Content is read from folders. `.yore` archives, the library, packing and the tools named under
   "Validate, export and load" are not ported yet.
 - A chapter's `ruleset` is a folder or a file. The framework's built-in `modern` and `classic` sets are
@@ -224,7 +223,7 @@ Modifiers use `stat`, `op` (`add`, `multiply`, `override`) and `value`. `token` 
 
 `map.json` contains named `tiles`, a `legend` mapping one character to each tile name, and `layers` of text `rows`. Spaces mean empty cells. All layers have equal dimensions, derived from the first layer. Empty ground is not walkable. Walls/obstacles can be painted over ground on later layers.
 
-Tiles declare `walkable` and `blocksSight` independently. Sight-blocking tile edges create the vision/lighting walls. `art` selects a built-in placeholder painter (grass, dirt, stone, wood, wall, water, tree); other names use the tile's `color`.
+Tiles declare `walkable` and `blocksSight` independently. Sight-blocking tile edges create the vision/lighting walls. `image` is the creator's picture for the tile, a content path (`tiles/grass.png`; png, jpg or webp, square, any size up to 256 px; all of a map's tiles are scaled to the biggest). The game draws no tile pictures of its own: a tile without one is a plain fill in the nearest CC-29 colour to its `color`, or, with no `color`, the usual colour of its `art` (grass, dirt, stone, wood, wall, water, tree). A layer of a `tileMap` map can lie on a painted picture: `"image": {"path": "maps/yard.png", "area": [x, y, width, height]}` in world units, drawn under the tiles of floor 0.
 
 Optional `lighting` picks how light works on the map. `mode` is `off` (everything lit, no darkness drawn), `mood` (lights and darkness are only for looks; the default) or `rules` (heroes only see cells that are lit or within their darkvision). `ambient` is the light level where no lamp reaches (`dark`, `dim` or `bright`), `brightFraction` the part of each light's radius that is bright, `carried` the radius in cells of the light each hero carries (0 = none) and `sight` how far heroes see, in cells. Players can override the mode in Settings. Classes and creatures take `darkvision` in feet.
 
@@ -244,7 +243,7 @@ Heroes use doors, levers, locks and found traps with E when standing beside them
 
 ### Drawing a map in Create
 
-Create > Map edits the `map.json` of the chapter named in the top right (click it for the package's next chapter). Create > New writes a new adventure folder to `create/` beside the save: a manifest, `chapters/chapter-one` and an empty 24 x 16 map with a tile type for each built-in painter. It carries no classes yet, so the validation list says which is missing until they are added.
+Create > Map edits the `map.json` of the chapter named in the top right (click it for the package's next chapter). Create > New writes a new adventure folder to `create/` beside the save: a manifest, `chapters/chapter-one` and an empty 24 x 16 map with a tile type for each kind of ground (plain fills until the creator gives them pictures). It carries no classes yet, so the validation list says which is missing until they are added.
 
 | Tool | Left button | Right button |
 |---|---|---|

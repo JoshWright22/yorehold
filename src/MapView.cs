@@ -21,8 +21,21 @@ public partial class MapView : Node2D
     {
         Clear();
         GameMap map = world.Chapter.Map;
-        _atlas = TileArt.Atlas(map.Types);
+        (_atlas, int size) = TileArt.Atlas(map.Types, world.Files);
         int cell = GameMap.CellSize;
+
+        // a layer's painted picture lies under every tile
+        Rid painted = NewItem();
+        RenderingServer.CanvasItemSetDefaultTextureFilter(painted, RenderingServer.CanvasItemTextureFilter.Linear);
+        foreach (MapLayer layer in map.Layers)
+        {
+            if (layer.Floor == 0 && layer.Visible && layer.ImageArea.Length == 4 && PlayerArt.Texture(world.Files, layer.Image) is Texture2D picture)
+            {
+                double[] a = layer.ImageArea;
+                RenderingServer.CanvasItemAddTextureRect(painted, new Rect2((float)a[0], (float)a[1], (float)a[2], (float)a[3]), picture.GetRid());
+            }
+        }
+
         for (int by = 0; by < map.Height; by += Block)
         {
             for (int bx = 0; bx < map.Width; bx += Block)
@@ -45,7 +58,7 @@ public partial class MapView : Node2D
                                 continue;
                             }
                             RenderingServer.CanvasItemAddTextureRectRegion(item, new Rect2(x * cell, y * cell, cell, cell), _atlas.GetRid(),
-                                new Rect2((id - 1) * TileArt.Size, 0, TileArt.Size, TileArt.Size));
+                                new Rect2((id - 1) * size, 0, size, size));
                         }
                     }
                 }

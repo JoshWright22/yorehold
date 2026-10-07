@@ -150,7 +150,7 @@ public partial class CreateScreen : Control
         _chapter.Disabled = _package.Chapters.Count < 2;
         if (_mode == Mode.Map)
         {
-            _map.Present(_package.MapEditor(), _package.MapError);
+            _map.Present(_package.MapEditor(), _package.MapError, _package.PlayFiles);
         }
         else if (_mode == Mode.Dialogue)
         {
@@ -171,7 +171,7 @@ public partial class CreateScreen : Control
         else
         {
             EncountersEditor? encounters = _package.EncountersEditor();
-            _encounters.Present(encounters, _package.MapEditor()?.Map(), _package.EncountersError);
+            _encounters.Present(encounters, _package.MapEditor()?.Map(), _package.EncountersError, _package.PlayFiles);
         }
 
         History history = _package.History;

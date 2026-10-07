@@ -58,7 +58,7 @@ public partial class EncountersModePanel : HBoxContainer
     }
 
     /// <summary>The chapter's groups and its map as drawn now, or null with why. Called every frame.</summary>
-    public void Present(EncountersEditor? editor, GameMap? map, string error)
+    public void Present(EncountersEditor? editor, GameMap? map, string error, Func<ContentFiles?> files)
     {
         if (!ReferenceEquals(editor, _editor))
         {
@@ -100,7 +100,7 @@ public partial class EncountersModePanel : HBoxContainer
             _lootItem = editor.Names.Items.Keys.FirstOrDefault() ?? "";
         }
         _view.Floor = 0; // creatures stand on floor 0
-        _view.ShowMap(map);
+        _view.ShowMap(map, files);
         _view.QueueRedraw();
 
         _tools.Build(string.Join("|", editor.Groups.Select(g => g.Id + "=" + g.Creatures.Count)), BuildTools);

@@ -84,7 +84,7 @@ public partial class MapModePanel : HBoxContainer
     }
 
     /// <summary>The chapter's map, or null with why it can't be shown. Called every frame.</summary>
-    public void Present(MapEditor? editor, string error)
+    public void Present(MapEditor? editor, string error, Func<ContentFiles?> files)
     {
         if (!ReferenceEquals(editor, _editor))
         {
@@ -119,7 +119,7 @@ public partial class MapModePanel : HBoxContainer
         }
         _view.Floor = _floor;
         _view.LowestFloor = editor.Floors().Low;
-        _view.ShowMap(editor.Map());
+        _view.ShowMap(editor.Map(), files);
         _tools.Build("tools", BuildTools);
         string props = $"{_tool}|{_floor}|{string.Join(",", layers.Select(l => editor.LayerName(l)))}|{editor.Types.Count}|{_light}|"
             + $"{string.Join(",", editor.Markers.Keys)}|{editor.Kits.Count}|{_view.Atlas?.GetRid()}";
@@ -236,7 +236,7 @@ public partial class MapModePanel : HBoxContainer
                     });
                     if (_view.Atlas != null)
                     {
-                        tile.Icon = new AtlasTexture { Atlas = _view.Atlas, Region = new Rect2(i * TileArt.Size, 0, TileArt.Size, TileArt.Size) };
+                        tile.Icon = new AtlasTexture { Atlas = _view.Atlas, Region = new Rect2(i * _view.AtlasSize, 0, _view.AtlasSize, _view.AtlasSize) };
                         tile.CustomMinimumSize = new Vector2(0, 36);
                     }
                     if (!usable)

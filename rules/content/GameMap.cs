@@ -5,9 +5,11 @@ namespace Yorehold.Rules;
 public class TileType
 {
     public string Name { get; init; } = "";
-    /// <summary>A built-in painter ("grass", "wall"...); other names use Color.</summary>
+    /// <summary>A kind of ground ("grass", "wall"...) that picks a plain fill colour when Color isn't given.</summary>
     public string Art { get; init; } = "";
     public ContentColor Color { get; init; } = new(128, 128, 128);
+    /// <summary>The creator's picture for this tile, a content path. Empty = a plain fill.</summary>
+    public string Image { get; init; } = "";
     public bool Walkable { get; init; } = true;
     public bool BlocksSight { get; init; }
     /// <summary>Under a roof: daylight doesn't reach it.</summary>
@@ -172,11 +174,16 @@ public class GameMap
             {
                 throw t.Fail("tile names must be unique and not empty");
             }
+            if (t.Text("image", "") is { Length: > 0 } picture && !ContentFiles.IsContentPath(picture))
+            {
+                throw t.Fail("image", "is a path inside the content folder, like tiles/grass.png");
+            }
             types.Add(new TileType
             {
                 Name = name,
                 Art = t.Text("art", name),
                 Color = t.Get("color") is ContentNode color ? ContentParts.ColorFrom(color) : new ContentColor(128, 128, 128),
+                Image = t.Text("image", ""),
                 Walkable = t.Bool("walkable", true),
                 BlocksSight = t.Bool("blocksSight", false),
                 Indoors = t.Bool("indoors", false),

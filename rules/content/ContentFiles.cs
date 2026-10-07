@@ -72,6 +72,9 @@ public class ContentFiles
         return File.ReadAllBytes(found);
     }
 
+    /// <summary>Where on disk a content path is found, the top folder first; null when nowhere.</summary>
+    public string? FullPath(string path) => Find(path);
+
     /// <summary>Every path read so far, so a check can tell which files nothing looked at.</summary>
     public IReadOnlyCollection<string> PathsRead => _read;
 

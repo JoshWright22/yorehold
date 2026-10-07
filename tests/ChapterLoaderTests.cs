@@ -51,6 +51,18 @@ public class ChapterLoaderTests
     }
 
     [Fact]
+    public void ATileTakesItsCreatorsPicture()
+    {
+        GameMap map = GameMap.Read(TestContent.Json(SmallMap.Replace("\"plank\": {\"art\": \"wood\",", "\"plank\": {\"image\": \"tiles/plank.png\",")), NoKits);
+        Assert.Equal(("tiles/plank.png", ""), (map.Types[2].Image, map.Types[0].Image));
+
+        // a picture has to come from inside the content, not anywhere on the disk
+        ContentException error = TestContent.Refused(() =>
+            GameMap.Read(TestContent.Json(SmallMap.Replace("\"plank\": {\"art\": \"wood\",", "\"plank\": {\"image\": \"../plank.png\",")), NoKits));
+        Assert.Contains("image", error.Message);
+    }
+
+    [Fact]
     public void AMapSavedByCreateReadsTheSame()
     {
         // Tile ids are the place in the array plus 1; each tile is [place in its 32 by 32 chunk, id].

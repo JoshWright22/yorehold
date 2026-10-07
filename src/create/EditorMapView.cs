@@ -74,24 +74,26 @@ public partial class EditorMapView : Control
     }
 
     /// <summary>The map as the editor holds it now. Draws again only when it is another one.</summary>
-    public void ShowMap(GameMap map)
+    /// <summary>files gives the content the tile pictures are read from; asked only when the tiles change.</summary>
+    public void ShowMap(GameMap map, Func<ContentFiles?> files)
     {
         if (ReferenceEquals(map, Map))
         {
             return;
         }
         Map = map;
-        string types = string.Join("|", map.Types.ConvertAll(t => t.Name + t.Art + t.Color));
+        string types = string.Join("|", map.Types.ConvertAll(t => t.Name + t.Art + t.Color + t.Image));
         if (types != _atlasTypes)
         {
             _atlasTypes = types;
-            _atlas = TileArt.Atlas(map.Types);
+            (_atlas, AtlasSize) = TileArt.Atlas(map.Types, files());
         }
         QueueRedraw();
     }
 
-    /// <summary>The tile atlas, for the palette's swatches: tile id n is at (n - 1) * TileArt.Size.</summary>
+    /// <summary>The tile atlas, for the palette's swatches: tile id n is at (n - 1) * AtlasSize.</summary>
     public Texture2D? Atlas => _atlas;
+    public int AtlasSize { get; private set; } = TileArt.MinSize;
 
     /// <summary>Puts the view's top-left at pan with zoom screen pixels per world unit.</summary>
     public void Look(Vector2 pan, float zoom)
@@ -351,7 +353,7 @@ public partial class EditorMapView : Control
                     int id = tiles.Tiles[y * Map.Width + x];
                     if (id != 0)
                     {
-                        DrawTextureRectRegion(_atlas, new Rect2(ToLocal(new Vector2(x * Cell, y * Cell)), size), new Rect2((id - 1) * TileArt.Size, 0, TileArt.Size, TileArt.Size));
+                        DrawTextureRectRegion(_atlas, new Rect2(ToLocal(new Vector2(x * Cell, y * Cell)), size), new Rect2((id - 1) * AtlasSize, 0, AtlasSize, AtlasSize));
                     }
                 }
             }

@@ -305,7 +305,7 @@ public partial class CutsceneModePanel : VBoxContainer
     {
         if (map != null)
         {
-            _view.ShowMap(map);
+            _view.ShowMap(map, () => _package?.PlayFiles());
         }
         _frame = editor.FrameAt(_now, _start.ToRules(), 1);
         Vector2 size = _view.Size;

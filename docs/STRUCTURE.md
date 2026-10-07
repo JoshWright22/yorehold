@@ -55,7 +55,7 @@ turns taps into `World` calls. It draws through its children, one script each:
 
 | Node | Does |
 |---|---|
-| `Map` (`MapView`) | tiles from `TileArt` (flat CC-29 placeholder tiles with a few marks each) and grid lines, in blocks of 8 by 8 cells |
+| `Map` (`MapView`) | a layer's painted picture, tiles from `TileArt` (the creator's tile pictures, else plain CC-29 fills) and grid lines, in blocks of 8 by 8 cells |
 | `Objects` (`ObjectsView`) | doors, levers, chests, sacks the dead left, found traps and lamp flames |
 | `Tokens` (`TokensView`) | one `Token.tscn` (`TokenView`) per creature, and the heroes' paths |
 | `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, right or middle drags, finger drags and pinches; a left click, or a tap that isn't a drag, comes out as `Tapped` and leaves the view where it is |
