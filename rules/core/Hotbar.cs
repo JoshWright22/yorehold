@@ -19,17 +19,27 @@ public sealed class Hotbar
 
     public IReadOnlyList<string> Slots => _slots;
 
+    /// <summary>Slots on each bar; the first bar holds the actions every hero has, the second spells and the rest.</summary>
+    public const int PerBar = Size / 2;
+
     /// <summary>
     /// Puts actions not seen before into the first empty slots, then says what each slot shows:
     /// the id when it is among actions, "" otherwise. actions is the character's in their usual order.
+    /// always says which are the actions every hero always has: they go on the first bar and
+    /// everything else (spells) on the second, each overflowing into the other (Josh, 10/7).
     /// </summary>
-    public string[] Layout(IReadOnlyList<string> actions)
+    public string[] Layout(IReadOnlyList<string> actions, Func<string, bool>? always = null)
     {
         foreach (string id in actions)
         {
             if (_seen.Add(id) && Array.IndexOf(_slots, id) < 0)
             {
-                int empty = Array.IndexOf(_slots, "");
+                bool first = always?.Invoke(id) ?? true;
+                int empty = Array.IndexOf(_slots, "", first ? 0 : PerBar);
+                if (empty < 0 || (first && empty >= PerBar))
+                {
+                    empty = first && empty >= 0 ? empty : Array.IndexOf(_slots, "");
+                }
                 if (empty >= 0)
                 {
                     _slots[empty] = id;

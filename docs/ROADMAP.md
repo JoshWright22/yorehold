@@ -447,12 +447,18 @@ reopened (`playtest.ps1 -Problems`).
 - [ ] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
   by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
   length, made by.
-- [ ] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
+- [x] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
   changes: the actions every hero always has (strike, stride, defend, help, hide, seek, shove,
   grapple, interact, ready) sit in their own group apart from spells and items; and as in BG3
   every action is picked first and then aimed, including the ones on yourself, so Defend or
   Stride (dash) is a press then a click on your own hero (or the key again), never one click
   that acts at once. Escape or a right click puts it back.
+  - Default: the first bar is the actions every hero has (general, needing nothing), the second
+    the hero's spells and class actions; each spills into the other when full. Only actions
+    placed from now on follow this: a hotbar the player already arranged (in a save or a
+    character file) keeps its slots (`.dev\playtest-spell-fight.png`).
+  - Default: an action on oneself, picked, waits like any other; a click on the hero or its
+    key again uses it, a click anywhere else puts it away.
 - [ ] **U10. Art pack coverage.** Mostly done 10/7 while checking for generated art: objects
   now show `objects/<name>.png` (CONTENT.md), the code-drawn icon shapes and object drawings are
   gone (plain blocks and letters remain as fallbacks), the old client's 13 UI skin pictures are

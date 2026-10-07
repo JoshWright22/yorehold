@@ -241,6 +241,23 @@ public partial class FightControl : Node
 
         if (Aim.Action.Length > 0 && w.FindAction(Aim.Action) is ActionDefinition action)
         {
+            // an action on oneself is aimed at oneself: a click anywhere else puts it away
+            if (action.Target == ActionTarget.Self)
+            {
+                if (target == me && w.Use(action.Id))
+                {
+                    Aim.Action = "";
+                }
+                else if (target == me)
+                {
+                    Refuse(at);
+                }
+                else
+                {
+                    Aim.Action = "";
+                }
+                return;
+            }
             // an enemy out of range is walked up to; everything else is used from here or refused
             bool done = action.Target == ActionTarget.Point ? w.Use(action.Id, null, cell)
                 : target is int aimed
@@ -280,7 +297,11 @@ public partial class FightControl : Node
         }
     }
 
-    /// <summary>A hotbar slot or its key. Actions on oneself happen at once; the others wait for a target, and picking one again puts it away.</summary>
+    /// <summary>
+    /// A hotbar slot or its key. Every action is picked first and then aimed, as in BG3 (Josh,
+    /// 10/7): one on oneself (Defend, Stride) is used by a click on the hero or by its key again;
+    /// any other is put away by picking it again.
+    /// </summary>
     public void PickAction(string id)
     {
         if (_world == null || !Aim.HeroTurn || _world.CurrentCreature is not int me || _world.FindAction(id) is not ActionDefinition action)
@@ -292,7 +313,7 @@ public partial class FightControl : Node
         {
             return; // the slot is greyed and its tooltip says why
         }
-        if (action.Target == ActionTarget.Self)
+        if (action.Target == ActionTarget.Self && Aim.Action == id)
         {
             Aim.Action = "";
             if (!_world.Use(id))

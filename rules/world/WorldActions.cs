@@ -30,8 +30,9 @@ public sealed partial class World
     /// <summary>What each of the creature's hotbar slots shows, an action id or "". End turn has a button of its own and no slot.</summary>
     public string[] HotbarOf(int creature)
     {
-        List<string> actions = ActionsOf(creature).Where(a => a.Id != EndTurnAction).Select(a => a.Id).ToList();
-        return Creatures[creature].Sheet.Hotbar.Layout(actions);
+        List<ActionDefinition> all = ActionsOf(creature).Where(a => a.Id != EndTurnAction).ToList();
+        var always = all.Where(a => a.General && a.NeedsResources.Count == 0).Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
+        return Creatures[creature].Sheet.Hotbar.Layout(all.Select(a => a.Id).ToList(), always.Contains);
     }
 
     /// <summary>Puts one of the creature's actions in a hotbar slot (dragged from the spell book or another slot).</summary>

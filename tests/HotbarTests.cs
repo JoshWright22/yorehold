@@ -13,6 +13,21 @@ public class HotbarTests
     }
 
     [Fact]
+    public void ActionsEveryHeroHasGoOnTheFirstBarAndSpellsOnTheSecond()
+    {
+        var bar = new Hotbar();
+        var always = new HashSet<string> { "strike", "dash" };
+        string[] shown = bar.Layout(new[] { "strike", "mire", "dash", "spark" }, always.Contains);
+        Assert.Equal(new[] { "strike", "dash", "" }, shown.Take(3));
+        Assert.Equal(new[] { "mire", "spark", "" }, shown.Skip(Hotbar.PerBar).Take(3));
+        // a full first bar spills over into the second, and the other way round
+        var full = new Hotbar();
+        string[] many = Enumerable.Range(0, Hotbar.PerBar + 1).Select(i => $"a{i}").ToArray();
+        string[] laid = full.Layout(many, _ => true);
+        Assert.Equal($"a{Hotbar.PerBar}", laid[Hotbar.PerBar]);
+    }
+
+    [Fact]
     public void PuttingAnActionOnTheBarSwapsOrReplaces()
     {
         var bar = new Hotbar();
