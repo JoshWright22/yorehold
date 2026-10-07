@@ -6,8 +6,8 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The tiles of a map in one texture. A tile type shows the picture its creator gave it; without
-/// one it is a plain palette fill, its own colour or, if it gives none, the usual colour of its kind
+/// The tiles of a map in one texture. A tile type shows the picture its creator gave it, else
+/// tiles/&lt;kind&gt;.png from the content or an art pack; without one it is a plain palette fill, its own colour or, if it gives none, the usual colour of its kind
 /// of ground. The game draws no tile pictures of its own.
 /// </summary>
 public static class TileArt
@@ -34,7 +34,9 @@ public static class TileArt
         int size = MinSize;
         for (int t = 0; t < types.Count; t++)
         {
-            pictures[t] = PlayerArt.Picture(files, types[t].Image);
+            // a type with no picture of its own takes an art pack's picture for its kind of ground
+            string image = types[t].Image.Length > 0 || types[t].Art.Length == 0 ? types[t].Image : $"tiles/{types[t].Art}.png";
+            pictures[t] = PlayerArt.Picture(files, image);
             if (pictures[t] is Image picture)
             {
                 size = Math.Max(size, Math.Max(picture.GetWidth(), picture.GetHeight()));

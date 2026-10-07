@@ -52,6 +52,9 @@ public sealed partial class CreatePackage
         _gameAssets = gameAssets;
     }
 
+    /// <summary>Players' art packs, laid between the game's content and the package in a playtest.</summary>
+    public List<string> ArtFolders { get; } = new();
+
     public ContentPackage? Manifest { get; private set; }
     public bool IsOpen => Manifest != null;
     /// <summary>The folder that is open; empty when nothing is.</summary>
@@ -214,6 +217,10 @@ public sealed partial class CreatePackage
     public ContentFiles PlayFiles()
     {
         var files = new ContentFiles(_gameAssets);
+        foreach (string pack in ArtFolders)
+        {
+            files.Add(pack);
+        }
         if (IsOpen && !IsGameContent)
         {
             files.Add(PackagePath);

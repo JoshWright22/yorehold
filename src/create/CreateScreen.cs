@@ -68,6 +68,7 @@ public partial class CreateScreen : Control
     public override void _Ready()
     {
         _package = new CreatePackage(Places.GameContent());
+        _package.ArtFolders.AddRange(Places.ArtFolders());
         _start = GetNode<DataPanel>("Start");
         _editor = GetNode<Control>("Editor");
         _map = GetNode<MapModePanel>("Editor/Body/Modes/Map");

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace Yorehold;
@@ -52,6 +55,23 @@ public static class Places
 
     /// <summary>The game's own content folder, which Create lays under every package.</summary>
     public static string GameContent() => PackedContent.Folder();
+
+    /// <summary>
+    /// Pictures players put in user://art, a folder per pack, laid over the game's content so
+    /// they are used everywhere (tiles/grass.png, portraits/goblin.png). Sorted by name, the last
+    /// winning. Screenshot runs read them too: they only read, and the pictures are what is judged.
+    /// </summary>
+    public static List<string> ArtFolders()
+    {
+        string root = ProjectSettings.GlobalizePath("user://art");
+        if (!System.IO.Directory.Exists(root))
+        {
+            return new List<string>();
+        }
+        List<string> packs = System.IO.Directory.GetDirectories(root).ToList();
+        packs.Sort(StringComparer.Ordinal);
+        return packs;
+    }
 
     /// <summary>A res://assets/ path as a file System.IO can read, which an export has elsewhere.</summary>
     public static string ContentFile(string resPath)

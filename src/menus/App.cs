@@ -18,7 +18,16 @@ public static class App
     /// <summary>A setting or a key was changed.</summary>
     public static event Action? Changed;
 
-    public static ContentFiles Content() => new(Places.GameContent());
+    /// <summary>The game's content with the players' art packs on top.</summary>
+    public static ContentFiles Content()
+    {
+        var files = new ContentFiles(Places.GameContent());
+        foreach (string pack in Places.ArtFolders())
+        {
+            files.Add(pack);
+        }
+        return files;
+    }
 
     /// <summary>The account server. Off unless the settings or YOREHOLD_SERVER name one; playing never waits on it.</summary>
     public static Online Online { get; } = new(new HttpTransport());

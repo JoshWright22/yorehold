@@ -21,6 +21,13 @@ What the port reads so far, and where it differs:
   over the game's folder. png, jpg or webp. A conversation shows the same picture whole and large,
   standing on the bottom of the screen, so a tall picture with a see-through background (a figure
   from the knees or waist up) looks best there; the hero's is mirrored to face the speaker.
+- Tiles: a tile type shows its `image`, or else `tiles/<art>.png` for its kind of ground
+  (`grass`, `dirt`, `stone`, `wood`, `wall`, `water`, `tree`), or else a plain palette fill.
+- Art packs: each folder in the user folder's `art/` (`%APPDATA%\Godot\app_userdata\Yorehold\art\<pack>\`)
+  holds pictures by the same content paths (`tiles/grass.png`, `portraits/goblin.png`,
+  `icons/<id>.png`) and sits over the game's content in play and in Create's playtest, so a
+  player's pictures are used everywhere. Packs are read in name order, the last winning; a
+  package's own pictures win over every pack.
 - Icons: an action or spell shows `icons/<action or spell id>.png` on the hotbar and in the spell
   book when the content has one, else its shape from `ui/action-icons.json` or its first letter.
 - Hotbars: a sheet saved by the game carries `hotbar`: `{"slots": [action ids, "" for empty, at most

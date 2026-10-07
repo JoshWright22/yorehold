@@ -256,6 +256,23 @@ public class CreateTests
     }
 
     [Fact]
+    public void ArtPacksSitBetweenTheGameAndThePackage()
+    {
+        using var scratch = new Scratch();
+        string pack = Path.Combine(scratch.Folder, "art", "pack");
+        Directory.CreateDirectory(Path.Combine(pack, "tiles"));
+        File.WriteAllText(Path.Combine(pack, "tiles", "grass.png"), "pack");
+        var package = new CreatePackage(TestContent.AssetsFolder());
+        package.ArtFolders.Add(pack);
+        Assert.True(package.New(Path.Combine(scratch.Folder, "create")), package.Status);
+        Assert.Equal("pack", File.ReadAllText(package.PlayFiles().FullPath("tiles/grass.png")!));
+        Directory.CreateDirectory(Path.Combine(package.PackagePath, "tiles"));
+        File.WriteAllText(Path.Combine(package.PackagePath, "tiles", "grass.png"), "own");
+        Assert.True(File.ReadAllText(package.PlayFiles().FullPath("tiles/grass.png")!) == "own", "The package's own picture wins over a pack's");
+        Assert.True(package.PlayFiles().Exists("content.json"), "The game's content is still under both");
+    }
+
+    [Fact]
     public void PackagesAreMadeOpenedAndSaved()
     {
         using var scratch = new Scratch();
