@@ -1,6 +1,6 @@
 # UI reference
 
-How similar tools and games lay out their screens, gathered 2026-10-07 for the UI rework asked for in
+How similar tools, rules sites and games lay out their screens, gathered 2026-10-07 for the UI rework asked for in
 the playtest (title, settings, pause, library, lobby, Create). Each section ends with what Yorehold
 takes from it.
 
@@ -94,6 +94,48 @@ large picture.
 Takes: title shows a large logo over player art (cover pictures from the library), few choices;
 library as list left and the chosen adventure's details right, which matches the data-screen rule.
 
+## D&D Beyond (rules site, character builder and sheet)
+
+- Top bar: logo left, five menus (Play, Rules, Library, Community, Marketplace), search and sign-in
+  right. The Rules menu lists each kind of entry (classes, backgrounds, species, feats, spells,
+  equipment, magic items, monsters) with a small picture each.
+- Front page: dark background with gold accents, one large banner picture with a single button,
+  then a row of product covers.
+- Spell list: filters in a column of folding groups (class, name, level, tags, casting time, school,
+  save, attack type, damage type, conditions, components, concentration, ritual, source) and one
+  "Reset all filters" link. Table columns: level, name, casting time, duration, range/area,
+  attack/save, damage/effect; school and components sit in small grey text under the name. Numbered
+  pages.
+- Monster page: name and picture at the top, type line, then AC, hit points, speed, the six
+  ability scores with modifiers, skills and senses, languages and challenge, traits, actions, then
+  the description. Thin bars divide the parts. The source book and page, tags and habitat sit
+  under the stat block.
+- Character sheet: abilities, saves, skills and senses fixed at the top and left; the rest in tabs
+  (Actions, Spells, Inventory, Features & Traits, Description, Notes, Extras). Clicking any entry
+  opens its full text in a side panel. Inventory switches between "My inventory" and "Party
+  inventory".
+- Common complaint: in a fight players flip through several tabs, and some routine things
+  (ammunition) take three clicks over three panels. Players ask for one tab they arrange
+  themselves.
+
+Takes: the entry page order (name, type line, numbers, traits, actions, then description, then
+source and tags) for creatures, items and spells; filter groups that fold, with one reset; the
+Rules menu as the way into the data screens; the sheet's fixed core with tabs and a side panel for
+details, but the fight stays on the hotbar so nobody flips tabs mid-turn.
+
+## Paizo store and Pathfinder Nexus
+
+- Store: product covers in a grid, each with title, short blurb, price and buttons; sections by
+  game line (Pathfinder 2E, Starfinder 2E), then rows for new players, digital, player and GM
+  essentials.
+- Pathfinder Nexus splits the digital side into three parts: a free Game Compendium (rules data), a
+  Digital Reader (the books) and a Character Builder with a digital sheet.
+- Archives of Nethys, the free rules site, is the dense table style the 10/5 rules already copy.
+
+Takes: the library's adventure covers can sit in sections (new, for new players, by world) above
+the list, like a store front; keep three separate places for rules data (Bestiary/Items), the
+adventure text (story graph/journal) and the character (sheet).
+
 ## Where this meets the 10/5 look rules
 
 The look rules (CC-29 palette, flat, 1 px borders, dense database-like data screens) still hold.
@@ -121,3 +163,7 @@ The playtest asks for screens that feel like a game, not lists of small buttons.
 - Baldur's Gate 3: https://www.escapistmagazine.com/all-patch-notes-for-baldurs-gate-3-patch-7/,
   https://baldursgate3.wiki.fextralife.com/Character+Creation
 - osu!: https://blog.ppy.sh/page/11
+- D&D Beyond: https://www.dndbeyond.com/, https://www.dndbeyond.com/spells,
+  https://www.dndbeyond.com/monsters/16907-goblin,
+  https://dndbeyond-support.wizards.com/hc/en-us/articles/7747193946388-Sheet-Sections
+- Paizo: https://store.paizo.com/, https://paizo.com/pathfinder
