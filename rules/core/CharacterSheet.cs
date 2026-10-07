@@ -96,6 +96,8 @@ public sealed partial class CharacterSheet
     public List<string> Preparable { get; } = new();
     public int PrepareLimit { get; set; }
     public List<string> Prepared { get; } = new();
+    /// <summary>The player's arrangement of their actions on the bars; a rebuild keeps it.</summary>
+    public Hotbar Hotbar { get; private set; } = new();
 
     public List<Item> Inventory { get; } = new();
     /// <summary>In copper. Coins weigh nothing.</summary>

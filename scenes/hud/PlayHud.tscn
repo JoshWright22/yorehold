@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
 [ext_resource type="Script" path="res://src/hud/PlayHud.cs" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/hud/PipsView.cs" id="8"]
 [ext_resource type="Script" path="res://src/hud/MoveBarView.cs" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/hud/DataPanel.tscn" id="11"]
+[ext_resource type="Script" path="res://src/hud/SheetPanel.cs" id="12"]
 
 [node name="PlayHud" type="Control"]
 layout_mode = 3
@@ -79,7 +80,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -200.0
-offset_top = -130.0
+offset_top = -158.0
 offset_right = 200.0
 offset_bottom = -10.0
 grow_horizontal = 2
@@ -190,9 +191,11 @@ theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
 text = "30 ft"
 horizontal_alignment = 2
 
-[node name="Slots" type="HBoxContainer" parent="Bottom/Hotbar/Rows"]
+[node name="Slots" type="GridContainer" parent="Bottom/Hotbar/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 12
 
 [node name="EndTurn" type="Button" parent="Bottom"]
 custom_minimum_size = Vector2(112, 0)
@@ -420,9 +423,21 @@ layout_mode = 1
 visible = false
 layout_mode = 1
 
-[node name="Sheet" parent="." instance=ExtResource("11")]
+[node name="Sheet" type="PanelContainer" parent="."]
 visible = false
 layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -300.0
+offset_right = 480.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("12")
 
 [node name="Tip" type="PanelContainer" parent="."]
 visible = false

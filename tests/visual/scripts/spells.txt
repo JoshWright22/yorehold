@@ -2,6 +2,14 @@
 # run with -Chapter chapters/spell-test
 20 key K
 40 shot .dev/p9-spells.png
+# drag Spark out of the book onto an empty slot on the second bar
+41 button Spark
+42 down left
+43 move 300 240
+44 move 500 600
+45 move 564 668
+46 up left
+48 shot .dev/p9-spells-dragged.png
 # Wynn swaps Mire for Glass skin
 50 button Mire
 52 down left

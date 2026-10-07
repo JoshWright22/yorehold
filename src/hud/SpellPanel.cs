@@ -29,14 +29,21 @@ public sealed class SpellPanel
         new("Name", 130), new("Lvl", 30, true), new("Cost", 38, true), new("Range", 54, true), new("Area", 74), new("Status", 92),
     };
 
+    // the hero's other actions sit in the book too, so they can be dragged onto the bars as well
+    private const string ActionKey = "action:";
+
     private readonly DataPanel _view;
+    private readonly Func<string, string> _shapeOf;
     private int _hero;
     // what the hero had prepared at the last refresh, for a Prepare press to work from
     private List<string> _prepared = new();
 
-    public SpellPanel(DataPanel view)
+    /// <summary>shapeOf gives an action's icon shape (action-icons.json) by its id.</summary>
+    public SpellPanel(DataPanel view, Func<string, string> shapeOf)
     {
         _view = view;
+        _shapeOf = shapeOf;
+        _view.Grid = true;
         _view.ActionPressed += Act;
         _view.SourcePicked += id => HeroPicked?.Invoke(int.Parse(id));
     }
@@ -57,11 +64,16 @@ public sealed class SpellPanel
             : spells.Count > 0 ? $"knows {spells.Count} {(spells.Count == 1 ? "spell" : "spells")}" : "";
         _view.SetHead($"{sheet.Name}'s spells", sub);
         _view.SetSources(Enumerable.Range(0, world.HeroCount).Select(i => (i.ToString(), world.Creatures[i].Sheet.Name)).ToList(), hero.ToString());
+        List<ActionDefinition> others = world.ActionsOf(hero).Where(a => world.SpellOf(a) == null && a.Id != World.EndTurnAction).ToList();
         var tabs = new List<string> { "All" };
         tabs.AddRange(spells.Where(s => s.Spends.Count == 0).Select(s => s.Level).Distinct().Order().Select(LevelTab));
         if (spells.Any(s => s.Spends.Count > 0))
         {
             tabs.Add("Focus");
+        }
+        if (others.Count > 0)
+        {
+            tabs.Add("Actions");
         }
         _view.SetTabs(tabs);
         _view.SetChips(Chips);
@@ -113,6 +125,27 @@ public sealed class SpellPanel
                 Tags = tags,
                 Search = a.Description,
                 Dim = !castable,
+                Section = spell.Spends.Count > 0 ? "Focus" : LevelTab(spell.Level),
+                Shape = _shapeOf(a.Id),
+                Picture = ActionIcon.PictureOf(world, a.Id),
+                // a prepared caster's spells waiting on the list say so in the corner
+                Badge = c.Concentration.Spell == spell.Id ? "C" : sheet.Preparable.Count > 0 && sheet.Prepared.Contains(spell.Id) ? "P" : "",
+                Drag = known ? ActionSlot.ActionDrag + a.Id : "",
+            });
+        }
+        foreach (ActionDefinition a in others)
+        {
+            int cost = world.ActionCost(hero, a);
+            rows.Add(new DataRow
+            {
+                Key = ActionKey + a.Id,
+                Cells = new[] { a.Name, "", cost.ToString(), "", AreaText(world, a.Area), "" },
+                Tags = new HashSet<string> { "Actions" },
+                Search = a.Description,
+                Section = "Actions",
+                Shape = _shapeOf(a.Id),
+                Picture = ActionIcon.PictureOf(world, a.Id),
+                Drag = ActionSlot.ActionDrag + a.Id,
             });
         }
         _view.SetRows(rows);
@@ -134,6 +167,19 @@ public sealed class SpellPanel
         WorldCreature c = world.Creatures[_hero];
         CharacterSheet sheet = c.Sheet;
         SpellDefinition? spell = spells.Find(s => s.Id == _view.Picked);
+        if (_view.Picked.StartsWith(ActionKey) && world.FindAction(_view.Picked[ActionKey.Length..]) is ActionDefinition other)
+        {
+            int cost = world.ActionCost(_hero, other);
+            var page = new BookPage().Title(other.Name).Sub("Action").Rule()
+                .Stats(("Cost", cost == 1 ? "1 action" : $"{cost} actions"));
+            if (other.Description.Length > 0)
+            {
+                page.Rule().Text(other.Description);
+            }
+            page.Gap().Note("Drag it onto a slot of the bar to use it from there.");
+            _view.SetEntry(page.ToString(), Array.Empty<DataAction>(), "");
+            return;
+        }
         if (spell == null)
         {
             _view.SetEntry(new BookPage().Note($"{sheet.Name} has no spells.").ToString(), Array.Empty<DataAction>(), "");

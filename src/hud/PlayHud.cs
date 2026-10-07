@@ -8,6 +8,9 @@ using Yorehold.Rules;
 
 namespace Yorehold;
 
+/// <summary>A hotbar slot changed by a drag: the hero's slot now holds Action, or nothing when it is "".</summary>
+public sealed record HotbarEdit(int Hero, int Slot, string Action);
+
 /// <summary>
 /// The panels over the map, laid out like Baldur's Gate 3: party portraits down the left, the
 /// hotbar with the selected hero's portrait and pips along the bottom, the menu down the right
@@ -23,7 +26,7 @@ public partial class PlayHud : Control
     /// <summary>Which shape each action's icon is drawn with, by action id.</summary>
     [Export] public string IconsFile { get; set; } = "res://assets/ui/action-icons.json";
     /// <summary>Where the log's bottom edge rests, in pixels above the screen's: clear of the hotbar, in the corner when the hotbar is away.</summary>
-    [Export] public float LogAboveHotbar { get; set; } = 138;
+    [Export] public float LogAboveHotbar { get; set; } = 166;
     [Export] public float LogAboveEdge { get; set; } = 10;
 
     public event Action<string>? ActionPressed;
@@ -46,6 +49,8 @@ public partial class PlayHud : Control
     public event Action? BackPressed;
     /// <summary>Trade, under a merchant's replies.</summary>
     public event Action? TradePressed;
+    /// <summary>An action dragged onto a hotbar slot, or off one (Action "").</summary>
+    public event Action<HotbarEdit>? HotbarChanged;
 
     // the scene has all of these
     private VBoxContainer _party = null!;
@@ -63,7 +68,7 @@ public partial class PlayHud : Control
     private PipsView _reactionPip = null!;
     private MoveBarView _move = null!;
     private Label _moveText = null!;
-    private HBoxContainer _slots = null!;
+    private GridContainer _slots = null!;
     private Button _endTurn = null!;
     private LogPanel _log = null!;
     private Control _reaction = null!;
@@ -78,7 +83,6 @@ public partial class PlayHud : Control
     private Label _tipBody = null!;
     private Label _tipWarning = null!;
     private Label _cursor = null!;
-    private DataPanel _sheetView = null!;
     private SheetPanel _sheet = null!;
     private Button _sheetButton = null!;
     private DataPanel _gearView = null!;
@@ -108,6 +112,8 @@ public partial class PlayHud : Control
     private bool _tipHeld;
     private bool _touch;
     private bool _fighting;
+    // whose bars are shown, for a drag onto them
+    private int _barHero;
     private ulong _promptId;
     private double _promptSeconds = 1;
 
@@ -130,7 +136,7 @@ public partial class PlayHud : Control
         _reactionPip = GetNode<PipsView>("Bottom/Hotbar/Rows/Status/Reaction");
         _move = GetNode<MoveBarView>("Bottom/Hotbar/Rows/Status/Move");
         _moveText = GetNode<Label>("Bottom/Hotbar/Rows/Status/MoveText");
-        _slots = GetNode<HBoxContainer>("Bottom/Hotbar/Rows/Slots");
+        _slots = GetNode<GridContainer>("Bottom/Hotbar/Rows/Slots");
         _endTurn = GetNode<Button>("Bottom/EndTurn");
         _log = GetNode<LogPanel>("Log");
         _reaction = GetNode<Control>("Reaction");
@@ -150,10 +156,9 @@ public partial class PlayHud : Control
         _tipBody = GetNode<Label>("Tip/Rows/Body");
         _tipWarning = GetNode<Label>("Tip/Rows/Warning");
         _cursor = GetNode<Label>("Cursor");
-        _sheetView = GetNode<DataPanel>("Sheet");
-        _sheet = new SheetPanel(_sheetView);
+        _sheet = GetNode<SheetPanel>("Sheet");
         _sheet.HeroPicked += hero => CreaturePressed?.Invoke(hero);
-        _sheetView.ClosePressed += () => OpenPanel = "";
+        _sheet.ClosePressed += () => OpenPanel = "";
         _sheetButton = GetNode<Button>("Menu/Sheet");
         _gearView = GetNode<DataPanel>("Gear");
         _gearButton = GetNode<Button>("Menu/Gear");
@@ -162,7 +167,7 @@ public partial class PlayHud : Control
         _gearView.ClosePressed += () => OpenPanel = "";
         _spellsView = GetNode<DataPanel>("Spells");
         _spellsButton = GetNode<Button>("Menu/Spells");
-        _spells = new SpellPanel(_spellsView);
+        _spells = new SpellPanel(_spellsView, id => _icons.GetValueOrDefault(id, ""));
         _spells.Ordered += order => SpellOrdered?.Invoke(order);
         _spells.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _spellsView.ClosePressed += () => OpenPanel = "";
@@ -260,7 +265,7 @@ public partial class PlayHud : Control
     public string? SlotAction(int index)
     {
         // between fights the hotbar is there to read, not to press
-        return _bottom.Visible && _fighting && index >= 0 && index < _slotViews.Count && _slotViews[index].Visible ? _slotViews[index].ActionId : null;
+        return _bottom.Visible && _fighting && index >= 0 && index < _slotViews.Count && _slotViews[index].ActionId.Length > 0 ? _slotViews[index].ActionId : null;
     }
 
     public override void _Input(InputEvent @event)
@@ -334,8 +339,8 @@ public partial class PlayHud : Control
             _spells.Refresh(world, hero, heroTurn);
         }
         _sheetButton.SetPressedNoSignal(OpenPanel == "Sheet");
-        _sheetView.Visible = OpenPanel == "Sheet" && hero < world.HeroCount;
-        if (_sheetView.Visible)
+        _sheet.Visible = OpenPanel == "Sheet" && hero < world.HeroCount;
+        if (_sheet.Visible)
         {
             _sheet.Refresh(world, hero);
         }
@@ -578,16 +583,22 @@ public partial class PlayHud : Control
         _move.Show(Math.Max(sheet.SpeedSquares(world.Rules), left), left, mine ? aim.PathCost : 0);
         _moveText.Text = $"{left * world.Rules.FeetPerSquare} ft";
 
-        // End turn has the big button, so it gets no slot
-        List<ActionDefinition> actionsShown = world.ActionsOf(shown).Where(a => a.Id != World.EndTurnAction).ToList();
-        while (SlotScene != null && _slotViews.Count < actionsShown.Count)
+        // the bars as the player arranged them; End turn has the big button, so it gets no slot
+        _barHero = shown;
+        string[] layout = world.HotbarOf(shown);
+        while (SlotScene != null && _slotViews.Count < layout.Length)
         {
             var slot = SlotScene.Instantiate<ActionSlot>();
+            slot.Index = _slotViews.Count;
             _slots.AddChild(slot);
             Listen(slot);
             slot.Clicked += pressed =>
             {
                 var which = (ActionSlot)pressed;
+                if (which.ActionId.Length == 0)
+                {
+                    return;
+                }
                 if (which.Usable)
                 {
                     ActionPressed?.Invoke(which.ActionId);
@@ -598,22 +609,26 @@ public partial class PlayHud : Control
                     Want(which, true);
                 }
             };
+            slot.Dropped += (onto, data) => SlotDropped(onto.Index, data);
+            slot.DraggedOff += off => HotbarChanged?.Invoke(new HotbarEdit(_barHero, off.Index, ""));
             _slotViews.Add(slot);
         }
+        List<ActionDefinition> owned = world.ActionsOf(shown);
         for (int i = 0; i < _slotViews.Count; i++)
         {
             ActionSlot slot = _slotViews[i];
-            slot.Visible = i < actionsShown.Count;
-            if (i >= actionsShown.Count)
+            string key = i < 9 ? (i + 1).ToString() : i == 9 ? "0" : "";
+            if (i >= layout.Length || owned.Find(a => a.Id == layout[i]) is not ActionDefinition action)
             {
+                slot.ShowEmpty(key);
+                slot.TipTitle = "";
                 continue;
             }
-            ActionDefinition action = actionsShown[i];
             int cost = world.ActionCost(shown, action);
             string why = "";
             bool usable = mine && world.CanUse(shown, action, out why);
-            string key = i < 9 ? (i + 1).ToString() : i == 9 ? "0" : "";
-            slot.Show(action.Id, _icons.GetValueOrDefault(action.Id, ""), action.Name, key, cost, usable, aim.Action == action.Id);
+            slot.Show(action.Id, _icons.GetValueOrDefault(action.Id, ""), action.Name, key, cost, usable, aim.Action == action.Id,
+                ActionIcon.PictureOf(world, action.Id));
             slot.TipTitle = action.Name;
             slot.TipMeta = HudText.ActionMeta(world, action, cost);
             slot.TipBody = action.Description;
@@ -656,9 +671,27 @@ public partial class PlayHud : Control
         };
     }
 
+    // A slot or a spell book icon let go on a slot: from another slot it moves (and swaps), from the book it is put there.
+    private void SlotDropped(int slot, string data)
+    {
+        string action = "";
+        if (data.StartsWith(ActionSlot.SlotDrag) && int.TryParse(data[ActionSlot.SlotDrag.Length..], out int from) && from >= 0 && from < _slotViews.Count)
+        {
+            action = _slotViews[from].ActionId;
+        }
+        else if (data.StartsWith(ActionSlot.ActionDrag))
+        {
+            action = data[ActionSlot.ActionDrag.Length..];
+        }
+        if (action.Length > 0)
+        {
+            HotbarChanged?.Invoke(new HotbarEdit(_barHero, slot, action));
+        }
+    }
+
     private void Want(TipButton button, bool held)
     {
-        if (!held && _touch)
+        if ((!held && _touch) || button.TipTitle.Length == 0)
         {
             return;
         }

@@ -19,10 +19,10 @@
 370 down right
 371 up right
 # fold the log, then hold a greyed slot down until its tooltip says why
-380 move 1028 396
+380 move 1028 368
 380 down left
 381 up left
-390 move 858 660
+390 move 764 617
 391 down left
 430 shot .dev/p6-hold-tip.png
 431 up left

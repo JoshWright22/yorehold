@@ -1,10 +1,12 @@
 using Godot;
+using Yorehold.Rules;
 
 namespace Yorehold;
 
 /// <summary>
-/// An action's picture on the hotbar, drawn from plain shapes until there is icon art. Which shape
-/// an action gets is in assets/ui/action-icons.json; one it doesn't name gets its first letter.
+/// An action's picture on the hotbar and in the spell book: the creator's icon when the content has
+/// one, else a plain shape. Which shape an action gets is in assets/ui/action-icons.json; one it
+/// doesn't name gets its first letter.
 /// </summary>
 public partial class ActionIcon : Control
 {
@@ -26,15 +28,29 @@ public partial class ActionIcon : Control
 
     private string _shape = "";
     private string _letter = "";
+    private Texture2D? _picture;
 
-    public void Show(string shape, string letter)
+    /// <summary>The creator's icon for an action, icons/&lt;action id&gt;.png in the content; null when they drew none.</summary>
+    public static Texture2D? PictureOf(World world, string action) => PlayerArt.Texture(world.Files, $"icons/{action}.png");
+
+    /// <summary>A new icon drawn the same, for the one that follows the pointer in a drag.</summary>
+    public ActionIcon Copy()
     {
-        if (shape == _shape && letter == _letter)
+        var copy = new ActionIcon { Ink = Ink, Soft = Soft, MouseFilter = MouseFilterEnum.Ignore };
+        copy.Show(_shape, _letter, _picture);
+        return copy;
+    }
+
+    /// <summary>picture, when there is one, is drawn instead of the shape.</summary>
+    public void Show(string shape, string letter, Texture2D? picture = null)
+    {
+        if (shape == _shape && letter == _letter && picture == _picture)
         {
             return;
         }
         _shape = shape;
         _letter = letter;
+        _picture = picture;
         QueueRedraw();
     }
 
@@ -55,6 +71,11 @@ public partial class ActionIcon : Control
 
     public override void _Draw()
     {
+        if (_picture != null)
+        {
+            DrawTextureRect(_picture, new Rect2(Vector2.Zero, Size), false, Ink == Palette.Slate ? Palette.Smoke : Colors.White);
+            return;
+        }
         float w = Mathf.Max(2, Size.X * 0.09f);
         Color soft = Soft;
         switch (_shape)

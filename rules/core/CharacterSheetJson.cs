@@ -67,6 +67,7 @@ public sealed partial class CharacterSheet
             ["prepareLimit"] = PrepareLimit,
             ["prepared"] = Strings(Prepared),
             ["inventory"] = new JsonArray(Inventory.Select(i => (JsonNode)i.ToJson()).ToArray()),
+            ["hotbar"] = Hotbar.ToJson(),
         };
         if (_weapon != null)
         {
@@ -135,6 +136,11 @@ public sealed partial class CharacterSheet
         foreach (ContentNode item in node.Get("inventory")?.Items() ?? Array.Empty<ContentNode>())
         {
             sheet.Inventory.Add(Item.Read(item));
+        }
+        // saves from before the bars could be arranged have none: every action goes on in order
+        if (node.Get("hotbar") is ContentNode hotbar)
+        {
+            sheet.Hotbar = Hotbar.Read(hotbar);
         }
         if (node.Get("weapon") is ContentNode weapon)
         {

@@ -19,6 +19,11 @@ What the port reads so far, and where it differs:
   root (not the chapter folder). With no picture the disc and initial are drawn.
   The game ships no faces: every picture comes from the content, and a package's own pictures win
   over the game's folder. png, jpg or webp.
+- Icons: an action or spell shows `icons/<action or spell id>.png` on the hotbar and in the spell
+  book when the content has one, else its shape from `ui/action-icons.json` or its first letter.
+- Hotbars: a sheet saved by the game carries `hotbar`: `{"slots": [action ids, "" for empty, at most
+  24], "seen": [ids]}`. An action not in `seen` is put in the first empty slot; one taken off stays
+  off. A sheet without it gets every action in order.
 - Content is read from folders. `.yore` archives, the library, packing and the tools named under
   "Validate, export and load" are not ported yet.
 - A chapter's `ruleset` is a folder or a file. The framework's built-in `modern` and `classic` sets are

@@ -27,6 +27,33 @@ public sealed partial class World
             .ToList();
     }
 
+    /// <summary>What each of the creature's hotbar slots shows, an action id or "". End turn has a button of its own and no slot.</summary>
+    public string[] HotbarOf(int creature)
+    {
+        List<string> actions = ActionsOf(creature).Where(a => a.Id != EndTurnAction).Select(a => a.Id).ToList();
+        return Creatures[creature].Sheet.Hotbar.Layout(actions);
+    }
+
+    /// <summary>Puts one of the creature's actions in a hotbar slot (dragged from the spell book or another slot).</summary>
+    public bool PutOnHotbar(int creature, int slot, string action)
+    {
+        if (creature < 0 || creature >= Creatures.Count || action == EndTurnAction || ActionsOf(creature).All(a => a.Id != action))
+        {
+            return false;
+        }
+        Creatures[creature].Sheet.Hotbar.Put(slot, action);
+        return true;
+    }
+
+    /// <summary>Takes a slot's action off the hotbar (dragged off it).</summary>
+    public void TakeOffHotbar(int creature, int slot)
+    {
+        if (creature >= 0 && creature < Creatures.Count)
+        {
+            Creatures[creature].Sheet.Hotbar.Clear(slot);
+        }
+    }
+
     public int ActionCost(int creature, ActionDefinition action) => action.CostFor(Creatures[creature].Sheet, Rules);
 
     /// <summary>It is the creature's turn, it has the action and can pay for it. why says what is missing when there is a reason to give.</summary>

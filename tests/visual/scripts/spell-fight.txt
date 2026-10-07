@@ -4,7 +4,7 @@
 11 down left
 12 up left
 # Wynn goes first: Mire from the hotbar, aimed on Gik, with Nok in the burst too
-200 move 1080 660
+200 button Bar:_Mire
 201 down left
 202 up left
 210 creature Gik

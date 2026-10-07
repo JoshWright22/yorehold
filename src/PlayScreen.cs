@@ -249,6 +249,17 @@ public partial class PlayScreen : Node2D
             _hud.Panels.ReplyPressed += index => _world?.Reply(index, _world.LeaderIndex());
             _hud.Panels.BackPressed += () => _world?.ReturnFromWipe();
             _hud.Panels.TradePressed += Trade;
+            _hud.Panels.HotbarChanged += edit =>
+            {
+                if (edit.Action.Length > 0)
+                {
+                    _world?.PutOnHotbar(edit.Hero, edit.Slot, edit.Action);
+                }
+                else
+                {
+                    _world?.TakeOffHotbar(edit.Hero, edit.Slot);
+                }
+            };
         }
         ShowChapter(world);
         ShowEvents();

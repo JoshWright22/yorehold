@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=44 format=3]
+[gd_resource type="Theme" load_steps=48 format=3]
 
 [sub_resource type="StyleBoxFlat" id="panel"]
 content_margin_left = 8.0
@@ -169,6 +169,9 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="xp_fill"]
+bg_color = Color(0.9294, 0.8824, 0.6196, 1)
 
 [sub_resource type="StyleBoxFlat" id="hp_fill"]
 bg_color = Color(0.7059, 0.3216, 0.3216, 1)
@@ -407,6 +410,30 @@ bg_color = Color(0.1294, 0.1294, 0.1373, 1)
 border_width_bottom = 1
 border_color = Color(0.2706, 0.2667, 0.3098, 1)
 
+[sub_resource type="StyleBoxFlat" id="tile"]
+bg_color = Color(0.1294, 0.1294, 0.1373, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2706, 0.2667, 0.3098, 1)
+
+[sub_resource type="StyleBoxFlat" id="tile_hover"]
+bg_color = Color(0.2706, 0.2667, 0.3098, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3922, 0.3882, 0.3961, 1)
+
+[sub_resource type="StyleBoxFlat" id="tile_on"]
+bg_color = Color(0.2706, 0.2667, 0.3098, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9294, 0.8824, 0.6196, 1)
+
 [sub_resource type="StyleBoxFlat" id="page"]
 content_margin_left = 14.0
 content_margin_top = 10.0
@@ -544,6 +571,9 @@ HeaderButton/styles/pressed = SubResource("none")
 HpBar/base_type = &"ProgressBar"
 HpBar/styles/background = SubResource("bar_back")
 HpBar/styles/fill = SubResource("hp_fill")
+XpBar/base_type = &"ProgressBar"
+XpBar/styles/background = SubResource("bar_back")
+XpBar/styles/fill = SubResource("xp_fill")
 KeyLabel/base_type = &"Label"
 KeyLabel/colors/font_color = Color(0.7216, 0.7098, 0.7255, 1)
 KeyLabel/colors/font_outline_color = Color(0.1294, 0.1294, 0.1373, 1)
@@ -591,6 +621,12 @@ RowButton/styles/hover = SubResource("row_hover")
 RowButton/styles/hover_pressed = SubResource("row_on")
 RowButton/styles/normal = SubResource("row")
 RowButton/styles/pressed = SubResource("row_on")
+TileButton/base_type = &"Button"
+TileButton/styles/focus = SubResource("tile")
+TileButton/styles/hover = SubResource("tile_hover")
+TileButton/styles/hover_pressed = SubResource("tile_on")
+TileButton/styles/normal = SubResource("tile")
+TileButton/styles/pressed = SubResource("tile_on")
 RowOddButton/base_type = &"RowButton"
 RowOddButton/styles/normal = SubResource("row_odd")
 TabButton/base_type = &"Button"

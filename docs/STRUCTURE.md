@@ -98,7 +98,7 @@ only shows them and raises an event when something is pressed; `FightControl` do
 |---|---|
 | `Party` | a `PartyCard.tscn` per hero down the left edge: portrait, HP, conditions as small badges, a gold frame on whose turn it is (or who is selected between fights) and a green one on who can take the shared turn. Pressing one selects that hero |
 | `Top` | the turn order in a fight: an `InitiativeCard.tscn` each from the block whose turn it is, the current one bigger, allies who share a turn together with a gap before the next block, the dead left out |
-| `Bottom` | in a fight: the acting hero's portrait and HP, the hotbar (action, reaction and bonus pips, the movement bar, an `ActionSlot.tscn` per action with its key) and End Turn |
+| `Bottom` | the acting (or selected) hero's portrait and HP, the hotbar (action, reaction and bonus pips, the movement bar, two bars of twelve `ActionSlot.tscn`, the first ten with keys 1 to 0) and in a fight End Turn. The slots follow the hero's `Hotbar` (on the sheet, saved with it): an action is dragged onto a slot from the spell book or another slot (they swap), and dragged off onto the map to take it off. Changes go out as a `HotbarEdit` |
 | `Log` (`LogPanel.tscn`) | the log, bottom right; its header folds it |
 | `Reaction` | use it or pass, with the time left, when a hero's reaction is offered |
 | `Defeat` | the chapter's defeat text once the party is wiped, with Back to the autosave under it |
@@ -107,12 +107,14 @@ only shows them and raises an event when something is pressed; `FightControl` do
 | `Camp` (`DataPanel.tscn`, filled by `CampPanel`) | rest and camp (R): make or break camp, the ruleset's rests with what each costs and has left, and at camp the stash, the hero's pack and the dead who can be brought back. What is pressed goes out as a `CampOrder` |
 | `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |
 | `Menu` | the buttons along the top right: Characters, one per panel (Sheet, C; Gear, I; Spells, K; Journal, J; Camp, R), then Save (F5) and Load (F9). A panel's key or button opens it and again closes it, so does Escape between fights; one is open at a time |
-| `Sheet` (`DataPanel.tscn`, filled by `SheetPanel`) | the sheet panel (C): the hero's abilities, skills, feats, uses and conditions as rows by type, with their stat block (`SheetPage`) on the right and the picked row spelled out under it. The heroes are buttons in its head. It shows the acting hero in a fight and the selected one between fights |
+| `Sheet` (`SheetPanel`) | the sheet panel (C), laid out like a tabletop character sheet with the important numbers biggest: face, name, class line and XP bar; HP, AC, initiative, speed, proficiency and hit die in boxes; an ability box each (modifier big, score under it, the save, marked when trained); the skills down the left; Features, Uses, Conditions and Gear on tabs. The heroes are buttons in its head. It shows the acting hero in a fight and the selected one between fights |
+| `Spells` (`DataPanel.tscn` in grid mode, filled by `SpellPanel`) | the spell book (K): the hero's spells as icon tiles under Cantrips, Focus and each level, then their other actions, with the picked one's page and Prepare, Cast or Use under it. A known spell or an action is dragged from its tile onto a hotbar slot |
 | `Gear` (`DataPanel.tscn`, filled by `GearPanel`) | the gear panel (I): the hero's pack, or a pile or shop beside them, by kind of item, with the picked item's page and what can be done with it (put on, use, give, take, buy, sell). What is pressed goes out as an `ItemOrder` and `PlayScreen` does it |
 
 `DataPanel` is the data screens' shared look: a tab bar, search box and filter chips over tight rows that sort
 by any column header, and the picked row's entry on the right as a book page (`BookPage` writes its bbcode)
-with buttons under it. Its owner fills it every frame; it only rebuilds what changed.
+with buttons under it. Its owner fills it every frame; it only rebuilds what changed. With `Grid` on it shows the rows
+as `IconTile`s under section headings instead of a table, keeping the tabs, chips, search and entry.
 
 ## Create
 

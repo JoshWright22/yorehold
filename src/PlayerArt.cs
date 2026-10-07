@@ -14,6 +14,7 @@ public static class PlayerArt
 {
     // by file on disk and when it was written, so a picture changed while the game runs is read again
     private static readonly Dictionary<(string, DateTime), (Image? Image, Texture2D? Texture)> Loaded = new();
+    private static readonly Dictionary<(ContentFiles, string), (string? File, DateTime Written, ulong At)> Looked = new();
     private static ContentFiles? _game;
 
     /// <summary>The picture at a content path, or null when there is none or it can't be read.</summary>
@@ -24,11 +25,23 @@ public static class PlayerArt
     private static (Image? Image, Texture2D? Texture) Load(ContentFiles? files, string path)
     {
         files ??= _game ??= App.Content();
-        if (path.Length == 0 || files.FullPath(path) is not string file)
+        if (path.Length == 0)
         {
             return (null, null);
         }
-        var key = (file, System.IO.File.GetLastWriteTimeUtc(file));
+        // the cards and the hotbar ask every frame; the disk is looked at again every two seconds
+        ulong now = Time.GetTicksMsec();
+        if (!Looked.TryGetValue((files, path), out (string? File, DateTime Written, ulong At) look) || now - look.At > 2000)
+        {
+            string? found = files.FullPath(path);
+            look = (found, found != null ? System.IO.File.GetLastWriteTimeUtc(found) : default, now);
+            Looked[(files, path)] = look;
+        }
+        if (look.File is not string file)
+        {
+            return (null, null);
+        }
+        var key = (file, look.Written);
         if (Loaded.TryGetValue(key, out (Image?, Texture2D?) known))
         {
             return known;

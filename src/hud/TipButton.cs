@@ -52,6 +52,12 @@ public partial class TipButton : Button
         };
     }
 
+    /// <summary>A drag began from it: the press is not going to turn into a held tip.</summary>
+    protected void CancelHold()
+    {
+        _down = false;
+    }
+
     public override void _Process(double delta)
     {
         if (!_down || _heldTip)

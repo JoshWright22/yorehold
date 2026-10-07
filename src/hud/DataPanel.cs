@@ -23,6 +23,17 @@ public sealed class DataRow
     public string Search { get; init; } = "";
     /// <summary>Greyed: there but not usable now.</summary>
     public bool Dim { get; init; }
+
+    // Only a panel in grid mode (the spell book) reads these.
+    /// <summary>The heading it sits under in the grid.</summary>
+    public string Section { get; init; } = "";
+    /// <summary>Its icon's shape (action-icons.json), and the creator's picture when there is one.</summary>
+    public string Shape { get; init; } = "";
+    public Texture2D? Picture { get; init; }
+    /// <summary>A short mark in the tile's corner.</summary>
+    public string Badge { get; init; } = "";
+    /// <summary>What dragging the tile carries (onto the hotbar); "" for none.</summary>
+    public string Drag { get; init; } = "";
 }
 
 /// <summary>A button under a data panel's entry. An action that can't be taken is greyed and says why when pressed.</summary>
@@ -46,6 +57,29 @@ public partial class DataPanel : PanelContainer
     /// <summary>The picked row's key, "" when the list is empty.</summary>
     public string Picked { get; private set; } = "";
     public string SearchText => _search.Text;
+
+    /// <summary>
+    /// Shows the list as icon tiles under section headings, like a spell book, instead of a table.
+    /// Rows are still filtered by tab, chip and search, and the picked one still fills the entry.
+    /// </summary>
+    public bool Grid
+    {
+        get => _grid;
+        set
+        {
+            if (_grid == value)
+            {
+                return;
+            }
+            _grid = value;
+            _columns.Visible = !value;
+            Clear(_items);
+            _rowButtons.Clear();
+            _tiles.Clear();
+            _tilesShown = "";
+            _dirty = true;
+        }
+    }
 
     // the scene has all of these
     private Label _title = null!;
@@ -72,6 +106,9 @@ public partial class DataPanel : PanelContainer
     private string _chipsShown = "";
     private string _sourcesShown = "";
     private string _entryShown = "";
+    private readonly Dictionary<string, IconTile> _tiles = new();
+    private string _tilesShown = "";
+    private bool _grid;
     private int _sortColumn;
     private bool _sortDown;
     private bool _dirty = true;
@@ -210,7 +247,8 @@ public partial class DataPanel : PanelContainer
         var signature = new StringBuilder();
         foreach (DataRow row in rows)
         {
-            signature.Append(row.Key).Append('\u001f').AppendJoin('\u001f', row.Cells).Append(row.Dim ? '-' : '+').AppendJoin(',', row.Tags).Append('\u001e');
+            signature.Append(row.Key).Append('\u001f').AppendJoin('\u001f', row.Cells).Append(row.Dim ? '-' : '+').AppendJoin(',', row.Tags)
+                .Append('\u001f').Append(row.Section).Append(row.Badge).Append(row.Drag).Append(row.Picture?.GetInstanceId() ?? 0).Append('\u001e');
         }
         if (signature.ToString() == _rowsShown && !_dirty)
         {
@@ -371,11 +409,20 @@ public partial class DataPanel : PanelContainer
     {
         _dirty = false;
         List<DataRow> shown = _rows.Where(Shows).ToList();
-        // a stable sort, so rows that tie keep the owner's order
-        shown = shown.Select((row, i) => (row, i)).OrderBy(p => p.row, Comparer<DataRow>.Create(Compare)).ThenBy(p => p.i).Select(p => p.row).ToList();
+        // a stable sort, so rows that tie keep the owner's order; a grid keeps the owner's sections as they are
+        if (!Grid)
+        {
+            shown = shown.Select((row, i) => (row, i)).OrderBy(p => p.row, Comparer<DataRow>.Create(Compare)).ThenBy(p => p.i).Select(p => p.row).ToList();
+        }
         if (shown.All(r => r.Key != Picked))
         {
             Picked = shown.Count > 0 ? shown[0].Key : "";
+        }
+        _count.Text = shown.Count == _rows.Count ? $"{_rows.Count} {(_rows.Count == 1 ? "entry" : "entries")}" : $"{shown.Count} of {_rows.Count}";
+        if (Grid)
+        {
+            ShowTiles(shown);
+            return;
         }
 
         while (_rowButtons.Count < shown.Count)
@@ -432,7 +479,47 @@ public partial class DataPanel : PanelContainer
                 label.AddThemeFontSizeOverride("font_size", column.Number ? 13 : 14);
             }
         }
-        _count.Text = shown.Count == _rows.Count ? $"{_rows.Count} {(_rows.Count == 1 ? "entry" : "entries")}" : $"{shown.Count} of {_rows.Count}";
+    }
+
+    // The grid: a heading per section and its tiles under it, rebuilt only when what is shown
+    // changes, so a tile being dragged isn't pulled out from under the pointer.
+    private void ShowTiles(List<DataRow> shown)
+    {
+        string layout = string.Join("|", shown.Select(r => r.Section + "/" + r.Key));
+        if (layout != _tilesShown)
+        {
+            _tilesShown = layout;
+            Clear(_items);
+            _rowButtons.Clear();
+            _tiles.Clear();
+            HFlowContainer? flow = null;
+            string section = "\u0000";
+            foreach (DataRow row in shown)
+            {
+                if (row.Section != section || flow == null)
+                {
+                    section = row.Section;
+                    if (section.Length > 0)
+                    {
+                        _items.AddChild(new Label { Text = section.ToUpperInvariant(), ThemeTypeVariation = "CapsLabel" });
+                    }
+                    flow = new HFlowContainer();
+                    flow.AddThemeConstantOverride("h_separation", 4);
+                    flow.AddThemeConstantOverride("v_separation", 4);
+                    _items.AddChild(flow);
+                }
+                var tile = new IconTile();
+                tile.Pressed += () => Pick(tile.Key);
+                flow.AddChild(tile);
+                _tiles[row.Key] = tile;
+            }
+        }
+        foreach (DataRow row in shown)
+        {
+            IconTile tile = _tiles[row.Key];
+            tile.Drag = row.Drag;
+            tile.Show(row.Key, row.Cells.Length > 0 ? row.Cells[0] : "", row.Shape, row.Picture, row.Badge, row.Dim, row.Key == Picked);
+        }
     }
 
     private static void Clear(Node node)
