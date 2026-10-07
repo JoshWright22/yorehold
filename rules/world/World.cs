@@ -274,6 +274,7 @@ public sealed partial class World
             {
                 Name = hero.Sheet.Name,
                 Color = member.Color,
+                Image = member.Image,
                 Radius = GameMap.CellSize * 0.4f,
                 Position = Grid.Center(member.At),
             });

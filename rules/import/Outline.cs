@@ -195,7 +195,7 @@ public sealed class Outline
             case OutlineKind.Quest:
                 SameId(data, id);
                 var journal = new JsonObject { ["quests"] = new JsonArray(JsonNode.Parse(WithId(data, id).Raw())) };
-                QuestJournal.Read(new ContentNode(JsonDocument.Parse(journal.ToJsonString()).RootElement.Clone(), data.File, data.Path));
+                QuestJournal.Read(new ContentNode(JsonDocument.Parse(CreateJson.Compact(journal)).RootElement.Clone(), data.File, data.Path));
                 break;
             case OutlineKind.Adventure:
                 data.Only("title", "description", "level");
@@ -328,7 +328,7 @@ public sealed class Outline
         }
         var copy = (JsonObject)JsonNode.Parse(data.Raw())!;
         copy["id"] = id;
-        return new ContentNode(JsonDocument.Parse(copy.ToJsonString()).RootElement.Clone(), data.File, data.Path);
+        return new ContentNode(JsonDocument.Parse(CreateJson.Compact(copy)).RootElement.Clone(), data.File, data.Path);
     }
 
     // entries that name other entries: places, chapters and conversations must be in the outline
@@ -414,7 +414,7 @@ public sealed class Outline
             {
                 entry["chapter"] = e.Chapter;
             }
-            entry["data"] = JsonNode.Parse(e.Data.ToJsonString());
+            entry["data"] = e.Data.DeepClone();
             entry["from"] = e.From.IsInvented ? "invented" : new JsonObject { ["page"] = e.From.Page, ["quote"] = e.From.Quote };
             if (e.Picture.Length > 0)
             {
@@ -430,6 +430,6 @@ public sealed class Outline
             ["system"] = System,
             ["entries"] = entries,
         };
-        return root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n";
+        return CreateJson.Write(root) + "\n";
     }
 }

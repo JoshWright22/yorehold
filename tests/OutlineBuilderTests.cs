@@ -1,0 +1,147 @@
+using System.Text.Json.Nodes;
+
+namespace Yorehold.Rules.Tests;
+
+public class OutlineBuilderTests
+{
+    // the sample outline built into a package in scratch, with the book's one picture in its import folder
+    private static (string Package, OutlineBuilder Builder, List<string> Problems) Build(Scratch scratch, string json = SampleOutline.Json)
+    {
+        string package = Path.Combine(scratch.Folder, "old-mill");
+        string import = Path.Combine(package, "import");
+        Directory.CreateDirectory(Path.Combine(import, "pictures"));
+        File.WriteAllBytes(Path.Combine(import, "pictures", "p1-1.png"), new byte[] { 137, 80, 78, 71 });
+        var builder = new OutlineBuilder(Outline.Parse("outline.json", json), import, TestContent.Shipped());
+        return (package, builder, builder.Build(package));
+    }
+
+    private static ContentFiles Play(string package)
+    {
+        ContentFiles files = TestContent.Shipped();
+        files.Add(package);
+        return files;
+    }
+
+    [Fact]
+    public void TheSampleBuildsIntoAPackageThatLoads()
+    {
+        using var scratch = new Scratch();
+        (string package, OutlineBuilder builder, List<string> problems) = Build(scratch);
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+        foreach (string file in new[] { "content.json", "adventure.json", "story.json", "creatures/mill-rat.json", "items/mill-key.json",
+            "chapters/mill-chapter/chapter.json", "chapters/mill-chapter/map.json", "chapters/mill-chapter/quests.json",
+            "chapters/mill-chapter/dialogue/ferryman-talk.json", "pictures/p1-1.png", "import/report.json" })
+        {
+            Assert.True(File.Exists(Path.Combine(package, file)), file + " was written");
+        }
+
+        Chapter chapter = Chapter.Load(Play(package), "chapters/mill-chapter");
+        Assert.Equal("The Old Mill", chapter.Title);
+        Assert.Equal(new[] { "Marn", "Pell" }, chapter.Party.Select(p => p.Name));
+        Assert.True(chapter.Party[0].Image == "pictures/p1-1.png", "The book's hero keeps their own picture");
+        EncounterGroup rats = Assert.Single(chapter.Encounters);
+        Assert.Equal(new[] { "mill-rat", "mill-rat", "goblin" }, rats.Creatures.Select(c => c.CreatureId));
+        Assert.Equal("Snag", rats.Creatures[2].Name);
+        Assert.Single(chapter.Npcs);
+        Assert.Contains(chapter.Containers, c => c.Name == "Flour chest");
+        Assert.Contains("The road to the mill runs along the river and the party follows it until dusk.", chapter.Intro);
+        Assert.Single(chapter.Intro);
+
+        // the locked door between the road and the mill opens with the mill key or a strength check
+        Assert.Contains(chapter.Map.Objects, o => o.Door is { Locked: true } && o.Tags.Contains("key:mill-key") && o.Lock is { Dc: 12, Skill: "athletics" });
+        // the book's notes, the passages read in rooms and what the game can't play are in the report
+        string report = File.ReadAllText(Path.Combine(package, "import", "report.json"));
+        Assert.Contains("lantern", report);
+        Assert.Contains("rooms can't show text on entering yet", report);
+        Assert.DoesNotContain(builder.Report, line => line.Text.Contains("no walk from the start"));
+    }
+
+    [Fact]
+    public void TheSameOutlineGivesTheSameFiles()
+    {
+        using var first = new Scratch();
+        using var second = new Scratch();
+        string a = Build(first).Package, b = Build(second).Package;
+        foreach (string file in Directory.GetFiles(a, "*.json", SearchOption.AllDirectories))
+        {
+            string relative = Path.GetRelativePath(a, file);
+            Assert.True(File.ReadAllText(file) == File.ReadAllText(Path.Combine(b, relative)), relative + " differs between two builds");
+        }
+    }
+
+    [Fact]
+    public void TheBuiltFightPlaysOut()
+    {
+        using var scratch = new Scratch();
+        string package = Build(scratch).Package;
+        using WorldFixture world = WorldFixture.LoadFrom(Play(package), "chapters/mill-chapter", 3);
+        World w = world.World;
+        w.Options.AutoPlay = true;
+        while (w.Talk != null)
+        {
+            w.EndTalk();
+        }
+        // the party stood in the mill with the rats, as if the door were already open
+        int rat = w.Creatures.FindIndex(c => c.Team == 1);
+        var seen = new HashSet<Cell> { w.CellOf(rat) };
+        var queue = new Queue<Cell>(new[] { w.CellOf(rat) });
+        int hero = 0;
+        while (queue.Count > 0 && hero < w.HeroCount)
+        {
+            Cell at = queue.Dequeue();
+            if (!w.Occupied(at, -1))
+            {
+                w.Place(hero++, at);
+            }
+            foreach (Cell next in w.Grid.Neighbours(at).Where(n => (n.X == at.X || n.Y == at.Y) && w.Walkable(n) && seen.Add(n)))
+            {
+                queue.Enqueue(next);
+            }
+        }
+        world.Fight(0);
+        Assert.True(world.StepUntil(() => !w.Fighting, 3600), string.Join("\n", world.Log.TakeLast(20)));
+        Assert.Single(world.EventsOf(WorldEventKind.FightOver));
+    }
+
+    [Fact]
+    public void ACreatureTheGameHasByNameIsUsedNotCopied()
+    {
+        using var scratch = new Scratch();
+        string json = SampleOutline.Json.Replace("\"name\": \"Mill rat\"", "\"name\": \"Goblin\"");
+        (string package, OutlineBuilder builder, List<string> problems) = Build(scratch, json);
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+        Assert.False(File.Exists(Path.Combine(package, "creatures", "mill-rat.json")));
+        Chapter chapter = Chapter.Load(Play(package), "chapters/mill-chapter");
+        Assert.All(chapter.Encounters[0].Creatures, c => Assert.Equal("goblin", c.CreatureId));
+        Assert.Contains(builder.Report, line => line.Entry == "mill-rat" && line.Text.Contains("game's own Goblin"));
+    }
+
+    [Fact]
+    public void RoomsAreLaidSideBySideWithAWallBetween()
+    {
+        using var scratch = new Scratch();
+        string package = Build(scratch).Package;
+        var map = (JsonObject)JsonNode.Parse(File.ReadAllText(Path.Combine(package, "chapters", "mill-chapter", "map.json")))!;
+        List<string> rows = ((JsonArray)map["layers"]![0]!["rows"]!).Select(r => r!.GetValue<string>()).ToList();
+        // the road is 10 by 6 of grass with trees round it, the mill 8 by 8 of floor, the bank 6 by 6;
+        // the two ways off the road are cut through the wall in the road's own ground
+        Assert.Equal(10 * 6 + 6 * 6 + 2, rows.Sum(r => r.Count(c => c == ',')));
+        Assert.Equal(8 * 8, rows.Sum(r => r.Count(c => c == '.')));
+        Assert.True(rows.All(r => r.Length == rows[0].Length), "every row is as long as the first");
+        Assert.Equal(new[] { "start" }, ((JsonObject)map["markers"]!).Select(m => m.Key));
+    }
+
+    [Fact]
+    public void NamesTheGameDoesntKnowStopTheBuild()
+    {
+        using var scratch = new Scratch();
+        (_, _, List<string> problems) = Build(scratch, SampleOutline.Json.Replace("\"class\": \"cleric\"", "\"class\": \"bard\""));
+        Assert.Equal(new[] { "pell: no class \"bard\"" }, problems);
+    }
+
+    [Theory]
+    [InlineData("The Old Mill", "the-old-mill")]
+    [InlineData("  Caves of Shadow (3.0)!  ", "caves-of-shadow-3-0")]
+    [InlineData("???", "imported")]
+    public void TitlesBecomeIds(string title, string id) => Assert.Equal(id, OutlineBuilder.Slug(title));
+}

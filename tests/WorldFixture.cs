@@ -36,6 +36,12 @@ public sealed class WorldFixture : IDisposable
         return new WorldFixture(World.Load(TestContent.Shipped(), folder, seed), null);
     }
 
+    /// <summary>A chapter from any content, like a package built in the test laid over the shipped content.</summary>
+    public static WorldFixture LoadFrom(ContentFiles files, string folder, ulong seed = 1)
+    {
+        return new WorldFixture(World.Load(files, folder, seed), null);
+    }
+
     /// <summary>A chapter written in the test: paths to their text, laid over the shipped content so it can use its classes and creatures.</summary>
     public static WorldFixture LoadJson(string folder, IReadOnlyDictionary<string, string> files, ulong seed = 1)
     {

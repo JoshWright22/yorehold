@@ -267,7 +267,7 @@ Rules for all of it:
     (Story2Game's main failure was one key called "Key" and "Metallic Key"). Things in the way
     are written as preconditions and effects (needs a key; opens the door), which is what made
     Story2Game's actions work.
-- [ ] **S3. Building.** `OutlineBuilder`: since entries already have the files' shapes, building
+- [x] **S3. Building.** `OutlineBuilder`: since entries already have the files' shapes, building
   is mostly writing each entry to its file (`content.json`, `adventure.json`, chapters, creatures,
   items, dialogue, quests, `story.json`, portraits) and turning ids into paths. The real work is
   maps: rooms laid on the grid from the places, their sizes and links, doors and locks as kits,
@@ -279,6 +279,17 @@ Rules for all of it:
     and links (Word2World and the roguelike map paper both found models bad at layout and good
     at naming what goes where). A path check from the start reaches every place, and what fails
     goes back to the model once with the reason before it lands in the report.
+  - Default: rooms go east, south, west then north of the room they link from, sliding along its
+    side until they fit with one wall between; a link that can't be a shared wall is a corridor
+    cut straight through. A place with no link is joined to the one before by an open way.
+  - Default: `secret` is played as a plain door, `climb` and `jump` as open ways; each says so in
+    the report. Read-aloud text of every room but the first goes on the story graph's scene and
+    in the report, since rooms can't show text when entered (S3b).
+  - Default: the map is written as text rows (stone, grass, wall, tree), so Create's Map mode
+    rewrites it in its own form on the first save.
+- [ ] **S3b. Room text on entering.** A map area (a place's rectangle) that sets a flag the first
+  time a hero steps in, so a chapter trigger can show that room's read-aloud passage then. The
+  builder writes one per place with a passage, and the report line about it goes.
 - [ ] **S4. What needs no model.** A picture goes to the name of the nearest heading under or
   over it in its column. A picture with numbers printed on it that match numbered headings is
   the map, and the numbers give each place its spot on it. A plain paper ground around a figure

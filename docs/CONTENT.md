@@ -285,7 +285,7 @@ Kits offered are the game's own plus the package's `kits/` and the chapter's. Pl
 
 ## Chapters and writer-owned text
 
-`chapter.json` declares `id`, `title`, `map`, `party` and `encounters`, and optionally `ruleset`. Without `ruleset` the chapter plays by the game's own rules, `rulesets/yorehold` (see Rulesets); leave it out unless the chapter is a test of other rules. It can be `modern` or `classic` (sets built into the framework, kept for tests), a relative JSON path, or a folder with `ruleset.json` in it. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.
+`chapter.json` declares `id`, `title`, `map`, `party` and `encounters`, and optionally `ruleset`. A `party` seat is `name`, `class`, `color`, `at` and an optional `image`, a picture in the content (`pictures/p7-1.png`) that the seat's token and cards show in place of its class's portrait. Without `ruleset` the chapter plays by the game's own rules, `rulesets/yorehold` (see Rulesets); leave it out unless the chapter is a test of other rules. It can be `modern` or `classic` (sets built into the framework, kept for tests), a relative JSON path, or a folder with `ruleset.json` in it. Paths resolve in the chapter folder first, then at the content root. Absolute paths and parent traversal are rejected.
 
 Party members have `name`, `class`, `color` and integer `at` cells. Encounter groups have unique `id`, optional starting `text`, and `creatures` with a `creature` id, optional `name` and `at`. Placements must be on walkable, distinct cells. Party size comes from the file, one to four. Seeing one enemy starts its authored encounter group.
 
@@ -484,6 +484,20 @@ into a package (`rules/import/Outline.cs`; the tests' `SampleOutline.cs` is a wh
   may be the game's own; the builder checks those against the game's content before it writes.
 - `assets/import/schemas.json` holds the JSON schema of each kind's `data`, which the story model is
   asked to answer in.
+
+Building (`OutlineBuilder`) writes the package around the import folder: `content.json`,
+`adventure.json` (chapters, and a transition for every link between places in two chapters),
+`creatures/` and `items/` (a creature or item the game already has by that name is the game's,
+unless the book gives it a picture), `pictures/` (the book's pictures in use), each chapter's
+`chapter.json`, `map.json`, `dialogue/` and `quests.json`, and `story.json`. The map is the places
+as rooms side by side with one wall between, stone floor and walls inside, grass and trees
+outdoors; a link is a gap in that wall, a `door` kit, or a `locked-door` kit with `key:<item>` and
+the link's check as its lock. The party starts in the first place of the chapter, whose passage
+to read out joins the chapter's `intro`; foes stand on the far side of their room. An NPC with a
+picture gets a creature of its own carrying it. A locked chest is a `locked-chest` map object.
+Every chapter gets `xpPerVictory` 50. `import/report.json` lists what didn't go in as written:
+`{"format": "yorehold.import-report", "version": 1, "lines": [{"entry", "text"}]}`. The same
+outline always gives the same files.
 
 ## Adventures
 

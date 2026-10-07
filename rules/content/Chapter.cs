@@ -1,7 +1,11 @@
 namespace Yorehold.Rules;
 
 /// <summary>A seat in the party with its ready-made hero.</summary>
-public record PartyMember(string Name, string ClassId, ContentColor Color, Cell At);
+public record PartyMember(string Name, string ClassId, ContentColor Color, Cell At)
+{
+    /// <summary>The seat's own picture, a content path; empty = the class's portrait.</summary>
+    public string Image { get; init; } = "";
+}
 
 public class Placement
 {
@@ -186,10 +190,17 @@ public class Chapter
         foreach (ContentNode p in partyNode.Items())
         {
             var member = new PartyMember(p.At("name").AsText(), p.At("class").AsText(),
-                p.Get("color") is ContentNode color ? ContentParts.ColorFrom(color) : new ContentColor(200, 200, 210), ContentParts.CellFrom(p.At("at")));
+                p.Get("color") is ContentNode color ? ContentParts.ColorFrom(color) : new ContentColor(200, 200, 210), ContentParts.CellFrom(p.At("at")))
+            {
+                Image = p.Text("image", ""),
+            };
             if (compendium.Class(member.ClassId) == null)
             {
                 throw p.Fail("class", $"unknown class \"{member.ClassId}\" for {member.Name}");
+            }
+            if (member.Image.Length > 0 && (!ContentFiles.IsContentPath(member.Image) || !files.Exists(member.Image)))
+            {
+                throw p.Fail("image", $"\"{member.Image}\" is not a picture in the content, like portraits/marn.png");
             }
             reader.Place(p.At("at"), member.At, member.Name);
             chapter.Party.Add(member);
