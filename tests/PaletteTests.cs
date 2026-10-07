@@ -121,6 +121,17 @@ public class PaletteTests
     }
 
     [Fact]
+    public void TheGameShipsNoPicturesOfItsOwn()
+    {
+        // every picture comes from content packages and the players' art packs; the placeholder
+        // app icon (icon.svg, beside the project) is the one stand-in until there is a logo
+        string[] pictures = { "*.png", "*.jpg", "*.jpeg", "*.webp", "*.svg", "*.bmp", "*.gif" };
+        List<string> found = pictures.SelectMany(p => Directory.EnumerateFiles(TestContent.AssetsFolder(), p, SearchOption.AllDirectories))
+            .Select(f => Path.GetRelativePath(ProjectFolder(), f)).ToList();
+        Assert.True(found.Count == 0, "pictures in the game's own content: " + string.Join(", ", found));
+    }
+
+    [Fact]
     public void PaletteFileIsApollo()
     {
         string palette = File.ReadAllText(Path.Combine(ProjectFolder(), "src", "hud", "Palette.cs"));

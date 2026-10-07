@@ -459,11 +459,15 @@ reopened (`playtest.ps1 -Problems`).
     character file) keeps its slots (`.dev\playtest-spell-fight.png`).
   - Default: an action on oneself, picked, waits like any other; a click on the hero or its
     key again uses it, a click anywhere else puts it away.
-- [ ] **U10. Art pack coverage.** Mostly done 10/7 while checking for generated art: objects
+- [x] **U10. Art pack coverage.** Mostly done 10/7 while checking for generated art: objects
   now show `objects/<name>.png` (CONTENT.md), the code-drawn icon shapes and object drawings are
   gone (plain blocks and letters remain as fallbacks), the old client's 13 UI skin pictures are
   deleted, and the test packs hold Dungeon Crawl objects (CC0) and game-icons.net icons (CC BY
   3.0) for every action and spell but `gathered-mending`. Left: `tiles/wood.png`, `objects/lever.png`
   and `objects/sack.png` in the test pack, and a check run that looks for any picture in the repo.
+  - Done: `tiles/wood.png` and `objects/sack.png` (a gold pile) in the test pack, built by
+    `.dev\make-art-pack.py`; `PaletteTests.TheGameShipsNoPicturesOfItsOwn` fails on any picture
+    under `assets/`. Left plain: the lever (the Dungeon Crawl set has none) and Gathered
+    Mending's icon.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.
