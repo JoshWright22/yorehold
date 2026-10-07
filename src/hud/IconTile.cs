@@ -43,10 +43,10 @@ public partial class IconTile : Button
         _badge.Size = new Vector2(16, 14);
     }
 
-    public void Show(string key, string name, string shape, Texture2D? picture, string badge, bool dim, bool picked)
+    public void Show(string key, string name, Texture2D? picture, string badge, bool dim, bool picked)
     {
         Key = key;
-        _icon.Show(shape, name.Length > 0 ? name[..1] : "?", picture);
+        _icon.Show(name.Length > 0 ? name[..1] : "?", picture);
         _icon.Grey(dim);
         _name.Text = name;
         _name.ThemeTypeVariation = dim ? "DimLabel" : "CellLabel";

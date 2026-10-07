@@ -27,8 +27,7 @@ public sealed class DataRow
     // Only a panel in grid mode (the spell book) reads these.
     /// <summary>The heading it sits under in the grid.</summary>
     public string Section { get; init; } = "";
-    /// <summary>Its icon's shape (action-icons.json), and the creator's picture when there is one.</summary>
-    public string Shape { get; init; } = "";
+    /// <summary>The creator's icon when there is one; else the tile shows its first letter.</summary>
     public Texture2D? Picture { get; init; }
     /// <summary>A short mark in the tile's corner.</summary>
     public string Badge { get; init; } = "";
@@ -518,7 +517,7 @@ public partial class DataPanel : PanelContainer
         {
             IconTile tile = _tiles[row.Key];
             tile.Drag = row.Drag;
-            tile.Show(row.Key, row.Cells.Length > 0 ? row.Cells[0] : "", row.Shape, row.Picture, row.Badge, row.Dim, row.Key == Picked);
+            tile.Show(row.Key, row.Cells.Length > 0 ? row.Cells[0] : "", row.Picture, row.Badge, row.Dim, row.Key == Picked);
         }
     }
 

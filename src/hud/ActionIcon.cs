@@ -4,51 +4,45 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// An action's picture on the hotbar and in the spell book: the creator's icon when the content has
-/// one, else a plain shape. Which shape an action gets is in assets/ui/action-icons.json; one it
-/// doesn't name gets its first letter.
+/// An action's picture on the hotbar and in the spell book: the creator's icon when the content or
+/// an art pack has one, else its first letter. The game draws no icons of its own.
 /// </summary>
 public partial class ActionIcon : Control
 {
     [Export] public Color Ink { get; set; } = Palette.Sand;
-    /// <summary>The fill inside a shape, a darker palette colour rather than the ink seen through.</summary>
-    [Export] public Color Soft { get; set; } = Palette.Rust;
 
-    /// <summary>Greyed: drawn in slate and iron instead of its own colours.</summary>
+    /// <summary>Greyed: the letter in slate, a picture dimmed.</summary>
     public void Grey(bool grey)
     {
-        Color ink = grey ? Palette.Slate : Palette.Sand, soft = grey ? Palette.Iron : Palette.Rust;
-        if (ink != Ink || soft != Soft)
+        Color ink = grey ? Palette.Slate : Palette.Sand;
+        if (ink != Ink)
         {
             Ink = ink;
-            Soft = soft;
             QueueRedraw();
         }
     }
 
-    private string _shape = "";
     private string _letter = "";
     private Texture2D? _picture;
 
-    /// <summary>The creator's icon for an action, icons/&lt;action id&gt;.png in the content; null when they drew none.</summary>
+    /// <summary>The creator's icon for an action, icons/&lt;action id&gt;.png in the content or an art pack; null when there is none.</summary>
     public static Texture2D? PictureOf(World world, string action) => PlayerArt.Texture(world.Files, $"icons/{action}.png");
 
     /// <summary>A new icon drawn the same, for the one that follows the pointer in a drag.</summary>
     public ActionIcon Copy()
     {
-        var copy = new ActionIcon { Ink = Ink, Soft = Soft, MouseFilter = MouseFilterEnum.Ignore };
-        copy.Show(_shape, _letter, _picture);
+        var copy = new ActionIcon { Ink = Ink, MouseFilter = MouseFilterEnum.Ignore };
+        copy.Show(_letter, _picture);
         return copy;
     }
 
-    /// <summary>picture, when there is one, is drawn instead of the shape.</summary>
-    public void Show(string shape, string letter, Texture2D? picture = null)
+    /// <summary>picture, when there is one, is drawn instead of the letter.</summary>
+    public void Show(string letter, Texture2D? picture = null)
     {
-        if (shape == _shape && letter == _letter && picture == _picture)
+        if (letter == _letter && picture == _picture)
         {
             return;
         }
-        _shape = shape;
         _letter = letter;
         _picture = picture;
         QueueRedraw();
@@ -62,13 +56,6 @@ public partial class ActionIcon : Control
         }
     }
 
-    private Vector2 P(float x, float y) => new(x * Size.X, y * Size.Y);
-
-    private void Stroke(float width, params Vector2[] points)
-    {
-        DrawPolyline(points, Ink, width);
-    }
-
     public override void _Draw()
     {
         if (_picture != null)
@@ -76,84 +63,9 @@ public partial class ActionIcon : Control
             DrawTextureRect(_picture, new Rect2(Vector2.Zero, Size), false, Ink == Palette.Slate ? Palette.Smoke : Colors.White);
             return;
         }
-        float w = Mathf.Max(2, Size.X * 0.09f);
-        Color soft = Soft;
-        switch (_shape)
-        {
-            case "sword":
-                Stroke(w * 1.3f, P(0.3f, 0.7f), P(0.84f, 0.16f));
-                Stroke(w, P(0.2f, 0.52f), P(0.48f, 0.8f));
-                Stroke(w, P(0.3f, 0.7f), P(0.16f, 0.84f));
-                break;
-            case "dash":
-                for (int i = 0; i < 3; i++)
-                {
-                    float x = 0.14f + i * 0.24f;
-                    Stroke(w, P(x, 0.22f), P(x + 0.26f, 0.5f), P(x, 0.78f));
-                }
-                break;
-            case "shield":
-            {
-                Vector2[] outline = { P(0.2f, 0.16f), P(0.8f, 0.16f), P(0.8f, 0.52f), P(0.5f, 0.88f), P(0.2f, 0.52f), P(0.2f, 0.16f) };
-                DrawColoredPolygon(outline[..5], soft);
-                Stroke(w, outline);
-                break;
-            }
-            case "plus":
-                Stroke(w * 1.6f, P(0.5f, 0.16f), P(0.5f, 0.84f));
-                Stroke(w * 1.6f, P(0.16f, 0.5f), P(0.84f, 0.5f));
-                break;
-            case "eye":
-            case "hidden":
-            {
-                var upper = new Vector2[13];
-                var lower = new Vector2[13];
-                for (int i = 0; i <= 12; i++)
-                {
-                    float t = i / 12.0f;
-                    float lift = Mathf.Sin(t * Mathf.Pi) * 0.26f;
-                    upper[i] = P(0.1f + t * 0.8f, 0.5f - lift);
-                    lower[i] = P(0.1f + t * 0.8f, 0.5f + lift);
-                }
-                Stroke(w, upper);
-                Stroke(w, lower);
-                DrawCircle(P(0.5f, 0.5f), Size.X * 0.11f, Ink);
-                if (_shape == "hidden")
-                {
-                    Stroke(w * 1.2f, P(0.18f, 0.84f), P(0.82f, 0.16f));
-                }
-                break;
-            }
-            case "push":
-                Stroke(w, P(0.12f, 0.5f), P(0.62f, 0.5f));
-                Stroke(w, P(0.42f, 0.28f), P(0.64f, 0.5f), P(0.42f, 0.72f));
-                Stroke(w * 1.4f, P(0.82f, 0.18f), P(0.82f, 0.82f));
-                break;
-            case "rings":
-                DrawArc(P(0.38f, 0.5f), Size.X * 0.22f, 0, Mathf.Tau, 32, Ink, w);
-                DrawArc(P(0.62f, 0.5f), Size.X * 0.22f, 0, Mathf.Tau, 32, Ink, w);
-                break;
-            case "up":
-                Stroke(w * 1.2f, P(0.5f, 0.86f), P(0.5f, 0.2f));
-                Stroke(w * 1.2f, P(0.24f, 0.44f), P(0.5f, 0.16f), P(0.76f, 0.44f));
-                break;
-            case "hourglass":
-                DrawColoredPolygon(new[] { P(0.26f, 0.18f), P(0.74f, 0.18f), P(0.5f, 0.5f) }, soft);
-                Stroke(w, P(0.22f, 0.16f), P(0.78f, 0.16f), P(0.22f, 0.84f), P(0.78f, 0.84f), P(0.22f, 0.16f));
-                break;
-            case "flask":
-                DrawCircle(P(0.5f, 0.62f), Size.X * 0.24f, soft);
-                DrawArc(P(0.5f, 0.62f), Size.X * 0.24f, 0, Mathf.Tau, 32, Ink, w);
-                Stroke(w, P(0.42f, 0.4f), P(0.42f, 0.16f), P(0.58f, 0.16f), P(0.58f, 0.4f));
-                break;
-            default:
-            {
-                Font font = ThemeDB.FallbackFont;
-                int size = Mathf.Max(8, (int)(Size.Y * 0.6f));
-                Vector2 measure = font.GetStringSize(_letter, HorizontalAlignment.Left, -1, size);
-                DrawString(font, new Vector2((Size.X - measure.X) / 2, Size.Y / 2 + font.GetAscent(size) / 2 - 2), _letter, HorizontalAlignment.Left, -1, size, Ink);
-                break;
-            }
-        }
+        Font font = ThemeDB.FallbackFont;
+        int size = Mathf.Max(8, (int)(Size.Y * 0.6f));
+        Vector2 measure = font.GetStringSize(_letter, HorizontalAlignment.Left, -1, size);
+        DrawString(font, new Vector2((Size.X - measure.X) / 2, Size.Y / 2 + font.GetAscent(size) / 2 - 2), _letter, HorizontalAlignment.Left, -1, size, Ink);
     }
 }

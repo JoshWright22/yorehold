@@ -33,16 +33,13 @@ public sealed class SpellPanel
     private const string ActionKey = "action:";
 
     private readonly DataPanel _view;
-    private readonly Func<string, string> _shapeOf;
     private int _hero;
     // what the hero had prepared at the last refresh, for a Prepare press to work from
     private List<string> _prepared = new();
 
-    /// <summary>shapeOf gives an action's icon shape (action-icons.json) by its id.</summary>
-    public SpellPanel(DataPanel view, Func<string, string> shapeOf)
+    public SpellPanel(DataPanel view)
     {
         _view = view;
-        _shapeOf = shapeOf;
         _view.Grid = true;
         _view.ActionPressed += Act;
         _view.SourcePicked += id => HeroPicked?.Invoke(int.Parse(id));
@@ -126,7 +123,6 @@ public sealed class SpellPanel
                 Search = a.Description,
                 Dim = !castable,
                 Section = spell.Spends.Count > 0 ? "Focus" : LevelTab(spell.Level),
-                Shape = _shapeOf(a.Id),
                 Picture = ActionIcon.PictureOf(world, a.Id),
                 // a prepared caster's spells waiting on the list say so in the corner
                 Badge = c.Concentration.Spell == spell.Id ? "C" : sheet.Preparable.Count > 0 && sheet.Prepared.Contains(spell.Id) ? "P" : "",
@@ -143,7 +139,6 @@ public sealed class SpellPanel
                 Tags = new HashSet<string> { "Actions" },
                 Search = a.Description,
                 Section = "Actions",
-                Shape = _shapeOf(a.Id),
                 Picture = ActionIcon.PictureOf(world, a.Id),
                 Drag = ActionSlot.ActionDrag + a.Id,
             });

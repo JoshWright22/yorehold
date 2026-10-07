@@ -23,8 +23,6 @@ public partial class PlayHud : Control
     [Export] public PackedScene? SlotScene { get; set; }
     [Export] public PackedScene? PartyCardScene { get; set; }
     [Export] public PackedScene? InitiativeCardScene { get; set; }
-    /// <summary>Which shape each action's icon is drawn with, by action id.</summary>
-    [Export] public string IconsFile { get; set; } = "res://assets/ui/action-icons.json";
     /// <summary>Where the log's bottom edge rests, in pixels above the screen's: clear of the hotbar, in the corner when the hotbar is away.</summary>
     [Export] public float LogAboveHotbar { get; set; } = 166;
     [Export] public float LogAboveEdge { get; set; } = 10;
@@ -107,7 +105,6 @@ public partial class PlayHud : Control
     private VBoxContainer _replies = null!;
     private string _talkShown = "";
 
-    private readonly Dictionary<string, string> _icons = new();
     private readonly List<PartyCard> _partyCards = new();
     private readonly List<InitiativeCard> _orderCards = new();
     private readonly List<ActionSlot> _slotViews = new();
@@ -177,7 +174,7 @@ public partial class PlayHud : Control
         _gearView.ClosePressed += () => OpenPanel = "";
         _spellsView = GetNode<DataPanel>("Spells");
         _spellsButton = GetNode<Button>("Menu/Spells");
-        _spells = new SpellPanel(_spellsView, id => _icons.GetValueOrDefault(id, ""));
+        _spells = new SpellPanel(_spellsView);
         _spells.Ordered += order => SpellOrdered?.Invoke(order);
         _spells.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _spellsView.ClosePressed += () => OpenPanel = "";
@@ -205,7 +202,6 @@ public partial class PlayHud : Control
         GetNode<Button>("Reaction/Rows/Buttons/Pass").Pressed += () => ReactionAnswered?.Invoke(false);
         _top.Visible = false;
         _bottom.Visible = false;
-        ReadIcons();
     }
 
     /// <summary>The menu buttons name the key each one has now, after the settings screen changed them.</summary>
@@ -468,27 +464,6 @@ public partial class PlayHud : Control
         }
     }
 
-    private void ReadIcons()
-    {
-        string file = Places.ContentFile(IconsFile);
-        if (!System.IO.File.Exists(file))
-        {
-            return; // every action then gets its first letter
-        }
-        try
-        {
-            using JsonDocument document = JsonDocument.Parse(System.IO.File.ReadAllText(file));
-            foreach (JsonProperty entry in document.RootElement.EnumerateObject())
-            {
-                _icons[entry.Name] = entry.Value.GetString() ?? "";
-            }
-        }
-        catch (Exception error) when (error is JsonException or InvalidOperationException)
-        {
-            GD.PushWarning($"{IconsFile}: {error.Message}");
-        }
-    }
-
     private void ShowParty(World world, bool fighting, int? current)
     {
         if (PartyCardScene == null)
@@ -657,7 +632,7 @@ public partial class PlayHud : Control
             int cost = world.ActionCost(shown, action);
             string why = "";
             bool usable = mine && world.CanUse(shown, action, out why);
-            slot.Show(action.Id, _icons.GetValueOrDefault(action.Id, ""), action.Name, key, cost, usable, aim.Action == action.Id,
+            slot.Show(action.Id, action.Name, key, cost, usable, aim.Action == action.Id,
                 ActionIcon.PictureOf(world, action.Id));
             slot.TipTitle = action.Name;
             slot.TipMeta = HudText.ActionMeta(world, action, cost);

@@ -162,8 +162,8 @@ tap does it.
 
 In a fight: a click on a square in reach walks there, a click on an enemy strikes it (walking up first), the
 number keys or a slot pick an action and the next click aims it, a right click or Escape puts it away, Space
-ends the turn. Portraits are the token's disc and action icons are plain shapes (`ActionIcon`) until there is
-art; `assets/ui/action-icons.json` says which shape each action id gets.
+ends the turn. Without pictures from content or an art pack, portraits are the token's disc, action icons
+(`ActionIcon`) the action's first letter and objects plain blocks (`ObjectsView`).
 
 ## Checking
 

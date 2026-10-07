@@ -42,12 +42,12 @@ public partial class ActionSlot : TipButton
     }
 
     /// <summary>usable false greys it out; it can still be pressed, which says why.</summary>
-    public void Show(string id, string shape, string name, string key, int cost, bool usable, bool armed, Texture2D? picture = null)
+    public void Show(string id, string name, string key, int cost, bool usable, bool armed, Texture2D? picture = null)
     {
         ActionId = id;
         Usable = usable;
         _icon.Visible = true;
-        _icon.Show(shape, name.Length > 0 ? name[..1] : "?", picture);
+        _icon.Show(name.Length > 0 ? name[..1] : "?", picture);
         _icon.Grey(!usable);
         _key.Text = key;
         // a greyed action's cost shows as spent pips, not as see-through ones

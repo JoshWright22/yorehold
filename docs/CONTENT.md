@@ -29,7 +29,13 @@ What the port reads so far, and where it differs:
   player's pictures are used everywhere. Packs are read in name order, the last winning; a
   package's own pictures win over every pack.
 - Icons: an action or spell shows `icons/<action or spell id>.png` on the hotbar and in the spell
-  book when the content has one, else its shape from `ui/action-icons.json` or its first letter.
+  book when the content or an art pack has one, else its first letter.
+- Objects: doors, chests, levers, found traps, sacks the dead leave and lamp flames show
+  `objects/<name>.png`: `door`, `door-open`, `door-locked`, `chest`, `chest-open` (emptied),
+  `lever`, `trap`, `trap-off` (disarmed), `sack`, `flame`, `block` (anything else). Without one
+  they are plain palette blocks; a locked door or chest gets a brass edge either way.
+- The game draws no pictures of its own: faces, tiles, icons and objects all come from content or
+  art packs, and the fallback is a plain fill, a disc or a letter.
 - Hotbars: a sheet saved by the game carries `hotbar`: `{"slots": [action ids, "" for empty, at most
   24], "seen": [ids]}`. An action not in `seen` is put in the first empty slot; one taken off stays
   off. A sheet without it gets every action in order.
@@ -66,9 +72,6 @@ What the port reads so far, and where it differs:
 - A cutscene step with no `ease` uses `inOutCubic`, the C++ client's curve. `chapters/trigger-test` has
   `intro-scene.json`, played by its opening trigger, for the cutscene screenshot run.
 - `ui/theme.json` and the two files in `create/` are not rules content. They only have to be JSON here.
-- `ui/action-icons.json` is new: action id to the shape its hotbar icon is drawn with (`sword`, `dash`,
-  `shield`, `plus`, `flask`, `hidden`, `eye`, `push`, `rings`, `up`, `hourglass`). An action it doesn't
-  name gets its first letter. The rules don't read it.
 - `ui/keys.json` is new: what the keys do. `{"actions": [{"id", "name", "group", "description", "keys"}]}`,
   one entry per thing a key can do, with the keys it ships with as names (`"C"`, `"F5"`, `"Kp Add"`, the
   names Godot gives keys). The id is the input action the game listens for (`pan_left`, `sheet`,

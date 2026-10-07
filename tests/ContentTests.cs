@@ -5,9 +5,6 @@ namespace Yorehold.Rules.Tests;
 /// <summary>The content check: every shipped file loads into its type, and says what the game expects.</summary>
 public class ContentTests
 {
-    // Files the rules don't read: they belong to the UI and to Create, and only have to be JSON here.
-    private static readonly string[] NotRules = { "ui/action-icons.json" };
-
     [Fact]
     public void EveryShippedFileLoads()
     {
@@ -40,10 +37,6 @@ public class ContentTests
             {
                 Try(path, () => Dialogue.Read(ContentNode.Read(files, path)));
             }
-        }
-        foreach (string path in NotRules)
-        {
-            Try(path, () => ContentNode.Read(files, path));
         }
 
         Try("ui/keys.json", () => KeyBindings.Read(ContentNode.Read(files, "ui/keys.json")));

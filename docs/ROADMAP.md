@@ -336,6 +336,8 @@ reopened (`playtest.ps1 -Problems`).
   buttons down the left, the rest of the window a banner of player art: adventure covers and
   art pack pictures, changing every few seconds. Until there is a logo picture
   (`ui/logo.png`, content), the name is set large in the heading face.
+  - Josh, 10/7: temporary logos are fine for now; real logo work is needed (the name set in
+    type and `icon.svg`, the placeholder app icon, are both stand-ins until then).
 - [ ] **U3. Settings** (`settings`). Groups down the left (Display, Sound, Controls, Gameplay,
   Account), the group's options on the right with a one-line help under each, a search box.
   No file paths shown. Keys (`keys`) becomes the Controls group.
@@ -354,10 +356,17 @@ reopened (`playtest.ps1 -Problems`).
 - [ ] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
   by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
   length, made by.
-- [ ] **U9. Hotbar and fight bar** (`first-look`). Actions grouped in decks (common, class,
-  spells, items) with the hero's portrait at the bar's left, BG3 style; tighter, larger icons.
-- [ ] **U10. Art pack coverage.** Picture fields for doors, chests, levers and other kit objects,
-  and `tiles/wood.png`; the test pack (`user://art/dungeon-crawl`) filled out for them, and
-  action icons from a CC0 or CC BY icon set kept in a pack with its licence.
+- [ ] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
+  changes: the actions every hero always has (strike, stride, defend, help, hide, seek, shove,
+  grapple, interact, ready) sit in their own group apart from spells and items; and as in BG3
+  every action is picked first and then aimed, including the ones on yourself, so Defend or
+  Stride (dash) is a press then a click on your own hero (or the key again), never one click
+  that acts at once. Escape or a right click puts it back.
+- [ ] **U10. Art pack coverage.** Mostly done 10/7 while checking for generated art: objects
+  now show `objects/<name>.png` (CONTENT.md), the code-drawn icon shapes and object drawings are
+  gone (plain blocks and letters remain as fallbacks), the old client's 13 UI skin pictures are
+  deleted, and the test packs hold Dungeon Crawl objects (CC0) and game-icons.net icons (CC BY
+  3.0) for every action and spell but `gathered-mending`. Left: `tiles/wood.png`, `objects/lever.png`
+  and `objects/sack.png` in the test pack, and a check run that looks for any picture in the repo.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.
