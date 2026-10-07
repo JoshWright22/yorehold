@@ -423,11 +423,18 @@ reopened (`playtest.ps1 -Problems`).
   - Default: Credits is a small link at the foot of the title's band. The libraries inside the
     engine are no longer rows; their notices are one block on the engine's page, since their
     licences ask for them to ship with the game.
-- [ ] **U6. Lobby first** (`seats`). New adventure opens a lobby: the adventure's picture, its
+- [x] **U6. Lobby first** (`seats`). New adventure opens a lobby: the adventure's picture, its
   seats as player slots, each player picking an existing character or "make one when we start".
   Start goes into the adventure and character creation opens there for every seat that asked to
   make one. A player joining later lands in the lobby's pick. Local seats now; the same lobby
   takes online players when play goes online.
+  - Default: every seat of a new adventure starts on "Make one when we start" (Josh, 10/7: by
+    default characters are made after the lobby). Start runs creation for those seats one after
+    another over the loaded chapter, then starts it with them; Escape in creation goes back to
+    the lobby. A seat can also take the ready-made hero or one of the player's characters.
+  - Not done: the adventure's picture (adventures have no cover yet; U8), and the lobby still
+    has the character screen's look rather than the band (`.dev\p7-seats.png`). Every seat says
+    "you" until seats have owners online.
 - [ ] **U7. Character creation visuals** (`character-creation`). The hero's picture large in the
   middle (from art packs by race and class, or picked from the player's own pictures), the steps
   down one side, what each pick gives shown beside it, as in BG3.

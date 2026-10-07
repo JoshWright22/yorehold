@@ -49,6 +49,9 @@ public partial class CharacterScreen : CanvasLayer
     private View _draftBack = View.Characters;
     private Rng _dice = new(1);
     private readonly List<LibraryEntry?> _seats = new();
+    // seats whose player makes their character once the adventure starts, and whether that is under way
+    private readonly SortedSet<int> _makeAtStart = new();
+    private bool _starting;
     private int _seat;
     private string _noticeText = "";
     private bool _noticeBad;
@@ -89,11 +92,18 @@ public partial class CharacterScreen : CanvasLayer
         _dice = new Rng((ulong)Time.GetTicksUsec());
         Load();
         _seats.Clear();
+        _makeAtStart.Clear();
+        _starting = false;
         for (int i = 0; i < world.Chapter.Party.Count; i++)
         {
             // what the world plays now, so opening and starting again changes nothing
             PartyPick? now = i < world.PartyPicks.Count ? world.PartyPicks[i] : null;
             _seats.Add(now == null ? null : _entries.Find(e => e.FileName == now.Library && !e.Retired));
+            // a new adventure's seats make their characters once it starts (Josh, 10/7), unless one is seated already
+            if (view == View.Party && _seats[i] == null && _compendium.Classes.Count > 0)
+            {
+                _makeAtStart.Add(i);
+            }
         }
         _seat = 0;
         Showing = view;
@@ -159,7 +169,9 @@ public partial class CharacterScreen : CanvasLayer
     {
         if (Showing == View.Draft)
         {
+            // leaving creation goes back to the lobby, where the seat can take a ready character instead
             _draft = null;
+            _starting = false;
             Showing = _draftBack;
             Redraw();
             return;
@@ -204,7 +216,7 @@ public partial class CharacterScreen : CanvasLayer
     private void ViewTabs()
     {
         Toggle(_tabs, "Characters", Showing == View.Characters, () => Showing = View.Characters);
-        Toggle(_tabs, "New adventure", Showing == View.Party, () => Showing = View.Party);
+        Toggle(_tabs, "Lobby", Showing == View.Party, () => Showing = View.Party);
     }
 
     // ---------------------------------------------------------------- the library
@@ -220,7 +232,7 @@ public partial class CharacterScreen : CanvasLayer
     private void FillLibrary()
     {
         _library.SetHead("Characters", _noticeText);
-        _library.SetSources(new[] { ("library", "Characters"), ("party", "New adventure") }, "library");
+        _library.SetSources(new[] { ("library", "Characters"), ("party", "Lobby") }, "library");
         _library.SetTabs(new[] { "All", "Ready", "Away", "Graveyard" });
         _library.SetChips(new[] { "Can level up" });
         _library.SetColumns(new DataColumn[] { new("Name", 150), new("Class", 120), new("Level", 50, true), new("XP", 60, true), new("State", 80) });
@@ -359,22 +371,39 @@ public partial class CharacterScreen : CanvasLayer
 
     // ---------------------------------------------------------------- the seats
 
+    // The lobby: a seat per hero the chapter has, each a player's (yours, until play goes online).
+    // A seat makes its character once the adventure starts, takes the chapter's ready-made hero, or
+    // takes one of the player's characters, which is how someone joining late brings theirs.
     private void DrawParty()
     {
         Chapter chapter = _world!.Chapter;
-        _title.Text = "New adventure";
+        _title.Text = "Lobby";
         ViewTabs();
-        Heading(_body, $"{chapter.Title}: level {chapter.Level}, {chapter.Party.Count} heroes");
+        Heading(_body, $"{chapter.Title}: level {chapter.Level}, {chapter.Party.Count} seats");
+        Dim(_body, "Each player picks who they play. A seat set to make one goes into character creation as the adventure starts.");
         for (int i = 0; i < chapter.Party.Count; i++)
         {
             LibraryEntry? seated = _seats[i];
-            string who = seated != null ? $"{seated.Choices.Name}  (level {seated.Choices.Level})"
+            string who = _makeAtStart.Contains(i) ? "makes a character when we start"
+                : seated != null ? $"{seated.Choices.Name}  (level {seated.Choices.Level})"
                 : $"{chapter.Party[i].Name}  (ready-made {ClassName(chapter.Party[i].ClassId)})";
             int index = i;
-            Toggle(_body, $"{i + 1}. {who}", i == _seat, () => _seat = index);
+            Toggle(_body, $"Seat {i + 1}, you: {who}", i == _seat, () => _seat = index);
         }
         Dim(_body, $"Who takes seat {_seat + 1}?");
-        Toggle(_body, "Ready-made: " + chapter.Party[_seat].Name, _seats[_seat] == null, () => _seats[_seat] = null);
+        if (_compendium.Classes.Count > 0)
+        {
+            Toggle(_body, "Make one when we start", _makeAtStart.Contains(_seat), () =>
+            {
+                _makeAtStart.Add(_seat);
+                _seats[_seat] = null;
+            });
+        }
+        Toggle(_body, "Ready-made: " + chapter.Party[_seat].Name, _seats[_seat] == null && !_makeAtStart.Contains(_seat), () =>
+        {
+            _makeAtStart.Remove(_seat);
+            _seats[_seat] = null;
+        });
         foreach (LibraryEntry entry in _entries)
         {
             bool here = _seats[_seat]?.Path == entry.Path;
@@ -384,11 +413,19 @@ public partial class CharacterScreen : CanvasLayer
                 continue;
             }
             LibraryEntry taken = entry;
-            Toggle(_body, $"{entry.Choices.Name}  (level {entry.Choices.Level})", here, () => _seats[_seat] = taken);
+            Toggle(_body, $"{entry.Choices.Name}  (level {entry.Choices.Level})", here, () =>
+            {
+                _makeAtStart.Remove(_seat);
+                _seats[_seat] = taken;
+            });
         }
-        Push(_body, "New character for this seat", _compendium.Classes.Count > 0, () => NewCharacter(View.Party));
 
-        if (_seats[_seat] is LibraryEntry chosen)
+        if (_makeAtStart.Contains(_seat))
+        {
+            _sheet.ShowText($"Seat {_seat + 1}", $"Makes a level {chapter.Level} character once the adventure starts: origin, class and scores, skills and feats.\n\n"
+                + "Escape during it comes back here, where the seat can take a ready character instead.");
+        }
+        else if (_seats[_seat] is LibraryEntry chosen)
         {
             CharacterSheet? sheet = CharacterBuild.Build(_rules, _compendium, chosen.Choices, out string problem);
             _sheet.ShowSheet(_rules, _compendium, sheet, chosen.Choices, problem);
@@ -408,6 +445,16 @@ public partial class CharacterScreen : CanvasLayer
 
     private void Start()
     {
+        // the seats that make their characters do so first, one after another, then the chapter starts with them
+        if (_makeAtStart.Count > 0)
+        {
+            _starting = true;
+            _seat = _makeAtStart.Min;
+            Notice($"Seat {_seat + 1}: make the character for this seat. Escape goes back to the lobby.", false);
+            NewCharacter(View.Party);
+            Changed();
+            return;
+        }
         var picks = _seats.Select(s => s == null ? null : new PartyPick(s.Choices, s.Inventory, s.FileName, s.Coins)).ToList();
         Visible = false;
         StartPressed?.Invoke(picks);
@@ -627,7 +674,13 @@ public partial class CharacterScreen : CanvasLayer
             if (forParty)
             {
                 _seats[_seat] = _entries[found];
+                _makeAtStart.Remove(_seat);
             }
+        }
+        if (forParty && _starting)
+        {
+            // on to the next seat that makes one, or into the adventure when they all have
+            Start();
         }
     }
 
