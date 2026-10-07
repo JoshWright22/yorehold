@@ -6,9 +6,10 @@ namespace Yorehold;
 
 /// <summary>
 /// Pan and zoom over the map. Keys and the left stick pan (pan_* actions), the wheel and the
-/// zoom_* actions zoom, a drag with any mouse button or one finger pans, two fingers pinch to
-/// zoom. A left click or tap that didn't turn into a drag comes out as Tapped. It follows the
-/// selected hero until the player pans, and recenter (Home) follows again.
+/// zoom_* actions zoom, a drag with the right or middle mouse button or one finger pans, two
+/// fingers pinch to zoom. A left click, or a tap that didn't turn into a drag, comes out as
+/// Tapped and never moves the view. It follows the selected hero until the player pans, and
+/// recenter (Home) or a new turn follows again.
 /// </summary>
 public partial class PlayCamera : Camera2D
 {
@@ -47,6 +48,7 @@ public partial class PlayCamera : Camera2D
     private bool _dragging;
     private bool _pinching;
     private bool _panButton;
+    private bool _fingerPress;
     private Vector2 _pressAt;
     private float _pinchDistance;
     private Vector2 _pinchMiddle;
@@ -180,7 +182,7 @@ public partial class PlayCamera : Camera2D
                 {
                     PanByScreen(motion.Relative);
                 }
-                else if (_pressed && !_dragging && (motion.Position - _pressAt).Length() > DragThreshold)
+                else if (_pressed && _fingerPress && !_dragging && (motion.Position - _pressAt).Length() > DragThreshold)
                 {
                     // catch up the few pixels moved before it counted as a drag
                     _dragging = true;
@@ -240,6 +242,9 @@ public partial class PlayCamera : Camera2D
                     _pressed = !_pinching;
                     _dragging = false;
                     _pressAt = button.Position;
+                    // a finger drags the view, but the left mouse button only clicks: the right
+                    // or middle button pans, like BG3
+                    _fingerPress = button.Device == InputEvent.DeviceIdEmulation;
                 }
                 else
                 {

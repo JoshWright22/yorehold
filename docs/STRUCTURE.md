@@ -58,7 +58,7 @@ turns taps into `World` calls. It draws through its children, one script each:
 | `Map` (`MapView`) | tiles from `TileArt` (flat CC-29 placeholder tiles with a few marks each) and grid lines, in blocks of 8 by 8 cells |
 | `Objects` (`ObjectsView`) | doors, levers, chests, sacks the dead left, found traps and lamp flames |
 | `Tokens` (`TokensView`) | one `Token.tscn` (`TokenView`) per creature, and the heroes' paths |
-| `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, drags and pinches; a click or tap that isn't a drag comes out as `Tapped` |
+| `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, right or middle drags, finger drags and pinches; a left click, or a tap that isn't a drag, comes out as `Tapped` and leaves the view where it is |
 | `LightMap` (SubViewport) and `Lighting` (`LightingView`) | the light map: white ground under the ambient colour, `Light.tscn` lamps and carried lights, walls as occluders |
 | `Shading/LightMap` | the light map over the world (`scenes/lighting.gdshader`): each colour steps down a ramp of darker CC-29 colours per band of lost light, ending in 352b42 or 212123, so shadow never goes muddy or black |
 | `Overlay/Fog` (`FogView`), `Overlay/Floaters` | fog of war from the party's view, words that float up (damage big and red, healing green, a miss pale) |

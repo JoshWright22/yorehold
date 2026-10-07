@@ -565,11 +565,7 @@ public partial class PlayScreen : Node2D
             Token token = w.Tokens.Tokens[creature];
             if (w.Talkable(creature) && token.Floor == 0 && at.DistanceTo(token.Position.ToGodot()) <= token.Radius)
             {
-                if (w.TalkTo(creature))
-                {
-                    _camera.Following = true;
-                }
-                else
+                if (!w.TalkTo(creature))
                 {
                     Refuse(at);
                 }
@@ -592,7 +588,6 @@ public partial class PlayScreen : Node2D
                 _pendingUse = (hero, thing.Id);
             }
             _pendingOpen = (hero, $"pile:{pile}");
-            _camera.Following = true;
             return;
         }
 
@@ -601,7 +596,6 @@ public partial class PlayScreen : Node2D
             if (w.GoNear(hero, thing.Id))
             {
                 _pendingUse = (hero, thing.Id);
-                _camera.Following = true;
             }
             else
             {
@@ -609,11 +603,8 @@ public partial class PlayScreen : Node2D
             }
             return;
         }
-        if (w.Go(hero, cell))
-        {
-            _camera.Following = true;
-        }
-        else
+        // the camera stays where the player put it; Home brings it back to the hero
+        if (!w.Go(hero, cell))
         {
             Refuse(at);
         }

@@ -66,7 +66,7 @@ builds, passes `check.ps1` and is committed.
   - Default: the play screen opens `chapters/chapter-one`, the adventure's first chapter; `--chapter` picks another until the menus (P11).
   - Default: lights go into a light map (a SubViewport with Light2D lamps and wall occluders) multiplied over the world like the C++ pass, so light stops at full and daylight doesn't blow out.
   - Default: clicking a door, lever, locked chest or found trap walks the leader beside it (`World.GoNear`) and uses it on arrival. An unlocked chest is just walked onto until looting (P8).
-  - Default: a left drag or one finger pans, so does a middle or right drag; a press that moves under 10 px is a click. Two fingers pinch to zoom. Zoom goes from the whole map on screen to 4x.
+  - Default: one finger pans, so does a middle or right drag (a left drag no longer does, see P6); a press that moves under 10 px is a click. Two fingers pinch to zoom. Zoom goes from the whole map on screen to 4x.
   - Default: cutscenes end as soon as they start and conversations are only printed until P10. A noticed party stops and waits for fights (P5).
   - Default: tokens are discs with an initial and tiles are the C++ placeholder painters; token images and painted layer pictures are not drawn yet.
   - Default: content is read from `res://assets` as a plain folder, which works from the project on desktop. Exports need another way in (P15).
@@ -90,6 +90,7 @@ builds, passes `check.ps1` and is committed.
   - Default: action icons are plain shapes picked by `assets/ui/action-icons.json`, conditions are two-letter badges. Art replaces them later.
   - Default: portraits and tokens show a face from `assets/portraits/` (by creature id, or a hero's class), see CONTENT.md. The eight shipped ones are CC0 Dungeon Crawl Stone Soup tiles (32 px) moved onto CC-29 until there is art of our own; a hero has no picture of their own yet, only their class's.
   - Default: the hotbar stays along the bottom between fights with the selected hero's portrait, its slots greyed ("Used in a fight") and no End Turn; a conversation or a cutscene takes it away. The menu is a column down the right edge so the turn order has the top of the screen.
+  - Default: a left click never moves the camera. The mouse pans with the right or middle button, the keys or the edges; one finger still drags on a touch screen. Once panned away, the view stays put through clicks until Home, a new turn in a fight or the fight's end brings it back to the hero.
   - Default: panels are styled like the website (ink, iron lines, bone text, one straw accent, sans faces from the system: Inter Tight if installed, else Segoe UI, Arial for entry text), all still CC-29. The fonts are not shipped with the game yet.
   - Not working, and it wasn't before this either: `tests/visual/scripts/loot.txt` ends on `button Pack`, which isn't there once the chest is empty.
   - Default: the ruleset has no bonus actions, so that pip is hidden and a reaction pip sits beside the action pips.

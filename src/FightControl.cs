@@ -249,7 +249,6 @@ public partial class FightControl : Node
             if (done)
             {
                 Aim.Action = "";
-                _camera.Following = true;
             }
             else
             {
@@ -267,22 +266,15 @@ public partial class FightControl : Node
             }
             if (w.Creatures[who].Team == 1 && w.OrderIndex(who) != null)
             {
-                if (w.Attack(who))
-                {
-                    _camera.Following = true;
-                }
-                else
+                if (!w.Attack(who))
                 {
                     Refuse(at);
                 }
                 return;
             }
         }
-        if (w.MoveTo(cell))
-        {
-            _camera.Following = true;
-        }
-        else
+        // a click never moves the camera; a new turn or Home does
+        if (!w.MoveTo(cell))
         {
             Refuse(at);
         }
@@ -348,8 +340,7 @@ public partial class FightControl : Node
             }
             if (Seen(w, creature))
             {
-                Watch = creature;
-                _camera.Following = true;
+                Watch = creature; // Home goes to them; the click itself leaves the camera
             }
             return;
         }
@@ -361,7 +352,6 @@ public partial class FightControl : Node
         {
             w.Tokens.Tokens[i].Selected = i == creature;
         }
-        _camera.Following = true;
     }
 
     private void Refuse(Vector2 at)
