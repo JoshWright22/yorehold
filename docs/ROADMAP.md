@@ -263,14 +263,25 @@ Rules for all of it:
   files in `assets/import/`. Tests use a stand-in; a run with no model still does S1 and S4 and
   leaves the cards to fill by hand.
   - Josh, 10/7: needing the server and GPU clusters is fine for this; it may be a paid feature
-    with use limited per account.
+    with use limited per account. The models are reached through OpenRouter, picking very cheap
+    ones; the aim is under one cent per book.
+  - Default: budget sized from Caves of Shadow (16 pages, about 8,000 words, about 11,000 tokens
+    of text). Text read in a few passes with the outline so far is about 35,000 tokens in and
+    10,000 out; at about $0.10 in and $0.40 out per million tokens that is under half a cent.
+    Page pictures go only to the passes that need them (which picture is whose, the map), about
+    1,000 tokens a page.
+  - Default: the model for each pass is named in the server's config, not in the game, so a
+    cheaper one can be swapped in without a release. Each run logs its tokens and cost, and a
+    book already read (same file hash) is answered from the last result for free.
 - [ ] **S5b. Import on the server, metered.** A `yorehold-server` module takes the request, queues
   it, runs it on the GPU backend and returns outline entries, so the game never holds a model
   key. Each account has an allowance (pages a month, data in the server's config) with a paid
   tier as a flag; the game shows what is left before a run and says plainly when it is used up.
   Only the book's text blocks and pictures are sent, never the user's other files, and the server
-  keeps nothing after the reply. Blocked on picking the GPU provider and prices, which is Josh's
-  call; until then the module runs against the stand-in.
+  keeps nothing after the reply but the outline and its cost. The OpenRouter key lives in the
+  server's environment, never in the repo or the game. Blocked on an OpenRouter account and key,
+  and the allowance and price, which are Josh's call; until then the module runs against the
+  stand-in.
 - [ ] **S6. Create > Import.** Pick a file, watch the stages, then the outline as a data panel:
   a tab per kind, the entry on the right as a book page with its source words and its picture
   (picked from the book's pictures), chips for invented, unplaced and dropped. Build writes the
