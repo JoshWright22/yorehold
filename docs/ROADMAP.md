@@ -318,3 +318,46 @@ Rules for all of it:
   cells, moved and sized by hand until its grid meets the editor's, so rooms are traced rather
   than guessed. Later: the server's model reads the grid, walls and doors off the picture and
   proposes the rooms, which the writer checks over the picture.
+
+## U. Game feel (playtest, 10/7)
+
+Josh's first ten playtest answers (`feedback/playtest-results.jsonl`): the screens read as lists
+of small buttons, not a game. Layouts to copy are in `docs/UI_REFERENCE.md`. The 10/5 look rules
+stay (CC-29, flat, 1 px lines, dense data screens); what changes is that game-facing screens lead
+with a large picture and a few big choices. Pictures come from art packs and content, never
+drawn by the game. Each step ends with screenshots of the screens it touched and its playtest
+reopened (`playtest.ps1 -Problems`).
+
+- [ ] **U1. Game screens kit.** One set of shared pieces for title, pause, lobby, creation and
+  library: a full-window picture with an ink band over it, a column of large plain buttons
+  (name and key), a heading face bigger than the data screens', a picture slot that takes art
+  pack or content pictures and falls back to a palette fill. Sizes and spacing in `ui/` data.
+- [ ] **U2. Title** (playtest `title`). A large logo top left, the menu as a column of big
+  buttons down the left, the rest of the window a banner of player art: adventure covers and
+  art pack pictures, changing every few seconds. Until there is a logo picture
+  (`ui/logo.png`, content), the name is set large in the heading face.
+- [ ] **U3. Settings** (`settings`). Groups down the left (Display, Sound, Controls, Gameplay,
+  Account), the group's options on the right with a one-line help under each, a search box.
+  No file paths shown. Keys (`keys`) becomes the Controls group.
+- [ ] **U4. Pause** (`pause`). The world stays drawn and dimmed, "Paused" large, a short column of
+  big buttons (Resume, Save, Load, Settings, Leave). No list of small buttons.
+- [ ] **U5. Credits** (`credits`). Off the title menu for now; the library list goes. Art pack
+  sources stay in each pack's own folder.
+- [ ] **U6. Lobby first** (`seats`). New adventure opens a lobby: the adventure's picture, its
+  seats as player slots, each player picking an existing character or "make one when we start".
+  Start goes into the adventure and character creation opens there for every seat that asked to
+  make one. A player joining later lands in the lobby's pick. Local seats now; the same lobby
+  takes online players when play goes online.
+- [ ] **U7. Character creation visuals** (`character-creation`). The hero's picture large in the
+  middle (from art packs by race and class, or picked from the player's own pictures), the steps
+  down one side, what each pick gives shown beside it, as in BG3.
+- [ ] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
+  by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
+  length, made by.
+- [ ] **U9. Hotbar and fight bar** (`first-look`). Actions grouped in decks (common, class,
+  spells, items) with the hero's portrait at the bar's left, BG3 style; tighter, larger icons.
+- [ ] **U10. Art pack coverage.** Picture fields for doors, chests, levers and other kit objects,
+  and `tiles/wood.png`; the test pack (`user://art/dungeon-crawl`) filled out for them, and
+  action icons from a CC0 or CC BY icon set kept in a pack with its licence.
+- [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
+  their answers become steps here.
