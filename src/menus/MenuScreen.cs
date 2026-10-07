@@ -53,7 +53,9 @@ public partial class MenuScreen : CanvasLayer
     private Control _title = null!;
     private Label _name = null!;
     private Label _sub = null!;
-    private Label _heading = null!;
+    private BannerView _banner = null!;
+    private TextureRect _logo = null!;
+    private Button _creditsLink = null!;
     private VBoxContainer _entries = null!;
     private RichTextLabel _page = null!;
     private Label _notice = null!;
@@ -80,7 +82,10 @@ public partial class MenuScreen : CanvasLayer
         _title = GetNode<Control>("Title");
         _name = GetNode<Label>("Title/Name");
         _sub = GetNode<Label>("Title/Sub");
-        _heading = GetNode<Label>("Title/Heading");
+        _banner = GetNode<BannerView>("Banner");
+        _logo = GetNode<TextureRect>("Title/Logo");
+        _creditsLink = GetNode<Button>("Title/Credits");
+        _creditsLink.Pressed += () => Open(Page.Credits);
         _entries = GetNode<VBoxContainer>("Title/Entries");
         _page = GetNode<RichTextLabel>("Title/Page/Text");
         _notice = GetNode<Label>("Title/Notice");
@@ -123,8 +128,21 @@ public partial class MenuScreen : CanvasLayer
         _load.View.Visible = page == Page.Load;
         _settings.View.Visible = page == Page.Settings;
         _credits.View.Visible = page == Page.Credits;
-        // flat ink over a game too: a see-through veil would put the map in colours off the palette
+        // the title stands on the players' art; paused, the world stays in view beside the band
+        // (not under a see-through veil, which would put the map in colours off the palette)
+        if (page == Page.Title)
+        {
+            _banner.Read();
+        }
+        _banner.Visible = page == Page.Title || (page != Page.Pause && _home == Page.Title);
+        _back.Visible = page != Page.Pause;
         _back.Color = Palette.Ink;
+        _creditsLink.Visible = page == Page.Title;
+        // paused, the card would sit on the hotbar and only say what the buttons say
+        GetNode<Control>("Title/Page").Visible = page != Page.Pause;
+        Texture2D? logo = GameScreen.Logo();
+        _logo.Texture = logo;
+        _logo.Visible = logo != null && page == Page.Title;
         Say("");
     }
 
@@ -270,7 +288,6 @@ public partial class MenuScreen : CanvasLayer
         _list.Add(new Entry("characters", "Characters", LibraryFact(), true, ""));
         _list.Add(new Entry("create", "Create", "the editor", true, ""));
         _list.Add(new Entry("settings", "Settings", "", true, ""));
-        _list.Add(new Entry("credits", "Credits", "", true, ""));
         _list.Add(new Entry("exit", "Exit", "", true, ""));
     }
 
@@ -299,9 +316,9 @@ public partial class MenuScreen : CanvasLayer
         BuildList();
         bool paused = Showing == Page.Pause;
         _name.Text = paused ? "PAUSED" : "YOREHOLD";
+        _name.Visible = paused || !_logo.Visible;
         _sub.Text = paused ? "The adventure waits." : $"Version {Rules.Version.Text}";
-        _heading.Text = paused ? "GAME" : "CONTENTS";
-        _foot.Text = _contentLine;
+        _foot.Text = paused ? "" : _contentLine;
         _online.Text = paused ? "" : App.Online.Status;
         if (_picked < 0 || _picked >= _list.Count)
         {
@@ -317,15 +334,8 @@ public partial class MenuScreen : CanvasLayer
             {
                 Entry entry = _list[i];
                 _buttons[i].Text = entry.Label;
-                _buttons[i].GetChild<Label>(0).Text = entry.Fact;
-                if (entry.Enabled)
-                {
-                    _buttons[i].RemoveThemeColorOverride("font_color");
-                }
-                else
-                {
-                    _buttons[i].AddThemeColorOverride("font_color", Palette.Slate);
-                }
+                GameScreen.SetRight(_buttons[i], entry.Fact);
+                GameScreen.SetEnabled(_buttons[i], entry.Enabled);
             }
         }
         else
@@ -341,33 +351,8 @@ public partial class MenuScreen : CanvasLayer
             {
                 int index = i;
                 Entry entry = _list[i];
-                var button = new Button
-                {
-                    Text = entry.Label,
-                    ToggleMode = true,
-                    Alignment = HorizontalAlignment.Left,
-                    CustomMinimumSize = new Vector2(0, 30),
-                    ThemeTypeVariation = i % 2 == 0 ? "RowButton" : "RowOddButton",
-                    FocusMode = Control.FocusModeEnum.None,
-                };
-                if (!entry.Enabled)
-                {
-                    button.AddThemeColorOverride("font_color", Palette.Slate);
-                }
-                var fact = new Label
-                {
-                    Text = entry.Fact,
-                    ThemeTypeVariation = "DimLabel",
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    MouseFilter = Control.MouseFilterEnum.Ignore,
-                    ClipText = true,
-                    TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-                };
-                fact.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-                fact.OffsetLeft = 150;
-                fact.OffsetRight = -8;
-                button.AddChild(fact);
+                Button button = GameScreen.BigButton(entry.Label, entry.Fact);
+                GameScreen.SetEnabled(button, entry.Enabled);
                 button.MouseEntered += () => _picked = index;
                 button.Pressed += () => Press(index);
                 _entries.AddChild(button);
@@ -420,7 +405,6 @@ public partial class MenuScreen : CanvasLayer
             case "exit": Ordered?.Invoke(MenuOrder.Exit, ""); break;
             case "load": Open(Page.Load); break;
             case "settings": Open(Page.Settings); break;
-            case "credits": Open(Page.Credits); break;
         }
     }
 
@@ -480,9 +464,6 @@ public partial class MenuScreen : CanvasLayer
                 page.Stat("Pan speed", App.Settings.PanSpeed.ToString("0"));
                 page.Stat("Keys changed", App.Keys.Overrides().Count.ToString());
                 page.Stat("Account", SettingsPanel.AccountWord());
-                break;
-            case "credits":
-                page.Sub("who made what").Rule().Text("The game, the engine it runs on and every library inside it, each with its licence.");
                 break;
             case "exit":
                 page.Sub("close the game").Rule().Text("Nothing is lost: the game saves as it goes.");

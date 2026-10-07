@@ -1,0 +1,9 @@
+{
+  "bandWidth": 440,
+  "buttonHeight": 50,
+  "buttonFont": 22,
+  "headingFont": 60,
+  "gap": 6,
+  "margin": 48,
+  "bannerSeconds": 8
+}

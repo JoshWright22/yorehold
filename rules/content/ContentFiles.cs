@@ -98,6 +98,28 @@ public class ContentFiles
         return names.Select(name => prefix + name).ToList();
     }
 
+    /// <summary>The pictures directly in a folder (png, jpg, webp), from every root, as content paths in name order.</summary>
+    public List<string> Pictures(string folder)
+    {
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (string root in _roots)
+        {
+            string full = Path.Combine(root, folder.Replace('/', Path.DirectorySeparatorChar));
+            if (!Directory.Exists(full))
+            {
+                continue;
+            }
+            foreach (string file in Directory.GetFiles(full))
+            {
+                if (Path.GetExtension(file).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".webp")
+                {
+                    names.Add(Path.GetFileName(file));
+                }
+            }
+        }
+        return names.Select(name => folder + "/" + name).ToList();
+    }
+
     /// <summary>"creatures/goblin.json" is "goblin": the file name is the id.</summary>
     public static string Stem(string path)
     {

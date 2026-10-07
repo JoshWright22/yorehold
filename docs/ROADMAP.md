@@ -385,23 +385,40 @@ with a large picture and a few big choices. Pictures come from art packs and con
 drawn by the game. Each step ends with screenshots of the screens it touched and its playtest
 reopened (`playtest.ps1 -Problems`).
 
-- [ ] **U1. Game screens kit.** One set of shared pieces for title, pause, lobby, creation and
+- [x] **U1. Game screens kit.** One set of shared pieces for title, pause, lobby, creation and
   library: a full-window picture with an ink band over it, a column of large plain buttons
   (name and key), a heading face bigger than the data screens', a picture slot that takes art
   pack or content pictures and falls back to a palette fill. Sizes and spacing in `ui/` data.
-- [ ] **U2. Title** (playtest `title`). A large logo top left, the menu as a column of big
+  - Default: `BannerView` (pictures in `ui/banners/` from content and art packs, covering the
+    window, one every `bannerSeconds`), `GameScreen.BigButton` (flat, 1 px line, name left and
+    key or fact right), `GameScreen.Logo` (`ui/logo.png`), sizes in `ui/screens.json`. The band
+    and the heading are laid out in the menu scene.
+  - Default: banner pictures are shown as they are, not snapped to the palette like the map:
+    they are the players' paintings. Say if they should be snapped too.
+- [x] **U2. Title** (playtest `title`). A large logo top left, the menu as a column of big
   buttons down the left, the rest of the window a banner of player art: adventure covers and
   art pack pictures, changing every few seconds. Until there is a logo picture
   (`ui/logo.png`, content), the name is set large in the heading face.
   - Josh, 10/7: temporary logos are fine for now; real logo work is needed (the name set in
     type and `icon.svg`, the placeholder app icon, are both stand-ins until then).
+  - Default: the picked button's page stays, as a card at the bottom right over the banner (the
+    save it would continue, the adventure it would start). Adventure covers join the banner
+    when adventures have covers (U8). Test banners: five CC0 paintings from OpenGameArt in the
+    art pack `banners-cc0` (`.dev\title.png`).
 - [ ] **U3. Settings** (`settings`). Groups down the left (Display, Sound, Controls, Gameplay,
   Account), the group's options on the right with a one-line help under each, a search box.
   No file paths shown. Keys (`keys`) becomes the Controls group.
-- [ ] **U4. Pause** (`pause`). The world stays drawn and dimmed, "Paused" large, a short column of
+- [x] **U4. Pause** (`pause`). The world stays drawn and dimmed, "Paused" large, a short column of
   big buttons (Resume, Save, Load, Settings, Leave). No list of small buttons.
-- [ ] **U5. Credits** (`credits`). Off the title menu for now; the library list goes. Art pack
+  - Default: the world beside the band is drawn as it is, not dimmed: a see-through veil puts
+    the map in colours off the palette, and the band already says the game waits. The buttons
+    are the ones pause had (Resume, Settings, Load, Save and quit to title); saving on its own is
+    F5 in play. No page card on pause (`.dev\playtest-pause.png`).
+- [x] **U5. Credits** (`credits`). Off the title menu for now; the library list goes. Art pack
   sources stay in each pack's own folder.
+  - Default: Credits is a small link at the foot of the title's band. The libraries inside the
+    engine are no longer rows; their notices are one block on the engine's page, since their
+    licences ask for them to ship with the game.
 - [ ] **U6. Lobby first** (`seats`). New adventure opens a lobby: the adventure's picture, its
   seats as player slots, each player picking an existing character or "make one when we start".
   Start goes into the adventure and character creation opens there for every seat that asked to

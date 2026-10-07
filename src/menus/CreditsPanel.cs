@@ -7,9 +7,9 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The credits: the game's own entries from ui/credits.json, the engine with its MIT licence text,
-/// and every library the engine is built from with its copyright lines and licence. The engine
-/// part is asked of the engine itself, so it always matches the build that is running.
+/// The credits, a small link at the foot of the title: the game's own entries from ui/credits.json
+/// and the engine, whose page carries its MIT licence and the notices of the libraries inside it.
+/// The engine part is asked of the engine itself, so it always matches the build that is running.
 /// </summary>
 public sealed class CreditsPanel
 {
@@ -89,45 +89,29 @@ public sealed class CreditsPanel
             GD.PushWarning($"Couldn't read the credits: {error.Message}");
         }
 
-        Godot.Collections.Dictionary version = Engine.GetVersionInfo();
-        _rows.Add(new Row("engine", "Godot Engine", "Engine", "Juan Linietsky, Ariel Manzur and the Godot Engine contributors", "MIT",
-            $"The engine the game runs on, version {version["string"].AsString()}. godotengine.org", new List<string>(), Engine.GetLicenseText()));
-
+        // the libraries inside the engine aren't rows of their own (Josh, 10/7), but their notices
+        // still go with the game: one block on the engine's page
         Godot.Collections.Dictionary licences = Engine.GetLicenseInfo();
+        var notices = new List<string>();
+        var used = new List<string>();
         foreach (Godot.Collections.Dictionary component in Engine.GetCopyrightInfo())
         {
             string name = component["name"].AsString();
             if (name == "Godot Engine")
             {
-                continue; // it has its own row above
+                continue;
             }
-            var copyright = new List<string>();
-            var names = new List<string>();
             foreach (Godot.Collections.Dictionary part in component["parts"].AsGodotArray<Godot.Collections.Dictionary>())
             {
-                foreach (string line in part["copyright"].AsStringArray())
-                {
-                    if (!copyright.Contains(line))
-                    {
-                        copyright.Add(line);
-                    }
-                }
-                string licence = part["license"].AsString();
-                if (!names.Contains(licence))
-                {
-                    names.Add(licence);
-                }
+                notices.AddRange(part["copyright"].AsStringArray().Select(line => $"{name}: {line}"));
+                // "Expat and Zlib" names two texts; anything the engine has no text for is left as its name
+                used.AddRange(part["license"].AsString().Split(new[] { " and ", " or " }, StringSplitOptions.RemoveEmptyEntries));
             }
-            // "Expat and Zlib" names two texts; anything the engine has no text for is left as its name
-            var texts = new List<string>();
-            foreach (string licence in names.SelectMany(n => n.Split(new[] { " and ", " or " }, StringSplitOptions.RemoveEmptyEntries)).Distinct())
-            {
-                if (licences.ContainsKey(licence))
-                {
-                    texts.Add($"{licence}\n{licences[licence].AsString()}");
-                }
-            }
-            _rows.Add(new Row("lib:" + name, name, "Library", "", string.Join(", ", names), "Part of Godot Engine.", copyright, string.Join("\n\n", texts)));
         }
+        string texts = string.Join("\n\n", used.Distinct().Where(l => licences.ContainsKey(l)).Select(l => $"{l}\n{licences[l].AsString()}"));
+        Godot.Collections.Dictionary version = Engine.GetVersionInfo();
+        _rows.Add(new Row("engine", "Godot Engine", "Engine", "Juan Linietsky, Ariel Manzur and the Godot Engine contributors", "MIT",
+            $"The engine the game runs on, version {version["string"].AsString()}, with the libraries inside it. godotengine.org",
+            notices.Distinct().ToList(), Engine.GetLicenseText() + (texts.Length > 0 ? "\n\n" + texts : "")));
     }
 }

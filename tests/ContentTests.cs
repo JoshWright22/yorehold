@@ -49,6 +49,7 @@ public class ContentTests
             }
         });
         Try(OutlineSchemas.File, () => OutlineSchemas.Load(files));
+        Try(ScreenSizes.File, () => ScreenSizes.Load(files));
         foreach (string table in files.List(SystemTable.Folder))
         {
             Try(table, () => SystemTable.Read(ContentNode.Read(files, table)));
