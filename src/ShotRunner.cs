@@ -22,9 +22,18 @@ public partial class ShotRunner : Node
     private MouseButtonMask _held;
     private readonly List<string> _pendingShots = new();
     private bool _failed;
+    // a playtest the player plays: no picture at the end and no quitting
+    private bool _open;
+    private int _windowAt;
+    // the control the last 'button' step pointed at, until the press after it is let go
+    private Control? _aimed;
+    // a press that went to the button itself, finished on the release
+    private BaseButton? _clickDirectly;
 
     /// <summary>A screenshot run is on.</summary>
     public static bool Running { get; private set; }
+    /// <summary>A playtest from playtest.ps1: the script sets the test up, then the player plays.</summary>
+    public static bool Playtest { get; private set; }
     /// <summary>The frame the run is on, as input scripts count them.</summary>
     public static int Frame { get; private set; }
 
@@ -32,6 +41,7 @@ public partial class ShotRunner : Node
     {
         string[] args = OS.GetCmdlineUserArgs();
         string scriptFile = "";
+        int until = int.MaxValue;
         for (int i = 0; i + 1 < args.Length; i++)
         {
             switch (args[i])
@@ -39,9 +49,20 @@ public partial class ShotRunner : Node
                 case "--shot": _shot = args[++i]; break;
                 case "--frames": _frames = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--script": scriptFile = args[++i]; break;
+                case "--playtest": Playtest = true; i++; break;
+                case "--until": until = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
             }
         }
 
+        // A playtest plays the script only to where the test starts, then the player has the game
+        // and the playtest window says what to try. It never quits on its own or saves pictures,
+        // unless check.ps1 -Playtest asks for one to see the test is set up right.
+        _open = Playtest && _shot == "";
+        if (_open)
+        {
+            _shot = "playtest";
+            _frames = int.MaxValue;
+        }
         if (_shot == "")
         {
             SetProcess(false);
@@ -57,6 +78,10 @@ public partial class ShotRunner : Node
                 return;
             }
             _script = InputScript.Parse(System.IO.File.ReadAllText(scriptFile));
+            if (Playtest)
+            {
+                _script = _script.Where(s => s.Frame <= until && s.Command != "shot").ToList();
+            }
         }
 
         // Scripted events must reach the game before it handles the frame.
@@ -81,13 +106,25 @@ public partial class ShotRunner : Node
         {
             System.IO.Directory.Delete(Places.CreateFolder(), true);
         }
+        if (Playtest)
+        {
+            // its own window on the desktop beside the game, not drawn inside it
+            GetTree().Root.GuiEmbedSubwindows = false;
+            // it opens once the setup is done: a window taking the focus earlier loses the setup's clicks
+            _windowAt = (_script.Count > 0 ? _script.Max(s => s.Frame) : 0) + 10;
+            GD.Print($"Playtest: {_script.Count} setup steps");
+            if (_open)
+            {
+                return;
+            }
+        }
         RenderingServer.FramePostDraw += AfterDraw;
         GD.Print($"Shot run:{_frames} frames, {_script.Count} script steps, saving {_shot}");
     }
 
     public override void _ExitTree()
     {
-        if (_shot != "")
+        if (_shot != "" && !_open)
         {
             RenderingServer.FramePostDraw -= AfterDraw;
         }
@@ -97,6 +134,10 @@ public partial class ShotRunner : Node
     {
         _frame++;
         Frame = _frame;
+        if (Playtest && _frame == _windowAt)
+        {
+            AddChild(new PlaytestWindow());
+        }
         foreach (InputStep step in _script)
         {
             if (step.Frame == _frame)
@@ -104,7 +145,7 @@ public partial class ShotRunner : Node
                 Play(step);
             }
         }
-        if (_frame == _frames)
+        if (_frame == _frames && !_open)
         {
             _pendingShots.Add(_shot);
         }
@@ -128,6 +169,10 @@ public partial class ShotRunner : Node
 
     private void Play(InputStep step)
     {
+        if (step.Command is "move" or "cell" or "creature")
+        {
+            _aimed = null; // the pointer was put somewhere else on purpose
+        }
         switch (step.Command)
         {
             case "move":
@@ -175,6 +220,7 @@ public partial class ShotRunner : Node
                     break;
                 }
                 MoveMouse(button.GetGlobalRect().GetCenter());
+                _aimed = button;
                 break;
             }
             case "tap":
@@ -193,6 +239,41 @@ public partial class ShotRunner : Node
                 MouseButton button = step.A == "right" ? MouseButton.Right : step.A == "middle" ? MouseButton.Middle : MouseButton.Left;
                 MouseButtonMask bit = (MouseButtonMask)(1 << ((int)button - 1));
                 bool pressed = step.Command == "down";
+                // a press right after 'button' follows that button if the layout moved it since
+                // (the title settles a few frames after it shows); a drag's release stays where it is
+                if (_aimed != null && IsInstanceValid(_aimed) && _aimed.IsVisibleInTree() && _held == 0 && pressed)
+                {
+                    Vector2 middle = _aimed.GetGlobalRect().GetCenter();
+                    if (middle != _mouse)
+                    {
+                        MoveMouse(middle);
+                    }
+                }
+                // Now and then the off-screen window never sees the pointer arrive, so the button
+                // isn't hovered and a real press would miss it; then the button is clicked directly.
+                if (pressed && button == MouseButton.Left && _aimed is BaseButton missed && IsInstanceValid(missed) && !missed.IsHovered())
+                {
+                    _clickDirectly = missed;
+                    break;
+                }
+                if (!pressed && _clickDirectly != null)
+                {
+                    if (IsInstanceValid(_clickDirectly) && _clickDirectly.IsVisibleInTree())
+                    {
+                        if (_clickDirectly.ToggleMode)
+                        {
+                            _clickDirectly.ButtonPressed = !_clickDirectly.ButtonPressed;
+                        }
+                        _clickDirectly.EmitSignal(BaseButton.SignalName.Pressed);
+                    }
+                    _clickDirectly = null;
+                    _aimed = null;
+                    break;
+                }
+                if (!pressed)
+                {
+                    _aimed = null;
+                }
                 _held = pressed ? _held | bit : _held & ~bit;
                 Input.ParseInputEvent(new InputEventMouseButton
                 {

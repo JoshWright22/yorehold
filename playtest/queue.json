@@ -1,0 +1,402 @@
+{
+  "about": "Playtests, in order. playtest.ps1 opens each one: screen (title, play or create), chapter, then the input script's steps up to frame until set it up, then the player has the game. Scripts are the screenshot scripts in tests/visual/scripts; their shot lines are skipped.",
+  "items": [
+    {
+      "id": "title",
+      "name": "Title screen",
+      "area": "Menus",
+      "try": "Look at the title screen and its contents page. Read every line. Does it look like the website, is anything ugly, unclear or pointless? Click around the entries.",
+      "screen": "title"
+    },
+    {
+      "id": "settings",
+      "name": "Settings",
+      "area": "Menus",
+      "try": "Go through every setting: camera, follow, edge scroll, lighting, fullscreen, sound, account. Change things and see if they take effect and make sense.",
+      "screen": "title",
+      "script": "playtest/setup/settings.txt"
+    },
+    {
+      "id": "keys",
+      "name": "Key bindings",
+      "area": "Menus",
+      "try": "Rebind a few keys, including one another action already uses. Then go back and check the labels on the menu buttons show the new keys.",
+      "screen": "title",
+      "script": "playtest/setup/settings-bindings.txt"
+    },
+    {
+      "id": "credits",
+      "name": "Credits",
+      "area": "Menus",
+      "try": "Read the credits page and its entries.",
+      "screen": "title",
+      "script": "playtest/setup/credits.txt"
+    },
+    {
+      "id": "seats",
+      "name": "New adventure: picking the party",
+      "area": "Menus",
+      "try": "The seats for a new adventure. Pick ready-made heroes and your own characters, change seats, start, and also back out with Escape.",
+      "screen": "title",
+      "script": "tests/visual/scripts/title-party.txt",
+      "until": 22
+    },
+    {
+      "id": "pause",
+      "name": "Pause list",
+      "area": "Menus",
+      "try": "A quick start and Escape opened the pause list. Try each entry: resume, save, load, settings, save and quit.",
+      "screen": "title",
+      "script": "playtest/setup/pause.txt"
+    },
+    {
+      "id": "load-screen",
+      "name": "Load screen",
+      "area": "Menus",
+      "try": "A game was saved and quit; this is the load screen. Load the save, look at what each save shows, delete one if you can.",
+      "screen": "title",
+      "script": "playtest/setup/load.txt"
+    },
+    {
+      "id": "character-creation",
+      "name": "Making a character",
+      "area": "Characters",
+      "try": "Make a character from start to finish: name, ancestry, background, scores (try each way of rolling), class choices, feats. Is every step clear? Then start an adventure with them.",
+      "script": "tests/visual/scripts/characters.txt",
+      "until": 73
+    },
+    {
+      "id": "library",
+      "name": "Character library",
+      "area": "Characters",
+      "try": "The Characters screen: your characters, the graveyard. Look at a character's page, edit one, delete one.",
+      "script": "tests/visual/scripts/characters.txt",
+      "until": 53
+    },
+    {
+      "id": "first-look",
+      "name": "First look at the map",
+      "area": "Exploring",
+      "try": "Just look: the map, colours, fog, light, tokens, the panels around the edge. What is hard to read, ugly or confusing? Anything that should not be there?"
+    },
+    {
+      "id": "camera",
+      "name": "Camera",
+      "area": "Exploring",
+      "try": "Move the view every way: arrow keys or WASD, right or middle drag, the wheel, the screen edges if on in settings, Home to come back. Left click should never move it. Does following the hero feel right?"
+    },
+    {
+      "id": "walking",
+      "name": "Selecting and walking",
+      "area": "Exploring",
+      "try": "Bob is selected. Pick heroes by clicking their tokens and their cards, walk them around, click walls and places they cannot reach. Do the others follow sensibly?",
+      "script": "tests/visual/scripts/select.txt",
+      "until": 12
+    },
+    {
+      "id": "doors",
+      "name": "Doors",
+      "area": "Exploring",
+      "try": "Click the shut door to the east. Open and shut doors, walk through, see how sight and fog change."
+    },
+    {
+      "id": "chest",
+      "name": "Chests and taking things",
+      "area": "Items",
+      "try": "The leader is walking to the chest in the corner. Look inside, take one thing, take all, put something back.",
+      "script": "tests/visual/scripts/loot.txt",
+      "until": 62
+    },
+    {
+      "id": "gear",
+      "name": "Gear panel",
+      "area": "Items",
+      "try": "The gear panel is open. Put things on and take them off, hold a weapon in each hand, use a potion, give an item to another hero, sort and filter.",
+      "script": "tests/visual/scripts/loot.txt",
+      "until": 11
+    },
+    {
+      "id": "sheet",
+      "name": "Character sheet",
+      "area": "Characters",
+      "try": "The sheet (C). Is what matters biggest? Read every box and tab, switch heroes with the buttons at the top. What is missing that a tabletop sheet has?",
+      "script": "tests/visual/scripts/characters.txt",
+      "until": 21
+    },
+    {
+      "id": "hotbar-idle",
+      "name": "Hotbar between fights",
+      "area": "Hotbar",
+      "try": "Look at the bars at the bottom outside a fight: greyed slots, tooltips on hover, the portrait. Is it useful between fights or in the way?"
+    },
+    {
+      "id": "spellbook",
+      "name": "Spell book and dragging to the bars",
+      "area": "Spells",
+      "try": "The spell book (K) is open on Wynn. Drag spells and actions onto the bars at the bottom, drag slot to slot to swap, drag a slot onto the map to clear it. Switch to Bo and Ana. Does it feel like BG3?",
+      "chapter": "chapters/spell-test",
+      "script": "tests/visual/scripts/spells.txt",
+      "until": 20
+    },
+    {
+      "id": "prepare",
+      "name": "Preparing spells",
+      "area": "Spells",
+      "try": "Wynn prepares a few of her spells. Unprepare one and prepare another. Is it clear how many she can have and which are ready?",
+      "chapter": "chapters/spell-test",
+      "script": "tests/visual/scripts/spells.txt",
+      "until": 20
+    },
+    {
+      "id": "cast-outside-fight",
+      "name": "Casting between fights",
+      "area": "Spells",
+      "try": "Bo's spells are open. Cast Mend on Ana, and try other spells outside a fight. What should and should not be castable here?",
+      "chapter": "chapters/spell-test",
+      "script": "tests/visual/scripts/spells.txt",
+      "until": 133
+    },
+    {
+      "id": "talk",
+      "name": "Talking (visual novel look)",
+      "area": "Story",
+      "try": "Alice walks up to Tamsin and talks. Read, pick replies with the mouse and with number keys, walk away with Escape, talk again. Does it feel like Hades?",
+      "script": "tests/visual/scripts/talk.txt",
+      "until": 12
+    },
+    {
+      "id": "companion",
+      "name": "A companion joins",
+      "area": "Story",
+      "try": "Talk Tamsin round and ask her along. Does she join the party, show on the cards, follow you? Try leaving her behind.",
+      "script": "tests/visual/scripts/talk.txt",
+      "until": 12
+    },
+    {
+      "id": "journal",
+      "name": "Journal",
+      "area": "Story",
+      "try": "Tamsin has joined and the journal (J) is open on her. Read the quests and the companion's approval. Is anything confusing?",
+      "script": "tests/visual/scripts/talk.txt",
+      "until": 193
+    },
+    {
+      "id": "shop",
+      "name": "Shop",
+      "area": "Items",
+      "try": "Trading with Wren in the goblin keep. Sell something, buy something, see prices and coins. Is it clear what you can afford?",
+      "chapter": "chapters/goblin-keep",
+      "script": "tests/visual/scripts/shop.txt",
+      "until": 138
+    },
+    {
+      "id": "camp",
+      "name": "Camp and resting",
+      "area": "Rest",
+      "try": "The camp panel (R) is open. Make camp, take short and long rests, put things in the stash and take them out, break camp.",
+      "script": "tests/visual/scripts/camp.txt",
+      "until": 11
+    },
+    {
+      "id": "cutscene",
+      "name": "Cutscene and a trigger",
+      "area": "Story",
+      "try": "The trigger test chapter opens with a cutscene, then a conversation starts by itself. Watch it all. Can you skip? Is the timing right?",
+      "chapter": "chapters/trigger-test"
+    },
+    {
+      "id": "save-load",
+      "name": "Saving and loading",
+      "area": "Menus",
+      "try": "Save with F5, walk somewhere, open a door, load with F9. Is everything back as it was? Try the save and load buttons too."
+    },
+    {
+      "id": "travel",
+      "name": "Going on to chapter two",
+      "area": "Story",
+      "try": "The fight past the door is won and the party steps on the exit. Watch the move to chapter two. Then load (F9): it should come back to the start of chapter two.",
+      "script": "tests/visual/scripts/travel.txt",
+      "until": 482
+    },
+    {
+      "id": "chapter-two",
+      "name": "Chapter two",
+      "area": "Exploring",
+      "try": "Play chapter two as a player would, as far as it goes.",
+      "chapter": "chapters/chapter-two"
+    },
+    {
+      "id": "keep",
+      "name": "The goblin keep",
+      "area": "Exploring",
+      "try": "Play the goblin keep. Explore, talk, fight, loot. Note anything odd as you go.",
+      "chapter": "chapters/goblin-keep"
+    },
+    {
+      "id": "sneaking",
+      "name": "Sneaking",
+      "area": "Exploring",
+      "try": "In the goblin keep, hide (sneak) and try to get past the guards. Can you see where they look? Is it clear when you are seen?",
+      "chapter": "chapters/goblin-keep"
+    },
+    {
+      "id": "fight",
+      "name": "A whole fight",
+      "area": "Fights",
+      "try": "Alice has walked into the goblin's room and the fight is on. Play it out: move, attack, end turns, watch the goblin's turn. Is it clear whose turn it is and what you can do?",
+      "script": "tests/visual/scripts/fight.txt",
+      "until": 317
+    },
+    {
+      "id": "fight-hud",
+      "name": "The fight screen",
+      "area": "Fights",
+      "try": "Look at everything on screen in the fight: turn order, cards, pips, move bar, tooltips on slots and cards, the log, the chance to hit at the pointer.",
+      "script": "tests/visual/scripts/fight-hud.txt",
+      "until": 92
+    },
+    {
+      "id": "actions",
+      "name": "Every action on the bar",
+      "area": "Fights",
+      "try": "Use each action at least once: strike, dash, defend, help, hide, seek, shove, grapple, interact, ready. Do they do what their tooltip says?",
+      "script": "tests/visual/scripts/fight.txt",
+      "until": 317
+    },
+    {
+      "id": "shared-turn",
+      "name": "Shared turns and picking who acts",
+      "area": "Fights",
+      "try": "Heroes next to each other in the turn order share a turn. Pick who acts by clicking cards and tokens. Is it clear who can act?",
+      "script": "tests/visual/scripts/fight.txt",
+      "until": 317
+    },
+    {
+      "id": "reactions",
+      "name": "Reactions",
+      "area": "Fights",
+      "try": "Walk a hero away from a goblin next to them, and let a goblin walk away from you, to get a reaction offered. Use it or pass. Is the prompt clear and the time fair?",
+      "script": "tests/visual/scripts/fight.txt",
+      "until": 317
+    },
+    {
+      "id": "defeat",
+      "name": "Losing",
+      "area": "Fights",
+      "try": "Let the party lose: stand still and end turns. Look at death saves, the defeat screen and going back.",
+      "script": "tests/visual/scripts/fight.txt",
+      "until": 317
+    },
+    {
+      "id": "loot-body",
+      "name": "Looting the fallen",
+      "area": "Items",
+      "try": "The goblin is down and Alice walks to what it dropped. Look at the pile, take things.",
+      "script": "tests/visual/scripts/loot-fight.txt",
+      "until": 482
+    },
+    {
+      "id": "spell-fight",
+      "name": "A fight with spells",
+      "area": "Spells",
+      "try": "The party walks into a fight with goblins and a hexer. Cast spells from the bars: areas, saves, concentration, focus spells. Is aiming clear? Out of range?",
+      "chapter": "chapters/spell-test",
+      "script": "tests/visual/scripts/spell-fight.txt",
+      "until": 12
+    },
+    {
+      "id": "enemy-ai",
+      "name": "How enemies behave",
+      "area": "Fights",
+      "try": "In the spell fight, watch the goblins and the hexer: who they go for, whether they flee or give up when it goes badly. Anything stupid?",
+      "chapter": "chapters/spell-test",
+      "script": "tests/visual/scripts/spell-fight.txt",
+      "until": 12
+    },
+    {
+      "id": "touch",
+      "name": "Touch screen",
+      "area": "Fights",
+      "try": "Only if you have a touch screen: tap to see a walk and tap again to take it, hold for tooltips, pinch to zoom, drag with a finger.",
+      "script": "tests/visual/scripts/fight.txt",
+      "until": 317
+    },
+    {
+      "id": "create-start",
+      "name": "Create: the package list",
+      "area": "Create",
+      "try": "The start of Create: your packages and the game's own. Is it clear what to do first?",
+      "screen": "create"
+    },
+    {
+      "id": "create-map",
+      "name": "Create: making a map",
+      "area": "Create",
+      "try": "A new adventure is open in Map mode. Paint floors and walls, fill boxes, add lights, doors and objects from kits, layers and floors, undo and redo.",
+      "screen": "create",
+      "script": "tests/visual/scripts/create.txt",
+      "until": 28
+    },
+    {
+      "id": "create-encounters",
+      "name": "Create: placing enemies",
+      "area": "Create",
+      "try": "Encounters mode on the map just drawn. Place creatures, group them, set their behaviour and loot.",
+      "screen": "create",
+      "script": "tests/visual/scripts/create.txt",
+      "until": 174
+    },
+    {
+      "id": "create-playtest",
+      "name": "Create: playtesting your adventure",
+      "area": "Create",
+      "try": "The new adventure is saved. Press Playtest, play it, Escape back to Create. Does the round trip work?",
+      "screen": "create",
+      "script": "tests/visual/scripts/create.txt",
+      "until": 264
+    },
+    {
+      "id": "create-dialogue",
+      "name": "Create: writing a conversation",
+      "area": "Create",
+      "try": "Dialogue mode on the goblin keep's Tobb. Write lines and replies, add a skill check, make a new conversation.",
+      "screen": "create",
+      "script": "tests/visual/scripts/create-dialogue.txt",
+      "until": 44
+    },
+    {
+      "id": "create-story",
+      "name": "Create: the story graph",
+      "area": "Create",
+      "try": "Story mode on the goblin keep. Take suggestions, link nodes, see how the chapter's story fits together.",
+      "screen": "create",
+      "script": "tests/visual/scripts/create-story.txt",
+      "until": 44
+    },
+    {
+      "id": "create-cutscene",
+      "name": "Create: cutscenes",
+      "area": "Create",
+      "try": "Cutscene mode on the keep's ending. Play it, add and move steps (camera, caption, title, fade), add a trigger.",
+      "screen": "create",
+      "script": "tests/visual/scripts/create-cutscene.txt",
+      "until": 44
+    },
+    {
+      "id": "create-compendium",
+      "name": "Create: items, creatures and spells",
+      "area": "Create",
+      "try": "Compendium mode. Edit an item, a creature, a spell; add a new one; look at the errors list.",
+      "screen": "create",
+      "script": "tests/visual/scripts/create-compendium.txt",
+      "until": 44
+    },
+    {
+      "id": "anything-else",
+      "name": "Anything else",
+      "area": "Everything",
+      "try": "Play freely from the title and note anything this list did not cover. Use Problem once per thing, or write it all in one note.",
+      "screen": "title"
+    }
+  ]
+}

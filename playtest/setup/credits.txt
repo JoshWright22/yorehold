@@ -1,0 +1,4 @@
+# playtest setup, title: open the credits
+40 button Credits
+41 down left
+42 up left

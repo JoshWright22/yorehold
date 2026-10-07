@@ -1,0 +1,4 @@
+# playtest setup, title: open Settings
+40 button Settings
+41 down left
+42 up left

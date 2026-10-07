@@ -308,8 +308,27 @@ public partial class MenuScreen : CanvasLayer
             _picked = _list.FindIndex(e => e.Enabled);
         }
 
-        string signature = Showing + "|" + string.Join("|", _list.Select(e => $"{e.Id}={e.Label}={e.Fact}={e.Enabled}"));
-        if (signature != _listShown)
+        // the rows are only made again when other entries are listed; a changed fact or label is
+        // written into the row there, so a click that lands while the page settles isn't lost
+        string signature = Showing + "|" + string.Join("|", _list.Select(e => e.Id));
+        if (signature == _listShown)
+        {
+            for (int i = 0; i < _buttons.Count; i++)
+            {
+                Entry entry = _list[i];
+                _buttons[i].Text = entry.Label;
+                _buttons[i].GetChild<Label>(0).Text = entry.Fact;
+                if (entry.Enabled)
+                {
+                    _buttons[i].RemoveThemeColorOverride("font_color");
+                }
+                else
+                {
+                    _buttons[i].AddThemeColorOverride("font_color", Palette.Slate);
+                }
+            }
+        }
+        else
         {
             _listShown = signature;
             foreach (Button old in _buttons)

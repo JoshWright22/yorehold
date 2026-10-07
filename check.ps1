@@ -8,6 +8,9 @@
 #                            -Chapter chapters\goblin-keep plays that chapter instead of the scene's
 #                            -Screen title starts the run on the title, -Screen create in Create
 #                            (default: play, straight into the game)
+#   .\check.ps1 -Playtest fight   sets up that test from playtest\queue.json off screen like
+#                            playtest.ps1 would, playtest window and all, and saves
+#                            ..\.dev\playtest-fight.png a second and a half after its setup ends
 # Exit code 0 and ALL OK = all good. Full output is in ..\.dev\godot-build.log, -test.log, -run.log,
 # -shot.log.
 
@@ -17,8 +20,38 @@ param(
     [int]$Frames = 300,
     [string]$Script,
     [string]$Chapter,
-    [string]$Screen = 'play'
+    [string]$Screen = 'play',
+    [string]$Playtest
 )
+
+# The screenshot runs to make: the one -Shot asks for, or one per playtest (-Playtest all for every one).
+$runs = @()
+if ($Playtest) {
+    $queueFile = Join-Path $PSScriptRoot 'playtest\queue.json'
+    $items = @((Get-Content $queueFile -Raw | ConvertFrom-Json).items)
+    if ($Playtest -ne 'all') { $items = @($items | Where-Object { $_.id -eq $Playtest }) }
+    if ($items.Count -eq 0) { Write-Host "FAIL: no test called $Playtest in playtest\queue.json"; exit 2 }
+    $results = Join-Path (Join-Path (Split-Path $PSScriptRoot -Parent) '.dev') 'playtest-check.jsonl'
+    foreach ($item in $items) {
+        # without an until the whole script is the setup: its last frame
+        $until = if ($item.until) { [int]$item.until }
+                 elseif ($item.script) { (Get-Content (Join-Path $PSScriptRoot $item.script) | Where-Object { $_ -match '^\d+' } | ForEach-Object { [int]($_ -split ' ')[0] } | Measure-Object -Maximum).Maximum }
+                 else { 0 }
+        $extra = @('--playtest', $item.id, '--queue', "`"$queueFile`"", '--results', "`"$results`"", '--number', 'check')
+        if ($item.until) { $extra += @('--until', "$until") }
+        $runs += @{
+            Shot = if ($Shot -and $items.Count -eq 1) { $Shot } else { "playtest-$($item.id).png" }
+            Frames = if ($PSBoundParameters.ContainsKey('Frames')) { $Frames } else { $until + 90 }
+            Script = if ($item.script) { Join-Path $PSScriptRoot $item.script } else { '' }
+            Chapter = if ($item.chapter) { $item.chapter } else { '' }
+            Screen = if ($item.screen) { $item.screen } else { 'play' }
+            Extra = $extra
+        }
+    }
+}
+elseif ($Shot) {
+    $runs += @{ Shot = $Shot; Frames = $Frames; Script = $Script; Chapter = $Chapter; Screen = $Screen; Extra = @() }
+}
 
 $ErrorActionPreference = 'Continue'
 $root = $PSScriptRoot
@@ -68,18 +101,19 @@ foreach ($startOn in 'title', 'play', 'create') {
 }
 Write-Host 'run ok'
 
-if ($Shot) {
-    $shotPath = if ([IO.Path]::IsPathRooted($Shot)) { $Shot } else { Join-Path $dev $Shot }
+foreach ($run in $runs) {
+    $shotPath = if ([IO.Path]::IsPathRooted($run.Shot)) { $run.Shot } else { Join-Path $dev $run.Shot }
     Remove-Item $shotPath -ErrorAction SilentlyContinue
     # A real window, because headless draws nothing. It sits far off screen so it never gets in the
     # way, and the fixed frame rate makes the same script give the same run every time.
     $arguments = @('--path', "`"$root`"", '--windowed', '--position', '-4000,-4000', '--resolution', '1280x720',
-        '--fixed-fps', '60', '--', '--shot', "`"$shotPath`"", '--frames', "$Frames", '--screen', $Screen)
-    if ($Script) {
-        if (-not (Test-Path $Script)) { Write-Host "FAIL: script not found: $Script"; exit 1 }
-        $arguments += @('--script', "`"$((Resolve-Path $Script).Path)`"")
+        '--fixed-fps', '60', '--', '--shot', "`"$shotPath`"", '--frames', "$($run.Frames)", '--screen', $run.Screen)
+    if ($run.Script) {
+        if (-not (Test-Path $run.Script)) { Write-Host "FAIL: script not found: $($run.Script)"; exit 1 }
+        $arguments += @('--script', "`"$((Resolve-Path $run.Script).Path)`"")
     }
-    if ($Chapter) { $arguments += @('--chapter', ($Chapter -replace '\\', '/')) }
+    if ($run.Chapter) { $arguments += @('--chapter', ($run.Chapter -replace '\\', '/')) }
+    $arguments += $run.Extra
     $shotLog = Join-Path $dev 'godot-shot.log'
     $p = Start-Process $godot -ArgumentList $arguments -PassThru -WindowStyle Hidden `
         -RedirectStandardOutput $shotLog -RedirectStandardError "$shotLog.err"

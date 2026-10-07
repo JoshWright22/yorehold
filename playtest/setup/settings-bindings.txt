@@ -1,0 +1,7 @@
+# playtest setup, title: open Settings on its Keys tab
+40 button Settings
+41 down left
+42 up left
+90 button Keys
+91 down left
+92 up left
