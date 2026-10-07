@@ -17,6 +17,9 @@ What the port reads so far, and where it differs:
   `portraits/<creature id>.png`, and a hero's show `portraits/<class name in lower case>.png`. Any
   size, square is best; small pixel art is drawn sharp. Paths are taken from the game's content root
   only for now, not from the chapter folder. With no picture the disc and initial are drawn as before.
+  The shipped faces are CC0 tiles from Dungeon Crawl Stone Soup moved onto CC-29; which tile each
+  one is and where it came from is in `portraits/CREDITS.txt`. A writer's own picture replaces one
+  by using the same file name or naming another in `token.image`.
 - Content is read from folders. `.yore` archives, the library, packing and the tools named under
   "Validate, export and load" are not ported yet.
 - A chapter's `ruleset` is a folder or a file. The framework's built-in `modern` and `classic` sets are

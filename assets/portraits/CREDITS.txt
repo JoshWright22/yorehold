@@ -1,0 +1,14 @@
+The faces here are tiles from Dungeon Crawl Stone Soup, released under CC0 (public domain):
+https://github.com/crawl/crawl/tree/master/crawl-ref/source/rltiles
+https://opengameart.org/content/dungeon-crawl-32x32-tiles
+
+Every pixel was moved to the nearest CC-29 colour and set on a flat palette background.
+
+barbarian.png    mon/unique/rupert.png
+cleric.png       mon/unique/edmund.png
+commoner.png     mon/humanoids/humans/human.png
+fighter.png      mon/unique/terence.png
+goblin.png       mon/humanoids/goblin.png
+goblin-boss.png  mon/humanoids/hobgoblin.png
+rogue.png        mon/unique/sonja.png
+wizard.png       mon/humanoids/humans/arcanist.png

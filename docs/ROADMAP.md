@@ -88,7 +88,7 @@ builds, passes `check.ps1` and is committed.
 	tooltips on every action. Our own art and names, the same arrangement and feel.
   - Default: the panels are styled by `scenes/hud/hud-theme.tres` (flat dark boxes, a 1 px warm trim). The pixel art in `assets/ui` is the C++ client's purple theme and isn't used here.
   - Default: action icons are plain shapes picked by `assets/ui/action-icons.json`, conditions are two-letter badges. Art replaces them later.
-  - Default: portraits and tokens show a face from `assets/portraits/` (by creature id, or a hero's class), see CONTENT.md. The eight shipped ones are 32 px stand-ins drawn in CC-29; a hero has no picture of their own yet, only their class's.
+  - Default: portraits and tokens show a face from `assets/portraits/` (by creature id, or a hero's class), see CONTENT.md. The eight shipped ones are CC0 Dungeon Crawl Stone Soup tiles (32 px) moved onto CC-29 until there is art of our own; a hero has no picture of their own yet, only their class's.
   - Default: the hotbar stays along the bottom between fights with the selected hero's portrait, its slots greyed ("Used in a fight") and no End Turn; a conversation or a cutscene takes it away. The menu is a column down the right edge so the turn order has the top of the screen.
   - Default: panels are styled like the website (ink, iron lines, bone text, one straw accent, sans faces from the system: Inter Tight if installed, else Segoe UI, Arial for entry text), all still CC-29. The fonts are not shipped with the game yet.
   - Not working, and it wasn't before this either: `tests/visual/scripts/loot.txt` ends on `button Pack`, which isn't there once the chest is empty.
