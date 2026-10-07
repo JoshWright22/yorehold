@@ -36,6 +36,9 @@ public partial class CharacterScreen : CanvasLayer
     private HBoxContainer _buttons = null!;
     private SheetView _sheet = null!;
     private Control _root = null!;
+    private PortraitView _face = null!;
+    private Label _faceName = null!;
+    private Label _faceLine = null!;
     private DataPanel _library = null!;
     private string _libraryShown = "";
 
@@ -70,6 +73,18 @@ public partial class CharacterScreen : CanvasLayer
         _buttons = GetNode<HBoxContainer>("Root/Left/Rows/Buttons");
         _sheet = GetNode<SheetView>("Root/Sheet");
         _root = GetNode<Control>("Root");
+        // the character large between the steps and the sheet: who is being made, not just numbers
+        var faceColumn = new VBoxContainer { CustomMinimumSize = new Vector2(260, 0) };
+        faceColumn.AddThemeConstantOverride("separation", 8);
+        _face = new PortraitView { CustomMinimumSize = new Vector2(260, 260), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _faceName = new Label { ThemeTypeVariation = "TitleLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center };
+        _faceName.AddThemeFontSizeOverride("font_size", 22);
+        _faceLine = new Label { ThemeTypeVariation = "DimLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center };
+        faceColumn.AddChild(_face);
+        faceColumn.AddChild(_faceName);
+        faceColumn.AddChild(_faceLine);
+        _root.AddChild(faceColumn);
+        _root.MoveChild(faceColumn, 1);
         _library = GetNode<DataPanel>("Library");
         _library.ClosePressed += Close;
         _library.SourcePicked += id =>
@@ -207,10 +222,57 @@ public partial class CharacterScreen : CanvasLayer
                 DrawDraft();
                 break;
         }
+        ShowFace();
         _problem.Visible = _problem.Text.Length > 0;
         _notice.Text = _noticeText;
         _notice.Visible = _noticeText.Length > 0;
         _notice.ThemeTypeVariation = _noticeBad ? "WarnLabel" : "DimLabel";
+    }
+
+    // The draft's or the picked seat's character: its picture from the content or an art pack by
+    // race and class, its name and what it is. The game draws none of its own: without a picture
+    // it is the disc and initial the map uses.
+    private void ShowFace()
+    {
+        CharacterChoices? choices = Showing == View.Draft ? _draft?.Choices
+            : Showing == View.Party && _seat < _seats.Count ? _seats[_seat]?.Choices : null;
+        string name, race, classId;
+        int level;
+        if (choices != null)
+        {
+            name = choices.Name.Trim().Length > 0 ? choices.Name.Trim() : "New character";
+            race = choices.Race;
+            classId = choices.Levels.Count > 0 ? choices.Levels[^1].ClassId : "";
+            level = choices.Level;
+        }
+        else if (Showing == View.Party && _world != null && _seat < _world.Chapter.Party.Count)
+        {
+            PartyMember member = _world.Chapter.Party[_seat];
+            bool making = _makeAtStart.Contains(_seat);
+            name = making ? $"Seat {_seat + 1}" : member.Name;
+            race = "";
+            classId = making ? "" : member.ClassId;
+            level = _world.Chapter.Level;
+        }
+        else
+        {
+            return;
+        }
+        ContentFiles? files = _world?.Files;
+        Texture2D? picture = null;
+        foreach (string path in new[] { $"portraits/{race}-{classId}.png", $"portraits/{classId}.png", $"portraits/{race}.png" })
+        {
+            if (!path.Contains("/-") && !path.EndsWith("-.png", StringComparison.Ordinal) && !path.EndsWith("/.png", StringComparison.Ordinal)
+                && PlayerArt.Texture(files, path) is Texture2D found)
+            {
+                picture = found;
+                break;
+            }
+        }
+        _face.Show(name, Palette.Leather, false, picture);
+        _faceName.Text = name;
+        string raceName = race.Length > 0 ? char.ToUpperInvariant(race[0]) + race[1..] + " " : "";
+        _faceLine.Text = classId.Length > 0 ? $"Level {level} {raceName}{ClassName(classId)}" : "picks once the adventure starts";
     }
 
     private void ViewTabs()

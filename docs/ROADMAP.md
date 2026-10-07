@@ -435,9 +435,15 @@ reopened (`playtest.ps1 -Problems`).
   - Not done: the adventure's picture (adventures have no cover yet; U8), and the lobby still
     has the character screen's look rather than the band (`.dev\p7-seats.png`). Every seat says
     "you" until seats have owners online.
-- [ ] **U7. Character creation visuals** (`character-creation`). The hero's picture large in the
+- [x] **U7. Character creation visuals** (`character-creation`). The hero's picture large in the
   middle (from art packs by race and class, or picked from the player's own pictures), the steps
   down one side, what each pick gives shown beside it, as in BG3.
+  - Default: a 260 px square picture between the steps and the sheet, with the name and "Level 1
+    Dwarf Fighter" under it, in creation and the lobby. It is `portraits/<race>-<class>.png`,
+    else `<class>.png`, else `<race>.png`, from content or art packs; else the disc and initial.
+    What each pick gives is the sheet on the right, rebuilt after every click (`.dev\p7-scores.png`).
+  - Not done: picking a picture of the player's own for a character; that needs a picture field
+    on character files (format change) and a way to choose one.
 - [ ] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
   by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
   length, made by.
