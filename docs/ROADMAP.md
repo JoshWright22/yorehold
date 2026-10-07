@@ -212,7 +212,7 @@ run again or done by hand:
 ```text
 book.pdf / .txt / .md
   1 read      import/source.json + import/pictures/   pages, text blocks, pictures; no guessing
-  2 outline   import/outline.json                     who, where, what happens; the story model
+  2 outline   import/outline.json                     who, where, what happens; the story model (server)
   3 review    Create > Import                         the writer takes, changes or drops each card
   4 build     the package's normal content files      deterministic; the same outline gives the same files
   5 refine    Create's other modes, Playtest
@@ -256,10 +256,21 @@ Rules for all of it:
   the map, and the numbers give each place its spot on it. A plain paper ground around a figure
   is made see-through (off by a switch). Source system tables in `import/systems/`.
 - [ ] **S5. The story model.** `IStoryModel` with one request shape: a chunk of `source.json`
-  and the outline so far in, outline entries out, checked against the outline's own reader.
-  First a service on this computer (Ollama's address, model named in settings), then
-  `yorehold-server` with the same request. Prompts are files in `assets/import/`. Tests use a
-  stand-in; a run with no model still does S1 and S4 and leaves the cards to fill by hand.
+  (with the page pictures, for a model that can see them) and the outline so far in, outline
+  entries out, checked against the outline's own reader. The main path is `yorehold-server`
+  sending the request to large models on rented GPUs; a service on this computer (Ollama's
+  address, model named in settings) is an option for writers who want it offline. Prompts are
+  files in `assets/import/`. Tests use a stand-in; a run with no model still does S1 and S4 and
+  leaves the cards to fill by hand.
+  - Josh, 10/7: needing the server and GPU clusters is fine for this; it may be a paid feature
+    with use limited per account.
+- [ ] **S5b. Import on the server, metered.** A `yorehold-server` module takes the request, queues
+  it, runs it on the GPU backend and returns outline entries, so the game never holds a model
+  key. Each account has an allowance (pages a month, data in the server's config) with a paid
+  tier as a flag; the game shows what is left before a run and says plainly when it is used up.
+  Only the book's text blocks and pictures are sent, never the user's other files, and the server
+  keeps nothing after the reply. Blocked on picking the GPU provider and prices, which is Josh's
+  call; until then the module runs against the stand-in.
 - [ ] **S6. Create > Import.** Pick a file, watch the stages, then the outline as a data panel:
   a tab per kind, the entry on the right as a book page with its source words and its picture
   (picked from the book's pictures), chips for invented, unplaced and dropped. Build writes the
@@ -267,4 +278,5 @@ Rules for all of it:
   screen for check runs.
 - [ ] **S7. The book's map under the editor.** Map mode shows the book's map picture under the
   cells, moved and sized by hand until its grid meets the editor's, so rooms are traced rather
-  than guessed. Later: find the grid and the open floor from the picture.
+  than guessed. Later: the server's model reads the grid, walls and doors off the picture and
+  proposes the rooms, which the writer checks over the picture.
