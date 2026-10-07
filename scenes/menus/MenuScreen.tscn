@@ -33,7 +33,7 @@ offset_top = 52.0
 offset_right = 464.0
 offset_bottom = 104.0
 theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(0.8275, 0.6275, 0.4078, 1)
+theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
 theme_override_font_sizes/font_size = 38
 text = "YOREHOLD"
 
@@ -52,7 +52,7 @@ offset_top = 134.0
 offset_right = 1216.0
 offset_bottom = 135.0
 mouse_filter = 2
-color = Color(0.6549, 0.4824, 0.3569, 1)
+color = Color(0.2706, 0.2667, 0.3098, 1)
 
 [node name="Heading" type="Label" parent="Title"]
 layout_mode = 0

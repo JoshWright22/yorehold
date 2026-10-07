@@ -8,7 +8,7 @@ namespace Yorehold;
 /// </summary>
 public partial class PortraitView : Control
 {
-    [Export] public Color Back { get; set; } = Palette.Night;
+    [Export] public Color Back { get; set; } = Palette.Iron;
 
     private string _name = "";
     private Color _color = Palette.Smoke;

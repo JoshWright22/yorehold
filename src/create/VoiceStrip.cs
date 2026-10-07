@@ -40,6 +40,6 @@ public partial class VoiceStrip : Control
             float from = (float)(word.Start / length) * Size.X, to = (float)(word.End / length) * Size.X;
             DrawRect(new Rect2(from + 1, 3, Math.Max(2, to - from - 2), Size.Y - 6), Palette.Faded(ColorOf(word, _flagBelow), 0.6f));
         }
-        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Leather, false, 1);
+        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Iron, false, 1);
     }
 }

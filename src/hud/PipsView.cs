@@ -6,7 +6,7 @@ namespace Yorehold;
 public partial class PipsView : Control
 {
     [Export] public Color Full { get; set; } = Palette.Leaf;
-    [Export] public Color Spent { get; set; } = Palette.Night;
+    [Export] public Color Spent { get; set; } = Palette.Iron;
     [Export] public Color Rim { get; set; } = Palette.Ink;
     [Export] public float PipSize { get; set; } = 16;
     [Export] public float Gap { get; set; } = 4;

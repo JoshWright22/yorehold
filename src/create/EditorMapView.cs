@@ -319,7 +319,7 @@ public partial class EditorMapView : Control
             }
         }
         DrawRect(new Rect2(ToLocal(Vector2.Zero), world * Zoom), Palette.Smoke, false, 1);
-        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Leather, false, 1);
+        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Iron, false, 1);
     }
 
     private void Edge(Cell inside, Cell other, Vector2 from, Vector2 to)

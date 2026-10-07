@@ -6,20 +6,21 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The bbcode for an entry laid out like a page of a rule book: the name big in rust, a line of
-/// what it is in italics, a rule, the numbers as bold labels, then the words. Ink on sand, from
-/// the palette.
+/// The bbcode for an entry laid out like a page of a rules site: the name big in bone, a line of
+/// what it is in italics, a rule, the numbers as bold labels, then the words. Ash on ink, from
+/// the palette, the same as the website's entries.
 /// </summary>
 public sealed class BookPage
 {
     private readonly StringBuilder _text = new();
 
-    private static string Rust => Palette.Hex(Palette.Rust);
-    private static string Faint => Palette.Hex(Palette.Leather);
+    private static string Bright => Palette.Hex(Palette.Bone);
+    private static string Line => Palette.Hex(Palette.Iron);
+    private static string Faint => Palette.Hex(Palette.Smoke);
 
     public BookPage Title(string name)
     {
-        _text.Append($"[font_size=22][color={Rust}][b]{Escape(name)}[/b][/color][/font_size]\n");
+        _text.Append($"[font_size=22][color={Bright}][b]{Escape(name)}[/b][/color][/font_size]\n");
         return this;
     }
 
@@ -34,7 +35,7 @@ public sealed class BookPage
 
     public BookPage Rule()
     {
-        _text.Append($"[hr color={Rust} height=2 width=100%]\n");
+        _text.Append($"[hr color={Line} height=1 width=100%]\n");
         return this;
     }
 
@@ -43,7 +44,7 @@ public sealed class BookPage
     {
         if (value.Length > 0)
         {
-            _text.Append($"[b]{Escape(label)}[/b] {Value(value)}\n");
+            _text.Append($"[color={Bright}][b]{Escape(label)}[/b][/color] {Value(value)}\n");
         }
         return this;
     }
@@ -51,7 +52,7 @@ public sealed class BookPage
     /// <summary>Several stats on one line, apart.</summary>
     public BookPage Stats(params (string Label, string Value)[] stats)
     {
-        List<string> parts = stats.Where(s => s.Value.Length > 0).Select(s => $"[b]{Escape(s.Label)}[/b] {Value(s.Value)}").ToList();
+        List<string> parts = stats.Where(s => s.Value.Length > 0).Select(s => $"[color={Bright}][b]{Escape(s.Label)}[/b][/color] {Value(s.Value)}").ToList();
         if (parts.Count > 0)
         {
             _text.Append(string.Join("   ", parts)).Append('\n');
@@ -62,7 +63,7 @@ public sealed class BookPage
     /// <summary>A small heading in capitals, like "ACTIONS".</summary>
     public BookPage Heading(string heading)
     {
-        _text.Append($"[font_size=13][color={Rust}][b]{Escape(heading.ToUpperInvariant())}[/b][/color][/font_size]\n");
+        _text.Append($"[font_size=13][color={Faint}][b]{Escape(heading.ToUpperInvariant())}[/b][/color][/font_size]\n");
         return this;
     }
 

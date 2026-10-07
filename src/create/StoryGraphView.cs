@@ -174,9 +174,9 @@ public partial class StoryGraphView : Control
             {
                 continue;
             }
-            DrawRect(r, Palette.Night);
+            DrawRect(r, Palette.Ink);
             DrawRect(new Rect2(r.Position, new Vector2(6, r.Size.Y)), ColorOf(node.Kind));
-            DrawRect(r, Node == i ? Palette.Straw : Palette.Mauve, false, Node == i ? 2 : 1);
+            DrawRect(r, Node == i ? Palette.Straw : Palette.Slate, false, Node == i ? 2 : 1);
             DrawString(font, r.Position + new Vector2(12, 20), StoryEditor.NameOf(node), HorizontalAlignment.Left, r.Size.X - 18, 14, Palette.Bone);
             string under = StoryEditor.KindName(node.Kind);
             if (node.Ref.Length > 0)
@@ -201,7 +201,7 @@ public partial class StoryGraphView : Control
         }
         string help = Linking ? "Click the node the link goes to, Escape stops" : "Drag nodes to move them, drag the background to look around";
         DrawString(font, new Vector2(10, Size.Y - 10), help, HorizontalAlignment.Left, -1, 12, Palette.Smoke);
-        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Leather, false, 1);
+        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Iron, false, 1);
     }
 
     private (Vector2, Vector2)? Ends(int link)

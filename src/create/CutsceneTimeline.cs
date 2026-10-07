@@ -119,7 +119,7 @@ public partial class CutsceneTimeline : Control
         }
         float at = X(Math.Min(_time, _length));
         DrawLine(new Vector2(at, 0), new Vector2(at, Size.Y), Palette.Bone, 2);
-        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Leather, false, 1);
+        DrawRect(new Rect2(Vector2.Zero, Size), Palette.Iron, false, 1);
     }
 
     private double TimeAt(float x) => Math.Clamp((x - 4) / Math.Max(1, Size.X - 8), 0, 1) * _length;
