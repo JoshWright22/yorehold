@@ -1,7 +1,7 @@
-# playtest setup, title: open Settings on its Keys tab
+# playtest setup, title: open Settings on its Controls group (the keys)
 40 button Settings
 41 down left
 42 up left
-90 button Keys
+90 button Controls
 91 down left
 92 up left

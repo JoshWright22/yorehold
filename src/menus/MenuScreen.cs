@@ -92,10 +92,10 @@ public partial class MenuScreen : CanvasLayer
         _foot = GetNode<Label>("Title/Foot");
         _online = GetNode<Label>("Title/Online");
         _load = new LoadPanel(GetNode<DataPanel>("Load"));
-        _settings = new SettingsPanel(GetNode<DataPanel>("Settings"));
+        _settings = new SettingsPanel(GetNode<Control>("Settings"));
         _credits = new CreditsPanel(GetNode<DataPanel>("Credits"));
         _load.View.ClosePressed += Back;
-        _settings.View.ClosePressed += Back;
+        _settings.Closed += Back;
         _credits.View.ClosePressed += Back;
         _load.LoadPressed += path => Ordered?.Invoke(MenuOrder.LoadSave, path);
         _load.Changed += ReadSaves;
@@ -134,7 +134,7 @@ public partial class MenuScreen : CanvasLayer
         {
             _banner.Read();
         }
-        _banner.Visible = page == Page.Title || (page != Page.Pause && _home == Page.Title);
+        _banner.Visible = page == Page.Title;
         _back.Visible = page != Page.Pause;
         _back.Color = Palette.Ink;
         _creditsLink.Visible = page == Page.Title;

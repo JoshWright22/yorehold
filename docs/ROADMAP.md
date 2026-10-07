@@ -405,9 +405,13 @@ reopened (`playtest.ps1 -Problems`).
     save it would continue, the adventure it would start). Adventure covers join the banner
     when adventures have covers (U8). Test banners: five CC0 paintings from OpenGameArt in the
     art pack `banners-cc0` (`.dev\title.png`).
-- [ ] **U3. Settings** (`settings`). Groups down the left (Display, Sound, Controls, Gameplay,
+- [x] **U3. Settings** (`settings`). Groups down the left (Display, Sound, Controls, Gameplay,
   Account), the group's options on the right with a one-line help under each, a search box.
   No file paths shown. Keys (`keys`) becomes the Controls group.
+  - Default: groups are Display, Gameplay, Camera, Controls and Account; Sound comes with the
+    first sound setting (the game has none yet). Each row's choices are chips on the row itself,
+    pan speed a - and + stepper, keys Change and Shipped. The search looks through every group.
+    Account's Sign-in row has Sign in again and Sync now (`.dev\p11-settings.png`, `p11-keys.png`).
 - [x] **U4. Pause** (`pause`). The world stays drawn and dimmed, "Paused" large, a short column of
   big buttons (Resume, Save, Load, Settings, Leave). No list of small buttons.
   - Default: the world beside the band is drawn as it is, not dimmed: a see-through veil puts
