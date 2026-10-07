@@ -212,11 +212,17 @@ run again or done by hand:
 ```text
 book.pdf / .txt / .md
   1 read      import/source.json + import/pictures/   pages, text blocks, pictures; no guessing
-  2 outline   import/outline.json                     who, where, what happens; the story model (server)
+  2 outline   import/outline.json                     the game's own data shapes, filled from the book (server)
   3 review    Create > Import                         the writer takes, changes or drops each card
   4 build     the package's normal content files      deterministic; the same outline gives the same files
   5 refine    Create's other modes, Playtest
 ```
+
+The outline is not a summary of the book: it is the adventure already in Yorehold's data, the
+creatures, items, chapters, encounters, containers, dialogue, quests, triggers and story graph in
+the shapes their content files have, so the book's ideas are cut down to what the game can hold
+(Josh, 10/7). The only things it holds that a package doesn't are where each entry came from, the
+picture it goes with, maps as rooms and links rather than tiles, and the notes on what didn't fit.
 
 Rules for all of it:
 - The writer's words stay as written. Every outline entry says where it came from (page and the
@@ -240,19 +246,26 @@ Rules for all of it:
   - Default: `box` is only given for real rectangles; a frame drawn as four loose lines isn't seen yet.
   - Default: a JPEG is saved as it is in the file. One in CMYK would not open in the game; none seen yet.
   - Default: the tests write their own PDF. `YOREHOLD_IMPORT_BOOK` and `YOREHOLD_IMPORT_OUT` make the test run read any book into a folder for a look by hand.
-- [ ] **S2. The outline.** `import/outline.json` and its reader with checks: the source system,
-  heroes, creatures, people, places (with the label the book's map gives them and what leads
-  where), fights, things in the way (locks, climbs, jumps) with their numbers, treasure,
-  conversations line by line, passages meant to be read out, and which picture is whose.
-  A sample outline for the tests' book.
+- [ ] **S2. The outline.** `import/outline.json` and its reader. Entries are
+  `{id, kind, data, from, picture}`: `kind` is a content kind (adventure, chapter, creature, item,
+  hero seat, dialogue, quest, trigger, container, encounter, story node, place, link, note);
+  `data` is that kind's own content file shape, so the reader checks it with the game's own
+  loaders and a valid outline is valid content; `from` is the page and quoted words, or
+  `invented`. Two kinds have no file of their own: `place` (a room: label from the book's map,
+  size, what it holds, read-out text) and `link` (between places: open, door, locked door with
+  its key or check, climb, jump). Things the game can't play are `note` entries. A JSON schema
+  per kind is written from the same loaders into `assets/import/schemas/`, so the story model
+  is asked for exactly these shapes. A sample outline for the tests' book.
   - Default: every entry has one id and the model must use ids, not names, after first mention
     (Story2Game's main failure was one key called "Key" and "Metallic Key"). Things in the way
     are written as preconditions and effects (needs a key; opens the door), which is what made
     Story2Game's actions work.
-- [ ] **S3. Building.** `OutlineBuilder`: outline to `content.json`, `adventure.json`, chapters,
-  maps (rooms laid on the grid from the places, their sizes and links; doors and locks as kits),
-  creature and item files (an entry the game already has by name is used, not copied),
-  containers, dialogue files, quests, opening and room text as triggers, `story.json`, portraits.
+- [ ] **S3. Building.** `OutlineBuilder`: since entries already have the files' shapes, building
+  is mostly writing each entry to its file (`content.json`, `adventure.json`, chapters, creatures,
+  items, dialogue, quests, `story.json`, portraits) and turning ids into paths. The real work is
+  maps: rooms laid on the grid from the places, their sizes and links, doors and locks as kits,
+  encounters and containers put in their room, read-out text as room triggers. A creature or item
+  the game already has by name is used, not copied.
   A party seat takes `image` so a book's hero keeps their own picture. The built package passes
   `ContentPackage.Validate` and its fights play out under `AutoPlay`.
   - Default: the model never places tiles; rooms are laid out by code from the outline's sizes
