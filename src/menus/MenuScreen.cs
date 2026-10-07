@@ -36,6 +36,7 @@ public partial class MenuScreen : CanvasLayer
         Load,
         Settings,
         Credits,
+        Adventures,
     }
 
     private sealed record Entry(string Id, string Label, string Fact, bool Enabled, string Why);
@@ -64,6 +65,7 @@ public partial class MenuScreen : CanvasLayer
     private LoadPanel _load = null!;
     private SettingsPanel _settings = null!;
     private CreditsPanel _credits = null!;
+    private AdventuresPanel _adventures = null!;
 
     private readonly List<Entry> _list = new();
     private readonly List<Button> _buttons = new();
@@ -94,6 +96,10 @@ public partial class MenuScreen : CanvasLayer
         _load = new LoadPanel(GetNode<DataPanel>("Load"));
         _settings = new SettingsPanel(GetNode<Control>("Settings"));
         _credits = new CreditsPanel(GetNode<DataPanel>("Credits"));
+        _adventures = new AdventuresPanel(GetNode<DataPanel>("Adventures"));
+        _adventures.View.ClosePressed += Back;
+        _adventures.StartPressed += package => Ordered?.Invoke(MenuOrder.NewAdventure, package);
+        _adventures.CoverPicked += (files, cover) => _banner.Pin(files, cover);
         _load.View.ClosePressed += Back;
         _settings.Closed += Back;
         _credits.View.ClosePressed += Back;
@@ -122,19 +128,25 @@ public partial class MenuScreen : CanvasLayer
         {
             _settings.Opened();
         }
+        if (page == Page.Adventures && Showing != Page.Adventures)
+        {
+            _adventures.Read();
+        }
         Showing = page;
         Visible = page != Page.None;
         _title.Visible = page is Page.Title or Page.Pause;
         _load.View.Visible = page == Page.Load;
         _settings.View.Visible = page == Page.Settings;
         _credits.View.Visible = page == Page.Credits;
-        // the title stands on the players' art; paused, the world stays in view beside the band
-        // (not under a see-through veil, which would put the map in colours off the palette)
+        _adventures.View.Visible = page == Page.Adventures;
+        // the title stands on the players' art, the adventures on the picked one's cover; paused,
+        // the world stays in view beside the band (not under a see-through veil, which would put
+        // the map in colours off the palette)
         if (page == Page.Title)
         {
             _banner.Read();
         }
-        _banner.Visible = page == Page.Title;
+        _banner.Visible = page is Page.Title or Page.Adventures;
         _back.Visible = page != Page.Pause;
         _back.Color = Palette.Ink;
         _creditsLink.Visible = page == Page.Title;
@@ -174,6 +186,9 @@ public partial class MenuScreen : CanvasLayer
                 break;
             case Page.Credits:
                 _credits.Refresh();
+                break;
+            case Page.Adventures:
+                _adventures.Refresh();
                 break;
         }
     }
@@ -282,7 +297,7 @@ public partial class MenuScreen : CanvasLayer
         bool loadable = save != null && save.Problem.Length == 0;
         _list.Add(new Entry("continue", "Continue", loadable ? save!.ChapterTitle : "no save", loadable,
             save == null ? "There is no save yet." : "The save can't be read: " + save.Problem));
-        _list.Add(new Entry("new", "New adventure", _adventure?.Title ?? "", true, ""));
+        _list.Add(new Entry("new", "New adventure", "pick one", true, ""));
         _list.Add(new Entry("quick", "Quick start", "ready-made party", true, ""));
         _list.Add(new Entry("load", "Load", Count(_saves.Count, "save"), _saves.Count > 0, "There is no save yet."));
         _list.Add(new Entry("characters", "Characters", LibraryFact(), true, ""));
@@ -396,7 +411,7 @@ public partial class MenuScreen : CanvasLayer
         switch (entry.Id)
         {
             case "continue": Ordered?.Invoke(MenuOrder.Continue, Places.SaveFile()); break;
-            case "new": Ordered?.Invoke(MenuOrder.NewAdventure, ""); break;
+            case "new": Open(Page.Adventures); break;
             case "quick": Ordered?.Invoke(MenuOrder.QuickStart, ""); break;
             case "characters": Ordered?.Invoke(MenuOrder.Characters, ""); break;
             case "create": Ordered?.Invoke(MenuOrder.Create, ""); break;

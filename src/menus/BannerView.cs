@@ -40,6 +40,21 @@ public partial class BannerView : Control
         QueueRedraw();
     }
 
+    /// <summary>Shows one picture and stays on it (an adventure's cover); null goes back to the players' art.</summary>
+    public void Pin(ContentFiles? files, string picture)
+    {
+        if (picture.Length == 0 || files == null)
+        {
+            Read();
+            return;
+        }
+        _files = files;
+        _pictures.Clear();
+        _pictures.Add(picture);
+        _shown = 0;
+        QueueRedraw();
+    }
+
     public override void _Process(double delta)
     {
         if (_pictures.Count < 2 || !IsVisibleInTree())

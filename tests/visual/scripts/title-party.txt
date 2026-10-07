@@ -3,6 +3,10 @@
 20 button New_adventure
 21 down left
 22 up left
+30 shot .dev/p11-adventures.png
+34 button Start
+35 down left
+36 up left
 50 shot .dev/p11-party.png
 55 key Escape
 56 keyup Escape

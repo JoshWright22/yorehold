@@ -444,9 +444,20 @@ reopened (`playtest.ps1 -Problems`).
     What each pick gives is the sheet on the right, rebuilt after every click (`.dev\p7-scores.png`).
   - Not done: picking a picture of the player's own for a character; that needs a picture field
     on character files (format change) and a way to choose one.
-- [ ] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
+- [x] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
   by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
   length, made by.
+  - Done as New adventure's page: every adventure on the machine (`AdventureLibrary`: the game's,
+    each package in the create folder made there, and imported books) in a list with a tab for
+    each, the picked one's page on the right and its `cover` (new in `adventure.json`) filling the
+    window behind, as osu does. Start opens that adventure's lobby with its package over the
+    game's content. An import's cover is the first of the book's pictures it uses
+    (`.dev\p11-adventures.png`).
+  - Default: covers fill the background rather than a row of small tiles; sections are the tabs
+    (the game's, made here, imported), since there are no worlds or "new" marks yet.
+  - Not done: the playtest's `library` answer was about the character library, which is the
+    data panel it was; Continue and Load of an adventure from a package read only the game's
+    content, so such a save says it can't be loaded until saves remember their package.
 - [x] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
   changes: the actions every hero always has (strike, stride, defend, help, hide, seek, shove,
   grapple, interact, ready) sit in their own group apart from spells and items; and as in BG3

@@ -95,6 +95,24 @@ public class OutlineBuilderTests
     }
 
     [Fact]
+    public void TheLibraryListsTheGamesAdventureAndEveryPackage()
+    {
+        using var scratch = new Scratch();
+        string package = Build(scratch).Package;
+        Outline.Parse("outline.json", SampleOutline.Json).Save(Path.Combine(package, "import"));
+        Directory.CreateDirectory(Path.Combine(scratch.Folder, "broken"));
+        File.WriteAllText(Path.Combine(scratch.Folder, "broken", "adventure.json"), "{\"chapters\": []}");
+
+        List<AdventureListing> listed = AdventureLibrary.List(TestContent.AssetsFolder(), scratch.Folder);
+        Assert.Equal(AdventureLibrary.Game, listed[0].Source);
+        AdventureListing mill = listed.Single(l => l.Package == package);
+        Assert.Equal(("The Old Mill", AdventureLibrary.Imported, "pictures/p1-1.png"), (mill.Name, mill.Source, mill.Adventure!.Cover));
+        AdventureListing broken = listed.Single(l => l.Name == "broken");
+        Assert.True(broken.Adventure == null && broken.Problem.Contains("at least one chapter"), "One that can't be read is listed with why");
+        Assert.True(AdventureLibrary.FilesOf(TestContent.AssetsFolder(), package).Exists("chapters/mill-chapter/chapter.json"));
+    }
+
+    [Fact]
     public void TheSameOutlineGivesTheSameFiles()
     {
         using var first = new Scratch();

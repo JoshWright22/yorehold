@@ -34,9 +34,9 @@
     },
     {
       "id": "seats",
-      "name": "New adventure: picking the party",
+      "name": "New adventure: the adventures and the lobby",
       "area": "Menus",
-      "try": "The seats for a new adventure. Pick ready-made heroes and your own characters, change seats, start, and also back out with Escape.",
+      "try": "New adventure lists every adventure (the game's, ones made in Create, imported books) with the picked one's cover behind. Start one: the lobby's seats default to making a character as it starts. Try a ready-made hero, one of your characters and making one; also back out with Escape.",
       "screen": "title",
       "script": "tests/visual/scripts/title-party.txt",
       "until": 22

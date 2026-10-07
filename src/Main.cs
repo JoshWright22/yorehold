@@ -85,7 +85,8 @@ public partial class Main : Node
                 Play(PlayScreen.StartKind.Continue, text);
                 break;
             case MenuOrder.NewAdventure:
-                Play(PlayScreen.StartKind.Party, "");
+                // text is the picked adventure's package, "" for the game's own
+                Play(PlayScreen.StartKind.Party, "", text);
                 break;
             case MenuOrder.QuickStart:
                 Play(PlayScreen.StartKind.Quick, "");
@@ -124,7 +125,7 @@ public partial class Main : Node
         }
     }
 
-    private void Play(PlayScreen.StartKind kind, string save)
+    private void Play(PlayScreen.StartKind kind, string save, string package = "")
     {
         ClosePlay();
         if (PlayScene == null)
@@ -134,6 +135,21 @@ public partial class Main : Node
         _play = PlayScene.Instantiate<PlayScreen>();
         _play.Start = kind;
         _play.StartSave = save;
+        if (package.Length > 0)
+        {
+            // an adventure made in Create or imported: its package over the game's content, from its first chapter
+            Rules.ContentFiles files = App.Content();
+            files.Add(package);
+            _play.Content = files;
+            try
+            {
+                _play.ChapterFolder = Rules.Adventure.Load(files).ChapterFolders[0];
+            }
+            catch (Rules.ContentException error)
+            {
+                GD.PushWarning($"The adventure in {package} can't be read: {error.Message}");
+            }
+        }
         _play.PauseAsked += () => _menus.Open(MenuScreen.Page.Pause);
         // deferred: it is asked from inside the play screen, which this frees
         _play.TitleAsked += () => Callable.From(() => ToTitle("")).CallDeferred();

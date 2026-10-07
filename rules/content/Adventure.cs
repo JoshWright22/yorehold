@@ -9,6 +9,8 @@ public class Adventure
     public string Id { get; init; } = "";
     public string Title { get; init; } = "";
     public string Description { get; init; } = "";
+    /// <summary>Its picture in the library and behind the title, a content path; empty = none.</summary>
+    public string Cover { get; init; } = "";
     public int MinLevel { get; init; } = 1;
     public int MaxLevel { get; init; } = 20;
     public int RecommendedPartySize { get; init; } = 4;
@@ -42,6 +44,16 @@ public class Adventure
     /// Reads adventure.json and checks it against its chapters: each loads, ids are different,
     /// levels and party sizes fit, and every transition names markers that are on the maps.
     /// </summary>
+    private static string CoverPath(ContentNode cover)
+    {
+        string path = cover.AsText(500);
+        if (path.Length > 0 && !ContentFiles.IsContentPath(path))
+        {
+            throw cover.Fail("is a picture in the content, like pictures/cover.png");
+        }
+        return path;
+    }
+
     public static Adventure Load(ContentFiles files, string folder = "")
     {
         ContentNode j = ContentNode.Read(files, folder.Length == 0 ? "adventure.json" : folder + "/adventure.json");
@@ -80,6 +92,7 @@ public class Adventure
             Id = j.Text("id", ""),
             Title = j.Text("title", ""),
             Description = j.Text("description", ""),
+            Cover = j.Get("cover") is ContentNode cover ? CoverPath(cover) : "",
             MinLevel = minLevel,
             MaxLevel = maxLevel,
             RecommendedPartySize = j.Int("recommendedPartySize", 4, 1, 4),

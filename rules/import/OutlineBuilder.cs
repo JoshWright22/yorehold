@@ -553,6 +553,14 @@ public sealed class OutlineBuilder
         {
             manifest["minLevel"] = level.DeepClone();
         }
+        // its cover in the library: the first of the book's pictures it uses, by page
+        string cover = _pictures.Values.Select(p => p.Target)
+            .OrderBy(p => int.TryParse(System.Text.RegularExpressions.Regex.Match(p, @"/p(\d+)-").Groups[1].Value, out int page) ? page : int.MaxValue)
+            .ThenBy(p => p, StringComparer.Ordinal).FirstOrDefault() ?? "";
+        if (cover.Length > 0)
+        {
+            manifest["cover"] = cover;
+        }
         WriteJson("adventure.json", manifest);
     }
 
