@@ -84,7 +84,7 @@ public sealed class OutlineBuilder
         var layouts = new Dictionary<string, Layout>();
         foreach (string chapter in chapterIds)
         {
-            layouts[chapter] = new Layout(PlacesOf(chapter), LinksWithin(chapter), _report);
+            layouts[chapter] = new Layout(PlacesOf(chapter), LinksWithin(chapter), _report, BookMapSquares(chapters.FirstOrDefault(c => c.Id == chapter)));
         }
         foreach (OutlineEntry link in _outline.OfKind(OutlineKind.Link))
         {
@@ -426,10 +426,55 @@ public sealed class OutlineBuilder
             j["quests"] = "quests.json";
         }
         WriteJson($"{folder}/chapter.json", j);
-        WriteJson($"{folder}/map.json", layout.Map(j["title"]!.GetValue<string>()));
+        JsonObject map = layout.Map(j["title"]!.GetValue<string>());
+        if (chapter?.Text("mapPicture") is { Length: > 0 } bookMap)
+        {
+            if (File.Exists(Path.Combine(_importFolder, bookMap.Replace('/', Path.DirectorySeparatorChar))))
+            {
+                // the book's map under Map mode, over the whole map to start with, for the writer to line up and trace
+                _pictures.TryAdd(bookMap, (bookMap, null));
+                var rows = (JsonArray)map["layers"]![0]!["rows"]!;
+                // lined up with the places put where it draws them; else over the whole map, for the writer to line up
+                map["trace"] = new JsonObject
+                {
+                    ["path"] = bookMap,
+                    ["area"] = layout.TraceArea is (double x, double y, double w, double h)
+                        ? new JsonArray(x, y, w, h)
+                        : new JsonArray(0, 0, rows[0]!.GetValue<string>().Length, rows.Count),
+                };
+            }
+            else
+            {
+                _report.Add(new ReportLine(id, $"its map picture {bookMap} is not in the import folder"));
+            }
+        }
+        WriteJson($"{folder}/map.json", map);
         foreach (string lost in layout.Unreached())
         {
             _report.Add(new ReportLine(lost, "no walk from the start reaches it"));
+        }
+    }
+
+    /// <summary>How many squares across a chapter's map picture is taken to be when places are put where it draws them.</summary>
+    public const double BookMapWidth = 60;
+
+    // the chapter's map picture in squares, BookMapWidth across and as tall as its shape says; null without one
+    private (double Width, double Height)? BookMapSquares(OutlineEntry? chapter)
+    {
+        string file = chapter?.Text("mapPicture") is { Length: > 0 } picture ? Path.Combine(_importFolder, picture.Replace('/', Path.DirectorySeparatorChar)) : "";
+        if (file.Length == 0 || !File.Exists(file))
+        {
+            return null;
+        }
+        try
+        {
+            using FileStream stream = File.OpenRead(file);
+            StbImageSharp.ImageInfo? info = StbImageSharp.ImageInfo.FromStream(stream);
+            return info is { Width: > 0, Height: > 0 } size ? (BookMapWidth, Math.Round(BookMapWidth * size.Height / size.Width, 2)) : null;
+        }
+        catch (Exception error) when (error is IOException or InvalidOperationException or ArgumentException)
+        {
+            return null;
         }
     }
 
@@ -660,9 +705,10 @@ public sealed class OutlineBuilder
         private readonly HashSet<Cell> _taken = new();
         private int _width, _height;
 
-        public Layout(List<OutlineEntry> places, List<OutlineEntry> links, List<ReportLine> report)
+        public Layout(List<OutlineEntry> places, List<OutlineEntry> links, List<ReportLine> report, (double Width, double Height)? mapSquares = null)
         {
             _places = places;
+            _mapSquares = mapSquares;
             Start = places.FirstOrDefault();
             if (Start == null)
             {
@@ -671,7 +717,14 @@ public sealed class OutlineBuilder
                 _places.Add(hall);
                 Start = hall;
             }
-            Place(Start, 1, 1);
+            if (OnBookMap(Start) is (int, int) first)
+            {
+                Place(Start, first.X, first.Y);
+            }
+            else
+            {
+                Place(Start, 1, 1);
+            }
             var pending = new List<OutlineEntry>(links);
             bool progress = true;
             while (progress)
@@ -703,13 +756,63 @@ public sealed class OutlineBuilder
             OutlineEntry previous = Start;
             foreach (OutlineEntry place in _places.Where(p => !_rooms.ContainsKey(p.Id)).ToList())
             {
-                PlaceBeside(previous.Id, place);
-                var link = new OutlineEntry { Id = $"{previous.Id}-{place.Id}", Kind = OutlineKind.Link, Data = new JsonObject { ["from"] = previous.Id, ["to"] = place.Id, ["way"] = "open" } };
-                Join(link, previous.Id, place.Id, report);
-                report.Add(new ReportLine(place.Id, $"no way in is given; joined to {previous.Id} by an open way"));
+                string to = previous.Id;
+                if (OnBookMap(place) is (int, int) spot)
+                {
+                    // where the book's map draws it, joined to the nearest room already down
+                    PlaceNear(place, spot.X, spot.Y);
+                    (int x, int y, int w, int h) = _rooms[place.Id];
+                    to = _rooms.Where(r => r.Key != place.Id)
+                        .OrderBy(r => Math.Pow(r.Value.X + r.Value.W / 2.0 - x - w / 2.0, 2) + Math.Pow(r.Value.Y + r.Value.H / 2.0 - y - h / 2.0, 2))
+                        .ThenBy(r => r.Key, StringComparer.Ordinal).First().Key;
+                }
+                else
+                {
+                    PlaceBeside(previous.Id, place);
+                }
+                var link = new OutlineEntry { Id = $"{to}-{place.Id}", Kind = OutlineKind.Link, Data = new JsonObject { ["from"] = to, ["to"] = place.Id, ["way"] = "open" } };
+                Join(link, to, place.Id, report);
+                report.Add(new ReportLine(place.Id, $"no way in is given; joined to {to} by an open way"));
                 previous = place;
             }
             Normalize();
+        }
+
+        private readonly (double Width, double Height)? _mapSquares;
+
+        /// <summary>Where the book's map picture lies, in the map's squares, once laid out; null without one.</summary>
+        public (double X, double Y, double Width, double Height)? TraceArea { get; private set; }
+
+        // the top-left square that puts a place's middle where its number is on the book's map
+        private (int X, int Y)? OnBookMap(OutlineEntry place)
+        {
+            if (_mapSquares is not (double width, double height) || place.Data["mapAt"] is not JsonArray at)
+            {
+                return null;
+            }
+            (int w, int h) = SizeOf(place);
+            return ((int)Math.Round(at[0]!.GetValue<double>() * width - w / 2.0), (int)Math.Round(at[1]!.GetValue<double>() * height - h / 2.0));
+        }
+
+        // the free spot nearest to x, y, rings out from it
+        private void PlaceNear(OutlineEntry place, int x, int y)
+        {
+            (int w, int h) = SizeOf(place);
+            for (int ring = 0; ring < 200; ring++)
+            {
+                for (int dy = -ring; dy <= ring; dy++)
+                {
+                    for (int dx = -ring; dx <= ring; dx++)
+                    {
+                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) == ring && Fits(x + dx, y + dy, w, h))
+                        {
+                            Place(place, x + dx, y + dy);
+                            return;
+                        }
+                    }
+                }
+            }
+            Place(place, x, _rooms.Values.Max(r => r.Y + r.H) + 2);
         }
 
         // rooms put west or north of the first can sit before 1,1: move everything so the map starts at 0,0
@@ -722,6 +825,10 @@ public sealed class OutlineBuilder
                 top = Math.Min(top, at.Y - 1);
             }
             int dx = -left, dy = -top;
+            if (_mapSquares is (double width, double height))
+            {
+                TraceArea = (dx, dy, width, height);
+            }
             foreach (string id in _rooms.Keys.ToList())
             {
                 (int x, int y, int w, int h) = _rooms[id];

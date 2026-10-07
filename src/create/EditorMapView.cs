@@ -35,6 +35,10 @@ public partial class EditorMapView : Control
     public bool Locked { get; set; }
     /// <summary>The cell under the pointer, if it is over the map.</summary>
     public Cell? Hover { get; private set; }
+    /// <summary>A picture to trace rooms over (a book's map), drawn half see-through over the tiles; its area in squares.</summary>
+    public Texture2D? Trace { get; set; }
+    public Rect2 TraceArea { get; set; }
+    public bool ShowTrace { get; set; } = true;
     /// <summary>Screen pixels per world unit; 0 fits the map at the next draw.</summary>
     public float Zoom { get; private set; }
     /// <summary>The world position at the view's top-left.</summary>
@@ -261,6 +265,12 @@ public partial class EditorMapView : Control
             DrawRect(new Rect2(ToLocal(Vector2.Zero), world * Zoom), Palette.Faded(Palette.Ink, 0.6f));
         }
         DrawFloor(Floor, x0, y0, x1, y1);
+        if (ShowTrace && Trace != null)
+        {
+            var area = new Rect2(ToLocal(TraceArea.Position * Cell), TraceArea.Size * Cell * Zoom);
+            // the palette pass over the view brings the blend back into the palette
+            DrawTextureRect(Trace, area, false, Palette.Faded(Colors.White, 0.55f));
+        }
 
         if (Grid && Cell * Zoom >= 8)
         {

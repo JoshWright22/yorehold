@@ -120,9 +120,25 @@ public partial class MapModePanel : HBoxContainer
         _view.Floor = _floor;
         _view.LowestFloor = editor.Floors().Low;
         _view.ShowMap(editor.Map(), files);
+        if (editor.Trace is MapEditor.MapTrace trace)
+        {
+            Texture2D? picture = PlayerArt.Texture(files(), trace.Path);
+            var area = new Rect2((float)trace.X, (float)trace.Y, (float)trace.Width, (float)trace.Height);
+            if (picture != _view.Trace || area != _view.TraceArea)
+            {
+                _view.Trace = picture;
+                _view.TraceArea = area;
+                _view.QueueRedraw();
+            }
+        }
+        else if (_view.Trace != null)
+        {
+            _view.Trace = null;
+            _view.QueueRedraw();
+        }
         _tools.Build("tools", BuildTools);
         string props = $"{_tool}|{_floor}|{string.Join(",", layers.Select(l => editor.LayerName(l)))}|{editor.Types.Count}|{_light}|"
-            + $"{string.Join(",", editor.Markers.Keys)}|{editor.Kits.Count}|{_view.Atlas?.GetRid()}";
+            + $"{string.Join(",", editor.Markers.Keys)}|{editor.Kits.Count}|{_view.Atlas?.GetRid()}|{editor.Trace != null}";
         _props.Build(props, BuildProps);
     }
 
@@ -215,6 +231,39 @@ public partial class MapModePanel : HBoxContainer
         _props.Act("-H", () => editor.Resize(editor.Width, editor.Height - 1), () => editor.Height > 1, sizeRow);
         _props.Act("+H", () => editor.Resize(editor.Width, editor.Height + 1), () => editor.Height < MapEditor.MaxSide, sizeRow);
         _props.Gap();
+
+        if (editor.Trace != null)
+        {
+            // the book's map: moved half a square at a time and sized a twentieth at a time until its grid meets the editor's
+            HBoxContainer traceRow = _props.Row();
+            _props.Live(() => "BOOK MAP", "TitleLabel", traceRow).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _props.Toggle("Show", () => _view.ShowTrace, () =>
+            {
+                _view.ShowTrace = !_view.ShowTrace;
+                _view.QueueRedraw();
+            }, traceRow, "ChipButton");
+            void Move(double dx, double dy, double grow)
+            {
+                MapEditor.MapTrace t = editor.Trace!;
+                editor.SetTrace(t with
+                {
+                    X = t.X + dx - t.Width * grow / 2,
+                    Y = t.Y + dy - t.Height * grow / 2,
+                    Width = t.Width * (1 + grow),
+                    Height = t.Height * (1 + grow),
+                }, "trace");
+            }
+            HBoxContainer moveRow = _props.Row();
+            _props.Act("Left", () => Move(-0.5, 0, 0), null, moveRow);
+            _props.Act("Right", () => Move(0.5, 0, 0), null, moveRow);
+            _props.Act("Up", () => Move(0, -0.5, 0), null, moveRow);
+            _props.Act("Down", () => Move(0, 0.5, 0), null, moveRow);
+            HBoxContainer growRow = _props.Row();
+            _props.Act("Smaller", () => Move(0, 0, -0.05), null, growRow);
+            _props.Act("Bigger", () => Move(0, 0, 0.05), null, growRow);
+            _props.Act("Fit", () => editor.SetTrace(editor.Trace! with { X = 0, Y = 0, Width = editor.Width, Height = editor.Height }, "trace"), null, growRow);
+            _props.Gap();
+        }
 
         switch (_tool)
         {

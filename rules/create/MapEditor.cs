@@ -43,9 +43,10 @@ public sealed class MapEditor
         public List<Placed> Objects = new();
         public List<EditorLight> Lights = new();
         public SortedDictionary<string, Cell> Markers = new(StringComparer.Ordinal);
+        public MapTrace? Trace;
     }
 
-    private static readonly string[] Owned = { "name", "tiles", "legend", "layers", "tileMap", "objects", "lights", "markers" };
+    private static readonly string[] Owned = { "name", "tiles", "legend", "layers", "tileMap", "objects", "lights", "markers", "trace" };
 
     private readonly History _history;
     private bool _loaded;
@@ -61,6 +62,26 @@ public sealed class MapEditor
     private SortedDictionary<string, Cell> _markers = new(StringComparer.Ordinal);
     private IReadOnlyDictionary<string, Kit> _kits = new Dictionary<string, Kit>();
     private GameMap? _map;
+    private MapTrace? _trace;
+
+    /// <summary>
+    /// A picture to draw rooms over, like a book's map: shown only in Create, never in play. Its
+    /// area is in squares, [x, y, width, height], and may run off the map.
+    /// </summary>
+    public sealed record MapTrace(string Path, double X, double Y, double Width, double Height);
+
+    public MapTrace? Trace => _trace;
+
+    /// <summary>Moves or sizes the trace picture; a drag of steps merges into one undo step.</summary>
+    public bool SetTrace(MapTrace trace, string mergeKey = "")
+    {
+        if (!_loaded || _trace == null || trace == _trace || trace.Width < 1 || trace.Height < 1 || trace.Width > 4 * MaxSide || trace.Height > 4 * MaxSide)
+        {
+            return false;
+        }
+        Edit("Move the traced picture", false, () => _trace = trace, mergeKey);
+        return true;
+    }
 
     public MapEditor(History history)
     {
@@ -169,6 +190,18 @@ public sealed class MapEditor
                 }
             }
 
+            _trace = null;
+            if (node.Get("trace") is ContentNode trace)
+            {
+                trace.Only("path", "area");
+                ContentNode area = trace.At("area");
+                double[] box = area.Items().Select(n => n.AsNumber(-10000, 10000)).ToArray();
+                if (box.Length != 4 || box[2] < 1 || box[3] < 1)
+                {
+                    throw area.Fail("is [x, y, width, height] in squares, at least one square each way");
+                }
+                _trace = new MapTrace(trace.At("path").AsText(500), box[0], box[1], box[2], box[3]);
+            }
             _name = map.Name;
             _tiles = tiles.ToJsonString();
             _types = map.Types;
@@ -203,6 +236,15 @@ public sealed class MapEditor
         foreach (KeyValuePair<string, JsonNode?> field in _rest)
         {
             j[field.Key] = field.Value?.DeepClone();
+        }
+        if (_trace != null)
+        {
+            j["trace"] = new JsonObject
+            {
+                ["path"] = _trace.Path,
+                ["area"] = new JsonArray(JsonValue.Create(Math.Round(_trace.X, 2)), JsonValue.Create(Math.Round(_trace.Y, 2)),
+                    JsonValue.Create(Math.Round(_trace.Width, 2)), JsonValue.Create(Math.Round(_trace.Height, 2))),
+            };
         }
         j["tiles"] = JsonNode.Parse(_tiles);
 
@@ -623,6 +665,7 @@ public sealed class MapEditor
             Objects = new List<Placed>(_objects),
             Lights = new List<EditorLight>(_lights),
             Markers = new SortedDictionary<string, Cell>(_markers, StringComparer.Ordinal),
+            Trace = _trace,
         };
     }
 
@@ -637,6 +680,7 @@ public sealed class MapEditor
         _objects = new List<Placed>(snapshot.Objects);
         _lights = new List<EditorLight>(snapshot.Lights);
         _markers = new SortedDictionary<string, Cell>(snapshot.Markers, StringComparer.Ordinal);
+        _trace = snapshot.Trace;
         _map = null;
     }
 

@@ -364,10 +364,17 @@ Rules for all of it:
   - Default: `check.ps1 -Import <book>` adds `--import` to a screenshot run. Caves of Shadow with
     no model builds and opens with nothing wrong (`.dev\import-caves.png`).
   - Not done: picking the model and seeing its cost before a run; that waits for S5b.
-- [ ] **S7. The book's map under the editor.** Map mode shows the book's map picture under the
+- [x] **S7. The book's map under the editor.** Map mode shows the book's map picture under the
   cells, moved and sized by hand until its grid meets the editor's, so rooms are traced rather
   than guessed. Later: the server's model reads the grid, walls and doors off the picture and
   proposes the rooms, which the writer checks over the picture.
+  - Default: the picture is a map's `trace` field, Create-only, drawn half see-through over the
+    tiles (under them it would be hidden); a layer's painted picture would show in play.
+  - Default: the layout's own reading goes further than tracing by hand: each place's number on
+    the map gives it a spot (`mapAt`), the picture is taken as 60 squares across, places no link
+    reaches go where the book draws them, and the trace is lined up with them. Caves of Shadow
+    with no model comes out as its seven caves in the book's shape (`.dev\import-caves.png`).
+  - Later, as written: the model reading the walls and doors off the picture.
 
 ## U. Game feel (playtest, 10/7)
 

@@ -203,8 +203,12 @@ public sealed class Outline
                 data.Int("level", 1, 1, 20);
                 break;
             case OutlineKind.Chapter:
-                data.Only("title", "intro", "level", "completeWhen");
+                data.Only("title", "intro", "level", "completeWhen", "mapPicture");
                 data.At("title").AsText(200);
+                if (data.Get("mapPicture") is ContentNode mapPicture && !mapPicture.AsText().StartsWith("pictures/", StringComparison.Ordinal))
+                {
+                    throw mapPicture.Fail("is one of the book's pictures, like pictures/p4-1.jpg");
+                }
                 data.Texts("intro");
                 data.Int("level", 1, 1, 20);
                 data.Flags("completeWhen");
@@ -228,7 +232,11 @@ public sealed class Outline
                 }
                 break;
             case OutlineKind.Place:
-                data.Only("name", "label", "size", "readAloud", "description", "dark", "outdoors");
+                data.Only("name", "label", "size", "readAloud", "description", "dark", "outdoors", "mapAt");
+                if (data.Get("mapAt") is ContentNode mapAt && (!mapAt.IsArray || mapAt.Count != 2 || mapAt.Items().Any(n => !n.IsNumber || n.AsNumber() < 0 || n.AsNumber() > 1)))
+                {
+                    throw mapAt.Fail("is where the place's number is on the chapter's map picture, [x, y], each a share from 0 to 1");
+                }
                 data.At("name").AsText(120);
                 data.Text("label", "", 20);
                 ContentNode size = data.At("size");

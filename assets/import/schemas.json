@@ -21,7 +21,8 @@
         "title": {"type": "string"},
         "intro": {"type": "array", "items": {"type": "string"}},
         "level": {"type": "integer", "minimum": 1, "maximum": 20},
-        "completeWhen": {"type": "array", "items": {"type": "string"}}
+        "completeWhen": {"type": "array", "items": {"type": "string"}},
+        "mapPicture": {"type": "string", "description": "the book's map of this chapter, one of its pictures"}
       }
     },
     "hero": {
@@ -188,7 +189,8 @@
         "readAloud": {"type": "array", "items": {"type": "string"}, "description": "the passages the book says to read out, word for word"},
         "description": {"type": "string"},
         "dark": {"type": "boolean"},
-        "outdoors": {"type": "boolean"}
+        "outdoors": {"type": "boolean"},
+        "mapAt": {"type": "array", "items": {"type": "number", "minimum": 0, "maximum": 1}, "minItems": 2, "maxItems": 2, "description": "where its number is on the chapter's map picture, as shares of its width and height"}
       }
     },
     "link": {

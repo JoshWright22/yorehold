@@ -86,6 +86,19 @@ public class BookLayoutTests
         File.WriteAllBytes(Path.Combine(package, "import", "pictures", "p1-1.jpg"), new byte[] { 255, 216 });
         List<string> problems = new OutlineBuilder(again, Path.Combine(package, "import"), TestContent.Shipped()).Build(package);
         Assert.True(problems.Count == 0, string.Join("\n", problems));
+
+        // the book's map lies under Map mode, over the whole map, and is moved there like any edit
+        Assert.True(File.Exists(Path.Combine(package, "pictures", "p1-1.jpg")));
+        var history = new History();
+        var editor = new MapEditor(history);
+        Assert.True(editor.Load(File.ReadAllText(Path.Combine(package, "chapters", "chapter-one", "map.json")), out string error), error);
+        MapEditor.MapTrace trace = editor.Trace!;
+        Assert.Equal(("pictures/p1-1.jpg", 0.0, 0.0, (double)editor.Width, (double)editor.Height), (trace.Path, trace.X, trace.Y, trace.Width, trace.Height));
+        Assert.True(editor.SetTrace(trace with { X = 1.5 }, "trace") && editor.SetTrace(editor.Trace! with { X = 2 }, "trace"));
+        Assert.Contains("\"area\": [\n      2,", editor.ToJson().Replace("\r", ""));
+        history.Undo();
+        Assert.True(editor.Trace!.X == 0, "Moving it is one undo step however many presses");
+        Assert.False(editor.SetTrace(trace with { Width = 0 }));
     }
 
     [Theory]

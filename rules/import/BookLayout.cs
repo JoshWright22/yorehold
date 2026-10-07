@@ -157,9 +157,14 @@ public static partial class BookLayout
         var outline = new Outline { Title = title };
         var from = new OutlineSource(book.Pages.FirstOrDefault()?.Number ?? 1, book.Title);
         outline.Entries.Add(new OutlineEntry { Id = "adventure", Kind = OutlineKind.Adventure, Data = new JsonObject { ["title"] = title }, From = from });
-        outline.Entries.Add(new OutlineEntry { Id = "chapter-one", Kind = OutlineKind.Chapter, Data = new JsonObject { ["title"] = title }, From = from });
         List<NumberedPlace> places = Places(book);
         MapPicture? map = FindMap(book, places.Select(p => p.Label).ToList());
+        var chapter = new JsonObject { ["title"] = title };
+        if (map != null)
+        {
+            chapter["mapPicture"] = map.File;
+        }
+        outline.Entries.Add(new OutlineEntry { Id = "chapter-one", Kind = OutlineKind.Chapter, Data = chapter, From = from });
         var used = new HashSet<string>(StringComparer.Ordinal);
         foreach (NumberedPlace place in places)
         {
@@ -173,6 +178,10 @@ public static partial class BookLayout
             if (place.ReadAloud.Count > 0)
             {
                 data["readAloud"] = new JsonArray(place.ReadAloud.Select(t => (JsonNode?)t).ToArray());
+            }
+            if (map != null && map.Labels.TryGetValue(place.Label, out (float X, float Y) at))
+            {
+                data["mapAt"] = new JsonArray(Math.Round(at.X, 3), Math.Round(at.Y, 3));
             }
             outline.Entries.Add(new OutlineEntry { Id = id, Kind = OutlineKind.Place, Data = data, From = new OutlineSource(place.Page, place.Heading) });
             for (int n = 0; n < place.Notes.Count; n++)

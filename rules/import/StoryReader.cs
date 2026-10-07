@@ -168,6 +168,18 @@ public sealed partial class StoryReader
             }
         }
         GivePictures(entries, names);
+        // what the layout found that the model can't see keeps when the model sent the entry again:
+        // a chapter's map picture and where each place's number is on it
+        foreach (OutlineEntry drafted in start.Entries)
+        {
+            foreach (string key in new[] { "mapPicture", "mapAt" })
+            {
+                if (drafted.Data[key] is JsonNode found && entries.FirstOrDefault(e => e["id"]?.ToString() == drafted.Id)?["data"] is JsonObject data && data[key] == null)
+                {
+                    data[key] = found.DeepClone();
+                }
+            }
+        }
         var root = new JsonObject
         {
             ["format"] = Outline.Format,

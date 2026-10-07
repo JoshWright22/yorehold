@@ -254,6 +254,8 @@ Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in
 
 The text rows are an import for maps written by hand. The game keeps every map in the framework's `TileMap` and `Objects` (one `Region` per chapter), and a map can be written that way too: `tiles` as an array (`{"name": "stone", "art": "stone", ...}`, tile id = place in the array + 1) and `tileMap` holding the framework's TileMap JSON (FRAMEWORK.md, "Maps, objects and streamed worlds"; `tileSize` 64) in place of `legend` and `layers`. Only floor 0 layers count for walking and sight for now. `GameMap::toJson` writes a loaded map in this form.
 
+Optional `trace` is a picture to draw rooms over in Create, never shown in play: `{"path": "pictures/p4-1.jpg", "area": [x, y, width, height]}` in squares (it may run off the map). Map mode shows it half see-through over the tiles under BOOK MAP, with Show, Left, Right, Up and Down (half a square), Smaller and Bigger (a twentieth) and Fit (over the whole map); each press is an undo step, a run of them one. An imported chapter gets its book's map here.
+
 Optional `areas` are rectangles of squares that set story flags: `[{"id": "room-mill", "area": [x, y, width, height], "set": ["entered_mill"]}]`. The first time a hero who isn't down stands in one outside a fight, its flags are set; flags set only once, so a trigger waiting on them fires once (a room's passage read out as the party walks in). In a fight they wait until it ends.
 
 `objects` places doors, levers, chests and traps. Each entry is a kit on a cell, `{"kit": "door", "at": [x, y]}`, where any other field changes that copy (`name`, `door`, `lock`, `trap`, `contents`) and `tags` add to the kit's. An entry without `kit` is a whole object in the framework's format, one cell big unless it has an `area`. Kits are one file each in `kits/` at the root or in the chapter's own `kits/` (which wins), named after their id, in the framework's Kit format. The game ships `door`, `locked-door`, `lever`, `chest`, `locked-chest` and `dart-trap`.
@@ -472,14 +474,15 @@ into a package (`rules/import/Outline.cs`; the tests' `SampleOutline.cs` is a wh
   files, see Definitions), `dialogue` (a dialogue file), `quest` (one quest of a quests file). Their
   `id` may be left out; it is the entry's.
 - Kinds that are part of an adventure or chapter: `adventure` (`title`, `description`, `level`; at
-  most one), `chapter` (`title`, `intro`, `level`, `completeWhen`), `hero` (a party seat: `name`,
+  most one), `chapter` (`title`, `intro`, `level`, `completeWhen`, `mapPicture`: the book's map of it), `hero` (a party seat: `name`,
   `class`, `race`, `color`, `image`, `description`), `npc` (`name`, `creature`, `place`, `dialogue`
   as an entry id, `merchant`, `color`), `encounter` (`place`, `creatures`: `[{"creature", "name",
   "count"}]`, `text`, `set`), `container` (`place`, `name`, `items`, `coins`, `locked`, `key`,
   `check`), `trigger` (`when`, `dialogue` as an entry id, `place`).
 - The outline's own kinds, which have no file: `place` (a room or area: `name`, `label` (the number
   the book's map gives it), `size` `[w, h]` in squares, `readAloud` (passages to read out, word for
-  word), `description`, `dark`, `outdoors`), `link` (`from` and `to` places, `way`: `open`, `door`,
+  word), `description`, `dark`, `outdoors`, `mapAt`: where its number is on the chapter's map
+  picture, `[x, y]` as shares of its width and height), `link` (`from` and `to` places, `way`: `open`, `door`,
   `locked`, `secret`, `climb` or `jump`, `key`, `check` `{"skill", "difficulty"}`; a locked one needs
   a key or a check) and `note` (`text`, `place`, `why`: what the game can't play yet).
 - Places, dialogue and chapters named by an entry must be entries. Creatures, items and classes
@@ -498,7 +501,10 @@ the link's check as its lock. The party starts in the first place of the chapter
 to read out joins the chapter's `intro`; every other room's passage is read the first time a hero
 steps in (an area setting `entered_<place>`, a trigger on it and a one-line conversation
 `dialogue/read-<place>.json`). Foes stand on the far side of their room. An NPC with a
-picture gets a creature of its own carrying it. A locked chest is a `locked-chest` map object.
+picture gets a creature of its own carrying it. A locked chest is a `locked-chest` map object. When the chapter has a `mapPicture`, it
+is taken as 60 squares across: a first place with `mapAt` sits where its number is, and a place
+no link reaches sits where its number is too (in the nearest free spot), joined to the nearest
+room by an open way; the picture goes in the map's `trace`, lined up with them.
 Every chapter gets `xpPerVictory` 50. `import/report.json` lists what didn't go in as written:
 `{"format": "yorehold.import-report", "version": 1, "lines": [{"entry", "text"}]}`. The same
 outline always gives the same files.
