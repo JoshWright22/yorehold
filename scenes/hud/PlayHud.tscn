@@ -97,14 +97,15 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="Portrait" type="Control" parent="Bottom/Selected/Rows"]
-custom_minimum_size = Vector2(84, 72)
+custom_minimum_size = Vector2(112, 112)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 4
+size_flags_vertical = 6
 mouse_filter = 2
 script = ExtResource("7")
 
 [node name="Hp" type="ProgressBar" parent="Bottom/Selected/Rows"]
-custom_minimum_size = Vector2(84, 18)
+custom_minimum_size = Vector2(112, 18)
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"HpBar"

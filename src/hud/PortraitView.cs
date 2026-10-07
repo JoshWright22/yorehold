@@ -3,8 +3,9 @@ using Godot;
 namespace Yorehold;
 
 /// <summary>
-/// A creature's face on a card: its picture filling the card, or without one its token, the same
-/// disc and initial as on the map, so a card is easy to match to who it is.
+/// A creature's face on a card: its picture filling a 1:1 square in the middle of the card, or
+/// without one its token, the same disc and initial as on the map, so a card is easy to match to
+/// who it is. Contain (conversations) instead shows the whole picture standing, at its own shape.
 /// </summary>
 public partial class PortraitView : Control
 {
@@ -49,24 +50,38 @@ public partial class PortraitView : Control
 
     public override void _Draw()
     {
-        DrawRect(new Rect2(Vector2.Zero, Size), Back);
-        Vector2 middle = Size / 2;
-        float r = Mathf.Min(Size.X, Size.Y) * 0.42f;
+        if (!Contain)
+        {
+            // a face is always 1:1: the biggest square in the middle of whatever box it is given
+            float side = Mathf.Floor(Mathf.Min(Size.X, Size.Y));
+            DrawSetTransform(((Size - new Vector2(side, side)) / 2).Floor(), 0, Vector2.One);
+            DrawFace(new Vector2(side, side));
+            DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+            return;
+        }
+        DrawFace(Size);
+    }
+
+    private void DrawFace(Vector2 size)
+    {
+        DrawRect(new Rect2(Vector2.Zero, size), Back);
+        Vector2 middle = size / 2;
+        float r = Mathf.Min(size.X, size.Y) * 0.42f;
         if (Contain)
         {
             // standing on the bottom edge like a picture would, not floating in the middle
-            middle = new Vector2(Size.X / 2, Size.Y - r - 4);
+            middle = new Vector2(size.X / 2, size.Y - r - 4);
         }
         Color color = _down ? Palette.Slate : _color;
         if (_picture != null && Contain)
         {
             Vector2 whole = _picture.GetSize();
-            float fit = Mathf.Min(Size.X / whole.X, Size.Y / whole.Y);
+            float fit = Mathf.Min(size.X / whole.X, size.Y / whole.Y);
             Vector2 drawn = whole * fit;
-            var at = new Rect2(new Vector2((Size.X - drawn.X) / 2, Size.Y - drawn.Y), drawn);
+            var at = new Rect2(new Vector2((size.X - drawn.X) / 2, size.Y - drawn.Y), drawn);
             if (Flip)
             {
-                DrawSetTransform(new Vector2(Size.X, 0), 0, new Vector2(-1, 1));
+                DrawSetTransform(new Vector2(size.X, 0), 0, new Vector2(-1, 1));
             }
             DrawTextureRect(_picture, at, false, _down ? Palette.Slate : Colors.White);
             DrawSetTransform(Vector2.Zero, 0, Vector2.One);
@@ -75,11 +90,11 @@ public partial class PortraitView : Control
         {
             // the picture covers the card: its middle is kept and what sticks out is cut off
             Vector2 whole = _picture.GetSize();
-            float scale = Mathf.Max(Size.X / whole.X, Size.Y / whole.Y);
-            Vector2 part = Size / scale;
-            DrawTextureRectRegion(_picture, new Rect2(Vector2.Zero, Size), new Rect2((whole - part) / 2, part), _down ? Palette.Slate : Colors.White);
+            float scale = Mathf.Max(size.X / whole.X, size.Y / whole.Y);
+            Vector2 part = size / scale;
+            DrawTextureRectRegion(_picture, new Rect2(Vector2.Zero, size), new Rect2((whole - part) / 2, part), _down ? Palette.Slate : Colors.White);
             // the token's colour along the bottom ties the card to the disc on the map
-            DrawRect(new Rect2(0, Size.Y - 3, Size.X, 3), color);
+            DrawRect(new Rect2(0, size.Y - 3, size.X, 3), color);
         }
         else
         {
@@ -89,10 +104,10 @@ public partial class PortraitView : Control
         if (_picture == null && _name.Length > 0)
         {
             Font font = ThemeDB.FallbackFont;
-            int size = Mathf.Max(8, (int)(r * 1.1f));
+            int letter = Mathf.Max(8, (int)(r * 1.1f));
             string initial = _name[..1];
-            Vector2 measure = font.GetStringSize(initial, HorizontalAlignment.Left, -1, size);
-            DrawString(font, middle + new Vector2(-measure.X / 2, font.GetAscent(size) / 2 - 2), initial, HorizontalAlignment.Left, -1, size,
+            Vector2 measure = font.GetStringSize(initial, HorizontalAlignment.Left, -1, letter);
+            DrawString(font, middle + new Vector2(-measure.X / 2, font.GetAscent(letter) / 2 - 2), initial, HorizontalAlignment.Left, -1, letter,
                 Palette.Ink);
         }
         if (_down)
