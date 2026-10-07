@@ -53,7 +53,7 @@ public partial class TokensView : Node2D
             bool dead = token.Floor == World.DeadFloor;
             // heroes always show; the rest only where the party sees them, or where they fell once that is explored
             bool seen = hero || (dead ? w.Fog.State(team, 0, w.CellOf(i)) != FogState.Unexplored : token.Floor == 0);
-            _views[i].Show(token, hero, dead, seen);
+            _views[i].Show(token, hero, dead, seen, i < w.Creatures.Count ? Portraits.Of(w, i) : null);
         }
         QueueRedraw();
     }

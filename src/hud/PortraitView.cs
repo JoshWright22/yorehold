@@ -3,7 +3,7 @@ using Godot;
 namespace Yorehold;
 
 /// <summary>
-/// A creature's face on a card. Until there is portrait art it is the creature's token: the same
+/// A creature's face on a card: its picture filling the card, or without one its token, the same
 /// disc and initial as on the map, so a card is easy to match to who it is.
 /// </summary>
 public partial class PortraitView : Control
@@ -13,10 +13,17 @@ public partial class PortraitView : Control
     private string _name = "";
     private Color _color = Palette.Smoke;
     private bool _down;
+    private Texture2D? _picture;
 
-    public void Show(string name, Color color, bool down)
+    public override void _Ready()
     {
-        if (name == _name && Palette.Nearest(color) == _color && down == _down)
+        // the pictures are small pixel art, drawn large
+        TextureFilter = TextureFilterEnum.Nearest;
+    }
+
+    public void Show(string name, Color color, bool down, Texture2D? picture = null)
+    {
+        if (name == _name && Palette.Nearest(color) == _color && down == _down && picture == _picture)
         {
             return;
         }
@@ -24,6 +31,7 @@ public partial class PortraitView : Control
         // token colours come from content, so they land on the palette here like on the map
         _color = Palette.Nearest(color);
         _down = down;
+        _picture = picture;
         QueueRedraw();
     }
 
@@ -41,9 +49,22 @@ public partial class PortraitView : Control
         Vector2 middle = Size / 2;
         float r = Mathf.Min(Size.X, Size.Y) * 0.42f;
         Color color = _down ? Palette.Slate : _color;
-        DrawCircle(middle, r, Palette.Ink);
-        DrawCircle(middle, r * 0.9f, color);
-        if (_name.Length > 0)
+        if (_picture != null)
+        {
+            // the picture covers the card: its middle is kept and what sticks out is cut off
+            Vector2 whole = _picture.GetSize();
+            float scale = Mathf.Max(Size.X / whole.X, Size.Y / whole.Y);
+            Vector2 part = Size / scale;
+            DrawTextureRectRegion(_picture, new Rect2(Vector2.Zero, Size), new Rect2((whole - part) / 2, part), _down ? Palette.Slate : Colors.White);
+            // the token's colour along the bottom ties the card to the disc on the map
+            DrawRect(new Rect2(0, Size.Y - 3, Size.X, 3), color);
+        }
+        else
+        {
+            DrawCircle(middle, r, Palette.Ink);
+            DrawCircle(middle, r * 0.9f, color);
+        }
+        if (_picture == null && _name.Length > 0)
         {
             Font font = ThemeDB.FallbackFont;
             int size = Mathf.Max(8, (int)(r * 1.1f));

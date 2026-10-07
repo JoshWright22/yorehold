@@ -8,7 +8,7 @@
 # tooltips: Alice's party card, then the goblin in the turn order
 300 move 52 108
 320 shot .dev/p6-card-tip.png
-330 move 763 43
+330 move 650 45
 345 shot .dev/p6-order-tip.png
 # pick Strike and put it away with Escape, pick Shove and put it away with a right click
 350 key 1
@@ -19,7 +19,7 @@
 370 down right
 371 up right
 # fold the log, then hold a greyed slot down until its tooltip says why
-380 move 1010 407
+380 move 1028 396
 380 down left
 381 up left
 390 move 858 660

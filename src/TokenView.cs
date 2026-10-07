@@ -4,23 +4,34 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// One creature on the map: a disc in its colour with its initial, a ring when selected and a
-/// cross once fallen. Token art comes later; images named in creature files are not drawn yet.
+/// One creature on the map: a disc in its colour with its face or, without a picture, its initial,
+/// a ring when selected and a cross once fallen.
 /// </summary>
 public partial class TokenView : Node2D
 {
     [Export] public Color SelectionColor { get; set; } = Palette.Straw;
+    /// <summary>How much of the disc stays the token's colour around the face.</summary>
+    [Export] public float Rim { get; set; } = 5;
+
+    private const int Sides = 32;
 
     private Token _token = new();
     private bool _dead;
     private bool _hero;
+    private Texture2D? _picture;
+
+    public override void _Ready()
+    {
+        TextureFilter = TextureFilterEnum.Nearest;
+    }
 
     /// <summary>Called each frame with what the rules say about it now.</summary>
-    public void Show(Token token, bool hero, bool dead, bool seen)
+    public void Show(Token token, bool hero, bool dead, bool seen, Texture2D? picture = null)
     {
         _token = token;
         _hero = hero;
         _dead = dead;
+        _picture = picture;
         Position = token.Position.ToGodot();
         Visible = seen;
         QueueRedraw();
@@ -44,6 +55,21 @@ public partial class TokenView : Node2D
         // content colours land on the nearest palette colour like everything else on the map
         DrawCircle(Vector2.Zero, r, Palette.Ink);
         DrawCircle(Vector2.Zero, r - 2, Palette.Nearest(_token.Color.ToGodot()));
+        if (_picture != null)
+        {
+            // the face is cut round: a many-sided shape with the picture laid across it
+            float inner = r - Rim;
+            var points = new Vector2[Sides];
+            var uvs = new Vector2[Sides];
+            for (int i = 0; i < Sides; i++)
+            {
+                Vector2 way = Vector2.Right.Rotated(Mathf.Tau * i / Sides);
+                points[i] = way * inner;
+                uvs[i] = way * 0.5f + new Vector2(0.5f, 0.5f);
+            }
+            DrawColoredPolygon(points, Colors.White, uvs, _picture);
+            return;
+        }
         if (_token.Name.Length > 0)
         {
             Font font = ThemeDB.FallbackFont;

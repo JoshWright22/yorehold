@@ -29,7 +29,7 @@ InitiativeCardScene = ExtResource("5")
 layout_mode = 0
 offset_left = 10.0
 offset_top = 56.0
-offset_right = 94.0
+offset_right = 98.0
 offset_bottom = 96.0
 mouse_filter = 2
 theme_override_constants/separation = 6
@@ -40,9 +40,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -200.0
-offset_top = 54.0
+offset_top = 8.0
 offset_right = 200.0
-offset_bottom = 176.0
+offset_bottom = 130.0
 grow_horizontal = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
@@ -79,7 +79,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -200.0
-offset_top = -118.0
+offset_top = -130.0
 offset_right = 200.0
 offset_bottom = -10.0
 grow_horizontal = 2
@@ -96,7 +96,7 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="Portrait" type="Control" parent="Bottom/Selected/Rows"]
-custom_minimum_size = Vector2(84, 60)
+custom_minimum_size = Vector2(84, 72)
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
@@ -341,19 +341,18 @@ autowrap_mode = 3
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="Menu" type="HBoxContainer" parent="."]
+[node name="Menu" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -900.0
+offset_left = -126.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = 46.0
 grow_horizontal = 0
 mouse_filter = 2
-theme_override_constants/separation = 6
-alignment = 2
+theme_override_constants/separation = 3
 
 [node name="Characters" type="Button" parent="Menu"]
 layout_mode = 2

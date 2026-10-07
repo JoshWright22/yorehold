@@ -10,10 +10,11 @@ Layout: `rules/` is plain C# with no Godot types (content loading, rules, World,
 tested with xunit in `tests/`. The Godot project in the root only draws, takes input and shows UI.
 Content stays as the JSON files in `assets/`; old files keep loading.
 
-Look: panels use the CC-29 palette and nothing else (`src/hud/Palette.cs`, `scenes/hud/hud-theme.tres`).
+Look: panels use the CC-29 palette and nothing else (`src/hud/Palette.cs`, `scenes/hud/hud-theme.tres`)
+and read like the website: ink ground, thin iron lines, bone text, straw as the one accent, no serif.
 The fight screen keeps its hotbar and portraits. Data screens (sheet, gear, spells, library) are dense
 like a database: a tab bar of types, a search box, filter chips, tight rows sorted by any column, the
-list on the left and the full entry on the right as a book page.
+list on the left and the full entry on the right.
 
 Order: get a playable demo early (walk a map, fight, win), then widen. Tick a box when its step
 builds, passes `check.ps1` and is committed.
@@ -82,11 +83,15 @@ builds, passes `check.ps1` and is committed.
 - [x] **P6. Combat on screen.** Action bar, initiative strip, party cards, targeting with ranges
   and areas, hit and damage text, the log. A scripted fight in a screenshot run. First demo.
   - Layout follows Baldur's Gate 3: the hotbar bottom centre with action, bonus and movement
-    pips and End Turn beside it, party portraits with HP down the left, the initiative strip of
-    portraits top centre, the combat log bottom right, hit chance at the cursor when targeting,
-    tooltips on every action. Our own art and names, the same arrangement and feel.
+	pips and End Turn beside it, party portraits with HP down the left, the initiative strip of
+	portraits top centre, the combat log bottom right, hit chance at the cursor when targeting,
+	tooltips on every action. Our own art and names, the same arrangement and feel.
   - Default: the panels are styled by `scenes/hud/hud-theme.tres` (flat dark boxes, a 1 px warm trim). The pixel art in `assets/ui` is the C++ client's purple theme and isn't used here.
-  - Default: portraits are the token's disc and initial, action icons are plain shapes picked by `assets/ui/action-icons.json`, conditions are two-letter badges. Art replaces them later.
+  - Default: action icons are plain shapes picked by `assets/ui/action-icons.json`, conditions are two-letter badges. Art replaces them later.
+  - Default: portraits and tokens show a face from `assets/portraits/` (by creature id, or a hero's class), see CONTENT.md. The eight shipped ones are 32 px stand-ins drawn in CC-29; a hero has no picture of their own yet, only their class's.
+  - Default: the hotbar stays along the bottom between fights with the selected hero's portrait, its slots greyed ("Used in a fight") and no End Turn; a conversation or a cutscene takes it away. The menu is a column down the right edge so the turn order has the top of the screen.
+  - Default: panels are styled like the website (ink, iron lines, bone text, one straw accent, sans faces from the system: Inter Tight if installed, else Segoe UI, Arial for entry text), all still CC-29. The fonts are not shipped with the game yet.
+  - Not working, and it wasn't before this either: `tests/visual/scripts/loot.txt` ends on `button Pack`, which isn't there once the chest is empty.
   - Default: the ruleset has no bonus actions, so that pip is hidden and a reaction pip sits beside the action pips.
   - Default: a click on an enemy with nothing picked strikes it, walking up first. An action on oneself (Dash, Defend, Hide, Ready) is used as soon as its slot is pressed. End turn is the big button and Space, with no slot.
   - Default: reaction prompts are on (`ReactionPrompts` on the play screen) and take the reaction when the ruleset's `promptSeconds` run out. The panel sits low in the middle so it doesn't cover who is moving.

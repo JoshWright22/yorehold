@@ -37,7 +37,7 @@ public partial class PartyCard : TipButton
         Creature = creature;
         CharacterSheet sheet = world.Creatures[creature].Sheet;
         Token token = world.Tokens.Tokens[creature];
-        _portrait.Show(sheet.Name, token.Color.ToGodot(), sheet.Down);
+        _portrait.Show(sheet.Name, token.Color.ToGodot(), sheet.Down, Portraits.Of(world, creature));
         _name.Text = sheet.Name;
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);

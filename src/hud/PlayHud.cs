@@ -9,9 +9,10 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The panels over the map: party cards down the left and the log in the bottom right always, and
-/// in a fight the turn order along the top, the hotbar with the acting hero's portrait, pips and
-/// End Turn along the bottom, the reaction prompt and the tooltip. It shows what the World says and
+/// The panels over the map, laid out like Baldur's Gate 3: party portraits down the left, the
+/// hotbar with the selected hero's portrait and pips along the bottom, the menu down the right
+/// edge and the log in the bottom right always, and in a fight the turn order along the top, End
+/// Turn beside the hotbar, the reaction prompt and the tooltip. It shows what the World says and
 /// raises an event when something is pressed; it never acts on the World itself.
 /// </summary>
 public partial class PlayHud : Control
@@ -21,8 +22,8 @@ public partial class PlayHud : Control
     [Export] public PackedScene? InitiativeCardScene { get; set; }
     /// <summary>Which shape each action's icon is drawn with, by action id.</summary>
     [Export] public string IconsFile { get; set; } = "res://assets/ui/action-icons.json";
-    /// <summary>Where the log's bottom edge rests, in pixels above the screen's: clear of the hotbar in a fight, in the corner otherwise.</summary>
-    [Export] public float LogAboveHotbar { get; set; } = 126;
+    /// <summary>Where the log's bottom edge rests, in pixels above the screen's: clear of the hotbar, in the corner when the hotbar is away.</summary>
+    [Export] public float LogAboveHotbar { get; set; } = 138;
     [Export] public float LogAboveEdge { get; set; } = 10;
 
     public event Action<string>? ActionPressed;
@@ -106,6 +107,7 @@ public partial class PlayHud : Control
     private TipButton? _tipOwner;
     private bool _tipHeld;
     private bool _touch;
+    private bool _fighting;
     private ulong _promptId;
     private double _promptSeconds = 1;
 
@@ -257,7 +259,8 @@ public partial class PlayHud : Control
     /// <summary>The action on the hotbar's slot with this place, 0 first; null when there is none.</summary>
     public string? SlotAction(int index)
     {
-        return _bottom.Visible && index >= 0 && index < _slotViews.Count && _slotViews[index].Visible ? _slotViews[index].ActionId : null;
+        // between fights the hotbar is there to read, not to press
+        return _bottom.Visible && _fighting && index >= 0 && index < _slotViews.Count && _slotViews[index].Visible ? _slotViews[index].ActionId : null;
     }
 
     public override void _Input(InputEvent @event)
@@ -286,15 +289,21 @@ public partial class PlayHud : Control
         int? current = world.CurrentCreature;
         int shown = aim.HeroTurn && current is int acting ? acting : world.LeaderIndex();
 
+        _fighting = fighting;
         ShowParty(world, fighting, current);
         _top.Visible = fighting;
-        _bottom.Visible = fighting;
+        // the hotbar stays between fights; a conversation takes its place along the bottom
+        _bottom.Visible = !world.PartyWiped && !world.InCutscene && world.Talk?.Current == null && shown < world.HeroCount;
+        _endTurn.Visible = fighting;
         if (fighting)
         {
             ShowOrder(world);
-            ShowBar(world, aim, shown);
         }
-        _log.Rest(fighting ? LogAboveHotbar : LogAboveEdge);
+        if (_bottom.Visible)
+        {
+            ShowBar(world, aim, shown, fighting);
+        }
+        _log.Rest(_bottom.Visible ? LogAboveHotbar : LogAboveEdge);
         ShowReaction(world);
         _defeat.Visible = world.PartyWiped && !world.InCutscene;
         _defeatText.Text = world.Chapter.DefeatText;
@@ -547,10 +556,10 @@ public partial class PlayHud : Control
         _turn.Text = world.CurrentCreature is int now && world.ReactionPrompt == null ? $"{world.Creatures[now].Sheet.Name}'s turn" : "";
     }
 
-    private void ShowBar(World world, FightAim aim, int shown)
+    private void ShowBar(World world, FightAim aim, int shown, bool fighting)
     {
         CharacterSheet sheet = world.Creatures[shown].Sheet;
-        _portrait.Show(sheet.Name, world.Tokens.Tokens[shown].Color.ToGodot(), sheet.Down);
+        _portrait.Show(sheet.Name, world.Tokens.Tokens[shown].Color.ToGodot(), sheet.Down, Portraits.Of(world, shown));
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
         _hpText.Text = $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
@@ -558,13 +567,14 @@ public partial class PlayHud : Control
         // off their turn a hero has nothing to spend, whatever was left over from the last one
         TurnBudget? budget = world.BudgetOf(shown);
         bool mine = aim.HeroTurn && world.CurrentCreature == shown && budget != null;
-        int actions = mine ? budget!.Actions : 0;
+        // between fights nothing is spent, so the pips and the move bar stand full
+        int actions = mine ? budget!.Actions : fighting ? 0 : world.Rules.ActionsPerTurn;
         _actions.Show(Math.Max(world.Rules.ActionsPerTurn, actions), actions);
         _bonusLabel.Visible = world.Rules.BonusActions;
         _bonus.Visible = world.Rules.BonusActions;
-        _bonus.Show(1, mine && budget!.BonusAction ? 1 : 0);
-        _reactionPip.Show(1, budget is { Reaction: true } ? 1 : 0);
-        int left = mine ? budget!.MovementLeft : 0;
+        _bonus.Show(1, !fighting || (mine && budget!.BonusAction) ? 1 : 0);
+        _reactionPip.Show(1, !fighting || budget is { Reaction: true } ? 1 : 0);
+        int left = mine ? budget!.MovementLeft : fighting ? 0 : sheet.SpeedSquares(world.Rules);
         _move.Show(Math.Max(sheet.SpeedSquares(world.Rules), left), left, mine ? aim.PathCost : 0);
         _moveText.Text = $"{left * world.Rules.FeetPerSquare} ft";
 
@@ -608,6 +618,7 @@ public partial class PlayHud : Control
             slot.TipMeta = HudText.ActionMeta(world, action, cost);
             slot.TipBody = action.Description;
             slot.TipWarning = usable ? ""
+                : !fighting ? "Used in a fight."
                 : !mine ? "Not their turn."
                 : why.Length > 0 ? char.ToUpperInvariant(why[0]) + why[1..] + "."
                 : "Can't be used right now.";

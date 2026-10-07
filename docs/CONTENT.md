@@ -13,6 +13,10 @@ What the port reads so far, and where it differs:
 - A bad file fails with the file, then the field, then what is wrong:
   `items/mace.json: hands: is a whole number from 0 to 4`. Fields inside lists carry their place:
   `chapters/pit/chapter.json: encounters[0].creatures[1].at: Nib starts on an occupied cell`.
+- Faces: a creature's cards and its token show the picture its `token.image` names, or else
+  `portraits/<creature id>.png`, and a hero's show `portraits/<class name in lower case>.png`. Any
+  size, square is best; small pixel art is drawn sharp. Paths are taken from the game's content root
+  only for now, not from the chapter folder. With no picture the disc and initial are drawn as before.
 - Content is read from folders. `.yore` archives, the library, packing and the tools named under
   "Validate, export and load" are not ported yet.
 - A chapter's `ruleset` is a folder or a file. The framework's built-in `modern` and `classic` sets are
@@ -423,19 +427,19 @@ Example:
   "maxLevel": 5,
   "chapters": ["chapters/goblin-keep", "chapters/goblin-warren"],
   "transitions": [
-    {
-      "from": "goblin-keep",
-      "exitMarker": "north-passage",
-      "to": "goblin-warren",
-      "entryMarker": "southern-entrance"
-    },
-    {
-      "from": "goblin-keep",
-      "exitMarker": "secret-exit",
-      "to": "goblin-warren",
-      "entryMarker": "hidden-passage",
-      "when": ["key-found"]
-    }
+	{
+	  "from": "goblin-keep",
+	  "exitMarker": "north-passage",
+	  "to": "goblin-warren",
+	  "entryMarker": "southern-entrance"
+	},
+	{
+	  "from": "goblin-keep",
+	  "exitMarker": "secret-exit",
+	  "to": "goblin-warren",
+	  "entryMarker": "hidden-passage",
+	  "when": ["key-found"]
+	}
   ],
   "flags": ["key-found", "warren-cleared"]
 }
@@ -599,18 +603,18 @@ Triggers fire dialogue or cutscenes in response to chapter events. A chapter may
 ```json
 "triggers": [
   {
-    "id": "treasure-found",
-    "when": ["treasure-discovered"],
-    "dialogue": "dialogue/found-treasure.json"
+	"id": "treasure-found",
+	"when": ["treasure-discovered"],
+	"dialogue": "dialogue/found-treasure.json"
   },
   {
-    "id": "greeting",
-    "dialogue": "dialogue/welcome.json"
+	"id": "greeting",
+	"dialogue": "dialogue/welcome.json"
   },
   {
-    "id": "betrayal",
-    "when": ["betrayed-party"],
-    "cutscene": "cutscenes/betrayal.json"
+	"id": "betrayal",
+	"when": ["betrayed-party"],
+	"cutscene": "cutscenes/betrayal.json"
   }
 ]
 ```
@@ -655,8 +659,8 @@ Each condition is one file in the ruleset folder, `conditions/<id>.json`, named 
   "name": "Frightened",
   "description": "Shaken: worse at attacking and defending by its value, which drops by one each round.",
   "modifiers": [
-    { "stat": "attack", "op": "add", "value": -1 },
-    { "stat": "ac", "op": "add", "value": -1 }
+	{ "stat": "attack", "op": "add", "value": -1 },
+	{ "stat": "ac", "op": "add", "value": -1 }
   ],
   "flags": ["frightened"],
   "stacking": "value",
@@ -697,9 +701,9 @@ What a creature can do on its turn is a file in the ruleset folder, `actions/<id
   "cost": "hands",
   "target": { "kind": "creature", "side": "enemy", "range": 1 },
   "effects": [
-    { "do": "roll", "kind": "attack", "steps": [
-      { "do": "damage", "dice": "weapon", "when": "hit", "minimum": 1 }
-    ] }
+	{ "do": "roll", "kind": "attack", "steps": [
+	  { "do": "damage", "dice": "weapon", "when": "hit", "minimum": 1 }
+	] }
   ]
 }
 ```
