@@ -291,6 +291,12 @@ Rules for all of it:
     10,000 out; at about $0.10 in and $0.40 out per million tokens that is under half a cent.
     Page pictures go only to the passes that need them (which picture is whose, the map), about
     1,000 tokens a page.
+  - Default: every model is reached with the same OpenAI-style chat request
+    (`/v1/chat/completions`, a JSON schema in `response_format`), which OpenRouter and Ollama
+    both take, so the model is an address and a name in settings. While testing (Josh, 10/7),
+    the address is a stand-in on `127.0.0.1:8765` kept in `.dev\story-model-shim.py`, outside
+    the repo, that answers on Josh's own subscription; it is swapped for OpenRouter later.
+    Pictures aren't passed through it yet.
   - Default: the model for each pass is named in the server's config, not in the game, so a
     cheaper one can be swapped in without a release. Each run logs its tokens and cost, and a
     book already read (same file hash) is answered from the last result for free.
