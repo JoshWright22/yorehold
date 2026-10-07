@@ -102,7 +102,7 @@ only shows them and raises an event when something is pressed; `FightControl` do
 | `Log` (`LogPanel.tscn`) | the log, bottom right; its header folds it |
 | `Reaction` | use it or pass, with the time left, when a hero's reaction is offered |
 | `Defeat` | the chapter's defeat text once the party is wiped, with Back to the autosave under it |
-| `Talk` | the conversation, bottom left of the log: who speaks, the line, a numbered button per reply (1 to 9 pick them, Escape walks away) and Trade (T) under a merchant's. It grows up from the bottom edge to fit |
+| `Talk` | the conversation, laid out like a visual novel (Hades): the map darkened behind, who speaks standing large on the left, the hero dimmed and mirrored on the right (lit while a reply is under the pointer), a name plate over a wide box with the line and a numbered button per reply (1 to 9 pick them, Escape walks away) and Trade (T) under a merchant's. The box grows up from the bottom edge to fit; the party cards and the log step away while it is open |
 | `Journal` (`DataPanel.tscn`, filled by `JournalPanel`) | the journal (J): the chapter's quests with their objectives ticked, and the companions met with their approval |
 | `Camp` (`DataPanel.tscn`, filled by `CampPanel`) | rest and camp (R): make or break camp, the ruleset's rests with what each costs and has left, and at camp the stash, the hero's pack and the dead who can be brought back. What is pressed goes out as a `CampOrder` |
 | `Tip`, `Cursor` | the tooltip, and the words at the pointer (chance to hit, what a move costs) |

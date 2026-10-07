@@ -313,34 +313,101 @@ focus_mode = 0
 theme_type_variation = &"EndTurnButton"
 text = "Back to the autosave"
 
-[node name="Talk" type="PanelContainer" parent="."]
+[node name="Talk" type="Control" parent="."]
 visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="Talk"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.1294, 0.1294, 0.1373, 1)
+
+[node name="Listener" type="Control" parent="Talk"]
+modulate = Color(0.5255, 0.5059, 0.5333, 1)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -600.0
+offset_right = -40.0
+offset_bottom = -110.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("7")
+Back = Color(0, 0, 0, 0)
+Contain = true
+Flip = true
+
+[node name="Speaker" type="Control" parent="Talk"]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 220.0
-offset_top = -260.0
-offset_right = 880.0
-offset_bottom = -10.0
+offset_left = 30.0
+offset_top = -660.0
+offset_right = 450.0
+offset_bottom = -110.0
 grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("7")
+Back = Color(0, 0, 0, 0)
+Contain = true
 
-[node name="Rows" type="VBoxContainer" parent="Talk"]
+[node name="Column" type="VBoxContainer" parent="Talk"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 250.0
+offset_top = -260.0
+offset_right = -250.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 0
+
+[node name="Plate" type="PanelContainer" parent="Talk/Column"]
 layout_mode = 2
-theme_override_constants/separation = 6
+size_flags_horizontal = 0
+theme_type_variation = &"NamePlate"
 
-[node name="Speaker" type="Label" parent="Talk/Rows"]
+[node name="Name" type="Label" parent="Talk/Column/Plate"]
 layout_mode = 2
-theme_type_variation = &"TitleLabel"
+theme_type_variation = &"NamePlateLabel"
 
-[node name="Text" type="Label" parent="Talk/Rows"]
-custom_minimum_size = Vector2(620, 0)
+[node name="Box" type="PanelContainer" parent="Talk/Column"]
+layout_mode = 2
+theme_type_variation = &"TalkBox"
+
+[node name="Rows" type="VBoxContainer" parent="Talk/Column/Box"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Text" type="Label" parent="Talk/Column/Box/Rows"]
+custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_type_variation = &"BookLabel"
-theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
+theme_override_font_sizes/font_size = 20
 autowrap_mode = 3
 
-[node name="Replies" type="VBoxContainer" parent="Talk/Rows"]
+[node name="Replies" type="VBoxContainer" parent="Talk/Column/Box/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 4
 

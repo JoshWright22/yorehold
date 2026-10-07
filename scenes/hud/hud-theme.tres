@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=48 format=3]
+[gd_resource type="Theme" load_steps=52 format=3]
 
 [sub_resource type="StyleBoxFlat" id="panel"]
 content_margin_left = 8.0
@@ -410,6 +410,43 @@ bg_color = Color(0.1294, 0.1294, 0.1373, 1)
 border_width_bottom = 1
 border_color = Color(0.2706, 0.2667, 0.3098, 1)
 
+[sub_resource type="StyleBoxFlat" id="plate"]
+content_margin_left = 18.0
+content_margin_top = 5.0
+content_margin_right = 18.0
+content_margin_bottom = 5.0
+bg_color = Color(0.949, 0.9412, 0.898, 1)
+
+[sub_resource type="StyleBoxFlat" id="talk_box"]
+content_margin_left = 24.0
+content_margin_top = 18.0
+content_margin_right = 24.0
+content_margin_bottom = 18.0
+bg_color = Color(0.1294, 0.1294, 0.1373, 1)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2706, 0.2667, 0.3098, 1)
+
+[sub_resource type="StyleBoxFlat" id="choice"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.1294, 0.1294, 0.1373, 1)
+border_width_left = 3
+border_color = Color(0.2706, 0.2667, 0.3098, 1)
+
+[sub_resource type="StyleBoxFlat" id="choice_hover"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.2706, 0.2667, 0.3098, 1)
+border_width_left = 3
+border_color = Color(0.9294, 0.8824, 0.6196, 1)
+
 [sub_resource type="StyleBoxFlat" id="tile"]
 bg_color = Color(0.1294, 0.1294, 0.1373, 1)
 border_width_left = 1
@@ -621,6 +658,23 @@ RowButton/styles/hover = SubResource("row_hover")
 RowButton/styles/hover_pressed = SubResource("row_on")
 RowButton/styles/normal = SubResource("row")
 RowButton/styles/pressed = SubResource("row_on")
+NamePlate/base_type = &"PanelContainer"
+NamePlate/styles/panel = SubResource("plate")
+NamePlateLabel/base_type = &"Label"
+NamePlateLabel/colors/font_color = Color(0.1294, 0.1294, 0.1373, 1)
+NamePlateLabel/fonts/font = SubResource("sans_bold")
+NamePlateLabel/font_sizes/font_size = 18
+TalkBox/base_type = &"PanelContainer"
+TalkBox/styles/panel = SubResource("talk_box")
+ChoiceButton/base_type = &"Button"
+ChoiceButton/colors/font_color = Color(0.7216, 0.7098, 0.7255, 1)
+ChoiceButton/colors/font_hover_color = Color(0.949, 0.9412, 0.898, 1)
+ChoiceButton/colors/font_pressed_color = Color(0.9294, 0.8824, 0.6196, 1)
+ChoiceButton/font_sizes/font_size = 17
+ChoiceButton/styles/focus = SubResource("choice")
+ChoiceButton/styles/hover = SubResource("choice_hover")
+ChoiceButton/styles/normal = SubResource("choice")
+ChoiceButton/styles/pressed = SubResource("choice_hover")
 TileButton/base_type = &"Button"
 TileButton/styles/focus = SubResource("tile")
 TileButton/styles/hover = SubResource("tile_hover")

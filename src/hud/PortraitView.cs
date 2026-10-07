@@ -9,6 +9,10 @@ namespace Yorehold;
 public partial class PortraitView : Control
 {
     [Export] public Color Back { get; set; } = Palette.Iron;
+    /// <summary>The whole picture standing on the bottom edge, as a conversation shows someone, instead of filling the card.</summary>
+    [Export] public bool Contain { get; set; }
+    /// <summary>Mirrored, so someone on the right of the screen faces the one on the left.</summary>
+    [Export] public bool Flip { get; set; }
 
     private string _name = "";
     private Color _color = Palette.Smoke;
@@ -48,8 +52,26 @@ public partial class PortraitView : Control
         DrawRect(new Rect2(Vector2.Zero, Size), Back);
         Vector2 middle = Size / 2;
         float r = Mathf.Min(Size.X, Size.Y) * 0.42f;
+        if (Contain)
+        {
+            // standing on the bottom edge like a picture would, not floating in the middle
+            middle = new Vector2(Size.X / 2, Size.Y - r - 4);
+        }
         Color color = _down ? Palette.Slate : _color;
-        if (_picture != null)
+        if (_picture != null && Contain)
+        {
+            Vector2 whole = _picture.GetSize();
+            float fit = Mathf.Min(Size.X / whole.X, Size.Y / whole.Y);
+            Vector2 drawn = whole * fit;
+            var at = new Rect2(new Vector2((Size.X - drawn.X) / 2, Size.Y - drawn.Y), drawn);
+            if (Flip)
+            {
+                DrawSetTransform(new Vector2(Size.X, 0), 0, new Vector2(-1, 1));
+            }
+            DrawTextureRect(_picture, at, false, _down ? Palette.Slate : Colors.White);
+            DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+        }
+        else if (_picture != null)
         {
             // the picture covers the card: its middle is kept and what sticks out is cut off
             Vector2 whole = _picture.GetSize();

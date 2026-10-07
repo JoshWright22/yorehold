@@ -98,6 +98,10 @@ public partial class PlayHud : Control
     private Button _campButton = null!;
     private CampPanel _camp = null!;
     private Control _talk = null!;
+    private Control _talkColumn = null!;
+    private Control _talkPlate = null!;
+    private PortraitView _speakerView = null!;
+    private PortraitView _listenerView = null!;
     private Label _talkSpeaker = null!;
     private Label _talkText = null!;
     private VBoxContainer _replies = null!;
@@ -147,9 +151,15 @@ public partial class PlayHud : Control
         _defeatText = GetNode<Label>("Defeat/Rows/Text");
         GetNode<Button>("Defeat/Rows/Back").Pressed += () => BackPressed?.Invoke();
         _talk = GetNode<Control>("Talk");
-        _talkSpeaker = GetNode<Label>("Talk/Rows/Speaker");
-        _talkText = GetNode<Label>("Talk/Rows/Text");
-        _replies = GetNode<VBoxContainer>("Talk/Rows/Replies");
+        _talkColumn = GetNode<Control>("Talk/Column");
+        _talkPlate = GetNode<Control>("Talk/Column/Plate");
+        _talkSpeaker = GetNode<Label>("Talk/Column/Plate/Name");
+        _talkText = GetNode<Label>("Talk/Column/Box/Rows/Text");
+        _replies = GetNode<VBoxContainer>("Talk/Column/Box/Rows/Replies");
+        // the scene behind a conversation stays in view, darkened toward ink
+        GetNode<ColorRect>("Talk/Dim").Color = Palette.Faded(Palette.Ink, 0.6f);
+        _speakerView = GetNode<PortraitView>("Talk/Speaker");
+        _listenerView = GetNode<PortraitView>("Talk/Listener");
         _tip = GetNode<Control>("Tip");
         _tipTitle = GetNode<Label>("Tip/Rows/Title");
         _tipMeta = GetNode<Label>("Tip/Rows/Meta");
@@ -372,11 +382,27 @@ public partial class PlayHud : Control
         DialogueSession? talk = world.Talk;
         DialogueNode? node = talk?.Current;
         _talk.Visible = node != null;
+        // like a visual novel, the conversation has the screen: the party and the log step back
+        _party.Visible = node == null;
+        _log.Visible = node == null;
         if (talk == null || node == null)
         {
             _talkShown = "";
             return;
         }
+
+        // who speaks stands large on the left, the hero they talk to dimmed on the right
+        int with = world.TalkingWith;
+        if (with >= 0 && with < world.Creatures.Count)
+        {
+            CharacterSheet them = world.Creatures[with].Sheet;
+            _speakerView.Show(them.Name, world.Tokens.Tokens[with].Color.ToGodot(), false, Portraits.Of(world, with));
+        }
+        int hero = world.LeaderIndex();
+        CharacterSheet me = world.Creatures[hero].Sheet;
+        _listenerView.Show(me.Name, world.Tokens.Tokens[hero].Color.ToGodot(), false, Portraits.Of(world, hero));
+        _speakerView.Visible = with >= 0;
+
         List<DialogueChoice> choices = talk.Choices();
         string shown = $"{talk.Dialogue.Id}/{node.Id}/{string.Join(",", choices.Select(c => c.Id))}";
         if (shown == _talkShown)
@@ -385,9 +411,10 @@ public partial class PlayHud : Control
             return;
         }
         _talkShown = shown;
-        _talkSpeaker.Text = node.Speaker.Length > 0 ? node.Speaker : world.TalkingWith >= 0 ? world.Creatures[world.TalkingWith].Sheet.Name : "";
-        _talkSpeaker.Visible = _talkSpeaker.Text.Length > 0;
+        _talkSpeaker.Text = (node.Speaker.Length > 0 ? node.Speaker : with >= 0 ? world.Creatures[with].Sheet.Name : "").ToUpperInvariant();
+        _talkPlate.Visible = _talkSpeaker.Text.Length > 0;
         _talkText.Text = node.Text;
+        _listenerView.Modulate = Palette.Smoke;
         foreach (Node old in _replies.GetChildren())
         {
             _replies.RemoveChild(old);
@@ -404,10 +431,13 @@ public partial class PlayHud : Control
                 Text = lines[i],
                 Alignment = HorizontalAlignment.Left,
                 FocusMode = FocusModeEnum.None,
-                CustomMinimumSize = new Vector2(0, 34),
-                ThemeTypeVariation = "RowButton",
+                CustomMinimumSize = new Vector2(0, 36),
+                ThemeTypeVariation = "ChoiceButton",
             };
             button.Pressed += () => ReplyPressed?.Invoke(index);
+            // the hero steps forward while the player weighs what they would say
+            button.MouseEntered += () => _listenerView.Modulate = Colors.White;
+            button.MouseExited += () => _listenerView.Modulate = Palette.Smoke;
             _replies.AddChild(button);
         }
         // a merchant's shop opens from the conversation, as E did beside one in the C++ client
@@ -419,8 +449,8 @@ public partial class PlayHud : Control
                 Text = "Trade (T)",
                 Alignment = HorizontalAlignment.Left,
                 FocusMode = FocusModeEnum.None,
-                CustomMinimumSize = new Vector2(0, 34),
-                ThemeTypeVariation = "RowOddButton",
+                CustomMinimumSize = new Vector2(0, 36),
+                ThemeTypeVariation = "ChoiceButton",
             };
             trade.Pressed += () => TradePressed?.Invoke();
             _replies.AddChild(trade);
@@ -428,13 +458,13 @@ public partial class PlayHud : Control
         FitTalk();
     }
 
-    // The conversation grows up from the bottom edge to fit the line and the replies.
+    // The name plate and the box grow up from the bottom edge to fit the line and the replies.
     private void FitTalk()
     {
-        float top = _talk.OffsetBottom - _talk.GetCombinedMinimumSize().Y;
-        if (!Mathf.IsEqualApprox(_talk.OffsetTop, top))
+        float top = _talkColumn.OffsetBottom - _talkColumn.GetCombinedMinimumSize().Y;
+        if (!Mathf.IsEqualApprox(_talkColumn.OffsetTop, top))
         {
-            _talk.OffsetTop = top;
+            _talkColumn.OffsetTop = top;
         }
     }
 
