@@ -404,6 +404,38 @@ Taking one is one undo step, and Take all is one too. One turned down is saved i
 
 The validation list warns about a node with no title, a chapter or a group, file, quest or cutscene the package doesn't have, a node with no links, an ending the story goes on from, and a link between two scenes that `adventure.json` has no transition for. None of them stops a save. `story.json` is only written once something in it changed, and undo and redo are the same history as the other modes.
 
+## Story import files
+
+Importing a book (ROADMAP.md, "Story import") leaves its working files in the package's `import/` folder. The game never reads them in play; they are there so a stage can be run again without the book.
+
+`import/source.json` is the book as read, before anything is made of it:
+
+```json
+{
+  "format": "yorehold.source",
+  "version": 1,
+  "title": "The Old Mill",
+  "file": "mill.pdf",
+  "bodySize": 10,
+  "pages": [
+	{"number": 1, "width": 600, "height": 800, "blocks": [
+	  {"kind": "heading", "text": "THE OLD MILL", "at": [50, 46, 137, 14], "font": "Helvetica", "size": 20},
+	  {"kind": "text", "box": "shaded", "text": "The wheel turns though the race is dry.", "at": [50, 218, 172, 9], "font": "Helvetica", "size": 10}
+	]}
+  ],
+  "pictures": [{"file": "pictures/p1-1.png", "page": 1, "at": [330, 220, 80, 100], "width": 80, "height": 100}],
+  "skipped": []
+}
+```
+
+- It reads `.pdf`, `.txt` and `.md`. A scanned PDF has no text and says so in `skipped`.
+- `at` is `[x, y, width, height]` in points from the page's top left. Blocks are in reading order: each column whole before the one to its right, and a block across the columns ends the ones above it. Columns are found from where the paragraphs are, so they need not meet in the middle of the page.
+- `kind` is `heading` for a short line set at least 1.15 times `bodySize` (the size most of the book's letters are), else `text`. A heading right on top of its paragraph is still its own block. Words broken over two lines are joined.
+- `box` is `shaded` for text on a filled rectangle and `framed` for text inside a ruled one; books set passages to read out and notes for whoever runs the game apart this way. Left out when there is none.
+- Cells side by side on one row of a column are one block, joined by spaces: `Attack: +3 bonus Climb: +2 bonus`, or a name and the boxes to tick after it.
+- `pictures` are saved to `import/pictures/` named by page and order. A JPEG is kept byte for byte, anything else is written as PNG. A picture covering more than 0.8 of its page is the page's paper and is left out, and so is anything under 64 pixels across. `width` and `height` are in pixels.
+- In a `.txt` or `.md`, paragraphs are split at blank lines and pages at form feeds; a `#` line in a `.md` and a short line all in capitals are headings. Blocks carry no `at`, `font` or `size`.
+
 ## Adventures
 
 `adventure.json` at the content root ties chapters together into a playable journey. It defines:

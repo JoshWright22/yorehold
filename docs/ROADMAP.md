@@ -202,3 +202,69 @@ builds, passes `check.ps1` and is committed.
   - Default: `icon.svg` is a placeholder icon (amber Y on ink) since Android won't export without one. The Windows exe has no icon until there is an `.ico`.
   - Not done: the APK on a phone. No device was attached and the SDK here has no emulator; `adb install` steps are in EXPORT.md.
   - Blocked: iOS. Godot refuses C# iOS exports off macOS (NativeAOT needs Xcode). Needs a Mac with Xcode and an Apple developer team ID; the preset is ready.
+
+## S. Story import
+
+A writer brings a book (an adventure module as a PDF, a manuscript, a pitch) and gets a package
+they refine in Create. Five stages, each leaving a file the next one reads, so any stage can be
+run again or done by hand:
+
+```text
+book.pdf / .txt / .md
+  1 read      import/source.json + import/pictures/   pages, text blocks, pictures; no guessing
+  2 outline   import/outline.json                     who, where, what happens; the story model
+  3 review    Create > Import                         the writer takes, changes or drops each card
+  4 build     the package's normal content files      deterministic; the same outline gives the same files
+  5 refine    Create's other modes, Playtest
+```
+
+Rules for all of it:
+- The writer's words stay as written. Every outline entry says where it came from (page and the
+  words quoted) or is marked invented, and the review shows which is which.
+- Pictures are only ever taken from the book. A picture is cut out of its page and named; nothing
+  is drawn, filled in or fetched.
+- Imports are made in `create/` in the user folder. A book's text and pictures never go into this
+  repo; the tests read a small book written for them.
+- The game has one ruleset. A book's own numbers are kept in the outline as written and turned
+  into Yorehold's by a table per source system (data), never by adding that system's rules.
+- What the game has no way to play yet (a chasm to jump, a ledge to push someone off, a room that
+  needs a torch) is not dropped: it goes on the story graph as a note and in `import/report.json`.
+
+- [x] **S1. Reading the book.** `rules/import`: a PDF (PdfPig from NuGet, pinned), a `.txt` or a
+  `.md` into `import/source.json`: pages, text blocks with their box, font and size, a guess at
+  heading, body or boxed text from size and face, reading order across columns, and each picture
+  bigger than a thumbnail saved to `import/pictures/` with its page and box. Page backgrounds
+  (a picture covering the page) are left out. Described in CONTENT.md.
+  - Default: blocks are cut by PdfPig's recursive XY cut, then split where a heading sits on its paragraph. Columns are found from the paragraphs, not the page's middle, and cells on one row of a column are joined into one block.
+  - Default: a font that gives its letters no height (seen in a real module) gets half its size as height, or lines and columns can't be told apart. Doubled letters from drop shadows are dropped.
+  - Default: `box` is only given for real rectangles; a frame drawn as four loose lines isn't seen yet.
+  - Default: a JPEG is saved as it is in the file. One in CMYK would not open in the game; none seen yet.
+  - Default: the tests write their own PDF. `YOREHOLD_IMPORT_BOOK` and `YOREHOLD_IMPORT_OUT` make the test run read any book into a folder for a look by hand.
+- [ ] **S2. The outline.** `import/outline.json` and its reader with checks: the source system,
+  heroes, creatures, people, places (with the label the book's map gives them and what leads
+  where), fights, things in the way (locks, climbs, jumps) with their numbers, treasure,
+  conversations line by line, passages meant to be read out, and which picture is whose.
+  A sample outline for the tests' book.
+- [ ] **S3. Building.** `OutlineBuilder`: outline to `content.json`, `adventure.json`, chapters,
+  maps (rooms laid on the grid from the places, their sizes and links; doors and locks as kits),
+  creature and item files (an entry the game already has by name is used, not copied),
+  containers, dialogue files, quests, opening and room text as triggers, `story.json`, portraits.
+  A party seat takes `image` so a book's hero keeps their own picture. The built package passes
+  `ContentPackage.Validate` and its fights play out under `AutoPlay`.
+- [ ] **S4. What needs no model.** A picture goes to the name of the nearest heading under or
+  over it in its column. A picture with numbers printed on it that match numbered headings is
+  the map, and the numbers give each place its spot on it. A plain paper ground around a figure
+  is made see-through (off by a switch). Source system tables in `import/systems/`.
+- [ ] **S5. The story model.** `IStoryModel` with one request shape: a chunk of `source.json`
+  and the outline so far in, outline entries out, checked against the outline's own reader.
+  First a service on this computer (Ollama's address, model named in settings), then
+  `yorehold-server` with the same request. Prompts are files in `assets/import/`. Tests use a
+  stand-in; a run with no model still does S1 and S4 and leaves the cards to fill by hand.
+- [ ] **S6. Create > Import.** Pick a file, watch the stages, then the outline as a data panel:
+  a tab per kind, the entry on the right as a book page with its source words and its picture
+  (picked from the book's pictures), chips for invented, unplaced and dropped. Build writes the
+  package and opens it in the other modes. `-- --import <file>` does the same without the
+  screen for check runs.
+- [ ] **S7. The book's map under the editor.** Map mode shows the book's map picture under the
+  cells, moved and sized by hand until its grid meets the editor's, so rooms are traced rather
+  than guessed. Later: find the grid and the open floor from the picture.
