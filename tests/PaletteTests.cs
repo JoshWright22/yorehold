@@ -4,19 +4,22 @@ using System.Text.RegularExpressions;
 namespace Yorehold.Rules.Tests;
 
 /// <summary>
-/// Everything is drawn in CC-29 and nothing else. These read the scenes, the theme, the shaders and
-/// the C# drawing code as text and fail on a colour written into them that is not one of the 29.
+/// Everything is drawn in Apollo and nothing else. These read the scenes, the theme, the shaders and
+/// the C# drawing code as text and fail on a colour written into them that is not one of its 46.
 /// </summary>
 public class PaletteTests
 {
-    private static readonly string[] Cc29 =
+    // in Palette.cs order: its 29 named roles, then the rest
+    private static readonly string[] Apollo =
     {
-        "f2f0e5", "b8b5b9", "868188", "646365", "45444f", "3a3858", "212123", "352b42", "43436a", "4b80ca",
-        "68c2d3", "a2dcc7", "ede19e", "d3a068", "b45252", "6a536e", "4b4158", "80493a", "a77b5b", "e5ceb4",
-        "c2d368", "8ab060", "567b79", "4e584a", "7b7243", "b2b47e", "edc8c4", "cf8acb", "5f556a",
+        "ebede9", "a8b5b2", "819796", "577277", "394a50", "1e1d39", "151d28", "172038", "253a5e", "3c5e8b",
+        "4f8fba", "a4dddb", "73bed3", "da863e", "a53030", "7a367b", "402751", "7a4841", "ad7757", "c7cfcc",
+        "a8ca58", "75a743", "25562e", "19332d", "468232", "d0da91", "df84a5", "c65197", "411d31",
+        "4d2b32", "c09473", "d7b594", "e7d5b3", "341c27", "602c2c", "884b2b", "be772b", "de9e41", "e8c170",
+        "241527", "752438", "cf573c", "a23e8c", "090a14", "10141f", "202e37",
     };
 
-    private static readonly (int R, int G, int B)[] Colours = Cc29
+    private static readonly (int R, int G, int B)[] Colours = Apollo
         .Select(h => (Convert.ToInt32(h[..2], 16), Convert.ToInt32(h[2..4], 16), Convert.ToInt32(h[4..], 16)))
         .ToArray();
 
@@ -58,7 +61,7 @@ public class PaletteTests
                     }
                     if (!InPalette(Byte(m.Groups[1].Value), Byte(m.Groups[2].Value), Byte(m.Groups[3].Value)))
                     {
-                        problems.Add($"{name}:{n + 1}: {m.Value} is not a CC-29 colour");
+                        problems.Add($"{name}:{n + 1}: {m.Value} is not an Apollo colour");
                     }
                     else if (!csharp && alpha < 1)
                     {
@@ -71,7 +74,7 @@ public class PaletteTests
                     int Part(int i) => hex ? Convert.ToInt32(m.Groups[i].Value, 16) : int.Parse(m.Groups[i].Value, CultureInfo.InvariantCulture);
                     if (!InPalette(Part(1), Part(2), Part(3)))
                     {
-                        problems.Add($"{name}:{n + 1}: {m.Value} is not a CC-29 colour");
+                        problems.Add($"{name}:{n + 1}: {m.Value} is not an Apollo colour");
                     }
                 }
                 foreach (Match m in HexColour.Matches(line))
@@ -79,7 +82,7 @@ public class PaletteTests
                     string h = m.Groups[1].Value;
                     if (!InPalette(Convert.ToInt32(h[..2], 16), Convert.ToInt32(h[2..4], 16), Convert.ToInt32(h[4..], 16)))
                     {
-                        problems.Add($"{name}:{n + 1}: #{h} is not a CC-29 colour");
+                        problems.Add($"{name}:{n + 1}: #{h} is not an Apollo colour");
                     }
                 }
             }
@@ -113,17 +116,17 @@ public class PaletteTests
             {
                 continue;
             }
-            Assert.True(found.SequenceEqual(Colours), $"{Path.GetFileName(file)}: its palette is not CC-29 in the order of Palette.cs");
+            Assert.True(found.SequenceEqual(Colours), $"{Path.GetFileName(file)}: its palette is not Apollo in the order of Palette.cs");
         }
     }
 
     [Fact]
-    public void PaletteFileIsCc29()
+    public void PaletteFileIsApollo()
     {
         string palette = File.ReadAllText(Path.Combine(ProjectFolder(), "src", "hud", "Palette.cs"));
         var found = ByteColour.Matches(palette)
             .Select(m => (Convert.ToInt32(m.Groups[1].Value, 16), Convert.ToInt32(m.Groups[2].Value, 16), Convert.ToInt32(m.Groups[3].Value, 16)))
             .ToHashSet();
-        Assert.True(found.SetEquals(Colours), "src/hud/Palette.cs does not hold exactly the 29 CC-29 colours");
+        Assert.True(found.SetEquals(Colours), "src/hud/Palette.cs does not hold exactly the 46 Apollo colours");
     }
 }

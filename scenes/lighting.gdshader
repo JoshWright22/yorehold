@@ -1,37 +1,38 @@
 shader_type canvas_item;
 
-// The light map over the world. The world is already CC-29, so instead of multiplying (which goes
+// The light map over the world. The world is already Apollo, so instead of multiplying (which goes
 // muddy and ends in black) each colour steps down its own ramp of darker palette colours, one step
-// per band of lost light. Every ramp ends in 352b42 or 212123. Same list as src/hud/Palette.cs.
+// per band of lost light. Every ramp ends in 172038 or 151d28. Same list as src/hud/Palette.cs.
 uniform sampler2D screen_texture : hint_screen_texture, filter_nearest;
 uniform float steps = 3.0;
 
-const vec3 PALETTE[29] = vec3[](
-    vec3(242, 240, 229), vec3(184, 181, 185), vec3(134, 129, 136), vec3(100, 99, 101),
-    vec3(69, 68, 79), vec3(58, 56, 88), vec3(33, 33, 35), vec3(53, 43, 66),
-    vec3(67, 67, 106), vec3(75, 128, 202), vec3(104, 194, 211), vec3(162, 220, 199),
-    vec3(237, 225, 158), vec3(211, 160, 104), vec3(180, 82, 82), vec3(106, 83, 110),
-    vec3(75, 65, 88), vec3(128, 73, 58), vec3(167, 123, 91), vec3(229, 206, 180),
-    vec3(194, 211, 104), vec3(138, 176, 96), vec3(86, 123, 121), vec3(78, 88, 74),
-    vec3(123, 114, 67), vec3(178, 180, 126), vec3(237, 200, 196), vec3(207, 138, 203),
-    vec3(95, 85, 106));
+const vec3 PALETTE[46] = vec3[](
+    vec3(235, 237, 233), vec3(168, 181, 178), vec3(129, 151, 150), vec3(87, 114, 119),
+    vec3(57, 74, 80), vec3(30, 29, 57), vec3(21, 29, 40), vec3(23, 32, 56),
+    vec3(37, 58, 94), vec3(60, 94, 139), vec3(79, 143, 186), vec3(164, 221, 219),
+    vec3(115, 190, 211), vec3(218, 134, 62), vec3(165, 48, 48), vec3(122, 54, 123),
+    vec3(64, 39, 81), vec3(122, 72, 65), vec3(173, 119, 87), vec3(199, 207, 204),
+    vec3(168, 202, 88), vec3(117, 167, 67), vec3(37, 86, 46), vec3(25, 51, 45),
+    vec3(70, 130, 50), vec3(208, 218, 145), vec3(223, 132, 165), vec3(198, 81, 151),
+    vec3(65, 29, 49), vec3(77, 43, 50), vec3(192, 148, 115), vec3(215, 181, 148),
+    vec3(231, 213, 179), vec3(52, 28, 39), vec3(96, 44, 44), vec3(136, 75, 43),
+    vec3(190, 119, 43), vec3(222, 158, 65), vec3(232, 193, 112), vec3(36, 21, 39),
+    vec3(117, 36, 56), vec3(207, 87, 60), vec3(162, 62, 140), vec3(9, 10, 20),
+    vec3(16, 20, 31), vec3(32, 46, 55));
 
-// the next darker colour for each one: greys to ink, blues and purples to night, greens through
-// teal and moss, browns through rust and shade
-const int DARKER[29] = int[](
-    1, 2, 3, 4, 7, 7, 6, 7,
-    5, 8, 9, 22,
-    13, 18, 17, 16,
-    7, 16, 17, 18,
-    21, 22, 23, 7,
-    23, 24, 27, 15,
-    16);
+// the next darker colour for each one, down Apollo's own ramps: greys to ink, blues and purples
+// to night, greens and reds to ink, browns through the dark oranges
+const int DARKER[46] = int[](
+    19, 2, 3, 4, 45, 7, 6, 6, 7, 8, 9, 12,
+    10, 41, 40, 16, 5, 29, 17, 1, 21, 24, 23, 6,
+    22, 20, 27, 42, 39, 33, 18, 30, 31, 39, 33, 34,
+    35, 36, 37, 6, 28, 14, 15, 43, 44, 6);
 
 int nearest(vec3 c)
 {
     int best = 0;
     float distance = 1e9;
-    for (int i = 0; i < 29; i++)
+    for (int i = 0; i < 46; i++)
     {
         vec3 d = c - PALETTE[i];
         float e = dot(d, d);

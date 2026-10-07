@@ -138,7 +138,7 @@ adventure text (story graph/journal) and the character (sheet).
 
 ## Where this meets the 10/5 look rules
 
-The look rules (CC-29 palette, flat, 1 px borders, dense database-like data screens) still hold.
+The look rules (one palette, now Apollo, flat, 1 px borders, dense database-like data screens) still hold.
 The playtest asks for screens that feel like a game, not lists of small buttons. Both fit if:
 
 - Game-facing screens (title, pause, lobby, character creation) put a large picture first, player

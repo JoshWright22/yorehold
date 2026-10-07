@@ -15,7 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1294, 0.1294, 0.1373, 1)
+color = Color(0.0824, 0.1137, 0.1569, 1)
 
 [node name="Root" type="HBoxContainer" parent="."]
 anchors_preset = 8

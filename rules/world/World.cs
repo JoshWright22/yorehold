@@ -428,6 +428,25 @@ public sealed partial class World
         return false;
     }
 
+    /// <summary>Whose a token is, for the frame it wears: this player's heroes, another player's, a companion, a foe or anyone else.</summary>
+    public TokenSide SideOf(int creature)
+    {
+        if (creature < 0 || creature >= Creatures.Count || creature >= Tokens.Tokens.Count)
+        {
+            return TokenSide.Neutral;
+        }
+        if (creature < HeroCount)
+        {
+            return Tokens.Tokens[creature].Owner == Tokens.LocalPlayer ? TokenSide.Mine : TokenSide.Party;
+        }
+        return Creatures[creature].Team switch
+        {
+            0 => TokenSide.Ally,
+            1 => TokenSide.Enemy,
+            _ => TokenSide.Neutral,
+        };
+    }
+
     /// <summary>Someone the party can talk to: an NPC standing and not fighting, one who gave up, or a companion with something to say.</summary>
     public bool Talkable(int creature)
     {

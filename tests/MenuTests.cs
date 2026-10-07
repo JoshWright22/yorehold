@@ -233,7 +233,7 @@ public class MenuTests
     {
         List<CreditEntry> credits = Credits.Read(ContentNode.Read(TestContent.Shipped(), "ui/credits.json"));
         Assert.Equal("Yorehold", credits[0].Name);
-        Assert.Contains(credits, c => c.Name.StartsWith("CC-29") && c.By.Length > 0);
+        Assert.Contains(credits, c => c.Name.StartsWith("Apollo") && c.By.Length > 0);
         Assert.Contains("listed twice", TestContent.Refused(() => Credits.Read(TestContent.Json(
             """{"entries": [{"name": "A"}, {"name": "A"}]}"""))).Message);
     }

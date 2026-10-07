@@ -55,16 +55,16 @@ turns taps into `World` calls. It draws through its children, one script each:
 
 | Node | Does |
 |---|---|
-| `Map` (`MapView`) | a layer's painted picture, tiles from `TileArt` (the creator's tile pictures, else plain CC-29 fills) and grid lines, in blocks of 8 by 8 cells |
-| `Objects` (`ObjectsView`) | doors, levers, chests, sacks the dead left, found traps and lamp flames |
-| `Tokens` (`TokensView`) | one `Token.tscn` (`TokenView`) per creature, and the heroes' paths |
+| `Map` (`MapView`) | a layer's painted picture, tiles from `TileArt` (the creator's tile pictures, else plain palette fills) and grid lines, in blocks of 8 by 8 cells |
+| `Objects` (`ObjectsView`) | doors, levers, chests, sacks the dead left, found traps and lamp flames, each its `objects/` picture or a plain block |
+| `Tokens` (`TokensView`) | one `Token.tscn` (`TokenView`) per creature: its face with its side's frame over it (`ui/tokens/<side>.png` from the skin, else a ring in the side's colour), and the heroes' paths |
 | `Camera` (`PlayCamera`) | pan and zoom from keys, wheel, right or middle drags, finger drags and pinches; a left click, or a tap that isn't a drag, comes out as `Tapped` and leaves the view where it is |
 | `LightMap` (SubViewport) and `Lighting` (`LightingView`) | the light map: white ground under the ambient colour, `Light.tscn` lamps and carried lights, walls as occluders |
-| `Shading/LightMap` | the light map over the world (`scenes/lighting.gdshader`): each colour steps down a ramp of darker CC-29 colours per band of lost light, ending in 352b42 or 212123, so shadow never goes muddy or black |
+| `Shading/LightMap` | the light map over the world (`scenes/lighting.gdshader`): each colour steps down a ramp of darker Apollo colours per band of lost light, ending in 172038 or 151d28, so shadow never goes muddy or black |
 | `Overlay/Fog` (`FogView`), `Overlay/Floaters` | fog of war from the party's view, words that float up (damage big and red, healing green, a miss pale) |
 | `Overlay/FightGround` (`FightGroundView`) | on a hero's turn: the squares in reach, the path a click would walk, a picked action's range and area |
 | `Overlay/TokenBars` (`TokenBarsView`) | in a fight: HP bars over tokens, a ring on whose turn it is and on who can be targeted |
-| `Palette/Snap` | snaps everything under it to the nearest CC-29 colour (`scenes/palette.gdshader`), so fog, the fight overlay and text edges on the map stay in the palette. Create's map has the same pass |
+| `Palette/Snap` | snaps everything under it to the nearest Apollo colour (`scenes/palette.gdshader`), so fog, the fight overlay and text edges on the map stay in the palette. Create's map has the same pass |
 | `Fight` (`FightControl`) | the player's side of a fight: the picked action, what the pointer is over (`FightAim`), taps and keys into `World` calls |
 | `Hud` | chapter title, banner, and `Panels` (`scenes/hud/PlayHud.tscn`) |
 | `Hud/Cutscene` (`CutsceneView`) | plays a cutscene from `CutsceneRun`: steers the camera, draws the bars, fade, captions and titles with the panels hidden. A click, Space, Enter or Escape skips it |
@@ -88,8 +88,8 @@ anchors and styled by `scenes/hud/hud-theme.tres` (flat opaque panels, a 1 px le
 most, no shadows; the type variations in it are the bars, frames, tabs, chips, rows, the book page and label
 styles). Headings and column titles are small capitals in the book face, entry text is the book face (Georgia,
 or the system serif) and numbers the monospace one (Consolas, or the system monospace); both are system fonts,
-so nothing is shipped for them. Every colour in the theme and in the panels' own drawing is from the CC-29
-palette, named in `src/hud/Palette.cs`, and nothing is see-through: a greyed thing uses `GreyButton` or slate,
+so nothing is shipped for them. Every colour in the theme and in the panels' own drawing is from the Apollo
+palette (46 colours, CC-29 until 10/7), named in `src/hud/Palette.cs`, and nothing is see-through: a greyed thing uses `GreyButton` or slate,
 never a faded alpha. `PaletteTests` reads the scenes, the theme, the shaders and `src/` and fails on any other
 colour. `PlayScreen` hands it the `World` and the `FightAim` each frame. It
 only shows them and raises an event when something is pressed; `FightControl` does the acting.
@@ -139,7 +139,7 @@ the grid, objects outlined by kind and the edges that block sight. The wheel zoo
 the arrow keys move it, and left and right presses on a cell go to the mode, which draws its own marks over
 it. Their side columns are `ToolColumn`s, made again only when what they list changes, so a text box keeps
 its focus while it is typed in. Colours from content (creature tokens, lights) are drawn as the nearest
-CC-29 colour (`Palette.Nearest`).
+palette colour (`Palette.Nearest`).
 
 Playtest saves first, then `Main` hides Create and starts a `PlayScreen` with `Playtest` on and the package
 laid over the game's content; Escape frees it and shows Create again as it was.

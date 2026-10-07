@@ -14,7 +14,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1294, 0.1294, 0.1373, 1)
+color = Color(0.0824, 0.1137, 0.1569, 1)
 
 [node name="Title" type="Control" parent="."]
 layout_mode = 3
@@ -33,7 +33,7 @@ offset_top = 52.0
 offset_right = 464.0
 offset_bottom = 104.0
 theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(0.949, 0.9412, 0.898, 1)
+theme_override_colors/font_color = Color(0.9216, 0.9294, 0.9137, 1)
 theme_override_font_sizes/font_size = 38
 text = "YOREHOLD"
 
@@ -52,7 +52,7 @@ offset_top = 134.0
 offset_right = 1216.0
 offset_bottom = 135.0
 mouse_filter = 2
-color = Color(0.2706, 0.2667, 0.3098, 1)
+color = Color(0.2235, 0.2902, 0.3137, 1)
 
 [node name="Heading" type="Label" parent="Title"]
 layout_mode = 0

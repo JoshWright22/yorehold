@@ -28,7 +28,7 @@ public partial class MapModePanel : HBoxContainer
         (Tool.Paint, "Paint"), (Tool.Fill, "Fill box"), (Tool.Wall, "Wall"), (Tool.Light, "Light"), (Tool.Marker, "Marker"), (Tool.Kit, "Kit"),
     };
 
-    // CC-29 colours a lamp can have, by what they look like in play
+    // palette colours a lamp can have, by what they look like in play
     private static readonly (string Name, Color Color)[] LightColors =
     {
         ("Torch", Palette.Amber), ("Candle", Palette.Straw), ("White", Palette.Bone), ("Ember", Palette.Red), ("Cold", Palette.Sky), ("Witchlight", Palette.Mint),

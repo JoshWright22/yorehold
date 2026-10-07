@@ -34,6 +34,12 @@ What the port reads so far, and where it differs:
   `objects/<name>.png`: `door`, `door-open`, `door-locked`, `chest`, `chest-open` (emptied),
   `lever`, `trap`, `trap-off` (disarmed), `sack`, `flame`, `block` (anything else). Without one
   they are plain palette blocks; a locked door or chest gets a brass edge either way.
+- Token frames (the skin): every token wears its side's frame over its face,
+  `ui/tokens/<side>.png` for `mine` (this player's heroes), `party` (other players' heroes), `ally`
+  (companions and others on the party's side), `enemy` and `neutral`. A frame is drawn over the
+  whole token, so its middle should be see-through. `ui/tokens/token.json` says how faces sit in
+  the frames: `{"shape": "round" | "square", "inset": 0.1}` (the face starts `inset` of the frame's
+  width in from its edge; 0 to 0.45). Without frames each side is a plain ring in its colour.
 - The game draws no pictures of its own: faces, tiles, icons and objects all come from content or
   art packs, and the fallback is a plain fill, a disc or a letter.
 - Hotbars: a sheet saved by the game carries `hotbar`: `{"slots": [action ids, "" for empty, at most
@@ -102,7 +108,7 @@ What the port reads so far, and where it differs:
   in for one of the game's own chapters when the package is played over them. The problems list reads
   the package's files over the game's content, the way a playtest plays them, so the game's classes and
   creatures count. Playtest plays the open chapter with nothing saved and Escape comes back. Lights
-  take one of six CC-29 colours. `-- --screen create` starts the game in Create, in place of
+  take one of six palette colours. `-- --screen create` starts the game in Create, in place of
   `YOREHOLD_CREATE`.
 - Dialogue mode ("Writing dialogue in Create") works as described. New conversation is the button
   for New, and Skill check is a toggle rather than a tick box.
@@ -240,7 +246,7 @@ Modifiers use `stat`, `op` (`add`, `multiply`, `override`) and `value`. `token` 
 
 `map.json` contains named `tiles`, a `legend` mapping one character to each tile name, and `layers` of text `rows`. Spaces mean empty cells. All layers have equal dimensions, derived from the first layer. Empty ground is not walkable. Walls/obstacles can be painted over ground on later layers.
 
-Tiles declare `walkable` and `blocksSight` independently. Sight-blocking tile edges create the vision/lighting walls. `image` is the creator's picture for the tile, a content path (`tiles/grass.png`; png, jpg or webp, square, any size up to 256 px; all of a map's tiles are scaled to the biggest). The game draws no tile pictures of its own: a tile without one is a plain fill in the nearest CC-29 colour to its `color`, or, with no `color`, the usual colour of its `art` (grass, dirt, stone, wood, wall, water, tree). A layer of a `tileMap` map can lie on a painted picture: `"image": {"path": "maps/yard.png", "area": [x, y, width, height]}` in world units, drawn under the tiles of floor 0.
+Tiles declare `walkable` and `blocksSight` independently. Sight-blocking tile edges create the vision/lighting walls. `image` is the creator's picture for the tile, a content path (`tiles/grass.png`; png, jpg or webp, square, any size up to 256 px; all of a map's tiles are scaled to the biggest). The game draws no tile pictures of its own: a tile without one is a plain fill in the nearest palette colour to its `color`, or, with no `color`, the usual colour of its `art` (grass, dirt, stone, wood, wall, water, tree). A layer of a `tileMap` map can lie on a painted picture: `"image": {"path": "maps/yard.png", "area": [x, y, width, height]}` in world units, drawn under the tiles of floor 0.
 
 Optional `lighting` picks how light works on the map. `mode` is `off` (everything lit, no darkness drawn), `mood` (lights and darkness are only for looks; the default) or `rules` (heroes only see cells that are lit or within their darkvision). `ambient` is the light level where no lamp reaches (`dark`, `dim` or `bright`), `brightFraction` the part of each light's radius that is bright, `carried` the radius in cells of the light each hero carries (0 = none) and `sight` how far heroes see, in cells. Players can override the mode in Settings. Classes and creatures take `darkvision` in feet.
 

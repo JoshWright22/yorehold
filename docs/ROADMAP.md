@@ -10,7 +10,7 @@ Layout: `rules/` is plain C# with no Godot types (content loading, rules, World,
 tested with xunit in `tests/`. The Godot project in the root only draws, takes input and shows UI.
 Content stays as the JSON files in `assets/`; old files keep loading.
 
-Look: panels use the CC-29 palette and nothing else (`src/hud/Palette.cs`, `scenes/hud/hud-theme.tres`)
+Look: panels use the Apollo palette (CC-29 until 10/7) and nothing else (`src/hud/Palette.cs`, `scenes/hud/hud-theme.tres`)
 and read like the website: ink ground, thin iron lines, bone text, straw as the one accent, no serif.
 The fight screen keeps its hotbar and portraits. Data screens (sheet, gear, spells, library) are dense
 like a database: a tab bar of types, a search box, filter chips, tight rows sorted by any column, the
@@ -323,7 +323,7 @@ Rules for all of it:
 
 Josh's first ten playtest answers (`feedback/playtest-results.jsonl`): the screens read as lists
 of small buttons, not a game. Layouts to copy are in `docs/UI_REFERENCE.md`. The 10/5 look rules
-stay (CC-29, flat, 1 px lines, dense data screens); what changes is that game-facing screens lead
+stay (one palette, Apollo since 10/7; flat, 1 px lines, dense data screens); what changes is that game-facing screens lead
 with a large picture and a few big choices. Pictures come from art packs and content, never
 drawn by the game. Each step ends with screenshots of the screens it touched and its playtest
 reopened (`playtest.ps1 -Problems`).

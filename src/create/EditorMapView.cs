@@ -51,7 +51,7 @@ public partial class EditorMapView : Control
         MouseFilter = MouseFilterEnum.Stop;
         FocusMode = FocusModeEnum.Click;
         AddToGroup("create_map");
-        // the marks modes draw over the map are see-through; this snaps the whole view to CC-29
+        // the marks modes draw over the map are see-through; this snaps the whole view to the palette
         // the way the play screen's palette pass does
         var snap = new ColorRect
         {
