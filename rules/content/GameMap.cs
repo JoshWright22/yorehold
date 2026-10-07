@@ -28,6 +28,12 @@ public class MapLayer
     public double[] ImageArea { get; init; } = Array.Empty<double>();
 }
 
+/// <summary>A rectangle of squares, X and Y its top left, that sets Set when a hero stands in it.</summary>
+public record MapArea(string Id, int X, int Y, int W, int H, List<string> Set)
+{
+    public bool Holds(Cell cell) => cell.X >= X && cell.Y >= Y && cell.X < X + W && cell.Y < Y + H;
+}
+
 /// <summary>A lamp. Position and radius are in cells; [4.5, 3.5] is the middle of cell [4, 3].</summary>
 public record MapLight(double X, double Y, double Radius, ContentColor Color, bool Flame, string Name);
 
@@ -91,6 +97,8 @@ public class GameMap
     public List<MapLight> Lights { get; init; } = new();
     public SortedDictionary<string, Cell> Markers { get; init; } = new(StringComparer.Ordinal);
     public List<MapObject> Objects { get; init; } = new();
+    /// <summary>Rectangles of squares that set story flags when a hero first stands in one.</summary>
+    public List<MapArea> Areas { get; init; } = new();
     /// <summary>Squares within which a hero can spot a trap.</summary>
     public double TrapSpotRange { get; init; } = 2;
 
@@ -261,6 +269,32 @@ public class GameMap
                 }
                 map.Markers[member.Key] = cell;
             }
+        }
+
+        foreach (ContentNode a in node.Get("areas")?.Items() ?? Array.Empty<ContentNode>())
+        {
+            a.Only("id", "area", "set");
+            string id = a.At("id").AsId();
+            ContentNode box = a.At("area");
+            if (!box.IsArray || box.Count != 4 || box.Items().Any(n => !n.IsWhole))
+            {
+                throw box.Fail("is [x, y, width, height] in squares");
+            }
+            int[] r = box.Items().Select(n => n.AsInt()).ToArray();
+            if (r[2] < 1 || r[3] < 1 || !map.Inside(new Cell(r[0], r[1])) || !map.Inside(new Cell(r[0] + r[2] - 1, r[1] + r[3] - 1)))
+            {
+                throw box.Fail("is a rectangle of at least one square inside the map");
+            }
+            List<string> set = a.Flags("set");
+            if (set.Count == 0)
+            {
+                throw a.Fail("set", "names at least one flag");
+            }
+            if (map.Areas.Any(other => other.Id == id))
+            {
+                throw a.Fail("id", $"two areas have the id \"{id}\"");
+            }
+            map.Areas.Add(new MapArea(id, r[0], r[1], r[2], r[3], set));
         }
 
         // Objects: a kit on a cell ({"kit": "door", "at": [x, y]}; any other field changes that

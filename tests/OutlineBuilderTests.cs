@@ -52,8 +52,44 @@ public class OutlineBuilderTests
         // the book's notes, the passages read in rooms and what the game can't play are in the report
         string report = File.ReadAllText(Path.Combine(package, "import", "report.json"));
         Assert.Contains("lantern", report);
-        Assert.Contains("rooms can't show text on entering yet", report);
         Assert.DoesNotContain(builder.Report, line => line.Text.Contains("no walk from the start"));
+        // the mill's and the bank's passages are read out when a hero first steps in
+        Assert.Equal(new[] { "room-mill", "room-bank" }, chapter.Map.Areas.Select(a => a.Id));
+        Assert.Contains(chapter.Triggers, t => t.Id == "read-mill" && t.When.SequenceEqual(new[] { "entered_mill" }));
+    }
+
+    [Fact]
+    public void ARoomsPassageIsReadWhenAHeroStepsIn()
+    {
+        using var scratch = new Scratch();
+        string package = Build(scratch).Package;
+        using WorldFixture world = WorldFixture.LoadFrom(Play(package), "chapters/mill-chapter", 3);
+        World w = world.World;
+        while (w.Talk != null)
+        {
+            w.EndTalk();
+        }
+        MapArea bank = w.Chapter.Map.Areas.First(a => a.Id == "room-bank");
+        world.Step(1.0 / 60);
+        Assert.Null(w.Talk);
+        w.Place(0, new Cell(bank.X + 1, bank.Y + 1));
+        world.Step(1.0 / 60);
+        Assert.True(w.Flags.Contains("entered_bank"), "Stepping into the room sets its flag");
+        Assert.True(w.Talk != null, "... and its passage opens");
+        w.EndTalk();
+        w.Place(0, new Cell(bank.X + 2, bank.Y + 1));
+        world.Step(1.0 / 60);
+        Assert.True(w.Talk == null, "It is read only once");
+    }
+
+    [Fact]
+    public void AMapAreaIsChecked()
+    {
+        string Map(string area) => "{\"tiles\": {\"floor\": {\"art\": \"stone\"}}, \"legend\": {\".\": \"floor\"}, \"layers\": [{\"name\": \"ground\", \"rows\": [\"....\", \"....\"]}], \"areas\": [" + area + "]}";
+        GameMap map = GameMap.Read(ContentNode.Parse("map.json", Map("{\"id\": \"a\", \"area\": [1, 0, 2, 2], \"set\": [\"in_a\"]}")), new Dictionary<string, Kit>());
+        Assert.True(map.Areas[0].Holds(new Cell(2, 1)) && !map.Areas[0].Holds(new Cell(0, 0)));
+        Assert.Contains("inside the map", TestContent.Refused(() => GameMap.Read(ContentNode.Parse("map.json", Map("{\"id\": \"a\", \"area\": [3, 0, 2, 2], \"set\": [\"x\"]}")), new Dictionary<string, Kit>())).Message);
+        Assert.Contains("at least one flag", TestContent.Refused(() => GameMap.Read(ContentNode.Parse("map.json", Map("{\"id\": \"a\", \"area\": [0, 0, 1, 1]}")), new Dictionary<string, Kit>())).Message);
     }
 
     [Fact]

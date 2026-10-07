@@ -283,13 +283,14 @@ Rules for all of it:
     side until they fit with one wall between; a link that can't be a shared wall is a corridor
     cut straight through. A place with no link is joined to the one before by an open way.
   - Default: `secret` is played as a plain door, `climb` and `jump` as open ways; each says so in
-    the report. Read-aloud text of every room but the first goes on the story graph's scene and
-    in the report, since rooms can't show text when entered (S3b).
+    the report. The book's notes go on the chapter's scene in the story graph.
   - Default: the map is written as text rows (stone, grass, wall, tree), so Create's Map mode
     rewrites it in its own form on the first save.
-- [ ] **S3b. Room text on entering.** A map area (a place's rectangle) that sets a flag the first
+- [x] **S3b. Room text on entering.** A map area (a place's rectangle) that sets a flag the first
   time a hero steps in, so a chapter trigger can show that room's read-aloud passage then. The
   builder writes one per place with a passage, and the report line about it goes.
+  - Default: the passage shows as a one-line conversation spoken by the room's name; a cutscene
+    caption would hold up play. Areas wait for a fight to end.
 - [ ] **S4. What needs no model.** A picture goes to the name of the nearest heading under or
   over it in its column. A picture with numbers printed on it that match numbered headings is
   the map, and the numbers give each place its spot on it. A plain paper ground around a figure

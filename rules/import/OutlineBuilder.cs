@@ -336,6 +336,21 @@ public sealed class OutlineBuilder
         j["encounters"] = encounters;
 
         var triggers = new JsonArray();
+        // a room's passage is read out the first time a hero steps in: an area sets a flag, a trigger on it shows the words
+        foreach (OutlineEntry place in PlacesOf(id).Where(p => p != layout.Start && p.Texts("readAloud").Count > 0))
+        {
+            string flag = "entered_" + place.Id.Replace('-', '_');
+            (int x, int y, int w, int h) = layout.Room(place.Id);
+            layout.Areas.Add(new JsonObject { ["id"] = "room-" + place.Id, ["area"] = new JsonArray(x, y, w, h), ["set"] = new JsonArray(flag) });
+            string talk = "read-" + place.Id;
+            WriteJson($"{folder}/dialogue/{talk}.json", new JsonObject
+            {
+                ["id"] = talk,
+                ["start"] = "read",
+                ["nodes"] = new JsonArray(new JsonObject { ["id"] = "read", ["speaker"] = place.Text("name"), ["text"] = string.Join("\n\n", place.Texts("readAloud")) }),
+            });
+            triggers.Add(new JsonObject { ["id"] = talk, ["when"] = new JsonArray(flag), ["dialogue"] = $"dialogue/{talk}.json" });
+        }
         foreach (OutlineEntry trigger in _outline.OfKind(OutlineKind.Trigger).Where(t => EntryChapter(t) == id))
         {
             dialogues.Add(trigger.Text("dialogue"));
@@ -475,10 +490,6 @@ public sealed class OutlineBuilder
             string scene = "scene-" + chapter;
             // what the game can't play yet is kept on the chapter's scene, so the writer sees it next to the rest
             var notes = new List<string>();
-            foreach (OutlineEntry place in PlacesOf(chapter).Skip(1).Where(p => p.Texts("readAloud").Count > 0))
-            {
-                notes.Add($"{Label(place)}: {string.Join(" ", place.Texts("readAloud"))}");
-            }
             foreach (OutlineEntry note in _outline.OfKind(OutlineKind.Note).Where(n => EntryChapter(n) == chapter))
             {
                 notes.Add(note.Text("why") is { Length: > 0 } why ? $"{note.Text("text")} ({why})" : note.Text("text"));
@@ -522,13 +533,6 @@ public sealed class OutlineBuilder
         foreach (OutlineEntry note in _outline.OfKind(OutlineKind.Note))
         {
             _report.Add(new ReportLine(note.Id, note.Text("why") is { Length: > 0 } why ? $"{note.Text("text")} ({why})" : note.Text("text")));
-        }
-        foreach (OutlineEntry place in _outline.OfKind(OutlineKind.Place).Where(p => p.Texts("readAloud").Count > 0))
-        {
-            if (!_outline.OfKind(OutlineKind.Chapter).Any() || PlacesOf(ChapterOf(place.Id)).FirstOrDefault() != place)
-            {
-                _report.Add(new ReportLine(place.Id, "its passage to read out is on the story graph; rooms can't show text on entering yet"));
-            }
         }
         var lines = new JsonArray();
         foreach (ReportLine line in _report)
@@ -701,6 +705,10 @@ public sealed class OutlineBuilder
 
         public OutlineEntry? Start { get; }
         public List<JsonObject> Objects { get; } = new();
+        public List<JsonObject> Areas { get; } = new();
+
+        /// <summary>A place's floor, in the map's squares.</summary>
+        public (int X, int Y, int W, int H) Room(string place) => _rooms[place];
         public List<(string Marker, string Place)> Exits { get; } = new();
 
         private static (int W, int H) SizeOf(OutlineEntry place)
@@ -959,6 +967,7 @@ public sealed class OutlineBuilder
                 ["layers"] = new JsonArray(new JsonObject { ["name"] = "ground", ["rows"] = rows }),
                 ["objects"] = objects,
                 ["markers"] = markers,
+                ["areas"] = new JsonArray(Areas.Select(a => (JsonNode?)a.DeepClone()).ToArray()),
             };
         }
     }

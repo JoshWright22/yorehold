@@ -254,6 +254,8 @@ Optional `ambient` is an RGB/RGBA color. `lights` have `at: [x, y]`, `radius` in
 
 The text rows are an import for maps written by hand. The game keeps every map in the framework's `TileMap` and `Objects` (one `Region` per chapter), and a map can be written that way too: `tiles` as an array (`{"name": "stone", "art": "stone", ...}`, tile id = place in the array + 1) and `tileMap` holding the framework's TileMap JSON (FRAMEWORK.md, "Maps, objects and streamed worlds"; `tileSize` 64) in place of `legend` and `layers`. Only floor 0 layers count for walking and sight for now. `GameMap::toJson` writes a loaded map in this form.
 
+Optional `areas` are rectangles of squares that set story flags: `[{"id": "room-mill", "area": [x, y, width, height], "set": ["entered_mill"]}]`. The first time a hero who isn't down stands in one outside a fight, its flags are set; flags set only once, so a trigger waiting on them fires once (a room's passage read out as the party walks in). In a fight they wait until it ends.
+
 `objects` places doors, levers, chests and traps. Each entry is a kit on a cell, `{"kit": "door", "at": [x, y]}`, where any other field changes that copy (`name`, `door`, `lock`, `trap`, `contents`) and `tags` add to the kit's. An entry without `kit` is a whole object in the framework's format, one cell big unless it has an `area`. Kits are one file each in `kits/` at the root or in the chapter's own `kits/` (which wins), named after their id, in the framework's Kit format. The game ships `door`, `locked-door`, `lever`, `chest`, `locked-chest` and `dart-trap`.
 
 - A door with `blocksMovement` and `blocksSight` stops walking and sight until it is opened. `"door": {"locked": true}` needs a key: an item whose id matches the door's `key:<item id>` tag. Add `"lock": {"dc": 15, "skill": "dex"}` and a check can open it too (`dc` 0 or no lock means a key only).
@@ -493,7 +495,9 @@ unless the book gives it a picture), `pictures/` (the book's pictures in use), e
 as rooms side by side with one wall between, stone floor and walls inside, grass and trees
 outdoors; a link is a gap in that wall, a `door` kit, or a `locked-door` kit with `key:<item>` and
 the link's check as its lock. The party starts in the first place of the chapter, whose passage
-to read out joins the chapter's `intro`; foes stand on the far side of their room. An NPC with a
+to read out joins the chapter's `intro`; every other room's passage is read the first time a hero
+steps in (an area setting `entered_<place>`, a trigger on it and a one-line conversation
+`dialogue/read-<place>.json`). Foes stand on the far side of their room. An NPC with a
 picture gets a creature of its own carrying it. A locked chest is a `locked-chest` map object.
 Every chapter gets `xpPerVictory` 50. `import/report.json` lists what didn't go in as written:
 `{"format": "yorehold.import-report", "version": 1, "lines": [{"entry", "text"}]}`. The same

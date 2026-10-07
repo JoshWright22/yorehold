@@ -387,7 +387,33 @@ public sealed partial class World
         }
         UpdateVisibility();
         WatchPendingTalk();
+        WatchAreas();
         WatchExits();
+    }
+
+    // A hero standing in an area sets its flags. Flags only set once, so its trigger fires once;
+    // in a fight the flags wait for it to end, so a room's passage doesn't break into the turns.
+    private void WatchAreas()
+    {
+        if (Fighting || Chapter.Map.Areas.Count == 0)
+        {
+            return;
+        }
+        foreach (MapArea area in Chapter.Map.Areas)
+        {
+            if (area.Set.All(Flags.Contains))
+            {
+                continue;
+            }
+            for (int h = 0; h < HeroCount; h++)
+            {
+                if (!Creatures[h].Sheet.Down && Tokens.Tokens[h].Floor == 0 && area.Holds(CellOf(h)))
+                {
+                    SetFlags(area.Set);
+                    break;
+                }
+            }
+        }
     }
 
     /// <summary>Everyone on the move takes their next steps.</summary>
