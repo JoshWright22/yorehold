@@ -455,9 +455,10 @@ reopened (`playtest.ps1 -Problems`).
     (`.dev\p11-adventures.png`).
   - Default: covers fill the background rather than a row of small tiles; sections are the tabs
     (the game's, made here, imported), since there are no worlds or "new" marks yet.
+  - Saves remember their package (`package` in the save's data); Continue and Load play from it
+    again, and a save whose package was deleted says so on the load screen.
   - Not done: the playtest's `library` answer was about the character library, which is the
-    data panel it was; Continue and Load of an adventure from a package read only the game's
-    content, so such a save says it can't be loaded until saves remember their package.
+    data panel it was.
 - [x] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
   changes: the actions every hero always has (strike, stride, defend, help, hide, seek, shove,
   grapple, interact, ready) sit in their own group apart from spells and items; and as in BG3

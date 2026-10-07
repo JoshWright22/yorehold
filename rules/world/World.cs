@@ -196,6 +196,11 @@ public sealed partial class World
     /// <summary>Trigger ids that have fired in this adventure.</summary>
     public SortedSet<string> FiredTriggers { get; } = new(StringComparer.Ordinal);
     public WorldOptions Options { get; } = new();
+    /// <summary>
+    /// The package folder the adventure is played from, over the game's own content; empty for the
+    /// game's. Saved, so Continue and Load play it from the same content again.
+    /// </summary>
+    public string Package { get; set; } = "";
     /// <summary>A trigger's or the ending's cutscene is playing: nothing else happens until EndCutscene.</summary>
     public bool InCutscene { get; private set; }
     /// <summary>The encounter the fight is with; null between fights.</summary>

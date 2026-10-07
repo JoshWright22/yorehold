@@ -82,7 +82,8 @@ public partial class Main : Node
         switch (order)
         {
             case MenuOrder.Continue:
-                Play(PlayScreen.StartKind.Continue, text);
+                // a save from an adventure in a package plays from that package again
+                Play(PlayScreen.StartKind.Continue, text, Rules.SaveSummary.Read(text).Package);
                 break;
             case MenuOrder.NewAdventure:
                 // text is the picked adventure's package, "" for the game's own
@@ -95,9 +96,10 @@ public partial class Main : Node
                 Play(PlayScreen.StartKind.Library, "");
                 break;
             case MenuOrder.LoadSave:
-                if (_play == null)
+                string package = Rules.SaveSummary.Read(text).Package;
+                if (_play == null || _play.Package != package)
                 {
-                    Play(PlayScreen.StartKind.Continue, text);
+                    Play(PlayScreen.StartKind.Continue, text, package);
                 }
                 else if (_play.LoadFrom(text))
                 {
@@ -135,12 +137,13 @@ public partial class Main : Node
         _play = PlayScene.Instantiate<PlayScreen>();
         _play.Start = kind;
         _play.StartSave = save;
-        if (package.Length > 0)
+        if (package.Length > 0 && System.IO.Directory.Exists(package))
         {
             // an adventure made in Create or imported: its package over the game's content, from its first chapter
             Rules.ContentFiles files = App.Content();
             files.Add(package);
             _play.Content = files;
+            _play.Package = package;
             try
             {
                 _play.ChapterFolder = Rules.Adventure.Load(files).ChapterFolders[0];

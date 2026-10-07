@@ -26,6 +26,7 @@ public sealed partial class World
         {
             ["chapterId"] = Chapter.Id,
             ["chapterFolder"] = Chapter.Folder,
+            ["package"] = Package,
             ["seed"] = _seed,
             ["rolls"] = _rolls,
             ["fights"] = _fights,

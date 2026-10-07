@@ -33,6 +33,8 @@ public partial class PlayScreen : Node2D
     public string StartSave { get; set; } = "";
     /// <summary>The content the chapter is read from; null reads the game's own.</summary>
     public ContentFiles? Content { get; set; }
+    /// <summary>The package Content puts over the game's (an import or one made in Create), for the saves to remember; "" for the game's.</summary>
+    public string Package { get; set; } = "";
     /// <summary>A playtest from Create: nothing is saved and no character goes home to the library.</summary>
     public bool Playtest { get; set; }
 
@@ -123,6 +125,7 @@ public partial class PlayScreen : Node2D
         try
         {
             _world = World.Load(Content ?? App.Content(), folder, (ulong)seed);
+            _world.Package = Package;
         }
         catch (ContentException e)
         {

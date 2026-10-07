@@ -21,6 +21,8 @@ public sealed class SaveSummary
     public string Problem { get; private set; } = "";
     public string ChapterId { get; private set; } = "";
     public string ChapterFolder { get; private set; } = "";
+    /// <summary>The package the adventure plays from (an import or one made in Create); empty for the game's own.</summary>
+    public string Package { get; private set; } = "";
     /// <summary>The chapter's title from the content, or its id when the content doesn't have it.</summary>
     public string ChapterTitle { get; private set; } = "";
     /// <summary>The party was at camp; this is the chapter they go back to.</summary>
@@ -74,9 +76,26 @@ public sealed class SaveSummary
         data.RequireObject("a save");
         ChapterId = data.Text("chapterId", "");
         ChapterFolder = data.Text("chapterFolder", "");
+        Package = data.Text("package", "");
         CampReturn = data.Text("campReturn", "");
         ChapterTitle = ChapterId;
         string chapterFile = ChapterFolder + "/chapter.json";
+        if (content != null && Package.Length > 0)
+        {
+            if (!Directory.Exists(Package))
+            {
+                throw new ContentException(System.IO.Path.GetFileName(Path), "package", $"its adventure, {Package}, is gone");
+            }
+            var both = new ContentFiles();
+            foreach (string root in new[] { content.FullPath("content.json") is string game ? System.IO.Path.GetDirectoryName(game)! : "", Package })
+            {
+                if (root.Length > 0)
+                {
+                    both.Add(root);
+                }
+            }
+            content = both;
+        }
         if (content != null && ChapterFolder.Length > 0 && ContentFiles.IsContentPath(chapterFile) && content.Exists(chapterFile))
         {
             try

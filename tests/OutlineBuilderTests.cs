@@ -113,6 +113,22 @@ public class OutlineBuilderTests
     }
 
     [Fact]
+    public void ASaveRemembersTheAdventuresPackage()
+    {
+        using var scratch = new Scratch();
+        string package = Build(scratch).Package;
+        using WorldFixture world = WorldFixture.LoadFrom(Play(package), "chapters/mill-chapter");
+        world.World.Package = package;
+        string path = Path.Combine(scratch.Folder, "save.json");
+        World.SaveFile.WriteFile(path, world.World.StateJson());
+
+        SaveSummary summary = SaveSummary.Read(path, TestContent.Shipped());
+        Assert.Equal(("", package, "The Old Mill"), (summary.Problem, summary.Package, summary.ChapterTitle));
+        Directory.Delete(package, true);
+        Assert.Contains("is gone", SaveSummary.Read(path, TestContent.Shipped()).Problem);
+    }
+
+    [Fact]
     public void TheSameOutlineGivesTheSameFiles()
     {
         using var first = new Scratch();
