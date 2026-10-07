@@ -522,6 +522,34 @@ neither knows becomes `otherwise`, with a line in the report. Checks on links, c
 replies, and creatures' hit points and armour class, are scaled and added to. The game ships
 `dnd-3.0` and `dnd-5e`.
 
+With a story model (`StoryReader`), the book goes in chunks of whole pages (about 14,000
+characters each) with the outline so far, and the model answers with entries in the outline's
+own shape. Every entry is checked by the outline's reader; the ones that fail go back once with
+what is wrong, and the ones that fail again are dropped and listed. A `from.quote` that isn't on
+that page of the book (give or take a page, ignoring punctuation) makes the entry invented. The
+model is anything that takes the usual chat request, `POST <address>/v1/chat/completions` with
+`model`, `messages` and the answer's JSON schema as `response_format`; OpenRouter and Ollama both
+do. What it is told is three files in `import/`: `prompt-system.txt` (the rules and each kind's
+schema; `{{kinds}}`, `{{schemas}}`, `{{gameCreatures}}`, `{{gameItems}}` and `{{gameClasses}}` are
+filled in), `prompt-chunk.txt` (`{{outline}}`, `{{pictures}}`, `{{pages}}`, `{{title}}`,
+`{{text}}`) and `prompt-fix.txt` (`{{outline}}`, `{{errors}}`). In the book's text a line starting
+`#` is a heading, `>` a passage boxed to be read out and `|` a boxed note.
+
+After the model's pass, a hero, person or creature with no picture gets the picture captioned with
+its name (the whole name, or its first word: JEZER for "Jezer the Ogre"), if no other entry has it.
+
+Create > Import (`Import a book` on Create's list) reads a `.pdf`, `.txt` or `.md` into a new folder
+in the create folder, named after the book, with everything in its `import/`. The story model is
+the settings file's `storyModel` (a chat address, like `http://127.0.0.1:11434` for Ollama) and
+`storyModelName`, or `YOREHOLD_IMPORT_MODEL` and `YOREHOLD_IMPORT_MODEL_NAME`; with none, only the
+layout's draft is made. The review lists the entries by kind with chips for From the book,
+Invented and Dropped, and shows each as a page: its quote and page, its picture, its passages and
+its fields. Drop and Keep mark entries (kept in `import/dropped.json`, so a review can be closed
+and opened again from the list, where an import not yet built shows as `import`); Build writes
+the package without the dropped entries and what stands in them (a fight in a dropped room), and
+opens it. `-- --import <book>` reads, builds and opens a book with no review; `check.ps1 -Shot
+x.png -Import <book>` does that in a screenshot run.
+
 Without a story model, the layout of the book alone gives a first outline (`BookLayout.Draft`):
 the adventure and one chapter named for the book, a place for every numbered heading
 (`1: OUTSIDE THE CAVES`, `4. Crossing the Crevice`) with the shaded passages after it to read out

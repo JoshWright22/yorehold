@@ -8,6 +8,8 @@
 #                            -Chapter chapters\goblin-keep plays that chapter instead of the scene's
 #                            -Screen title starts the run on the title, -Screen create in Create
 #                            (default: play, straight into the game)
+#                            -Import book.pdf reads that book into a new package, builds it and
+#                            opens it in Create's Map mode
 #   .\check.ps1 -Playtest fight   sets up that test from playtest\queue.json off screen like
 #                            playtest.ps1 would, playtest window and all, and saves
 #                            ..\.dev\playtest-fight.png a second and a half after its setup ends
@@ -21,7 +23,8 @@ param(
     [string]$Script,
     [string]$Chapter,
     [string]$Screen = 'play',
-    [string]$Playtest
+    [string]$Playtest,
+    [string]$Import
 )
 
 # The screenshot runs to make: the one -Shot asks for, or one per playtest (-Playtest all for every one).
@@ -50,7 +53,9 @@ if ($Playtest) {
     }
 }
 elseif ($Shot) {
-    $runs += @{ Shot = $Shot; Frames = $Frames; Script = $Script; Chapter = $Chapter; Screen = $Screen; Extra = @() }
+    # -Import book.pdf reads, builds and opens that book in Create (story model from the settings or YOREHOLD_IMPORT_MODEL)
+    $extra = if ($Import) { @('--import', "`"$((Resolve-Path $Import).Path)`"") } else { @() }
+    $runs += @{ Shot = $Shot; Frames = $Frames; Script = $Script; Chapter = $Chapter; Screen = $Screen; Extra = $extra }
 }
 
 $ErrorActionPreference = 'Continue'

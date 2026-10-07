@@ -404,23 +404,31 @@ public sealed class Outline
         return problems;
     }
 
+    private static JsonObject EntryNode(OutlineEntry e)
+    {
+        var entry = new JsonObject { ["id"] = e.Id, ["kind"] = KindName(e.Kind) };
+        if (e.Chapter.Length > 0)
+        {
+            entry["chapter"] = e.Chapter;
+        }
+        entry["data"] = e.Data.DeepClone();
+        entry["from"] = e.From.IsInvented ? "invented" : new JsonObject { ["page"] = e.From.Page, ["quote"] = e.From.Quote };
+        if (e.Picture.Length > 0)
+        {
+            entry["picture"] = e.Picture;
+        }
+        return entry;
+    }
+
+    /// <summary>One entry as it is written in the file.</summary>
+    public static string EntryJson(OutlineEntry entry) => CreateJson.Compact(EntryNode(entry));
+
     public string ToJson()
     {
         var entries = new JsonArray();
         foreach (OutlineEntry e in Entries)
         {
-            var entry = new JsonObject { ["id"] = e.Id, ["kind"] = KindName(e.Kind) };
-            if (e.Chapter.Length > 0)
-            {
-                entry["chapter"] = e.Chapter;
-            }
-            entry["data"] = e.Data.DeepClone();
-            entry["from"] = e.From.IsInvented ? "invented" : new JsonObject { ["page"] = e.From.Page, ["quote"] = e.From.Quote };
-            if (e.Picture.Length > 0)
-            {
-                entry["picture"] = e.Picture;
-            }
-            entries.Add(entry);
+            entries.Add(EntryNode(e));
         }
         var root = new JsonObject
         {

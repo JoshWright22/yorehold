@@ -1,0 +1,6 @@
+The outline so far (id, kind, name):
+{{outline}}
+
+These entries from your last answer could not be used. Each is followed by what is wrong with it. Send them again, fixed, or leave one out if it can't be fixed.
+
+{{errors}}

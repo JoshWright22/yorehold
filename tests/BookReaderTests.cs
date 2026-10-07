@@ -256,6 +256,18 @@ public class BookReaderTests
         // and what the layout alone makes of it, next to the source
         BookLayout.Draft(book).Save(folder);
         File.WriteAllLines(Path.Combine(folder, "picture-names.txt"), BookLayout.PictureNames(book).Select(n => $"{n.Key}: {n.Value}"));
+        // with YOREHOLD_IMPORT_MODEL (a chat address) the story model reads it too, and the outline is built
+        if (Environment.GetEnvironmentVariable("YOREHOLD_IMPORT_MODEL") is { Length: > 0 } address)
+        {
+            var model = new ChatModel(address, Environment.GetEnvironmentVariable("YOREHOLD_IMPORT_MODEL_NAME") ?? "sonnet");
+            StoryReader.Result read = new StoryReader(model, TestContent.Shipped()).Read(book, BookLayout.Draft(book)).GetAwaiter().GetResult();
+            read.Outline.Save(folder);
+            File.WriteAllLines(Path.Combine(folder, "model-run.txt"), new[] { $"calls {read.Calls}, tokens in {read.InputTokens}, out {read.OutputTokens}" }
+                .Concat(read.Notes).Concat(read.Dropped.Select(d => $"dropped {d.Entry}: {d.Why}")));
+            string package = Path.Combine(folder, "package");
+            List<string> problems = new OutlineBuilder(read.Outline, folder, TestContent.Shipped()).Build(package);
+            File.WriteAllLines(Path.Combine(folder, "build-problems.txt"), problems);
+        }
         Directory.CreateDirectory(Path.Combine(folder, "cleared"));
         foreach ((string file, byte[] bytes) in book.PictureFiles)
         {

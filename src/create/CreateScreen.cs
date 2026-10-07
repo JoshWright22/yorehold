@@ -130,7 +130,14 @@ public partial class CreateScreen : Control
         _editor.Visible = open;
         if (!open)
         {
-            FillStart();
+            if (_import != null)
+            {
+                FillImport();
+            }
+            else
+            {
+                FillStart();
+            }
             return;
         }
 
@@ -203,14 +210,26 @@ public partial class CreateScreen : Control
         }
         if (!_package.IsOpen)
         {
-            if (key.Keycode == Key.Escape)
+            if (key.Keycode == Key.Escape && _import != null)
+            {
+                CloseImport();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (key.Keycode == Key.Escape)
             {
                 Closed?.Invoke();
                 GetViewport().SetInputAsHandled();
             }
-            else if (key.Keycode is Key.Enter or Key.KpEnter && _start.Picked.Length > 0)
+            else if (key.Keycode is Key.Enter or Key.KpEnter && _start.Picked.Length > 0 && _import == null)
             {
-                Open(_start.Picked);
+                if (_imports.Contains(_start.Picked))
+                {
+                    ReviewImport(_start.Picked);
+                }
+                else
+                {
+                    Open(_start.Picked);
+                }
                 GetViewport().SetInputAsHandled();
             }
             return;
@@ -360,6 +379,7 @@ public partial class CreateScreen : Control
             }
         }
         string root = Places.CreateFolder();
+        _imports.Clear();
         if (Directory.Exists(root))
         {
             foreach (string folder in Directory.GetDirectories(root).OrderBy(f => f, StringComparer.Ordinal))
@@ -367,6 +387,11 @@ public partial class CreateScreen : Control
                 if (File.Exists(Path.Combine(folder, "content.json")))
                 {
                     Add(folder, false);
+                }
+                else if (StoryImport.IsImport(folder))
+                {
+                    // a book read but not built yet: it opens in the review
+                    _imports.Add(folder.Replace('\\', '/'));
                 }
             }
         }
@@ -383,7 +408,7 @@ public partial class CreateScreen : Control
     {
         _start.SetHead("Create", "make your own adventures");
         _start.SetSources(Array.Empty<(string, string)>(), "");
-        _start.SetTabs(new[] { "All", "Made here", "The game's" });
+        _start.SetTabs(new[] { "All", "Made here", "Imports", "The game's" });
         _start.SetChips(Array.Empty<string>());
         _start.SetColumns(Columns);
         var rows = new List<DataRow>();
@@ -400,12 +425,30 @@ public partial class CreateScreen : Control
                 Dim = package == null,
             });
         }
+        foreach (string import in _imports)
+        {
+            string name = Path.GetFileName(import.TrimEnd('/'));
+            rows.Add(new DataRow
+            {
+                Key = import,
+                Cells = new[] { name, "import", "" },
+                Sort = new IComparable?[] { name, null, -1 },
+                Tags = new HashSet<string> { "Made here", "Imports" },
+                Search = import,
+            });
+        }
         _start.SetRows(rows);
 
         var page = new BookPage();
         var actions = new List<DataAction>();
         (string Path, ContentPackage? Package, string Problem, bool Game) picked = _found.FirstOrDefault(f => f.Path == _start.Picked);
-        if (picked.Path == null)
+        if (_imports.Contains(_start.Picked))
+        {
+            page.Title(Path.GetFileName(_start.Picked.TrimEnd('/'))).Sub("a book being imported").Rule()
+                .Text("Read but not built yet. Review what was read, drop what shouldn't go in, and build it.").Gap().Note(_start.Picked);
+            actions.Add(new DataAction("review", "Review"));
+        }
+        else if (picked.Path == null)
         {
             page.Title("Nothing made yet").Rule().Text("New adventure makes a folder with one chapter, one hero and an empty map to draw on.");
         }
@@ -435,6 +478,7 @@ public partial class CreateScreen : Control
             actions.Add(new DataAction("open", "Open"));
         }
         actions.Add(new DataAction("new", "New adventure"));
+        actions.Add(new DataAction("import", "Import a book"));
         actions.Add(new DataAction("back", "Back to title"));
         _start.SetEntry(page.ToString(), actions, _startNote);
         _start.SetFoot(Places.CreateFolder());
@@ -453,6 +497,15 @@ public partial class CreateScreen : Control
                 break;
             case "back":
                 Closed?.Invoke();
+                break;
+            case "import":
+                PickBook();
+                break;
+            case "review":
+                ReviewImport(_start.Picked);
+                break;
+            default:
+                ImportAction(id);
                 break;
         }
     }

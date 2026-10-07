@@ -1,0 +1,9 @@
+The outline so far (id, kind, name):
+{{outline}}
+
+The book's pictures on these pages:
+{{pictures}}
+
+Here are pages {{pages}} of "{{title}}". Lines starting "#" are headings, ">" passages boxed to be read out, "|" boxed notes. Answer with the entries these pages add. To change an entry already in the outline, send it again whole under the same id.
+
+{{text}}

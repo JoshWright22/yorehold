@@ -25,12 +25,19 @@ public partial class Main : Node
         _menus.Ordered += Order;
 
         string screen = "title";
+        string import = "";
         string[] args = OS.GetCmdlineUserArgs();
         for (int i = 0; i + 1 < args.Length; i++)
         {
             if (args[i] == "--screen")
             {
                 screen = args[i + 1];
+            }
+            else if (args[i] == "--import")
+            {
+                // a book read, built and opened in Create with no review, for check runs
+                import = args[i + 1];
+                screen = "create";
             }
             else if (args[i] == "--chapter" && screen == "title")
             {
@@ -44,6 +51,10 @@ public partial class Main : Node
                 break;
             case "create":
                 OpenCreate();
+                if (import.Length > 0)
+                {
+                    _create?.Import(import, build: true);
+                }
                 break;
             default:
                 _menus.Open(MenuScreen.Page.Title);

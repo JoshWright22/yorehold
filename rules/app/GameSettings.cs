@@ -40,6 +40,9 @@ public sealed class GameSettings
     public string ServerKey { get; set; } = "";
     /// <summary>Names this install to the server; made up on first use.</summary>
     public string DeviceId { get; set; } = "";
+    /// <summary>Story import's model: a chat address (an Ollama on this computer, say) and the model's name. "" = none set.</summary>
+    public string StoryModel { get; set; } = "";
+    public string StoryModelName { get; set; } = "";
     /// <summary>Key bindings that differ from the shipped ones: action id to key names.</summary>
     public Dictionary<string, List<string>> Keys { get; } = new();
 
@@ -82,6 +85,8 @@ public sealed class GameSettings
         settings.Server = Clip(Text(j, "server", ""), 253);
         settings.ServerKey = Clip(Text(j, "serverKey", ""), 128);
         settings.DeviceId = Clip(Text(j, "deviceId", ""), 128);
+        settings.StoryModel = Clip(Text(j, "storyModel", ""), 253);
+        settings.StoryModelName = Clip(Text(j, "storyModelName", ""), 128);
         if (j["keys"] is JsonObject keys)
         {
             foreach (KeyValuePair<string, JsonNode?> binding in keys)
@@ -140,6 +145,8 @@ public sealed class GameSettings
             ["server"] = Server,
             ["serverKey"] = ServerKey,
             ["deviceId"] = DeviceId,
+            ["storyModel"] = StoryModel,
+            ["storyModelName"] = StoryModelName,
         };
         var keys = new JsonObject();
         foreach (KeyValuePair<string, List<string>> binding in Keys.OrderBy(k => k.Key, StringComparer.Ordinal))
@@ -176,7 +183,7 @@ public sealed class GameSettings
     private static readonly string[] Known =
     {
         "zoomToCursor", "edgeScroll", "cameraFollows", "panSpeed", "fullscreen", "lighting", "timeOfDay", "sharedFog",
-        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId",
+        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName",
     };
 
     private static string Clip(string text, int longest) => text.Length > longest ? text[..longest] : text;

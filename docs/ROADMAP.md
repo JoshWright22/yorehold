@@ -305,7 +305,7 @@ Rules for all of it:
     a table for a system with other scales says so in its own lines.
   - Default: the draft's places are 8 by 8 until the model or the writer sizes them, and are not
     linked, so the builder joins them in order; the map note carries where each number sits.
-- [ ] **S5. The story model.** `IStoryModel` with one request shape: a chunk of `source.json`
+- [x] **S5. The story model.** `IStoryModel` with one request shape: a chunk of `source.json`
   (with the page pictures, for a model that can see them) and the outline so far in, outline
   entries out, checked against the outline's own reader. The main path is `yorehold-server`
   sending the request to large models on rented GPUs; a service on this computer (Ollama's
@@ -329,6 +329,18 @@ Rules for all of it:
   - Default: the model for each pass is named in the server's config, not in the game, so a
     cheaper one can be swapped in without a release. Each run logs its tokens and cost, and a
     book already read (same file hash) is answered from the last result for free.
+  - Done 10/7: `ChatModel` (the chat request, any address), `StoryReader` (pages in chunks of about
+    14,000 characters with the outline so far; entries checked by the outline's reader, failures
+    sent back once, then dropped; quotes not in the book make the entry invented; captioned
+    pictures given to heroes, people and creatures by name), prompts in `assets/import/`, the
+    address and model name in settings (`storyModel`, `storyModelName`).
+  - First real run, Caves of Shadow through the stand-in on Sonnet: 6 calls, 65,000 tokens in and
+    12,500 out, about two minutes; 7 places, 7 links (two locked doors, the crevice as a jump),
+    4 fights, the 4 heroes, Jeffries and his talk, 10 items, 8 chests and a quest. It built with
+    no problems. At OpenRouter's cheap models that many tokens is about a cent, just over the
+    aim; the outline sent with every chunk is most of it, and is the first thing to trim.
+  - Not done: pictures aren't sent to the model, and the per-book cost log and same-book cache
+    belong to the server (S5b).
 - [ ] **S5b. Import on the server, metered.** A `yorehold-server` module takes the request, queues
   it, runs it on the GPU backend and returns outline entries, so the game never holds a model
   key. Each account has an allowance (pages a month, data in the server's config) with a paid
@@ -338,11 +350,20 @@ Rules for all of it:
   server's environment, never in the repo or the game. Blocked on an OpenRouter account and key,
   and the allowance and price, which are Josh's call; until then the module runs against the
   stand-in.
-- [ ] **S6. Create > Import.** Pick a file, watch the stages, then the outline as a data panel:
+- [x] **S6. Create > Import.** Pick a file, watch the stages, then the outline as a data panel:
   a tab per kind, the entry on the right as a book page with its source words and its picture
   (picked from the book's pictures), chips for invented, unplaced and dropped. Build writes the
   package and opens it in the other modes. `-- --import <file>` does the same without the
   screen for check runs.
+  - Default: the review keeps or drops entries; changing one is done after the build in the
+    other modes, which already edit every kind. Dropping a place drops what stands in it.
+  - Default: the entry's picture is named on its page, not shown: the book page is text. Seeing
+    the pictures comes with S7's picture layer.
+  - Default: the read runs in the background while the screen shows its stage; an import read
+    but not built is listed in Create as `import` and opens in the review again.
+  - Default: `check.ps1 -Import <book>` adds `--import` to a screenshot run. Caves of Shadow with
+    no model builds and opens with nothing wrong (`.dev\import-caves.png`).
+  - Not done: picking the model and seeing its cost before a run; that waits for S5b.
 - [ ] **S7. The book's map under the editor.** Map mode shows the book's map picture under the
   cells, moved and sized by hand until its grid meets the editor's, so rooms are traced rather
   than guessed. Later: the server's model reads the grid, walls and doors off the picture and
