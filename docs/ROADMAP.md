@@ -245,12 +245,20 @@ Rules for all of it:
   where), fights, things in the way (locks, climbs, jumps) with their numbers, treasure,
   conversations line by line, passages meant to be read out, and which picture is whose.
   A sample outline for the tests' book.
+  - Default: every entry has one id and the model must use ids, not names, after first mention
+    (Story2Game's main failure was one key called "Key" and "Metallic Key"). Things in the way
+    are written as preconditions and effects (needs a key; opens the door), which is what made
+    Story2Game's actions work.
 - [ ] **S3. Building.** `OutlineBuilder`: outline to `content.json`, `adventure.json`, chapters,
   maps (rooms laid on the grid from the places, their sizes and links; doors and locks as kits),
   creature and item files (an entry the game already has by name is used, not copied),
   containers, dialogue files, quests, opening and room text as triggers, `story.json`, portraits.
   A party seat takes `image` so a book's hero keeps their own picture. The built package passes
   `ContentPackage.Validate` and its fights play out under `AutoPlay`.
+  - Default: the model never places tiles; rooms are laid out by code from the outline's sizes
+    and links (Word2World and the roguelike map paper both found models bad at layout and good
+    at naming what goes where). A path check from the start reaches every place, and what fails
+    goes back to the model once with the reason before it lands in the report.
 - [ ] **S4. What needs no model.** A picture goes to the name of the nearest heading under or
   over it in its column. A picture with numbers printed on it that match numbered headings is
   the map, and the numbers give each place its spot on it. A plain paper ground around a figure
