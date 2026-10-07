@@ -350,6 +350,12 @@ Rules for all of it:
   server's environment, never in the repo or the game. Blocked on an OpenRouter account and key,
   and the allowance and price, which are Josh's call; until then the module runs against the
   stand-in.
+  - 10/7 night: the server module is written and its 76 checks pass (`yorehold-server`:
+    `modules/imports.ts`, RPCs `story_allowance` and `story_ask`, config `imports`, the key as
+    runtime env `STORY_MODEL_KEY`, README section Story import), but it is not committed: git
+    commands in that repo were refused partway through. Left: commit it, then the game side (a
+    story model that calls `story_ask` through `Online`, picked in Create > Import when signed in
+    and no local model is set, showing the pages left).
 - [x] **S6. Create > Import.** Pick a file, watch the stages, then the outline as a data panel:
   a tab per kind, the entry on the right as a book page with its source words and its picture
   (picked from the book's pictures), chips for invented, unplaced and dropped. Build writes the
