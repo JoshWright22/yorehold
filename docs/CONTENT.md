@@ -503,6 +503,32 @@ Every chapter gets `xpPerVictory` 50. `import/report.json` lists what didn't go 
 `{"format": "yorehold.import-report", "version": 1, "lines": [{"entry", "text"}]}`. The same
 outline always gives the same files.
 
+A picture of a hero, creature or person standing on plain light paper (most of its edge one
+colour, lighter than 170 of 255) is written as a PNG with that paper see-through, flooded in from
+the edge; paper-coloured parts inside the figure stay. `ClearPaper = false` on the builder turns it off.
+
+`import/systems/<name>.json` turns one source system's numbers into the game's; the outline's
+`system` names it and the builder applies it before writing:
+
+```json
+{"format": "yorehold.system", "version": 1, "name": "D&D 3.0 and 3.5",
+ "skills": {"open-lock": "dex", "climb": "athletics"}, "otherwise": "perception",
+ "difficulty": {"scale": 1, "add": 0}, "hitPoints": {"scale": 1, "add": 0}, "armorClass": {"scale": 1, "add": 0}}
+```
+
+`skills` maps the book's skill names (written lower case with `-`: "Move Silently" is
+`move-silently`) to the game's skills or abilities; a name the game already has is kept, and one
+neither knows becomes `otherwise`, with a line in the report. Checks on links, chests and dialogue
+replies, and creatures' hit points and armour class, are scaled and added to. The game ships
+`dnd-3.0` and `dnd-5e`.
+
+Without a story model, the layout of the book alone gives a first outline (`BookLayout.Draft`):
+the adventure and one chapter named for the book, a place for every numbered heading
+(`1: OUTSIDE THE CAVES`, `4. Crossing the Crevice`) with the shaded passages after it to read out
+and its framed boxes as notes, and a note with the map picture: the picture with the most place
+numbers printed on it, and where each number sits on it. `BookLayout.PictureNames` gives each
+picture the short heading set right under it in its column (or over it), the name of who it shows.
+
 ## Adventures
 
 `adventure.json` at the content root ties chapters together into a playable journey. It defines:

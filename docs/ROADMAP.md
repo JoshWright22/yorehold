@@ -291,10 +291,20 @@ Rules for all of it:
   builder writes one per place with a passage, and the report line about it goes.
   - Default: the passage shows as a one-line conversation spoken by the room's name; a cutscene
     caption would hold up play. Areas wait for a fight to end.
-- [ ] **S4. What needs no model.** A picture goes to the name of the nearest heading under or
+- [x] **S4. What needs no model.** A picture goes to the name of the nearest heading under or
   over it in its column. A picture with numbers printed on it that match numbered headings is
   the map, and the numbers give each place its spot on it. A plain paper ground around a figure
   is made see-through (off by a switch). Source system tables in `import/systems/`.
+  - Default: on Caves of Shadow the layout alone finds all seven numbered places with their
+    passages, the map with all seven numbers on it, and the four heroes' names under their
+    pictures. A long heading by a picture (a page title, a back-cover blurb) is not a name.
+  - Default: pictures are read and written with StbImageSharp and StbImageWriteSharp (public
+    domain, NuGet, pinned), since `rules/` has no Godot. Paper is cleared from the edge only.
+  - Default: the outline keeps the book's skill names as written ("Open Lock"); the table maps
+    them. `dnd-3.0` and `dnd-5e` ship with no number changes, the d20 numbers being close enough;
+    a table for a system with other scales says so in its own lines.
+  - Default: the draft's places are 8 by 8 until the model or the writer sizes them, and are not
+    linked, so the builder joins them in order; the map note carries where each number sits.
 - [ ] **S5. The story model.** `IStoryModel` with one request shape: a chunk of `source.json`
   (with the page pictures, for a model that can see them) and the outline so far in, outline
   entries out, checked against the outline's own reader. The main path is `yorehold-server`

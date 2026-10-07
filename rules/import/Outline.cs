@@ -256,7 +256,7 @@ public sealed class Outline
                 if (data.Get("check") is ContentNode check)
                 {
                     check.Only("skill", "difficulty");
-                    check.At("skill").AsId();
+                    check.At("skill").AsText(60); // the book's own name for it; the system table makes it the game's
                     check.At("difficulty").AsInt(1, 60);
                 }
                 if (parsed == LinkWay.Locked && data.Get("key") == null && data.Get("check") == null)
@@ -295,7 +295,7 @@ public sealed class Outline
                 if (data.Get("check") is ContentNode lockCheck)
                 {
                     lockCheck.Only("skill", "difficulty");
-                    lockCheck.At("skill").AsId();
+                    lockCheck.At("skill").AsText(60);
                     lockCheck.At("difficulty").AsInt(1, 60);
                 }
                 break;

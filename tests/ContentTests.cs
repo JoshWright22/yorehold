@@ -49,6 +49,10 @@ public class ContentTests
             }
         });
         Try(OutlineSchemas.File, () => OutlineSchemas.Load(files));
+        foreach (string table in files.List(SystemTable.Folder))
+        {
+            Try(table, () => SystemTable.Read(ContentNode.Read(files, table)));
+        }
         Try("create/voice.json", () =>
         {
             if (VoiceImporter.Settings.Read(files.ReadText("create/voice.json"), out string error) == null)

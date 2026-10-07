@@ -10,7 +10,7 @@ public class OutlineBuilderTests
         string package = Path.Combine(scratch.Folder, "old-mill");
         string import = Path.Combine(package, "import");
         Directory.CreateDirectory(Path.Combine(import, "pictures"));
-        File.WriteAllBytes(Path.Combine(import, "pictures", "p1-1.png"), new byte[] { 137, 80, 78, 71 });
+        File.WriteAllBytes(Path.Combine(import, "pictures", "p1-1.png"), PaperGroundTests.Figure(235));
         var builder = new OutlineBuilder(Outline.Parse("outline.json", json), import, TestContent.Shipped());
         return (package, builder, builder.Build(package));
     }
@@ -39,6 +39,8 @@ public class OutlineBuilderTests
         Assert.Equal("The Old Mill", chapter.Title);
         Assert.Equal(new[] { "Marn", "Pell" }, chapter.Party.Select(p => p.Name));
         Assert.True(chapter.Party[0].Image == "pictures/p1-1.png", "The book's hero keeps their own picture");
+        byte[] face = File.ReadAllBytes(Path.Combine(package, "pictures", "p1-1.png"));
+        Assert.Equal(0, StbImageSharp.ImageResult.FromMemory(face, StbImageSharp.ColorComponents.RedGreenBlueAlpha).Data[3]);
         EncounterGroup rats = Assert.Single(chapter.Encounters);
         Assert.Equal(new[] { "mill-rat", "mill-rat", "goblin" }, rats.Creatures.Select(c => c.CreatureId));
         Assert.Equal("Snag", rats.Creatures[2].Name);

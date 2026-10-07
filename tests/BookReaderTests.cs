@@ -253,5 +253,16 @@ public class BookReaderTests
         SourceBook book = BookReader.Read(path);
         book.Save(folder);
         Assert.NotEmpty(book.Pages);
+        // and what the layout alone makes of it, next to the source
+        BookLayout.Draft(book).Save(folder);
+        File.WriteAllLines(Path.Combine(folder, "picture-names.txt"), BookLayout.PictureNames(book).Select(n => $"{n.Key}: {n.Value}"));
+        Directory.CreateDirectory(Path.Combine(folder, "cleared"));
+        foreach ((string file, byte[] bytes) in book.PictureFiles)
+        {
+            if (PaperGround.Clear(bytes) is byte[] cleared)
+            {
+                File.WriteAllBytes(Path.Combine(folder, "cleared", Path.GetFileNameWithoutExtension(file) + ".png"), cleared);
+            }
+        }
     }
 }

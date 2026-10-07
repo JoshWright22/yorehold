@@ -1,0 +1,26 @@
+{
+  "format": "yorehold.system",
+  "version": 1,
+  "name": "D&D 5th edition",
+  "skills": {
+    "sleight-of-hand": "dex",
+    "thieves-tools": "dex",
+    "history": "arcana",
+    "religion": "arcana",
+    "nature": "survival",
+    "animal-handling": "survival",
+    "medicine": "insight",
+    "intimidation": "persuasion",
+    "performance": "persuasion",
+    "strength": "str",
+    "dexterity": "dex",
+    "constitution": "con",
+    "intelligence": "int",
+    "wisdom": "wis",
+    "charisma": "cha"
+  },
+  "otherwise": "perception",
+  "difficulty": { "scale": 1, "add": 0 },
+  "hitPoints": { "scale": 1, "add": 0 },
+  "armorClass": { "scale": 1, "add": 0 }
+}

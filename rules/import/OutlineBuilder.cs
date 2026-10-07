@@ -19,18 +19,22 @@ public sealed class OutlineBuilder
     public const string ReportFile = "report.json";
     public const int XpPerVictory = 50;
 
-    private readonly Outline _outline;
+    private readonly Outline _source;
+    // the outline being built: the source with its system's numbers made the game's
+    private Outline _outline;
     private readonly string _importFolder;
     private readonly ContentFiles _game;
     private readonly Compendium _gameCompendium = new();
     private readonly List<ReportLine> _report = new();
     // outline creature and item ids to the ids the package uses (the game's own when it has one by that name)
     private readonly Dictionary<string, string> _ids = new(StringComparer.Ordinal);
-    private readonly SortedSet<string> _pictures = new(StringComparer.Ordinal);
+    // the book's pictures in use: where each goes in the package, and its cleared bytes when its paper was taken out
+    private readonly SortedDictionary<string, (string Target, byte[]? Cleared)> _pictures = new(StringComparer.Ordinal);
     private string _package = "";
 
     public OutlineBuilder(Outline outline, string importFolder, ContentFiles game)
     {
+        _source = outline;
         _outline = outline;
         _importFolder = importFolder;
         _game = game;
@@ -38,6 +42,9 @@ public sealed class OutlineBuilder
     }
 
     public IReadOnlyList<ReportLine> Report => _report;
+
+    /// <summary>Make the plain paper round a figure (a hero, creature or person) see-through. On by default.</summary>
+    public bool ClearPaper { get; init; } = true;
 
     /// <summary>
     /// Writes the package into folder (made if missing) and checks it loads. Problems are what
@@ -47,6 +54,21 @@ public sealed class OutlineBuilder
     {
         _package = folder;
         _report.Clear();
+        _outline = _source;
+        if (_outline.System.Length > 0)
+        {
+            // the book's numbers become the game's before anything is written
+            try
+            {
+                SystemTable table = SystemTable.Load(_game, _outline.System);
+                Ruleset rules = RulesFolder.Load(_game).Rules;
+                _outline = table.Apply(_outline, s => rules.Skill(s) != null || rules.Ability(s) != null, _report);
+            }
+            catch (ContentException error)
+            {
+                return new List<string> { $"the book's system \"{_outline.System}\": {error.Message}" };
+            }
+        }
         List<string> problems = _outline.Check(_gameCompendium);
         if (problems.Count > 0)
         {
@@ -120,13 +142,22 @@ public sealed class OutlineBuilder
         {
             return "";
         }
-        if (!File.Exists(Path.Combine(_importFolder, entry.Picture)))
+        string source = Path.Combine(_importFolder, entry.Picture.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(source))
         {
             _report.Add(new ReportLine(entry.Id, $"its picture {entry.Picture} is not in the import folder"));
             return "";
         }
-        _pictures.Add(entry.Picture);
-        return entry.Picture;
+        if (_pictures.TryGetValue(entry.Picture, out (string Target, byte[]? Cleared) known))
+        {
+            return known.Target;
+        }
+        byte[]? cleared = ClearPaper && entry.Kind is OutlineKind.Hero or OutlineKind.Creature or OutlineKind.Npc
+            ? PaperGround.Clear(File.ReadAllBytes(source))
+            : null;
+        string target = cleared != null ? Path.ChangeExtension(entry.Picture, ".png") : entry.Picture;
+        _pictures[entry.Picture] = (target, cleared);
+        return target;
     }
 
     private void WriteDefinitions()
@@ -546,11 +577,18 @@ public sealed class OutlineBuilder
 
     private void CopyPictures()
     {
-        foreach (string picture in _pictures)
+        foreach ((string picture, (string to, byte[]? cleared)) in _pictures)
         {
-            string target = Path.Combine(_package, picture.Replace('/', Path.DirectorySeparatorChar));
+            string target = Path.Combine(_package, to.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(Path.Combine(_importFolder, picture.Replace('/', Path.DirectorySeparatorChar)), target, true);
+            if (cleared != null)
+            {
+                File.WriteAllBytes(target, cleared);
+            }
+            else
+            {
+                File.Copy(Path.Combine(_importFolder, picture.Replace('/', Path.DirectorySeparatorChar)), target, true);
+            }
         }
     }
 
