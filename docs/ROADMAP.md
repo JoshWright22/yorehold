@@ -246,7 +246,7 @@ Rules for all of it:
   - Default: `box` is only given for real rectangles; a frame drawn as four loose lines isn't seen yet.
   - Default: a JPEG is saved as it is in the file. One in CMYK would not open in the game; none seen yet.
   - Default: the tests write their own PDF. `YOREHOLD_IMPORT_BOOK` and `YOREHOLD_IMPORT_OUT` make the test run read any book into a folder for a look by hand.
-- [ ] **S2. The outline.** `import/outline.json` and its reader. Entries are
+- [x] **S2. The outline.** `import/outline.json` and its reader. Entries are
   `{id, kind, data, from, picture}`: `kind` is a content kind (adventure, chapter, creature, item,
   hero seat, dialogue, quest, trigger, container, encounter, story node, place, link, note);
   `data` is that kind's own content file shape, so the reader checks it with the game's own
@@ -256,6 +256,13 @@ Rules for all of it:
   its key or check, climb, jump). Things the game can't play are `note` entries. A JSON schema
   per kind is written from the same loaders into `assets/import/schemas/`, so the story model
   is asked for exactly these shapes. A sample outline for the tests' book.
+  - Default: the schemas are one hand-kept file, `assets/import/schemas.json`, not written from the
+    loaders (they aren't built from a schema). A test holds them to the kinds and to the sample;
+    the reader stays the real check and what fails it goes back to the model.
+  - Default: chapter parts (seat, NPC, encounter, container, trigger) name a place instead of a
+    cell, since the builder lays the map out; their full check is the built chapter's own load.
+  - Default: `story node` from the list above isn't a kind: the builder makes the story graph from
+    places, fights and flags. Read-aloud text sits on its place.
   - Default: every entry has one id and the model must use ids, not names, after first mention
     (Story2Game's main failure was one key called "Key" and "Metallic Key"). Things in the way
     are written as preconditions and effects (needs a key; opens the door), which is what made

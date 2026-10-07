@@ -48,6 +48,7 @@ public class ContentTests
                 throw new ContentException("create/compendium.json", "", error);
             }
         });
+        Try(OutlineSchemas.File, () => OutlineSchemas.Load(files));
         Try("create/voice.json", () =>
         {
             if (VoiceImporter.Settings.Read(files.ReadText("create/voice.json"), out string error) == null)

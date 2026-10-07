@@ -1,0 +1,273 @@
+{
+  "format": "yorehold.import-schemas",
+  "version": 1,
+  "about": "The JSON schema of each outline kind's data, sent to the story model so it answers in the game's own shapes. The outline reader is the real check; these only have to agree with it (OutlineSchemaTests).",
+  "kinds": {
+    "adventure": {
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "level": {"type": "integer", "minimum": 1, "maximum": 20}
+      }
+    },
+    "chapter": {
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {"type": "string"},
+        "intro": {"type": "array", "items": {"type": "string"}},
+        "level": {"type": "integer", "minimum": 1, "maximum": 20},
+        "completeWhen": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "hero": {
+      "type": "object",
+      "required": ["name", "class"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "class": {"type": "string", "description": "a class id the game has: barbarian, cleric, fighter, rogue, wizard"},
+        "race": {"type": "string"},
+        "color": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}, "minItems": 3, "maxItems": 4},
+        "image": {"type": "string"},
+        "description": {"type": "string"}
+      }
+    },
+    "creature": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "hp": {"type": "integer", "minimum": 1},
+        "level": {"type": "integer", "minimum": 1},
+        "armorClass": {"type": "integer", "minimum": 0, "maximum": 100},
+        "speed": {"type": "integer", "minimum": 0, "description": "feet per turn"},
+        "abilities": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "proficiencyRanks": {"type": "object", "additionalProperties": {"type": "string"}},
+        "proficiencies": {"type": "array", "items": {"type": "string"}},
+        "dcAbility": {"type": "string"},
+        "darkvision": {"type": "integer", "minimum": 0},
+        "deathSaves": {"type": "boolean"},
+        "items": {"type": "array", "items": {"type": "string"}, "description": "item ids it carries and uses"},
+        "spells": {"type": "array", "items": {"type": "string"}},
+        "loot": {"type": "object"},
+        "token": {
+          "type": "object",
+          "properties": {
+            "color": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+            "size": {"type": "number", "exclusiveMinimum": 0, "maximum": 10},
+            "image": {"type": "string"}
+          }
+        },
+        "ai": {"type": "string", "description": "a behaviour profile: cunning, brute, coward, lookout"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "slot": {"type": "string", "description": "mainHand, offHand, body, ring... or empty for a carried thing"},
+        "hands": {"type": "integer", "minimum": 0, "maximum": 4},
+        "damage": {"type": "string", "description": "dice like 1d8"},
+        "attackAbility": {"type": "string"},
+        "value": {"type": "integer", "minimum": 0, "description": "copper pieces"},
+        "weight": {"type": "number", "minimum": 0},
+        "quantity": {"type": "integer", "minimum": 1},
+        "magic": {"type": "boolean"},
+        "supplies": {"type": "integer", "minimum": 0},
+        "use": {"type": "object"}
+      }
+    },
+    "npc": {
+      "type": "object",
+      "required": ["name", "place"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "creature": {"type": "string", "description": "a creature entry or game creature for its sheet; commoner when left out"},
+        "place": {"type": "string", "description": "a place entry's id"},
+        "dialogue": {"type": "string", "description": "a dialogue entry's id"},
+        "merchant": {"type": "object"},
+        "color": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+        "description": {"type": "string"}
+      }
+    },
+    "dialogue": {
+      "type": "object",
+      "required": ["start", "nodes"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "start": {"type": "string"},
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "text"],
+            "properties": {
+              "id": {"type": "string"},
+              "speaker": {"type": "string"},
+              "text": {"type": "string", "description": "the book's words when it has them"},
+              "set": {"type": "array", "items": {"type": "string"}},
+              "clear": {"type": "array", "items": {"type": "string"}},
+              "do": {"type": "array", "items": {"type": "string"}},
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "text"],
+                  "properties": {
+                    "id": {"type": "string"},
+                    "text": {"type": "string"},
+                    "next": {"type": "string", "description": "a node id, or empty to end"},
+                    "require": {"type": "array", "items": {"type": "string"}},
+                    "forbid": {"type": "array", "items": {"type": "string"}},
+                    "set": {"type": "array", "items": {"type": "string"}},
+                    "clear": {"type": "array", "items": {"type": "string"}},
+                    "check": {
+                      "type": "object",
+                      "required": ["skill", "difficulty", "success", "failure"],
+                      "properties": {
+                        "skill": {"type": "string"},
+                        "difficulty": {"type": "integer"},
+                        "success": {"type": "string"},
+                        "failure": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "quest": {
+      "type": "object",
+      "required": ["title", "objectives"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "require": {"type": "array", "items": {"type": "string"}},
+        "fail": {"type": "array", "items": {"type": "string"}},
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "text"],
+            "properties": {
+              "id": {"type": "string"},
+              "text": {"type": "string"},
+              "require": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+    "place": {
+      "type": "object",
+      "required": ["name", "size"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "label": {"type": "string", "description": "the number or letter the book's map gives it"},
+        "size": {"type": "array", "items": {"type": "integer", "minimum": 2, "maximum": 60}, "minItems": 2, "maxItems": 2, "description": "[width, height] in 5 ft squares"},
+        "readAloud": {"type": "array", "items": {"type": "string"}, "description": "the passages the book says to read out, word for word"},
+        "description": {"type": "string"},
+        "dark": {"type": "boolean"},
+        "outdoors": {"type": "boolean"}
+      }
+    },
+    "link": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {"type": "string"},
+        "to": {"type": "string"},
+        "way": {"type": "string", "enum": ["open", "door", "locked", "secret", "climb", "jump"]},
+        "key": {"type": "string", "description": "the item entry or game item that opens it"},
+        "check": {
+          "type": "object",
+          "required": ["skill", "difficulty"],
+          "properties": {"skill": {"type": "string"}, "difficulty": {"type": "integer", "minimum": 1, "maximum": 60}}
+        },
+        "description": {"type": "string"}
+      }
+    },
+    "encounter": {
+      "type": "object",
+      "required": ["place", "creatures"],
+      "additionalProperties": false,
+      "properties": {
+        "place": {"type": "string"},
+        "text": {"type": "string"},
+        "set": {"type": "array", "items": {"type": "string"}, "description": "story flags set when it is won"},
+        "creatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["creature"],
+            "properties": {
+              "creature": {"type": "string"},
+              "name": {"type": "string"},
+              "count": {"type": "integer", "minimum": 1, "maximum": 20}
+            }
+          }
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "required": ["place"],
+      "additionalProperties": false,
+      "properties": {
+        "place": {"type": "string"},
+        "name": {"type": "string"},
+        "items": {"type": "array", "items": {"type": "string"}},
+        "coins": {"type": "integer", "minimum": 0, "description": "copper pieces"},
+        "locked": {"type": "boolean"},
+        "key": {"type": "string"},
+        "check": {
+          "type": "object",
+          "required": ["skill", "difficulty"],
+          "properties": {"skill": {"type": "string"}, "difficulty": {"type": "integer", "minimum": 1, "maximum": 60}}
+        }
+      }
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["dialogue"],
+      "additionalProperties": false,
+      "properties": {
+        "when": {"type": "array", "items": {"type": "string"}},
+        "dialogue": {"type": "string"},
+        "place": {"type": "string"}
+      }
+    },
+    "note": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "text": {"type": "string"},
+        "place": {"type": "string"},
+        "why": {"type": "string", "description": "what the game has no way to play yet"}
+      }
+    }
+  }
+}

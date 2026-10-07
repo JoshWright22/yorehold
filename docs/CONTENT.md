@@ -452,6 +452,39 @@ Importing a book (ROADMAP.md, "Story import") leaves its working files in the pa
 - `pictures` are saved to `import/pictures/` named by page and order. A JPEG is kept byte for byte, anything else is written as PNG. A picture covering more than 0.8 of its page is the page's paper and is left out, and so is anything under 64 pixels across. `width` and `height` are in pixels.
 - In a `.txt` or `.md`, paragraphs are split at blank lines and pages at form feeds; a `#` line in a `.md` and a short line all in capitals are headings. Blocks carry no `at`, `font` or `size`.
 
+`import/outline.json` is the book cut down to the game's own data, the file the builder turns
+into a package (`rules/import/Outline.cs`; the tests' `SampleOutline.cs` is a whole example):
+
+```json
+{"format": "yorehold.outline", "version": 1, "title": "The Old Mill", "system": "",
+ "entries": [{"id": "marn", "kind": "hero", "data": {"name": "Marn", "class": "fighter"},
+              "from": {"page": 1, "quote": "MARN"}, "picture": "pictures/p1-1.png"}]}
+```
+
+- Each entry has an `id` (a-z, 0-9, - and _, one per outline), a `kind`, its `data`, `from`
+  (`{"page", "quote"}`: the book's words it rests on, or `"invented"`), an optional `picture` from
+  `import/pictures/` and an optional `chapter` (a chapter entry's id; the first chapter when left out).
+- `system` names a table in `import/systems/` that turns the book's numbers into the game's; empty
+  when the book has none or already uses the game's.
+- Kinds whose `data` is a content file, read by the game's own reader: `creature` and `item` (their
+  files, see Definitions), `dialogue` (a dialogue file), `quest` (one quest of a quests file). Their
+  `id` may be left out; it is the entry's.
+- Kinds that are part of an adventure or chapter: `adventure` (`title`, `description`, `level`; at
+  most one), `chapter` (`title`, `intro`, `level`, `completeWhen`), `hero` (a party seat: `name`,
+  `class`, `race`, `color`, `image`, `description`), `npc` (`name`, `creature`, `place`, `dialogue`
+  as an entry id, `merchant`, `color`), `encounter` (`place`, `creatures`: `[{"creature", "name",
+  "count"}]`, `text`, `set`), `container` (`place`, `name`, `items`, `coins`, `locked`, `key`,
+  `check`), `trigger` (`when`, `dialogue` as an entry id, `place`).
+- The outline's own kinds, which have no file: `place` (a room or area: `name`, `label` (the number
+  the book's map gives it), `size` `[w, h]` in squares, `readAloud` (passages to read out, word for
+  word), `description`, `dark`, `outdoors`), `link` (`from` and `to` places, `way`: `open`, `door`,
+  `locked`, `secret`, `climb` or `jump`, `key`, `check` `{"skill", "difficulty"}`; a locked one needs
+  a key or a check) and `note` (`text`, `place`, `why`: what the game can't play yet).
+- Places, dialogue and chapters named by an entry must be entries. Creatures, items and classes
+  may be the game's own; the builder checks those against the game's content before it writes.
+- `assets/import/schemas.json` holds the JSON schema of each kind's `data`, which the story model is
+  asked to answer in.
+
 ## Adventures
 
 `adventure.json` at the content root ties chapters together into a playable journey. It defines:
