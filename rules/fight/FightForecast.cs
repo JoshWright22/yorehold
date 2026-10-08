@@ -13,7 +13,7 @@ public sealed record FightForecast(int Fights, int Won, int LostAHero, int Heroe
     {
         if (Fights == 0)
         {
-            return "this fight: not played";
+            return "this fight: no party to play it with";
         }
         string lost = LostAHero == 0 ? "no hero lost" : $"{InN(HeroLossChance)} lose a hero";
         return $"this fight: won {InN(WinChance)}, {lost}, {AverageRounds:0.#} rounds";
@@ -61,6 +61,11 @@ public static class FightSimulation
         for (int i = 0; i < fights; i++)
         {
             World w = load(firstSeed + (ulong)i);
+            if (w.HeroCount == 0 || group < 0 || group >= w.Chapter.Encounters.Count)
+            {
+                // no party to play it with, or no such fight: nothing to forecast
+                return new FightForecast(0, 0, 0, 0, 0, 0);
+            }
             PlayOut(w, group, out bool over);
             if (!over)
             {

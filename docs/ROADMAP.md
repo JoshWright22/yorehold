@@ -280,8 +280,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: simulated fights (`FightSimulation.Forecast`): an encounter played out many
     times by the AI on both sides from seeds, giving the win chance, the chance of losing a hero,
     deaths and rounds, as one line ("this fight: won 9 in 10, 1 in 5 lose a hero, 3 rounds").
-  - Left: the forecast in Create's encounter editor and the builder's balancing; the schema and
-    reference for the story model.
+  - Done 10/8: Create's encounter panel plays a saved fight out 20 times in the background
+    ("Forecast", "Play it out").
+  - Left: the builder's balancing by forecast (and parties of a chosen level, not only the
+    chapter's own); the schema and reference for the story model.
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The
     import (R13) writes systems in it, and the game checks the draft by loading and running it.

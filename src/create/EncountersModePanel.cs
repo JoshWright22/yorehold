@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using Godot;
 using Yorehold.Rules;
 
@@ -37,8 +38,19 @@ public partial class EncountersModePanel : HBoxContainer
     private string _lootItem = "";
     private bool _dragging;
     private string _hint = "";
+    private Func<ContentFiles?> _files = () => null;
+    // a fight played out many times, in the background so the screen keeps drawing
+    private Task<FightForecast>? _forecast;
+    private string _forecastOf = "";
+
+    /// <summary>How many times Forecast plays a fight.</summary>
+    private const int ForecastFights = 20;
 
     public EditorMapView View => _view;
+    /// <summary>The chapter folder the groups belong to, for the forecast to load.</summary>
+    public string Chapter { get; set; } = "";
+    /// <summary>Nothing is waiting to be saved: the forecast plays the saved files.</summary>
+    public bool Saved { get; set; } = true;
 
     public static Color ColorOf(int group) => GroupColors[group % GroupColors.Length];
 
@@ -60,6 +72,7 @@ public partial class EncountersModePanel : HBoxContainer
     /// <summary>The chapter's groups and its map as drawn now, or null with why. Called every frame.</summary>
     public void Present(EncountersEditor? editor, GameMap? map, string error, Func<ContentFiles?> files)
     {
+        _files = files;
         if (!ReferenceEquals(editor, _editor))
         {
             _editor = editor;
@@ -275,6 +288,12 @@ public partial class EncountersModePanel : HBoxContainer
             () => Now().Xp != editor.ProposedXp(group) && Now().Creatures.Count > 0);
         _props.Gap();
 
+        _props.Heading("Forecast");
+        _props.Dim($"Played out {ForecastFights} times by the AI, with the party the chapter starts with");
+        _props.Live(() => ForecastLine(Now().Id));
+        _props.Act("Play it out", () => StartForecast(group, Now().Id), () => Now().Creatures.Count > 0 && (_forecast == null || _forecast.IsCompleted));
+        _props.Gap();
+
         _props.Heading("Loot");
         _props.Dim("Coins dropped, as dice like 2d6");
         _props.Field(() => Now().Loot.Coins, typed =>
@@ -327,6 +346,42 @@ public partial class EncountersModePanel : HBoxContainer
         }
         Stepper(() => editor.Names.Items.GetValueOrDefault(_lootItem, _lootItem), step => _lootItem = StepName(editor.Names.Items.Keys.ToList(), _lootItem, step));
         _props.Act("Add to loot", () => Click(new LootTable { Coins = Now().Loot.Coins, Items = Now().Loot.Items.Append(new LootEntry(_lootItem)).ToList() }));
+    }
+
+    private void StartForecast(int group, string id)
+    {
+        if (!Saved)
+        {
+            _hint = "Save first: the forecast plays the saved chapter.";
+            return;
+        }
+        if (_files() is not ContentFiles files || Chapter.Length == 0)
+        {
+            return;
+        }
+        _hint = "";
+        string chapter = Chapter;
+        _forecastOf = id;
+        // the rules have no engine types, so a world can be played on another thread
+        _forecast = Task.Run(() => FightSimulation.Forecast(seed => World.Load(files, chapter, seed), group, ForecastFights));
+    }
+
+    private string ForecastLine(string id)
+    {
+        if (_forecast == null || id != _forecastOf)
+        {
+            return "Not played yet.";
+        }
+        if (!_forecast.IsCompleted)
+        {
+            return "Playing...";
+        }
+        if (_forecast.IsFaulted)
+        {
+            return "Could not play it: " + (_forecast.Exception?.InnerException?.Message ?? "unknown");
+        }
+        FightForecast result = _forecast.Result;
+        return result.Unfinished > 0 ? $"{result.Summary()}; {result.Unfinished} never ended" : result.Summary();
     }
 
     private void BuildCreature(EncountersEditor editor, int index)

@@ -179,6 +179,8 @@ public partial class CreateScreen : Control
         else
         {
             EncountersEditor? encounters = _package.EncountersEditor();
+            _encounters.Chapter = _package.Chapter;
+            _encounters.Saved = !_package.History.Dirty;
             _encounters.Present(encounters, _package.MapEditor()?.Map(), _package.EncountersError, _package.PlayFiles);
         }
 
