@@ -386,7 +386,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     start.
   - Done 10/8: feat kinds from the system (`featKinds`: PF2e's ancestry, class, skill and
     general; 5e's origin, general, fighting style and epic boon).
-  - Left: the Features tab and Create's "grants" fields.
+  - Done 10/8: the sheet's Features tab lists fields, options, feats by the system's kind names,
+    and every granted action, trigger and reaction with its cost in the system's words; a
+    system without levels shows no hit die or proficiency.
+  - Left: Create's "grants" fields.
 - [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's

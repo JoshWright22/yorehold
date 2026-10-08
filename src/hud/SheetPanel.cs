@@ -199,8 +199,10 @@ public partial class SheetPanel : PanelContainer
         Vital("Initiative", SheetView.Signed(sheet.InitiativeModifier(rules)),
             (rules.Skill(rolledWith)?.Name ?? rules.Ability(rolledWith)?.Name ?? rolledWith).ToLowerInvariant());
         Vital("Speed", $"{sheet.SpeedFeet}", "feet");
-        Vital("Proficiency", SheetView.Signed(rules.ProficiencyBonus(sheet.Level)), "bonus");
-        Vital("Hit die", sheet.HitDie, $"level {sheet.Level}");
+        // a system without levels (Fate) has no proficiency by level or hit die to show
+        bool levels = rules.Advancement != "none";
+        Vital("Proficiency", levels ? SheetView.Signed(rules.ProficiencyBonus(sheet.Level)) : "", levels ? "bonus" : "");
+        Vital("Hit die", levels ? sheet.HitDie : "", levels ? $"level {sheet.Level}" : "");
 
         ShowAbilities(rules, sheet);
         ShowSkills(rules, sheet);
@@ -319,14 +321,48 @@ public partial class SheetPanel : PanelContainer
                 {
                     page.Heading("Weapon").Stat(weapon.Name, weapon.Definition.Damage).Gap();
                 }
-                List<FeatDefinition> feats = SheetPage.Feats(compendium, c.Choices);
-                if (feats.Count == 0)
+                // the system's words for who they are (Fate's aspects), then its own picks (a heritage)
+                foreach (FieldDefinition field in rules.Fields)
                 {
-                    page.Note($"{sheet.Name} has no feats.");
+                    List<string> lines = sheet.Fields.GetValueOrDefault(field.Id, new List<string>()).Where(l => l.Trim().Length > 0).ToList();
+                    if (lines.Count > 0)
+                    {
+                        page.Stat(field.Name, string.Join("; ", lines));
+                    }
                 }
+                foreach ((string kind, string id) in c.Choices?.Options ?? new SortedDictionary<string, string>())
+                {
+                    if (compendium.Options.TryGetValue(id, out OptionDefinition? option))
+                    {
+                        string kindName = rules.OptionKinds.Find(k => k.Id == kind)?.Name ?? kind;
+                        page.Heading($"{option.Name} ({kindName.ToLowerInvariant()})").Text(option.Description).Gap();
+                    }
+                }
+                List<FeatDefinition> feats = SheetPage.Feats(compendium, c.Choices);
                 foreach (FeatDefinition f in feats)
                 {
-                    page.Heading(f.Name + (f.Kind.Length > 0 ? $" ({f.Kind})" : "")).Text(f.Description).Gap();
+                    page.Heading(f.Name + (f.Kind.Length > 0 ? $" ({rules.FeatKindName(f.Kind).ToLowerInvariant()})" : "")).Text(f.Description).Gap();
+                }
+                // what its class, feats or creature file grant beyond what everyone has
+                foreach (string id in sheet.Granted)
+                {
+                    if (world.FindAction(id) is ActionDefinition action)
+                    {
+                        string cost = action.CostsBonus ? rules.Words.Bonus : rules.Words.Cost(action.Cost);
+                        page.Heading($"{action.Name} ({cost})").Text(action.Description).Gap();
+                    }
+                    else if (rules.Trigger(id) is TriggerDefinition trigger)
+                    {
+                        page.Heading($"{trigger.Name} (goes off by itself)").Text(trigger.Description).Gap();
+                    }
+                    else if (world.Chapter.Rules.Reactions.Find(r => r.Id == id) is ReactionDefinition reaction)
+                    {
+                        page.Heading($"{reaction.Name} ({rules.Words.Reaction})").Gap();
+                    }
+                }
+                if (feats.Count == 0 && sheet.Granted.Count == 0 && (c.Choices?.Options.Count ?? 0) == 0)
+                {
+                    page.Note($"{sheet.Name} has no features beyond what everyone can do.");
                 }
                 break;
             case "Uses":
