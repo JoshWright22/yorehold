@@ -13,6 +13,10 @@
 #   .\check.ps1 -Playtest fight   sets up that test from playtest\queue.json off screen like
 #                            playtest.ps1 would, playtest window and all, and saves
 #                            ..\.dev\playtest-fight.png a second and a half after its setup ends
+#   .\check.ps1 -Bench ..\.dev\import-bench   builds, then runs every book in that folder's books\
+#                            through every version of the import in its bench.json, scores each
+#                            and prints the scores beside the run before (runs\<label>\report.txt).
+#                            -Label names the run; without it, the commit it ran on. No unit tests.
 # Exit code 0 and ALL OK = all good. Full output is in ..\.dev\godot-build.log, -test.log, -run.log,
 # -shot.log.
 
@@ -24,7 +28,9 @@ param(
     [string]$Chapter,
     [string]$Screen = 'play',
     [string]$Playtest,
-    [string]$Import
+    [string]$Import,
+    [string]$Bench,
+    [string]$Label
 )
 
 # The screenshot runs to make: the one -Shot asks for, or one per playtest (-Playtest all for every one).
@@ -73,6 +79,31 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host 'build ok'
 if ($NoTest) { Write-Host 'ALL OK'; exit 0 }
+
+if ($Bench) {
+    # The import's comparison run and nothing else: no unit tests, no start of the game.
+    if (-not (Test-Path $Bench)) { Write-Host "FAIL: no folder $Bench"; exit 2 }
+    $benchFolder = (Resolve-Path $Bench).Path
+    if (-not $Label) {
+        # named after the commit it ran on, so the history says which code made which scores
+        $Label = (git -C $root rev-parse --short HEAD).Trim()
+        if (git -C $root status --porcelain --untracked-files=no) { $Label += '-changed' }
+    }
+    $env:YOREHOLD_BENCH = $benchFolder
+    $env:YOREHOLD_BENCH_LABEL = $Label
+    $benchLog = Join-Path $dev 'godot-bench.log'
+    dotnet test (Join-Path $root 'tests\Yorehold.Rules.Tests.csproj') --no-build -nologo -v q `
+        --filter 'FullyQualifiedName~ABenchNamedInTheEnvironmentIsRun' --logger 'console;verbosity=normal' *> $benchLog
+    $benchCode = $LASTEXITCODE
+    $env:YOREHOLD_BENCH = ''
+    if ($benchCode -ne 0) {
+        Select-String -Path $benchLog -Pattern 'Error Message' -Context 0, 4 | Select-Object -First 3 | ForEach-Object { $_.Line; $_.Context.PostContext }
+        Write-Host 'FAIL: comparison run'; exit 1
+    }
+    $slug = (($Label.ToLower() -replace '[^a-z0-9]', '-') -replace '-+', '-').Trim('-')
+    Get-Content (Join-Path $benchFolder "runs\$slug\report.txt")
+    Write-Host 'ALL OK'; exit 0
+}
 
 $testLog = Join-Path $dev 'godot-test.log'
 # The normal console logger prints each failure's message; the quiet one only names the test.

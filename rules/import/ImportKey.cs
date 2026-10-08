@@ -123,6 +123,54 @@ public sealed class ImportKey
     /// <summary>Every line in plain words, and whether the outline meets it.</summary>
     public List<(string Line, bool Met)> Check(Outline outline) => _lines.Select(line => (Describe(line), Met(line, outline))).ToList();
 
+    /// <summary>
+    /// What the outline has that the key doesn't: a fight where the book has none, a creature,
+    /// hero, person or quest the book doesn't name. Only for the kinds the key lists at all, so a
+    /// key that says nothing of heroes doesn't count every hero against the import. An import that
+    /// makes things up to be on the safe side meets every line of a key; this is what it costs.
+    /// </summary>
+    public List<string> Extras(Outline o)
+    {
+        var extras = new List<string>();
+        List<ContentNode> Of(string kind) => _lines.Where(l => KindOf(l) == kind).ToList();
+        string Words(string kind) => string.Join("|", Of(kind).Select(l => l.At(kind).AsText()));
+
+        List<ContentNode> fights = Of("fight");
+        if (fights.Count > 0)
+        {
+            HashSet<string> where = fights.SelectMany(f => At(o, f.At("fight").AsText())).ToHashSet(StringComparer.Ordinal);
+            extras.AddRange(o.OfKind(OutlineKind.Encounter).Where(e => !where.Contains(e.Text("place")))
+                .Select(e => $"a fight in {PlaceLabel(o, e.Text("place"))} the book doesn't have"));
+        }
+        if (Of("creature").Count > 0)
+        {
+            string known = Words("creature") + "|" + string.Join("|", fights.SelectMany(f => f.Get("creatures")?.Members() ?? Enumerable.Empty<KeyValuePair<string, ContentNode>>()).Select(c => c.Key));
+            extras.AddRange(o.OfKind(OutlineKind.Creature).Where(c => !Named(c.Text("name") + " " + c.Id, known)).Select(c => $"the creature {c.Text("name", c.Id)}"));
+        }
+        if (Of("hero").Count > 0)
+        {
+            extras.AddRange(o.OfKind(OutlineKind.Hero).Where(h => !Named(h.Text("name"), Words("hero"))).Select(h => $"the hero {h.Text("name")}"));
+        }
+        if (Of("person").Count > 0)
+        {
+            extras.AddRange(o.OfKind(OutlineKind.Npc).Where(n => !Named(n.Text("name"), Words("person"))).Select(n => $"{n.Text("name")}, someone to talk to"));
+        }
+        if (Of("quest").Count > 0)
+        {
+            extras.AddRange(o.OfKind(OutlineKind.Quest).Where(q => !Named(q.Text("title") + " " + q.Text("description"), Words("quest"))).Select(q => $"the quest {q.Text("title")}"));
+        }
+        List<ContentNode> chests = Of("chest");
+        if (chests.Count > 0)
+        {
+            HashSet<string> where = chests.SelectMany(c => At(o, c.At("chest").AsText())).ToHashSet(StringComparer.Ordinal);
+            extras.AddRange(o.OfKind(OutlineKind.Container).Where(c => !where.Contains(c.Text("place")))
+                .Select(c => $"{c.Text("name", "something to open")} in {PlaceLabel(o, c.Text("place"))}, where the book has nothing to open"));
+        }
+        return extras;
+    }
+
+    private static string PlaceLabel(Outline o, string id) => o.Find(id)?.Text("label") is { Length: > 0 } label ? label : id;
+
     private static bool Met(ContentNode line, Outline o)
     {
         string kind = KindOf(line);

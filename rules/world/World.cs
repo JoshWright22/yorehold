@@ -1310,6 +1310,20 @@ public sealed partial class World
         {
             Say(note);
         }
+        // Seen from the doorway, nobody has stepped into the room yet: what the room looks like is
+        // told first. The fight starts when that is closed and they still see each other.
+        foreach (MapArea area in Chapter.Map.Areas.Where(a => !a.Set.All(Flags.Contains)))
+        {
+            if (Enumerable.Range(HeroCount, Creatures.Count - HeroCount)
+                .Any(i => Creatures[i].Group == group && Tokens.Tokens[i].Floor != DeadFloor && area.Holds(CellOf(i))))
+            {
+                SetFlags(area.Set);
+            }
+        }
+        if (Talk != null || InCutscene)
+        {
+            return;
+        }
         StartFight(group);
     }
 }

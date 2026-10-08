@@ -407,15 +407,19 @@ Rules for all of it:
     finds under "Look in the Sack" / "Search the..." headings (gold and known things, potions by
     colour, a find on a foe goes on the foe); "go to Area 3" as ways, locked with a Dex check
     when the text around says so, a jump over a chasm; shaded passages before area 1 as the
-    chapter's intro. Rooms with a number on the book's map are put where it draws them, joined
+	chapter's intro. Rooms with a number on the book's map are put where it draws them, joined
     by corridors. Caves of Shadow with no model: score 31 to 89, key 7 to 41 of 42 (orc 6 HP,
-    hit on 13, spear 1d6; rat 5, 14, teeth; Jezer the ogre 18, 14, axe 2d6). The key's coins
-    are gold now.
+	hit on 13, spear 1d6; rat 5, 14, teeth; Jezer the ogre 18, 14, axe 2d6). The key's coins
+	are gold now.
   - Done 10/7: a room's passage is narration (no speaker, no faces), not a line spoken by the
-    room's name.
+	room's name.
+  - Done 10/7: rooms take the floor, walls and doors the book's map draws (`BookMap`); shape 35
+    to 42 of 42. A room's foes that see the party from the doorway wait for its passage to be read.
+  - Done 10/7 (Josh: "hill climb the pipeline with variations; need a way of judging it"):
+    comparison runs, `check.ps1 -Bench`, with a `judged` score that also costs what was made up.
+    Caves of Shadow: layout 32, cast 95, full 96.
   - Left: Create > Import says before reading that no story model is set, with Read anyway; a
-    quest from the opening passage; rooms sized from the map and walls read off it (S7's later
-    part), scored by `shape`.
+	quest from the opening passage; more books with keys in the comparison folder.
 
 ## U. Game feel (playtest, 10/7)
 
@@ -435,13 +439,13 @@ reopened (`playtest.ps1 -Problems`).
     key or fact right), `GameScreen.Logo` (`ui/logo.png`), sizes in `ui/screens.json`. The band
     and the heading are laid out in the menu scene.
   - Default: banner pictures are shown as they are, not snapped to the palette like the map:
-    they are the players' paintings. Say if they should be snapped too.
+	they are the players' paintings. Say if they should be snapped too.
 - [x] **U2. Title** (playtest `title`). A large logo top left, the menu as a column of big
   buttons down the left, the rest of the window a banner of player art: adventure covers and
   art pack pictures, changing every few seconds. Until there is a logo picture
   (`ui/logo.png`, content), the name is set large in the heading face.
   - Josh, 10/7: temporary logos are fine for now; real logo work is needed (the name set in
-    type and `icon.svg`, the placeholder app icon, are both stand-ins until then).
+	type and `icon.svg`, the placeholder app icon, are both stand-ins until then).
   - Default: the picked button's page stays, as a card at the bottom right over the banner (the
     save it would continue, the adventure it would start). Adventure covers join the banner
     when adventures have covers (U8). Test banners: five CC0 paintings from OpenGameArt in the
@@ -450,19 +454,19 @@ reopened (`playtest.ps1 -Problems`).
   Account), the group's options on the right with a one-line help under each, a search box.
   No file paths shown. Keys (`keys`) becomes the Controls group.
   - Default: groups are Display, Gameplay, Camera, Controls and Account; Sound comes with the
-    first sound setting (the game has none yet). Each row's choices are chips on the row itself,
+	first sound setting (the game has none yet). Each row's choices are chips on the row itself,
     pan speed a - and + stepper, keys Change and Shipped. The search looks through every group.
-    Account's Sign-in row has Sign in again and Sync now (`.dev\p11-settings.png`, `p11-keys.png`).
+	Account's Sign-in row has Sign in again and Sync now (`.dev\p11-settings.png`, `p11-keys.png`).
 - [x] **U4. Pause** (`pause`). The world stays drawn and dimmed, "Paused" large, a short column of
   big buttons (Resume, Save, Load, Settings, Leave). No list of small buttons.
   - Default: the world beside the band is drawn as it is, not dimmed: a see-through veil puts
-    the map in colours off the palette, and the band already says the game waits. The buttons
-    are the ones pause had (Resume, Settings, Load, Save and quit to title); saving on its own is
-    F5 in play. No page card on pause (`.dev\playtest-pause.png`).
+	the map in colours off the palette, and the band already says the game waits. The buttons
+	are the ones pause had (Resume, Settings, Load, Save and quit to title); saving on its own is
+	F5 in play. No page card on pause (`.dev\playtest-pause.png`).
 - [x] **U5. Credits** (`credits`). Off the title menu for now; the library list goes. Art pack
   sources stay in each pack's own folder.
   - Default: Credits is a small link at the foot of the title's band. The libraries inside the
-    engine are no longer rows; their notices are one block on the engine's page, since their
+	engine are no longer rows; their notices are one block on the engine's page, since their
     licences ask for them to ship with the game.
 - [x] **U6. Lobby first** (`seats`). New adventure opens a lobby: the adventure's picture, its
   seats as player slots, each player picking an existing character or "make one when we start".
@@ -472,34 +476,34 @@ reopened (`playtest.ps1 -Problems`).
   - Default: every seat of a new adventure starts on "Make one when we start" (Josh, 10/7: by
     default characters are made after the lobby). Start runs creation for those seats one after
     another over the loaded chapter, then starts it with them; Escape in creation goes back to
-    the lobby. A seat can also take the ready-made hero or one of the player's characters.
+	the lobby. A seat can also take the ready-made hero or one of the player's characters.
   - Not done: the adventure's picture (adventures have no cover yet; U8), and the lobby still
-    has the character screen's look rather than the band (`.dev\p7-seats.png`). Every seat says
+	has the character screen's look rather than the band (`.dev\p7-seats.png`). Every seat says
 	"you" until seats have owners online.
 - [x] **U7. Character creation visuals** (`character-creation`). The hero's picture large in the
   middle (from art packs by race and class, or picked from the player's own pictures), the steps
   down one side, what each pick gives shown beside it, as in BG3.
   - Default: a 260 px square picture between the steps and the sheet, with the name and "Level 1
 	Dwarf Fighter" under it, in creation and the lobby. It is `portraits/<race>-<class>.png`,
-    else `<class>.png`, else `<race>.png`, from content or art packs; else the disc and initial.
-    What each pick gives is the sheet on the right, rebuilt after every click (`.dev\p7-scores.png`).
+	else `<class>.png`, else `<race>.png`, from content or art packs; else the disc and initial.
+	What each pick gives is the sheet on the right, rebuilt after every click (`.dev\p7-scores.png`).
   - Not done: picking a picture of the player's own for a character; that needs a picture field
     on character files (format change) and a way to choose one.
 - [x] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
   by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
   length, made by.
   - Done as New adventure's page: every adventure on the machine (`AdventureLibrary`: the game's,
-    each package in the create folder made there, and imported books) in a list with a tab for
-    each, the picked one's page on the right and its `cover` (new in `adventure.json`) filling the
-    window behind, as osu does. Start opens that adventure's lobby with its package over the
-    game's content. An import's cover is the first of the book's pictures it uses
+	each package in the create folder made there, and imported books) in a list with a tab for
+	each, the picked one's page on the right and its `cover` (new in `adventure.json`) filling the
+	window behind, as osu does. Start opens that adventure's lobby with its package over the
+	game's content. An import's cover is the first of the book's pictures it uses
     (`.dev\p11-adventures.png`).
   - Default: covers fill the background rather than a row of small tiles; sections are the tabs
 	(the game's, made here, imported), since there are no worlds or "new" marks yet.
   - Saves remember their package (`package` in the save's data); Continue and Load play from it
     again, and a save whose package was deleted says so on the load screen.
   - Not done: the playtest's `library` answer was about the character library, which is the
-    data panel it was.
+	data panel it was.
 - [x] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
   changes: the actions every hero always has (strike, stride, defend, help, hide, seek, shove,
   grapple, interact, ready) sit in their own group apart from spells and items; and as in BG3
@@ -507,7 +511,7 @@ reopened (`playtest.ps1 -Problems`).
   Stride (dash) is a press then a click on your own hero (or the key again), never one click
   that acts at once. Escape or a right click puts it back.
   - Default: the first bar is the actions every hero has (general, needing nothing), the second
-    the hero's spells and class actions; each spills into the other when full. Only actions
+	the hero's spells and class actions; each spills into the other when full. Only actions
     placed from now on follow this: a hotbar the player already arranged (in a save or a
     character file) keeps its slots (`.dev\playtest-spell-fight.png`).
   - Default: an action on oneself, picked, waits like any other; a click on the hero or its
@@ -519,42 +523,42 @@ reopened (`playtest.ps1 -Problems`).
   3.0) for every action and spell but `gathered-mending`. Left: `tiles/wood.png`, `objects/lever.png`
   and `objects/sack.png` in the test pack, and a check run that looks for any picture in the repo.
   - Done: `tiles/wood.png` and `objects/sack.png` (a gold pile) in the test pack, built by
-    `.dev\make-art-pack.py`; `PaletteTests.TheGameShipsNoPicturesOfItsOwn` fails on any picture
-    under `assets/`. Left plain: the lever (the Dungeon Crawl set has none) and Gathered
-    Mending's icon.
+	`.dev\make-art-pack.py`; `PaletteTests.TheGameShipsNoPicturesOfItsOwn` fails on any picture
+	under `assets/`. Left plain: the lever (the Dungeon Crawl set has none) and Gathered
+	Mending's icon.
 - [x] **U12. Friendlier everywhere (Josh, 10/7: "go through the entire UI and make it more user
   friendly").** All 50 playtest screens shot (`check.ps1 -Playtest all`) and gone through. Fixed
   across every list screen (load, gear, chests, shop, spells, journal, camp, characters, Create):
   - the panel's main button is filled (Load, Start, Take all, New character), a double click on
-    a row does it, and a greyed main button says why under it (Buy with no coins) and on hover;
+	a row does it, and a greyed main button says why under it (Buy with no coins) and on hover;
   - search and filter chips only on lists of 8 or more; the "N entries" count only when a filter
-    hides rows; no second Close button.
+	hides rows; no second Close button.
   - No file paths, ids or revision numbers on Load or Create's list; "Flags set" gone from saves;
-    the newest save first; Load's tabs and chips only when there are backups or broken files.
+	the newest save first; Load's tabs and chips only when there are backups or broken files.
   - Keys read as a player says them ("=", "Numpad +", not "Equal", "Kp Add"); "Shipped" is
 	"Default".
   - Play: the chapter name and news ("Combat", a quest) are one large line centred at the top,
-    not a second title over the party; the side menu steps back during a conversation like the
+	not a second title over the party; the side menu steps back during a conversation like the
 	party and log do; dice working in the log is faint so "Alice initiative 20" reads first.
   - Camp: rows say what each choice does ("heals all HP, at camp only") in place of a kind column.
   - Create: the problems column only shows when there is a problem.
 - [ ] **U13. What the walk-through found that needs more than a fix:**
   - Done 10/7: a "How to play" card the first time play opens (`shownHelp` in settings) and on
-    F1 (`help` in `ui/keys.json`), with the keys bound now; Esc or Got it puts it away. Screenshot
-    and playtest runs don't open it by themselves (`.dev\help-card.png`).
+	F1 (`help` in `ui/keys.json`), with the keys bound now; Esc or Got it puts it away. Screenshot
+	and playtest runs don't open it by themselves (`.dev\help-card.png`).
   - Done 10/7: the play menu is two columns of small buttons right of the hotbar, as in BG3
     (panels, Characters, Save, and Menu for the pause list); Load is F9 and on the pause list. The
-    top right is the map's again (`.dev\playtest-fight.png`, `playtest-keep.png`).
+	top right is the map's again (`.dev\playtest-fight.png`, `playtest-keep.png`).
   - Done 10/7: "Alice's turn" is in the turn order strip, after the cards. The log is as tall as
-    its lines, up to its old height (`.dev\playtest-first-look.png`).
+	its lines, up to its old height (`.dev\playtest-first-look.png`).
   - Gear, chest, shop and loot are one panel with Pack and the other side as tabs; a chest or
-    body would read better as two lists side by side (yours, theirs) with Take and Give between.
+	body would read better as two lists side by side (yours, theirs) with Take and Give between.
   - Done 10/7: a companion's journal page says how they feel and when they would join or leave
     in words, the numbers in small print under it.
   - Done 10/7: Create's Dialogue and Encounters say what each field is for in plain words
-    ("Conversation: tobb", "Lines", "Who says it", "goes to freed", "Story flags it sets when won,
-    for a door or a conversation to wait for", "Fights" for groups). Map, Compendium, Cutscene
-    and Story still use some engine words; they get the same pass when next touched.
+	("Conversation: tobb", "Lines", "Who says it", "goes to freed", "Story flags it sets when won,
+	for a door or a conversation to wait for", "Fights" for groups). Map, Compendium, Cutscene
+	and Story still use some engine words; they get the same pass when next touched.
   - Done 10/7: the character library opened from the title has no Lobby tab.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.

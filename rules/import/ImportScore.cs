@@ -36,6 +36,11 @@ public sealed class ImportScore
     /// <summary>What the builder said of its own work: its report lines and where it put each place's room.</summary>
     public sealed record BuildReport(List<(string Entry, string Text)> Lines, Dictionary<string, (string Chapter, int X, int Y, int W, int H)> Rooms)
     {
+        /// <summary>The square each place is centred on, when the report says.</summary>
+        public Dictionary<string, (int X, int Y)> Spots { get; } = new(StringComparer.Ordinal);
+        /// <summary>The places whose walls are the book's map's own.</summary>
+        public HashSet<string> Drawn { get; } = new(StringComparer.Ordinal);
+
         public static BuildReport? Load(string importFolder)
         {
             string file = Path.Combine(importFolder, OutlineBuilder.ReportFile);
@@ -53,6 +58,14 @@ public sealed class ImportScore
                 if (room.Value is JsonObject at && at["at"] is JsonArray { Count: 4 } box)
                 {
                     report.Rooms[room.Key] = (at["chapter"]?.ToString() ?? "", box[0]!.GetValue<int>(), box[1]!.GetValue<int>(), box[2]!.GetValue<int>(), box[3]!.GetValue<int>());
+                    if (at["spot"] is JsonArray { Count: 2 } spot)
+                    {
+                        report.Spots[room.Key] = (spot[0]!.GetValue<int>(), spot[1]!.GetValue<int>());
+                    }
+                    if (at["drawn"]?.GetValue<bool>() == true)
+                    {
+                        report.Drawn.Add(room.Key);
+                    }
                 }
             }
             return report;
@@ -115,11 +128,46 @@ public sealed class ImportScore
         if (key != null)
         {
             List<(string Line, bool Met)> lines = key.Check(kept);
+            score.Extras.AddRange(key.Extras(kept));
             score.Parts.Add(new Part("key", "The answer key", lines.Count(l => l.Met), lines.Count,
-                lines.Where(l => !l.Met).Select(l => l.Line).ToList(), new List<string>()));
+                lines.Where(l => !l.Met).Select(l => l.Line).ToList(),
+                score.Extras.Count == 0 ? new List<string>() : score.Extras.Select(e => "not in the book: " + e).ToList()));
         }
         return score;
     }
+
+    /// <summary>What the import made that the book's answer key doesn't have. Empty without a key.</summary>
+    public List<string> Extras { get; } = new();
+
+    /// <summary>
+    /// One number to steer a change to the import by. With an answer key, most of it (KeyWeight)
+    /// is how much of the key was met, marked down for what was made up (met over met plus
+    /// extras, and met over the key's lines, as their harmonic mean); the rest is the other
+    /// parts, which see what a key doesn't list (pictures, the map's shape, the book's words).
+    /// Without a key it is the overall score, which only knows how much of the book went
+    /// somewhere, not whether it went to the right place.
+    /// </summary>
+    public int Judged
+    {
+        get
+        {
+            if (Find("key") is not { Of: > 0 } key)
+            {
+                return Overall;
+            }
+            double met = 0;
+            if (key.Found > 0)
+            {
+                double recall = (double)key.Found / key.Of, precision = (double)key.Found / (key.Found + Extras.Count);
+                met = 100 * 2 * recall * precision / (recall + precision);
+            }
+            List<Part> rest = Parts.Where(p => p.Scored && p.Id != "key").ToList();
+            return (int)Math.Round(rest.Count == 0 ? met : KeyWeight * met + (1 - KeyWeight) * rest.Average(p => p.Percent));
+        }
+    }
+
+    /// <summary>How much of the judged score is the answer key's, when there is one.</summary>
+    public const double KeyWeight = 0.7;
 
     private static Part Pictures(SourceBook book, Outline kept, ImportKey? key, IReadOnlySet<string>? copied)
     {
@@ -268,14 +316,20 @@ public sealed class ImportScore
     private static Part Shape(Outline kept, BuildReport? report)
     {
         List<OutlineEntry> places = kept.OfKind(OutlineKind.Place).ToList();
-        var facts = new List<string>
+        var facts = new List<string>();
+        int drawn = places.Count(p => report?.Drawn.Contains(p.Id) == true);
+        if (drawn > 0)
         {
-            "rooms are plain boxes cut from each place's size; the walls the book's map draws are not read yet",
-        };
-        int standIn = places.Count(p => p.Data["size"] is JsonArray { Count: 2 } s && s[0]!.GetValue<int>() == 8 && s[1]!.GetValue<int>() == 8);
-        if (standIn > 0)
+            facts.Add($"{drawn} of {places.Count} places have the floor, walls and doors the book's map draws");
+        }
+        if (drawn < places.Count)
         {
-            facts.Add($"{standIn} of {places.Count} places are 8 by 8, the size given when the book's isn't known");
+            facts.Add($"{places.Count - drawn} of {places.Count} places are plain boxes; the book's map wasn't read for their walls");
+            int standIn = places.Count(p => report?.Drawn.Contains(p.Id) != true && p.Data["size"] is JsonArray { Count: 2 } s && s[0]!.GetValue<int>() == 8 && s[1]!.GetValue<int>() == 8);
+            if (standIn > 0)
+            {
+                facts.Add($"{standIn} of {places.Count} places are 8 by 8, the size given when the book's isn't known");
+            }
         }
         var spots = new List<(OutlineEntry Place, double X, double Y)>();
         foreach (OutlineEntry p in places)
@@ -306,15 +360,34 @@ public sealed class ImportScore
                 {
                     continue;
                 }
-                bool across = Agrees(spots[j].X - spots[i].X, b.X + b.W / 2.0 - (a.X + a.W / 2.0), ref found, ref of);
-                bool down = Agrees(spots[j].Y - spots[i].Y, b.Y + b.H / 2.0 - (a.Y + a.H / 2.0), ref found, ref of);
+                (double ax, double ay) = Middle(spots[i].Place.Id, a);
+                (double bx, double by) = Middle(spots[j].Place.Id, b);
+                bool across = Agrees(spots[j].X - spots[i].X, bx - ax, ref found, ref of);
+                bool down = Agrees(spots[j].Y - spots[i].Y, by - ay, ref found, ref of);
                 if (!across || !down)
                 {
                     wrong.Add($"{Label(spots[i].Place)} and {Label(spots[j].Place)} lie {(across ? "over and under" : "left and right")} each other the wrong way round");
                 }
             }
         }
+        // and each place's own shape: the book's, or a box standing in for it
+        foreach (OutlineEntry p in places)
+        {
+            of++;
+            if (report.Drawn.Contains(p.Id))
+            {
+                found++;
+            }
+            else if (wrong.Count < 8)
+            {
+                wrong.Add($"{Label(p)} is a plain box, not the shape the book's map draws");
+            }
+        }
         return new Part("shape", "The map's shape", found, of, wrong.Take(8).ToList(), facts);
+
+        // a room drawn off the map is no box, so its middle is where its number is
+        (double X, double Y) Middle(string id, (string Chapter, int X, int Y, int W, int H) box) =>
+            report.Spots.TryGetValue(id, out (int X, int Y) spot) ? (spot.X + 0.5, spot.Y + 0.5) : (box.X + box.W / 2.0, box.Y + box.H / 2.0);
     }
 
     // numbers nearly level on the map say nothing about which is left of which
@@ -553,6 +626,8 @@ public sealed class ImportScore
             ["built"] = Built,
             ["key"] = HasKey,
             ["overall"] = Overall,
+            ["judged"] = Judged,
+            ["extras"] = CreateJson.Texts(Extras),
             ["parts"] = parts,
         };
     }

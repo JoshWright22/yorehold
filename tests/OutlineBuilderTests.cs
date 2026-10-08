@@ -61,6 +61,27 @@ public class OutlineBuilderTests
     }
 
     [Fact]
+    public void ARoomsPassageIsReadBeforeTheFightWhenItsFoesSeeThePartyFromTheDoor()
+    {
+        using var scratch = new Scratch();
+        string package = Build(scratch).Package;
+        using WorldFixture world = WorldFixture.LoadFrom(Play(package), "chapters/mill-chapter", 3);
+        World w = world.World;
+        while (w.Talk != null)
+        {
+            w.EndTalk();
+        }
+        // nobody has stepped into the mill, and its rats notice the party
+        Assert.DoesNotContain("entered_mill", w.Flags);
+        w.Notice(0);
+        Assert.True(w.Flags.Contains("entered_mill") && w.Talk != null, "The room is told first");
+        Assert.False(w.Fighting, "... and the fight waits for it");
+        w.EndTalk();
+        w.Notice(0);
+        Assert.True(w.Fighting && w.Talk == null, "Seen again with the passage read, the fight starts");
+    }
+
+    [Fact]
     public void ARoomsPassageIsReadWhenAHeroStepsIn()
     {
         using var scratch = new Scratch();

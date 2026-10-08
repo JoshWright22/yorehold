@@ -33,6 +33,12 @@ public sealed class StoryImport
     public List<string> Problems { get; } = new();
     /// <summary>Where the books' answer keys are and the history of scores is kept; null for neither.</summary>
     public string? ScoresFolder { get; init; }
+    /// <summary>Read heroes, foes, talk, finds and ways off the book's layout (BookCast). On unless a comparison run turns it off.</summary>
+    public bool Cast { get; init; } = true;
+    /// <summary>Take rooms' shapes, walls and doors off the book's map (BookMap). On unless a comparison run turns it off.</summary>
+    public bool Walls { get; init; } = true;
+    /// <summary>Add each build's score to the scores folder's history. Off in a comparison run, which keeps its own.</summary>
+    public bool KeepHistory { get; init; } = true;
     /// <summary>How much of the book this import got into the game, as of the last read or build.</summary>
     public ImportScore? Score { get; private set; }
 
@@ -57,10 +63,13 @@ public sealed class StoryImport
         source.Save(Folder);
         Stage = "Finding places and pictures";
         Outline draft = BookLayout.Draft(source);
-        Stage = "Finding heroes, foes, talk and treasure";
-        var game = new Compendium();
-        game.Load(_game, "");
-        BookCast.Add(source, draft, game.Classes.Keys.ToList());
+        if (Cast)
+        {
+            Stage = "Finding heroes, foes, talk and treasure";
+            var game = new Compendium();
+            game.Load(_game, "");
+            BookCast.Add(source, draft, game.Classes.Keys.ToList());
+        }
         Outline = draft;
         if (model != null)
         {
@@ -140,7 +149,7 @@ public sealed class StoryImport
             ImportKey? key = ScoresFolder != null ? ImportKey.Find(ScoresFolder, book) : null;
             Score = ImportScore.Of(Folder, Kept(), built ? Package : null, key);
             Score.Save(Folder);
-            if (built && ScoresFolder != null)
+            if (built && ScoresFolder != null && KeepHistory)
             {
                 Score.AddToHistory(ScoresFolder, Package);
             }
@@ -181,7 +190,7 @@ public sealed class StoryImport
         Stage = "Building the package";
         try
         {
-            Problems.AddRange(new OutlineBuilder(Kept(), Folder, _game) { ClearPaper = clearPaper }.Build(Package));
+            Problems.AddRange(new OutlineBuilder(Kept(), Folder, _game) { ClearPaper = clearPaper, ReadWalls = Walls }.Build(Package));
         }
         catch (Exception error) when (error is ContentException or IOException or UnauthorizedAccessException)
         {

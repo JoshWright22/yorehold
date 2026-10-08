@@ -74,9 +74,18 @@ public class ImportScoreTests
         var rooms = new Dictionary<string, (string, int, int, int, int)> { ["west"] = ("ch", 20, 1, 6, 6), ["east"] = ("ch", 1, 1, 6, 6) };
         var report = new ImportScore.BuildReport(new(), rooms);
         ImportScore.Part shape = ImportScore.Of(Mill(), outline, report, "", null, new HashSet<string>()).Find("shape")!;
-        // level on the map, so only left and right is asked, and the rooms are the wrong way round
-        Assert.Equal((0, 1), (shape.Found, shape.Of));
-        Assert.Contains("left and right", Assert.Single(shape.Missing));
+        // level on the map, so only left and right is asked, and the rooms are the wrong way round;
+        // and each room is asked for the shape the book draws, which a box isn't
+        Assert.Equal((0, 3), (shape.Found, shape.Of));
+        Assert.Contains("left and right", shape.Missing[0]);
+        Assert.Contains("plain box", shape.Missing[1]);
+
+        // drawn off the book's map and the right way round, by where their numbers are
+        report.Drawn.UnionWith(new[] { "west", "east" });
+        report.Spots["west"] = (3, 4);
+        report.Spots["east"] = (30, 4);
+        shape = ImportScore.Of(Mill(), outline, report, "", null, new HashSet<string>()).Find("shape")!;
+        Assert.Equal((3, 3), (shape.Found, shape.Of));
     }
 
     [Fact]

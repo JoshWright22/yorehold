@@ -32,6 +32,8 @@ public sealed class OutlineBuilder
     private readonly SortedDictionary<string, (string Target, byte[]? Cleared)> _pictures = new(StringComparer.Ordinal);
     // where each place's floor was put, for the report: the import's score holds it against the book's map
     private readonly SortedDictionary<string, (string Chapter, (int X, int Y, int W, int H) At)> _rooms = new(StringComparer.Ordinal);
+    // the square each place is centred on, and whether its walls are the book's map's
+    private readonly Dictionary<string, (Cell Spot, bool Drawn)> _spots = new(StringComparer.Ordinal);
     private string _package = "";
 
     public OutlineBuilder(Outline outline, string importFolder, ContentFiles game)
@@ -87,7 +89,10 @@ public sealed class OutlineBuilder
         var layouts = new Dictionary<string, Layout>();
         foreach (string chapter in chapterIds)
         {
-            layouts[chapter] = new Layout(PlacesOf(chapter), LinksWithin(chapter), _report, BookMapSquares(chapters.FirstOrDefault(c => c.Id == chapter)));
+            OutlineEntry? entry = chapters.FirstOrDefault(c => c.Id == chapter);
+            layouts[chapter] = ReadWalls && DrawnMap(chapter, entry) is BookMap drawn
+                ? new Layout(PlacesOf(chapter), LinksWithin(chapter), _report, drawn)
+                : new Layout(PlacesOf(chapter), LinksWithin(chapter), _report, BookMapSquares(entry));
         }
         foreach (OutlineEntry link in _outline.OfKind(OutlineKind.Link))
         {
@@ -374,8 +379,17 @@ public sealed class OutlineBuilder
         foreach (OutlineEntry place in PlacesOf(id).Where(p => p != layout.Start && p.Texts("readAloud").Count > 0))
         {
             string flag = "entered_" + place.Id.Replace('-', '_');
-            (int x, int y, int w, int h) = layout.Room(place.Id);
-            layout.Areas.Add(new JsonObject { ["id"] = "room-" + place.Id, ["area"] = new JsonArray(x, y, w, h), ["set"] = new JsonArray(flag) });
+            // a room drawn off the book's map is not a box: as many boxes as cover its floor, each setting the same flag
+            int part = 0;
+            foreach ((int x, int y, int w, int h) in layout.RoomAreas(place.Id))
+            {
+                layout.Areas.Add(new JsonObject
+                {
+                    ["id"] = ++part == 1 ? "room-" + place.Id : $"room-{place.Id}-{part}",
+                    ["area"] = new JsonArray(x, y, w, h),
+                    ["set"] = new JsonArray(flag),
+                });
+            }
             string talk = "read-" + place.Id;
             WriteJson($"{folder}/dialogue/{talk}.json", new JsonObject
             {
@@ -434,6 +448,7 @@ public sealed class OutlineBuilder
         foreach (OutlineEntry place in PlacesOf(id))
         {
             _rooms[place.Id] = (id, layout.Room(place.Id));
+            _spots[place.Id] = (layout.Spot(place.Id), layout.Drawn);
         }
         if (chapter?.Text("mapPicture") is { Length: > 0 } bookMap)
         {
@@ -484,6 +499,48 @@ public sealed class OutlineBuilder
         {
             return null;
         }
+    }
+
+    /// <summary>Take each room's shape, walls and doors from the book's map when it can be read. On by default; off, rooms are boxes put where the map has them.</summary>
+    public bool ReadWalls { get; init; } = true;
+
+    // the chapter's map picture read into squares, when every place of the chapter has its number on it
+    private BookMap? DrawnMap(string id, OutlineEntry? chapter)
+    {
+        List<OutlineEntry> places = PlacesOf(id);
+        string file = chapter?.Text("mapPicture") is { Length: > 0 } picture ? Path.Combine(_importFolder, picture.Replace('/', Path.DirectorySeparatorChar)) : "";
+        if (file.Length == 0 || !File.Exists(file) || places.Count == 0)
+        {
+            return null;
+        }
+        var labels = new Dictionary<string, (double X, double Y)>(StringComparer.Ordinal);
+        foreach (OutlineEntry place in places)
+        {
+            if (place.Data["mapAt"] is not JsonArray { Count: 2 } at)
+            {
+                _report.Add(new ReportLine(place.Id, "its number isn't on the book's map, so the map's walls aren't used; rooms are boxes"));
+                return null;
+            }
+            labels[place.Id] = (at[0]!.GetValue<double>(), at[1]!.GetValue<double>());
+        }
+        BookMap? map;
+        try
+        {
+            map = BookMap.Read(File.ReadAllBytes(file), labels);
+        }
+        catch (IOException)
+        {
+            map = null;
+        }
+        if (map == null)
+        {
+            _report.Add(new ReportLine(id, "the floor on the book's map couldn't be told from the rest, so its walls aren't used; rooms are boxes"));
+        }
+        else if (!map.GridFound)
+        {
+            _report.Add(new ReportLine(id, $"the book's map draws no grid; it is taken to be {BookMap.SquaresWithoutGrid} squares across"));
+        }
+        return map;
     }
 
     private bool IsStarted(string dialogue) =>
@@ -634,7 +691,8 @@ public sealed class OutlineBuilder
         var rooms = new JsonObject();
         foreach ((string place, (string chapter, (int X, int Y, int W, int H) at)) in _rooms)
         {
-            rooms[place] = new JsonObject { ["chapter"] = chapter, ["at"] = new JsonArray(at.X, at.Y, at.W, at.H) };
+            (Cell spot, bool drawn) = _spots[place];
+            rooms[place] = new JsonObject { ["chapter"] = chapter, ["at"] = new JsonArray(at.X, at.Y, at.W, at.H), ["spot"] = new JsonArray(spot.X, spot.Y), ["drawn"] = drawn };
         }
         Directory.CreateDirectory(_importFolder);
         File.WriteAllText(Path.Combine(_importFolder, ReportFile),
@@ -806,6 +864,206 @@ public sealed class OutlineBuilder
                 previous = place;
             }
             Normalize();
+        }
+
+        // the book's map read into tiles, when the rooms are drawn off it instead of put down as boxes
+        private readonly char[,]? _drawn;
+
+        /// <summary>Are the walls the book's map's own.</summary>
+        public bool Drawn => _drawn != null;
+
+        /// <summary>
+        /// The chapter as the book's map draws it: floor where the map has floor, rock walls round
+        /// it, each place the floor nearest its number, and a door where the map draws one. A link
+        /// decides what kind of door it is; places the map doesn't join are joined by a corridor.
+        /// </summary>
+        public Layout(List<OutlineEntry> places, List<OutlineEntry> links, List<ReportLine> report, BookMap map)
+        {
+            _places = places;
+            Start = places[0];
+            // one square of rock all round, so the outermost floor has a wall
+            _width = map.Width + 2;
+            _height = map.Height + 2;
+            _drawn = new char[_height, _width];
+            var outdoors = places.Where(Outdoors).Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+            var owner = new Dictionary<Cell, string>();
+            var doors = new List<Cell>();
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    _drawn[y, x] = Empty;
+                    if (x == 0 || y == 0 || x > map.Width || y > map.Height || !map.Floor[y - 1, x - 1])
+                    {
+                        continue;
+                    }
+                    string place = map.Place[y - 1, x - 1]!;
+                    _drawn[y, x] = outdoors.Contains(place) ? Grass : Floor;
+                    owner[new Cell(x, y)] = place;
+                    if (map.Door[y - 1, x - 1])
+                    {
+                        doors.Add(new Cell(x, y));
+                    }
+                }
+            }
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    if (_drawn[y, x] != Empty)
+                    {
+                        continue;
+                    }
+                    var round = new List<char>();
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            if (x + dx >= 0 && y + dy >= 0 && x + dx < _width && y + dy < _height && _drawn[y + dy, x + dx] is Floor or Grass)
+                            {
+                                round.Add(_drawn[y + dy, x + dx]);
+                            }
+                        }
+                    }
+                    if (round.Count > 0)
+                    {
+                        _drawn[y, x] = round.All(c => c == Grass) ? Tree : Wall;
+                    }
+                }
+            }
+            foreach (OutlineEntry place in places)
+            {
+                Cell label = map.Labels[place.Id];
+                var spot = new Cell(label.X + 1, label.Y + 1);
+                List<Cell> cells = owner.Where(o => o.Value == place.Id).Select(o => o.Key).ToList();
+                _rooms[place.Id] = (cells.Min(c => c.X), cells.Min(c => c.Y), cells.Max(c => c.X) - cells.Min(c => c.X) + 1, cells.Max(c => c.Y) - cells.Min(c => c.Y) + 1);
+                _cells[place.Id] = cells;
+                // from the place's number out; nobody stands in a doorway
+                _free[place.Id] = cells.Where(c => !doors.Contains(c))
+                    .OrderBy(c => Math.Abs(c.X - spot.X) + Math.Abs(c.Y - spot.Y)).ThenBy(c => c.Y).ThenBy(c => c.X).ToList();
+            }
+            TraceArea = (map.Picture.X + 1, map.Picture.Y + 1, map.Picture.Width, map.Picture.Height);
+
+            IEnumerable<Cell> Beside(Cell c) => new[] { new Cell(c.X + 1, c.Y), new Cell(c.X - 1, c.Y), new Cell(c.X, c.Y + 1), new Cell(c.X, c.Y - 1) };
+            var used = new HashSet<Cell>();
+            foreach (OutlineEntry link in links)
+            {
+                string a = link.Text("from"), b = link.Text("to");
+                if (!_rooms.ContainsKey(a) || !_rooms.ContainsKey(b))
+                {
+                    report.Add(new ReportLine(link.Id, "joins places in no room of this chapter; left out"));
+                    continue;
+                }
+                string way = link.Text("way", "open");
+                // a door the map draws between the two: in one's floor and touching the other's
+                List<Cell> between = doors.Where(d => !used.Contains(d) && (owner[d] == a || owner[d] == b)
+                    && Beside(d).Any(n => owner.TryGetValue(n, out string? other) && other == (owner[d] == a ? b : a))).ToList();
+                if (between.Count > 0)
+                {
+                    foreach (Cell door in between)
+                    {
+                        used.Add(door);
+                        // the map draws a door even where the words only say the way is there
+                        WayObject(link, way == "open" ? "door" : way, door, report);
+                    }
+                    continue;
+                }
+                List<Cell> meet = _cells[a].Where(c => Beside(c).Any(n => owner.TryGetValue(n, out string? other) && other == b)).ToList();
+                if (meet.Count == 0 && !Walk(a, b))
+                {
+                    Cell start = _free[a][0], end = _free[b][0];
+                    char ground = outdoors.Contains(a) ? Grass : Floor;
+                    for (int y = Math.Min(start.Y, end.Y); y <= Math.Max(start.Y, end.Y); y++)
+                    {
+                        _openings.Add((new Cell(start.X, y), ground));
+                    }
+                    for (int x = Math.Min(start.X, end.X); x <= Math.Max(start.X, end.X); x++)
+                    {
+                        _openings.Add((new Cell(x, end.Y), ground));
+                    }
+                    report.Add(new ReportLine(link.Id, "the book's map draws no way between them; a corridor joins them"));
+                    continue;
+                }
+                if (way is "door" or "secret" or "locked" && (meet.Count == 0 || meet.Count > 3))
+                {
+                    report.Add(new ReportLine(link.Id, $"the book's map draws no door here and the two don't meet at a doorway; the way is left open"));
+                    continue;
+                }
+                if (way == "open")
+                {
+                    continue;
+                }
+                foreach (Cell at in way is "climb" or "jump" ? meet.Take(1) : meet)
+                {
+                    WayObject(link, way, at, report);
+                }
+            }
+            foreach (Cell door in doors.Where(d => !used.Contains(d)))
+            {
+                Objects.Add(new JsonObject { ["kit"] = "door", ["at"] = new JsonArray(door.X, door.Y) });
+            }
+        }
+
+        private readonly Dictionary<string, List<Cell>> _cells = new(StringComparer.Ordinal);
+
+        // can b's number be walked to from a's, over the floor as it stands (doors open)
+        private bool Walk(string a, string b)
+        {
+            char[,] grid = Grid();
+            var seen = new HashSet<Cell>();
+            var queue = new Queue<Cell>();
+            queue.Enqueue(_free[a][0]);
+            while (queue.Count > 0)
+            {
+                Cell at = queue.Dequeue();
+                if (at.X < 0 || at.Y < 0 || at.X >= _width || at.Y >= _height || grid[at.Y, at.X] is not (Floor or Grass) || !seen.Add(at))
+                {
+                    continue;
+                }
+                queue.Enqueue(new Cell(at.X + 1, at.Y));
+                queue.Enqueue(new Cell(at.X - 1, at.Y));
+                queue.Enqueue(new Cell(at.X, at.Y + 1));
+                queue.Enqueue(new Cell(at.X, at.Y - 1));
+            }
+            return seen.Contains(_free[b][0]);
+        }
+
+        /// <summary>The square a place is centred on: a box's middle, or where its number is on the book's map.</summary>
+        public Cell Spot(string place) => _free[place][0];
+
+        /// <summary>A place's floor as boxes: the one it is, or as many as cover a floor drawn off the book's map.</summary>
+        public List<(int X, int Y, int W, int H)> RoomAreas(string place)
+        {
+            if (!_cells.TryGetValue(place, out List<Cell>? cells))
+            {
+                return new() { _rooms[place] };
+            }
+            // each row's runs of floor, a run growing down while the row under it has the same one
+            var boxes = new List<(int X, int Y, int W, int H)>();
+            foreach (IGrouping<int, Cell> row in cells.GroupBy(c => c.Y).OrderBy(g => g.Key))
+            {
+                List<int> xs = row.Select(c => c.X).OrderBy(x => x).ToList();
+                for (int i = 0; i < xs.Count;)
+                {
+                    int end = i;
+                    while (end + 1 < xs.Count && xs[end + 1] == xs[end] + 1)
+                    {
+                        end++;
+                    }
+                    int x = xs[i], w = xs[end] - xs[i] + 1;
+                    int above = boxes.FindIndex(b => b.X == x && b.W == w && b.Y + b.H == row.Key);
+                    if (above >= 0)
+                    {
+                        boxes[above] = (x, boxes[above].Y, w, boxes[above].H + 1);
+                    }
+                    else
+                    {
+                        boxes.Add((x, row.Key, w, 1));
+                    }
+                    i = end + 1;
+                }
+            }
+            return boxes;
         }
 
         private readonly (double Width, double Height)? _mapSquares;
@@ -999,7 +1257,12 @@ public sealed class OutlineBuilder
                 return;
             }
             _openings.Add((at, ground));
-            string way = link.Text("way", "open");
+            WayObject(link, link.Text("way", "open"), at, report);
+        }
+
+        // what stands in a way that isn't open: a door, a locked one, or a line in the report for what the game can't play
+        private void WayObject(OutlineEntry link, string way, Cell at, List<ReportLine> report)
+        {
             switch (way)
             {
                 case "door":
@@ -1029,19 +1292,27 @@ public sealed class OutlineBuilder
         }
 
         /// <summary>A free square in the place, from its middle out.</summary>
-        public Cell Take(string place)
-        {
-            List<Cell> free = _free.GetValueOrDefault(place) ?? _free[Start!.Id];
-            Cell at = free.First(c => !_taken.Contains(c));
-            _taken.Add(at);
-            return at;
-        }
+        public Cell Take(string place) => Take(place, far: false);
 
         /// <summary>A free square in the place, from its far side in: where foes wait.</summary>
-        public Cell TakeFar(string place)
+        public Cell TakeFar(string place) => Take(place, far: true);
+
+        private Cell Take(string place, bool far)
         {
             List<Cell> free = _free.GetValueOrDefault(place) ?? _free[Start!.Id];
-            Cell at = free.Last(c => !_taken.Contains(c));
+            List<Cell> left = free.Where(c => !_taken.Contains(c)).ToList();
+            if (left.Count == 0)
+            {
+                // a place the book's map draws smaller than what the book puts in it: the nearest free floor of any place
+                Cell middle = free[0];
+                left = _free.Values.SelectMany(cells => cells).Where(c => !_taken.Contains(c))
+                    .OrderBy(c => Math.Abs(c.X - middle.X) + Math.Abs(c.Y - middle.Y)).ThenBy(c => c.Y).ThenBy(c => c.X).Take(1).ToList();
+                if (left.Count == 0)
+                {
+                    return middle;
+                }
+            }
+            Cell at = far ? left[^1] : left[0];
             _taken.Add(at);
             return at;
         }
@@ -1052,8 +1323,7 @@ public sealed class OutlineBuilder
             char[,] grid = Grid();
             var seen = new HashSet<Cell>();
             var queue = new Queue<Cell>();
-            (int sx, int sy, int sw, int sh) = _rooms[Start!.Id];
-            queue.Enqueue(new Cell(sx + sw / 2, sy + sh / 2));
+            queue.Enqueue(_free[Start!.Id][0]);
             while (queue.Count > 0)
             {
                 Cell at = queue.Dequeue();
@@ -1066,7 +1336,7 @@ public sealed class OutlineBuilder
                 queue.Enqueue(new Cell(at.X, at.Y + 1));
                 queue.Enqueue(new Cell(at.X, at.Y - 1));
             }
-            return _rooms.Where(r => !seen.Contains(new Cell(r.Value.X, r.Value.Y))).Select(r => r.Key).ToList();
+            return _rooms.Where(r => !seen.Contains(_free[r.Key][0])).Select(r => r.Key).ToList();
         }
 
         public JsonObject Map(string name)
@@ -1087,6 +1357,15 @@ public sealed class OutlineBuilder
 
         private char[,] Grid()
         {
+            if (_drawn != null)
+            {
+                var drawn = (char[,])_drawn.Clone();
+                foreach ((Cell at, char tile) in _openings)
+                {
+                    drawn[at.Y, at.X] = tile;
+                }
+                return drawn;
+            }
             var grid = new char[_height, _width];
             for (int y = 0; y < _height; y++)
             {
@@ -1121,8 +1400,8 @@ public sealed class OutlineBuilder
         {
             var objects = new JsonArray(Objects.Select(o => (JsonNode?)o.DeepClone()).ToArray());
             var markers = new JsonObject();
-            (int sx, int sy, int sw, int sh) = _rooms[Start!.Id];
-            markers["start"] = new JsonArray(sx + sw / 2, sy + sh / 2);
+            Cell start = _free[Start!.Id][0];
+            markers["start"] = new JsonArray(start.X, start.Y);
             foreach ((string marker, string place) in Exits)
             {
                 Cell at = Take(place);

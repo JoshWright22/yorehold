@@ -617,11 +617,11 @@ package, model run, overall, each part's found and of) are in `user://import-sco
 {"format": "yorehold.import-key", "version": 1, "book": "Caves of Shadow",
  "notPictures": ["pictures/p2-1.jpg"],
  "expect": [{"place": "3"}, {"way": ["5", "6"], "how": "locked"},
-            {"fight": "3", "creatures": {"orc": 1, "rat": 1}}, {"creature": "ogre|jezer"},
-            {"hero": "Lidda", "class": "rogue", "picture": true},
-            {"person": "Jeffries", "place": "1", "talks": true},
-            {"says": "My name is Jeffries", "who": "Jeffries"}, {"item": "crossbow"},
-            {"chest": "6", "holds": ["crossbow"], "coins": 50}, {"quest": "orcs|ogre"}]}
+			{"fight": "3", "creatures": {"orc": 1, "rat": 1}}, {"creature": "ogre|jezer"},
+			{"hero": "Lidda", "class": "rogue", "picture": true},
+			{"person": "Jeffries", "place": "1", "talks": true},
+			{"says": "My name is Jeffries", "who": "Jeffries"}, {"item": "crossbow"},
+			{"chest": "6", "holds": ["crossbow"], "coins": 50}, {"quest": "orcs|ogre"}]}
 ```
 
 A line's first field is its kind; places are named by the book's labels; `a|b` takes either name,
@@ -629,6 +629,37 @@ matched as whole words in the id, name or the foe's own name. A chest's `coins` 
 give them (the game counts copper, 100 to the gold). `notPictures` aren't counted in
 `pictures`. Setting `YOREHOLD_SCORE_IMPORT` (with `_PACKAGE` and `_KEY`) makes the tests score an
 import folder into its `score.txt`.
+
+With a key, the score also lists `extras`: what the outline has that the key doesn't (a fight
+where the key has none, a creature, hero, person or quest it doesn't name, something to open where
+it lists nothing), only for kinds the key lists at all. `judged` is the number to steer changes
+by: 70% the key's lines met marked down for extras (the harmonic mean of met/lines and
+met/(met + extras)), 30% the other parts' mean; without a key it is `overall`. The book's room
+`shape` part also counts, built, each place whose walls are the book's map's own (`drawn` in
+report.json's `rooms`, with the `spot` square its number is on).
+
+**Comparison runs** (`ImportBench`): a folder with `books/` (each book with its
+`<slug>.key.json` beside it) and `bench.json` listing versions of the import:
+
+```json
+{"format": "yorehold.import-bench",
+ "versions": [{"name": "layout", "cast": false, "walls": false}, {"name": "full"},
+              {"name": "local", "model": "http://127.0.0.1:11434", "modelName": "qwen"}]}
+```
+
+`cast` (BookCast) and `walls` (the map's walls) default to on; `model` is a chat address, none
+for layout only. `check.ps1 -Bench <folder> [-Label name]` builds, runs every book through every
+version into `runs/<label>/<book>/<version>/`, and prints `runs/<label>/report.txt`: each
+version's mean judged score with its change from the last run and the best before, then per book
+the parts and the key's lines won and lost. `history.jsonl` keeps every result; a label run again
+replaces its earlier run. Without `-Label` the run is named after the commit.
+
+**The book's map** (`BookMap`): when every place of a chapter has its number on the map picture,
+the picture is read into squares (its drawn grid, else 40 across), floor is what looks like the
+ground under the numbers, small white or grey boxes are doors, and each floor square goes to the
+place whose number is the shortest walk away (a door ends a room). The chapter's map is that floor
+with walls round it; a link's door, lock or check goes on the door the map draws between its two
+places. A map that can't be read falls back to boxes, and the report says why.
 
 ## Adventures
 
