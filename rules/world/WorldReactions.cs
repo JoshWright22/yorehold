@@ -202,6 +202,54 @@ public sealed partial class World
         }
     }
 
+    // Reactions an attack sets off once it is done: the one attacked, on a hit or a miss, or its
+    // allies when it was hit. Taken at once, with no prompt: the attacker's turn can't wait for an
+    // answer the way a move does yet.
+    private void AttackReactions(EffectResult result)
+    {
+        foreach (EffectEvent e in result.Events.Where(e => e.Kind == EffectEventKind.Attack).ToList())
+        {
+            int attacker = e.By;
+            int target = e.Who;
+            if (!Fighting || attacker < 0 || target < 0 || Creatures[attacker].Sheet.Down)
+            {
+                continue;
+            }
+            for (int reactor = 0; reactor < Creatures.Count && Fighting; reactor++)
+            {
+                if (reactor == attacker || Creatures[reactor].Team == Creatures[attacker].Team || OrderIndex(reactor) is not int index
+                    || !Encounter!.Order[index].Standing || !Encounter.Order[index].Budget.Reaction
+                    || Creatures[reactor].Sheet.HasFlag(Rules, "cantAct"))
+                {
+                    continue;
+                }
+                foreach (ReactionDefinition definition in Chapter.Rules.Reactions)
+                {
+                    bool fits = definition.Trigger switch
+                    {
+                        ReactionTrigger.Hit => reactor == target && e.Success,
+                        ReactionTrigger.Missed => reactor == target && !e.Success,
+                        ReactionTrigger.AllyHit => reactor != target && Creatures[target].Team == Creatures[reactor].Team && e.Success,
+                        _ => false,
+                    };
+                    if (!fits || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
+                    {
+                        continue;
+                    }
+                    ActionDefinition? action = FindAction(definition.Action);
+                    if (action == null || !action.Meets(Creatures[reactor].Sheet, Rules, out _)
+                        || (action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, attacker)))
+                    {
+                        continue;
+                    }
+                    _pendingReaction = new PendingReaction(reactor, attacker, action.Id, definition.Name, false);
+                    ResolveReaction(true);
+                    break;
+                }
+            }
+        }
+    }
+
     // A prompt nobody answers in time takes the reaction.
     private void ReactionTime(double seconds)
     {

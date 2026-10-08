@@ -4,6 +4,12 @@ public enum ReactionTrigger
 {
     LeavesReach,
     EntersReach,
+    /// <summary>An attack on the reactor hit it.</summary>
+    Hit,
+    /// <summary>An attack on the reactor missed it.</summary>
+    Missed,
+    /// <summary>An attack hit one of the reactor's allies.</summary>
+    AllyHit,
 }
 
 /// <summary>A movement trigger and the action it offers: rulesets/yorehold/reactions/opportunity.json.</summary>
@@ -36,7 +42,10 @@ public class ReactionDefinition
         {
             "leavesReach" => ReactionTrigger.LeavesReach,
             "entersReach" => ReactionTrigger.EntersReach,
-            _ => throw node.Fail("trigger", "is leavesReach or entersReach"),
+            "hit" => ReactionTrigger.Hit,
+            "missed" => ReactionTrigger.Missed,
+            "allyHit" => ReactionTrigger.AllyHit,
+            _ => throw node.Fail("trigger", "is leavesReach, entersReach, hit, missed or allyHit"),
         };
         bool readied = node.Bool("readied", false);
         string action = node.Name("action", "");

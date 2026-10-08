@@ -252,7 +252,7 @@ public sealed partial class World
         }
         else
         {
-            RunActionEffect(me, action, target, at, slot);
+            AttackReactions(RunActionEffect(me, action, target, at, slot));
         }
         if (action.EndsTurn && !Encounter.Finished)
         {

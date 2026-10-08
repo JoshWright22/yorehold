@@ -1111,7 +1111,7 @@ The ruleset's `reactions/<id>.json` files name movement triggers and the action 
 { "id": "opportunity", "name": "Opportunity Strike", "trigger": "leavesReach", "action": "strike", "order": 10, "promptSeconds": 2 }
 ```
 
-`trigger` is `leavesReach` or `entersReach`. Name `action`, or use `readied: true` in its place. `order` defaults to 0; `promptSeconds` defaults to 2 (0.1 to 30). Reach comes from the action's targeting range. The same action effects run for a reaction, spending one reaction instead of turn actions, including for two-handed weapons. A creature gets its reaction back at the start of its turn.
+`trigger` is `leavesReach` or `entersReach` (a move), or `hit`, `missed` (an attack on the reactor) or `allyHit` (an attack that hit one of its allies); the attack ones go off once the attack is done, at the attacker, and are taken at once with no prompt. Name `action`, or use `readied: true` in its place. `order` defaults to 0; `promptSeconds` defaults to 2 (0.1 to 30). Reach comes from the action's targeting range. The same action effects run for a reaction, spending one reaction instead of turn actions, including for two-handed weapons. A creature gets its reaction back at the start of its turn.
 
 Every edge of voluntary movement is checked, including free movement and movement bought with Dash. An opportunity happens before leaving; a readied action happens after entering. Forced movement does not provoke. A lethal reaction stops movement where it happened and advances the turn. Planned movement is paid when the move starts.
 

@@ -4,7 +4,8 @@ namespace Yorehold.Rules.Tests;
 public class SystemPackageTests
 {
     // A fighter and a wizard against two goblins, under the named system.
-    private static WorldFixture Yard(string ruleset, string fighter, string caster) => WorldFixture.LoadJson("chapters/sys-yard", new Dictionary<string, string>
+    private static WorldFixture Yard(string ruleset, string fighter, string caster, params (string Path, string Json)[] more) =>
+        WorldFixture.LoadJson("chapters/sys-yard", new Dictionary<string, string>(more.Select(f => KeyValuePair.Create(f.Path, f.Json)))
     {
         ["chapters/sys-yard/chapter.json"] = $$"""
             {"id":"sys-yard","title":"Yard","map":"map.json","ruleset":"{{ruleset}}",
@@ -46,6 +47,20 @@ public class SystemPackageTests
         rogue.AddCondition(w.Rules, "helped");
         world.Use("attack", 3);
         Assert.Equal(said, world.Log.Count(line => line.Contains("Sneak Attack")));
+    }
+
+    [Fact]
+    public void AMissCanSetOffAReaction()
+    {
+        // a riposte: when an attack on it misses, strike back
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard",
+            ("rulesets/pf2e/reactions/riposte.json", """{"id": "riposte", "name": "Riposte", "trigger": "missed", "action": "strike"}"""));
+        World w = world.World;
+        w.Creatures[0].Sheet.Stats.SetBase("perception", 2000);
+        w.Creatures[2].Sheet.Stats.SetBase("ac", 1000); // Ana can't hit Gik
+        world.Fight();
+        Assert.True(world.TurnTo(0) && world.Use("strike", 2));
+        Assert.True(world.Said("Gik takes Riposte") && world.Said("Gik attacks Ana"), "The miss sets off Gik's riposte");
     }
 
     [Fact]

@@ -300,8 +300,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: `freeMove`, `attackPenalty` (a formula from attacks made this turn, used by the
     roll and the hit chance), conditions changing the turn's actions through the `actions` stat,
     and `"cost": "bonus"` actions that spend the bonus action (the hotbar tip says so).
-  - Left: `agile` and other weapon traits (R6); reaction triggers beyond leaving and entering
-    reach; the pips' names from the system.
+  - Done 10/8: reaction triggers `hit`, `missed` and `allyHit` (after the attack, no prompt);
+    agile and other traits through formulas.
+  - Left: reactions before a hit lands (Shield), prompts for them, a spell being cast; the
+    pips' names from the system.
 - [ ] **R5. Features that do things.** Classes, subclasses, races, heritages and feats grant
   actions, reactions, passive modifiers and triggered effects, not only numbers; feat kinds come
   from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's
