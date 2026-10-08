@@ -526,6 +526,39 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AContentSetOnlyAddsItsTypeForItsSystem()
+    {
+        using var scratch = new Scratch();
+        scratch.Write("content.json", """{"format": "yorehold.content", "version": 1, "name": "More foes", "kind": "creatures", "ruleset": "pf2e@1.0"}""");
+        scratch.Write("creatures/cave-rat.json", """
+            {"id": "cave-rat", "name": "Cave rat", "hp": 6, "armorClass": 14, "speed": 25, "level": -1,
+             "abilities": {"str": 8, "dex": 14, "con": 12, "int": 2, "wis": 12, "cha": 4}, "items": [],
+             "token": {"color": [120, 110, 100], "size": 0.3}}
+            """);
+        ContentFiles Files()
+        {
+            ContentFiles files = TestContent.Shipped();
+            files.Add(scratch.Folder);
+            return files;
+        }
+        ContentPackage set = ContentPackage.Load(new ContentFiles(scratch.Folder));
+        Assert.True(set.IsSet);
+        Assert.Empty(set.CheckSet(scratch.Folder, Files()));
+
+        // nothing but its own type: a ruleset file in it is refused
+        scratch.Write("ruleset.json", "{}");
+        Assert.Contains(set.CheckSet(scratch.Folder, Files()), p => p.StartsWith("ruleset.json: a set of creatures holds only"));
+        File.Delete(Path.Combine(scratch.Folder, "ruleset.json"));
+
+        // it names its system, and its entries load under it
+        scratch.Write("content.json", """{"format": "yorehold.content", "version": 1, "kind": "creatures"}""");
+        Assert.Contains(ContentPackage.Load(new ContentFiles(scratch.Folder)).CheckSet(scratch.Folder, Files()), p => p.Contains("names the system"));
+        scratch.Write("content.json", """{"format": "yorehold.content", "version": 1, "kind": "creatures", "ruleset": "pf2e"}""");
+        scratch.Write("creatures/cave-rat.json", """{"id": "cave-rat", "name": "Cave rat", "speed": "fast"}""");
+        Assert.NotEmpty(ContentPackage.Load(new ContentFiles(scratch.Folder)).CheckSet(scratch.Folder, Files()));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

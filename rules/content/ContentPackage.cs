@@ -3,7 +3,19 @@ namespace Yorehold.Rules;
 /// <summary>content.json: what a content folder holds and where play starts.</summary>
 public class ContentPackage
 {
-    private static readonly string[] Kinds = { "adventure", "ruleset", "compendium", "character_class", "race", "feat" };
+    /// <summary>
+    /// What a package can be: an adventure, a rules system, a skin, art, or a set of one type of
+    /// entry for one system. The last few are the older names, still read.
+    /// </summary>
+    public static readonly string[] Kinds =
+    {
+        "adventure", "system", "skin", "art", "creatures", "items", "spells", "classes", "feats", "races", "backgrounds", "maps",
+        "ruleset", "compendium", "character_class", "race", "feat",
+    };
+    /// <summary>Kinds that only add entries of their type, in the folder of that name, for the system they name.</summary>
+    public static readonly string[] SetKinds = { "creatures", "items", "spells", "classes", "feats", "races", "backgrounds", "maps" };
+
+    public bool IsSet => SetKinds.Contains(Kind);
 
     /// <summary>What the library shows; empty = the file name.</summary>
     public string Name { get; init; } = "";
@@ -128,6 +140,64 @@ public class ContentPackage
         {
             Cutscene.Read(ContentNode.Read(files, path));
         }
+    }
+
+    /// <summary>
+    /// What is wrong with a content set (empty when nothing): it has to name its system, hold
+    /// only entries of its own type (in the folder of that name) and pictures, and every entry has
+    /// to load under that system. A set can't change rules, other entries or anything else.
+    /// files is the game's content with the package laid over it, as it plays.
+    /// </summary>
+    public List<string> CheckSet(string packageFolder, ContentFiles files)
+    {
+        ContentFiles game = files;
+        var problems = new List<string>();
+        if (!IsSet)
+        {
+            return problems;
+        }
+        string system = Ruleset.Split('@')[0];
+        string? systemFolder = game.Folders("rulesets").FirstOrDefault(f => RulesFolder.SystemAt(game, "", f).Id == system);
+        if (system.Length == 0 || systemFolder == null)
+        {
+            problems.Add(system.Length == 0 ? "content.json: a set names the system it is for in \"ruleset\"" : $"content.json: no rules system \"{system}\"");
+            return problems;
+        }
+        string root = Path.GetFullPath(packageFolder);
+        foreach (string file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+        {
+            string relative = Path.GetRelativePath(root, file).Replace(Path.DirectorySeparatorChar, '/');
+            string top = relative.Split('/')[0];
+            bool allowed = relative == "content.json" || top == Kind || top == "pictures"
+                || (relative.IndexOf('/') < 0 && (relative.StartsWith("LICENSE", StringComparison.OrdinalIgnoreCase) || relative.StartsWith("README", StringComparison.OrdinalIgnoreCase)));
+            if (!allowed)
+            {
+                problems.Add($"{relative}: a set of {Kind} holds only {Kind}/ and pictures/");
+            }
+        }
+        if (problems.Count > 0)
+        {
+            return problems;
+        }
+        // every entry loads under its system, beside the system's own
+        try
+        {
+            RulesFolder rules = RulesFolder.Load(files, systemFolder);
+            var compendium = new Compendium();
+            compendium.Load(files, systemFolder, "");
+            compendium.LoadOptions(files, systemFolder);
+            if (Kind is "spells" or "feats" or "races" or "backgrounds")
+            {
+                // options sets sit at the package's root folder of their kind: read them as the system's would be
+                compendium.LoadOptions(files, "");
+            }
+            rules.Check(compendium, "", files);
+        }
+        catch (ContentException error)
+        {
+            problems.Add(error.Message);
+        }
+        return problems;
     }
 
     private static List<string> Paths(ContentNode j, string key)

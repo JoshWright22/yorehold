@@ -497,6 +497,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   checks a package in the game, in Create and on the site, so anything that uploads also loads.
   `.yore` archives are ported. UI: a Library screen with a tab per kind (installed, update,
   remove, on/off for sets), and an adventure's page says what it needs and gets it.
+  - Done 10/8: the manifest's kinds (`system`, `skin`, `art` and the one-type sets beside the
+    older names), and `ContentPackage.CheckSet`: a set names its system, holds only its type and
+    pictures, and its entries load under that system.
+  - Left: the play loader turning sets on per system (and refusing one on another), the Library
+    screen with a tab per kind, the same check in Create and on the site, `.yore` archives.
 - [ ] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
   host tools; the AI makes the enemies' and NPCs' decisions. The fight AI reads the loaded
   system's actions, costs and odds (R3, R4, through R2b's evaluator) instead of d20 maths and the `strike` action, so it
