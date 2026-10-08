@@ -234,11 +234,21 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     (dex, con) now means none instead of refusing the file.
   - Left for R13: the import's own guesses (`BookCast` "dex"/"athletics", `SystemTable`
     "perception") still name yorehold ids; they map to the system once the import drafts systems.
-- [ ] **R2. A system owns its classes, items, creatures, races and feats.** They load from the
+- [x] **R2. A system owns its classes, items, creatures, races and feats.** They load from the
   ruleset folder first, the content root after (so today's packages keep loading). Manifests'
   `ruleset` and `requires` are read; a character records its system and is refused, with the
   reason, by an adventure on another. UI: New adventure in Create asks which system; the library
   shows each adventure's system.
+  - Done 10/8: the game's classes, items and creatures moved into `rulesets/yorehold/`; a
+    chapter loads its ruleset folder's, then the root's, then its own. A package's chapters must
+    all play the system its manifest names. A hero made for another system is turned away with
+    the reason and the ready-made hero takes the seat. The adventure list has a Rules column
+    (`.dev\p11-adventures.png`); Create offers one New adventure per installed system.
+  - Default: AI profiles (`ai/`) stay at the content root: they are how a creature behaves,
+    not part of a system, until R12 makes the fight AI read the system.
+  - Left for R11: `requires` is read but nothing is installed from it yet, and the version
+    after the `@` in `ruleset` isn't checked. The character screen doesn't yet grey out heroes
+    of another system before Start; the refusal shows in the log.
 - [ ] **R2b. A rules language, so every rule is data.** Josh, 10/8: all of it data the AI can
   evaluate when making adventures. Instead of a switch per known system, R3-R8 are written in a
   small language the game interprets: dice expressions (pools, keep/drop, exploding, success

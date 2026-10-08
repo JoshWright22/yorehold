@@ -478,7 +478,12 @@ public partial class CreateScreen : Control
             }
             actions.Add(new DataAction("open", "Open"));
         }
-        actions.Add(new DataAction("new", "New adventure"));
+        // one New per rules system the game has, named when there is a choice
+        List<(string Folder, string Name)> systems = _package.Systems();
+        foreach ((string folder, string name) in systems)
+        {
+            actions.Add(new DataAction("new:" + folder, systems.Count == 1 ? "New adventure" : $"New {name} adventure"));
+        }
         actions.Add(new DataAction("import", "Import a book"));
         actions.Add(new DataAction("back", "Back to title"));
         _start.SetEntry(page.ToString(), actions, _startNote);
@@ -493,7 +498,8 @@ public partial class CreateScreen : Control
                 Open(_start.Picked);
                 break;
             case "new":
-                _package.New(Places.CreateFolder());
+            case not null when id.StartsWith("new:", StringComparison.Ordinal):
+                _package.New(Places.CreateFolder(), id.Length > 4 ? id[4..] : RulesFolder.Default);
                 Opened();
                 break;
             case "back":

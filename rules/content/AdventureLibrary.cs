@@ -1,7 +1,11 @@
 namespace Yorehold.Rules;
 
 /// <summary>One adventure to play: where its package is ("" for the game's own), what it is, and whose.</summary>
-public sealed record AdventureListing(string Package, Adventure? Adventure, string Name, string Source, string Problem);
+public sealed record AdventureListing(string Package, Adventure? Adventure, string Name, string Source, string Problem)
+{
+    /// <summary>The name of the rules system its first chapter plays; empty when unknown.</summary>
+    public string System { get; init; } = "";
+}
 
 /// <summary>
 /// Every adventure on this machine: the game's own and each package in the create folder (made in
@@ -50,7 +54,10 @@ public static class AdventureLibrary
         try
         {
             Adventure adventure = Adventure.Load(files);
-            return new AdventureListing(package, adventure, adventure.Title.Length > 0 ? adventure.Title : fallback, source, "");
+            return new AdventureListing(package, adventure, adventure.Title.Length > 0 ? adventure.Title : fallback, source, "")
+            {
+                System = RulesFolder.SystemOf(files, adventure.ChapterFolders[0]).Name,
+            };
         }
         catch (ContentException error)
         {

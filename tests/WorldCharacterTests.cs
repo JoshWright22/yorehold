@@ -82,6 +82,14 @@ public class WorldCharacterTests
         w.SetParty(new PartyPick?[] { new PartyPick(ada, Array.Empty<Item>(), "ada.json", 0) });
         w.NewAdventure(5);
         Assert.True(w.Creatures[0].Sheet.Name == "Ana" && w.Creatures[0].Library.Length == 0, "A character the chapter can't build leaves the seat to its own hero");
+
+        ada.Levels[0].ClassId = "rogue";
+        ada.Ruleset = "pf2e";
+        w.SetParty(new PartyPick?[] { new PartyPick(ada, Array.Empty<Item>(), "ada.json", 0) });
+        w.NewAdventure(5);
+        Assert.True(w.Creatures[0].Sheet.Name == "Ana" && world.Said("Ada can't play this adventure (made for the pf2e rules; this adventure plays Yorehold)"),
+            "A character made for another rules system is refused, with the reason");
+        Assert.Null(w.PlaysAnotherSystem(new CharacterChoices { Name = "Old" }));
     }
 
     [Fact]

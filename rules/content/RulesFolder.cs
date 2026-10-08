@@ -119,6 +119,43 @@ public class RulesFolder
         }
     }
 
+    /// <summary>
+    /// The id and name of the rules system a chapter plays, read without loading the rest, for
+    /// lists. Empty strings when the chapter or its ruleset can't be read.
+    /// </summary>
+    public static (string Id, string Name) SystemOf(ContentFiles files, string chapterFolder)
+    {
+        try
+        {
+            string chapterFile = chapterFolder.Length == 0 ? "chapter.json" : chapterFolder + "/chapter.json";
+            return SystemAt(files, chapterFolder, ContentNode.Read(files, chapterFile).Text("ruleset", Default));
+        }
+        catch (ContentException)
+        {
+            return ("", "");
+        }
+    }
+
+    /// <summary>The same for a ruleset path (a folder or a file) as a chapter in chapterFolder would name it.</summary>
+    public static (string Id, string Name) SystemAt(ContentFiles files, string chapterFolder, string ruleset)
+    {
+        try
+        {
+            string file = Resolve(files, chapterFolder, ruleset + "/ruleset.json");
+            if (!files.Exists(file))
+            {
+                file = Resolve(files, chapterFolder, ruleset);
+            }
+            ContentNode rules = ContentNode.Read(files, file);
+            string id = rules.Text("id", "", 64);
+            return (id, rules.Text("name", id, 80));
+        }
+        catch (ContentException)
+        {
+            return ("", "");
+        }
+    }
+
     /// <summary>A path written in a chapter: in its folder if the file is there, else from the root.</summary>
     public static string Resolve(ContentFiles files, string folder, string path)
     {

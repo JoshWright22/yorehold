@@ -284,6 +284,9 @@ public class CreateTests
         string file = Path.Combine(folder, package.Chapter, "map.json");
         Assert.True(File.Exists(Path.Combine(folder, "content.json")) && File.Exists(file), "It is a folder with a manifest, a chapter and a map");
         Assert.True(package.Problems().All(p => !p.Error), string.Join("; ", package.Problems().Select(p => p.Message)));
+        Assert.Contains((RulesFolder.Default, "Yorehold"), package.Systems());
+        Assert.True(ContentPackage.Load(new ContentFiles(folder)).Ruleset == "yorehold", "A new adventure says which rules system it plays");
+        Assert.False(new CreatePackage(TestContent.AssetsFolder()).New(Path.Combine(scratch.Folder, "other"), "rulesets/none"), "There is no new adventure for rules the game doesn't have");
         MapEditor? editor = package.MapEditor();
         Assert.True(editor != null && editor.Width == 24 && editor.Markers.ContainsKey("partyStart"), "Map mode opens the chapter's map");
         Assert.NotEmpty(editor!.Kits);

@@ -33,6 +33,19 @@ public sealed partial class World
         return entry;
     }
 
+    /// <summary>
+    /// Why a character can't join this adventure's rules system, or null when it can. A character
+    /// from before characters named their system belongs to any.
+    /// </summary>
+    public string? PlaysAnotherSystem(CharacterChoices choices)
+    {
+        if (choices.Ruleset.Length == 0 || choices.Ruleset == Rules.Id)
+        {
+            return null;
+        }
+        return $"made for the {choices.Ruleset} rules; this adventure plays {(Rules.Name.Length > 0 ? Rules.Name : Rules.Id)}";
+    }
+
     // The ready-made hero is rolled even when someone else takes the seat, so the dice that follow
     // are the same either way.
     private WorldCreature SeatHero(PartyMember member, Rng dice)
@@ -48,6 +61,11 @@ public sealed partial class World
         }
         int seat = Creatures.Count;
         PartyPick? pick = seat < _partyPicks.Count ? _partyPicks[seat] : null;
+        if (pick != null && PlaysAnotherSystem(pick.Choices) is string why)
+        {
+            Say($"{pick.Choices.Name} can't play this adventure ({why}); {member.Name} takes the seat.");
+            pick = null;
+        }
         if (pick != null)
         {
             CharacterSheet? brought = CharacterBuild.Build(Rules, Chapter.Compendium, pick.Choices, out string error);

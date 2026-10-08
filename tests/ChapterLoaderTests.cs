@@ -448,5 +448,11 @@ public class ChapterLoaderTests
         ContentPackage package = ContentPackage.Load(files);
         Assert.Equal(("Yorehold", "adventure", "yorehold-builtin", "ui/theme.json"), (package.Name, package.Kind, package.Id, package.Theme));
         package.Validate(files);
+
+        var other = new ContentPackage { Ruleset = "pf2e@1.0", Chapters = package.Chapters, DefaultChapter = package.DefaultChapter };
+        ContentException error = TestContent.Refused(() => other.Validate(files));
+        Assert.True(error.Field == "ruleset" && error.Message.Contains("plays the yorehold rules, but content.json says the package plays pf2e"), error.Message);
+        Assert.Equal(("yorehold", "Yorehold"), RulesFolder.SystemOf(files, package.DefaultChapter));
+        Assert.Equal("Yorehold", AdventureLibrary.List(TestContent.AssetsFolder(), "")[0].System);
     }
 }

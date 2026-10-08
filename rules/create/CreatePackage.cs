@@ -147,8 +147,18 @@ public sealed partial class CreatePackage
     /// The chapter folder is named after the package, so it never stands in for one of the
     /// game's own chapters when the package is played over them.
     /// </summary>
-    public bool New(string root)
+    public bool New(string root, string system = RulesFolder.Default)
     {
+        var game = new ContentFiles(_gameAssets);
+        (string systemId, _) = RulesFolder.SystemAt(game, "", system);
+        if (systemId.Length == 0)
+        {
+            Status = $"There are no rules at {system}.";
+            return false;
+        }
+        // the hero is one of the system's own classes, the fighter where it has one
+        List<string> classes = game.List(system + "/classes").Select(ContentFiles.Stem).ToList();
+        string heroClass = classes.Contains("fighter") || classes.Count == 0 ? "fighter" : classes[0];
         string id = "new-adventure";
         for (int n = 2; Directory.Exists(System.IO.Path.Combine(root, id)); n++)
         {
@@ -164,6 +174,7 @@ public sealed partial class CreatePackage
             ["kind"] = "adventure",
             ["id"] = id,
             ["revision"] = 0,
+            ["ruleset"] = systemId,
             ["requires"] = new JsonArray(),
             ["defaultChapter"] = chapter,
             ["chapters"] = new JsonArray(chapter),
@@ -174,9 +185,13 @@ public sealed partial class CreatePackage
             ["title"] = "Chapter one",
             ["map"] = "map.json",
             ["level"] = 1,
-            ["party"] = new JsonArray(new JsonObject { ["name"] = "Hero", ["class"] = "fighter", ["color"] = new JsonArray(180, 82, 82), ["at"] = new JsonArray(2, 2) }),
+            ["party"] = new JsonArray(new JsonObject { ["name"] = "Hero", ["class"] = heroClass, ["color"] = new JsonArray(180, 82, 82), ["at"] = new JsonArray(2, 2) }),
             ["encounters"] = new JsonArray(),
         };
+        if (system != RulesFolder.Default)
+        {
+            chapterFile["ruleset"] = system;
+        }
         // BlankMap writes an object
         JsonObject map = JsonNode.Parse(Yorehold.Rules.MapEditor.BlankMap("Chapter one", 24, 16))!.AsObject();
         map["markers"]!["partyStart"] = new JsonArray(2, 2);
@@ -193,6 +208,22 @@ public sealed partial class CreatePackage
         }
         Open(folder);
         return IsOpen;
+    }
+
+    /// <summary>The rules systems the game has, as (ruleset folder, name): what a new adventure can play.</summary>
+    public List<(string Folder, string Name)> Systems()
+    {
+        var game = new ContentFiles(_gameAssets);
+        var systems = new List<(string, string)>();
+        foreach (string folder in game.Folders("rulesets"))
+        {
+            (string id, string name) = RulesFolder.SystemAt(game, "", folder);
+            if (id.Length > 0)
+            {
+                systems.Add((folder, name));
+            }
+        }
+        return systems;
     }
 
     public void SelectChapter(string folder)

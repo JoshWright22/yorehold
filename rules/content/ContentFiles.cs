@@ -98,6 +98,22 @@ public class ContentFiles
         return names.Select(name => prefix + name).ToList();
     }
 
+    /// <summary>The folders directly in a folder, from every root, as content paths in name order.</summary>
+    public List<string> Folders(string folder)
+    {
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (string root in _roots)
+        {
+            string full = folder.Length == 0 ? root : Path.Combine(root, folder.Replace('/', Path.DirectorySeparatorChar));
+            if (Directory.Exists(full))
+            {
+                names.UnionWith(Directory.GetDirectories(full).Select(Path.GetFileName).OfType<string>());
+            }
+        }
+        string prefix = folder.Length == 0 ? "" : folder + "/";
+        return names.Select(name => prefix + name).ToList();
+    }
+
     /// <summary>The pictures directly in a folder (png, jpg, webp), from every root, as content paths in name order.</summary>
     public List<string> Pictures(string folder)
     {

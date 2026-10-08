@@ -12,7 +12,7 @@ namespace Yorehold;
 /// </summary>
 public sealed class AdventuresPanel
 {
-    private static readonly DataColumn[] Columns = { new("Adventure", 230), new("From", 90), new("Chapters", 70, true), new("Levels", 60) };
+    private static readonly DataColumn[] Columns = { new("Adventure", 230), new("Rules", 90), new("From", 90), new("Chapters", 70, true), new("Levels", 60) };
 
     /// <summary>Start was pressed on an adventure: its package folder, "" for the game's own.</summary>
     public event Action<string>? StartPressed;
@@ -72,10 +72,10 @@ public sealed class AdventuresPanel
         View.SetRows(_list.Select((l, index) => new DataRow
         {
             Key = Key(l),
-            Cells = new[] { l.Name, l.Source, l.Adventure?.ChapterFolders.Count.ToString() ?? "", l.Adventure == null ? "" : $"{l.Adventure.MinLevel}-{l.Adventure.MaxLevel}" },
-            Sort = new IComparable?[] { l.Name, l.Source, l.Adventure?.ChapterFolders.Count ?? -1, l.Adventure?.MinLevel ?? 0 },
+            Cells = new[] { l.Name, l.System, l.Source, l.Adventure?.ChapterFolders.Count.ToString() ?? "", l.Adventure == null ? "" : $"{l.Adventure.MinLevel}-{l.Adventure.MaxLevel}" },
+            Sort = new IComparable?[] { l.Name, l.System, l.Source, l.Adventure?.ChapterFolders.Count ?? -1, l.Adventure?.MinLevel ?? 0 },
             Tags = new HashSet<string> { l.Source },
-            Search = l.Adventure?.Description ?? "",
+            Search = (l.System + " " + (l.Adventure?.Description ?? "")).Trim(),
             Dim = l.Adventure == null,
         }).ToList());
 
@@ -92,7 +92,9 @@ public sealed class AdventuresPanel
             View.SetFoot("");
             return;
         }
-        var page = new BookPage().Title(picked.Name).Sub(picked.Source.ToLowerInvariant()).Rule();
+        // the stats line is full, so the rules system goes with where it is from
+        string from = picked.Source.ToLowerInvariant() + (picked.System.Length > 0 ? $", {picked.System} rules" : "");
+        var page = new BookPage().Title(picked.Name).Sub(from).Rule();
         if (picked.Adventure is Adventure adventure)
         {
             page.Stats(("Levels", $"{adventure.MinLevel} to {adventure.MaxLevel}"), ("Party", adventure.RecommendedPartySize.ToString()),

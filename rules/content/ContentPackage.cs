@@ -93,6 +93,9 @@ public class ContentPackage
             new Compendium().Load(files, RulesFolder.Default, "");
         }
         var ids = new HashSet<string>();
+        // "yorehold@1.0": the system is the part before the @. One adventure plays one system,
+        // so a character made for it can play every chapter.
+        string system = Ruleset.Split('@')[0];
         foreach (string folder in Chapters)
         {
             Chapter chapter = Chapter.Load(files, folder);
@@ -100,6 +103,13 @@ public class ContentPackage
             {
                 throw new ContentException(folder + "/chapter.json", "id", $"duplicate chapter id {chapter.Id}");
             }
+            string plays = chapter.Rules.Rules.Id;
+            if (system.Length > 0 && plays != system)
+            {
+                throw new ContentException(folder + "/chapter.json", "ruleset",
+                    $"plays the {plays} rules, but content.json says the package plays {system}");
+            }
+            system = plays;
         }
         if ((own ?? files).Exists("adventure.json"))
         {
