@@ -421,6 +421,40 @@ Rules for all of it:
   - Left: Create > Import says before reading that no story model is set, with Read anyway; a
 	quest from the opening passage; more books with keys in the comparison folder.
 
+### Bestiaries (Josh, 10/8: a monster book, many monsters, tokens that frame them well)
+
+Tried on a scanned 2024-style monster book (390 pages, 28-page excerpt). What it showed: the
+pages are full-page scans with a poor text layer, so the reader skips the only picture on each
+page and reads scrambled words; there is no stat-block reader (without a model, foes come only
+from fight boxes); and round tokens squashed the whole picture onto the disc. The book stays in
+Josh's Downloads; nothing from it goes into a repo.
+
+- [x] **S10. Tokens framed around the creature.** `token.focus` and `token.zoom` on a creature;
+  tokens and cards cut a square or the card's shape around it instead of squashing (f95859c).
+- [ ] **S11. Scanned pages read again.** A page that is one full-page picture is read with the
+  OCR built into Windows (a small helper program beside the game, since the game also builds for
+  Android), as lines with their places, then laid out like any other page. Windows OCR on the
+  excerpt reads names, AC, HP, speeds, the ability rows and actions nearly cleanly; the PDF's own
+  text layer does not. Without the helper, scanned pages say they need it.
+- [ ] **S12. Paintings cut out of scans, with a focus.** Prototype in `..\.dev\mm\art.py`: a block
+  is art when more than 55% of its pixels are not paper (text is about a fifth ink); the focus is
+  the largest part that stands out from the painting's own edges, a little above its middle.
+  On the excerpt about 17 of 24 tokens land well; misses are crowd scenes and a stat block laid
+  over the painting. Port to `rules/import`, set `token.focus`/`zoom` at build, and show the
+  framing in Create so a writer can drag it (the canvas's Portrait crop screen).
+- [ ] **S13. Stat blocks.** Both the 2014 and 2024 layouts, tolerant of OCR slips (l for 1, a
+  for 4): name, size/type/alignment, AC, initiative, HP and its dice, speeds, the six abilities
+  with saves, skills, resistances and immunities, senses, languages, CR, traits, actions, bonus
+  actions, reactions, legendary actions. What the creature schema holds is filled in; the rest
+  is kept as text on the creature and counted in the import report, so the gap is visible.
+  - Needs a decision later: the creature format has no CR, saves, resistances, reactions or
+	legendary actions yet; they are game rules, not import work.
+- [ ] **S14. Which painting is whose.** A caption naming the creature wins; else the painting goes
+  to the stat block or heading on its page it sits nearest; one painting over a family's page
+  (Black Dragon Wyrmling, Young, Adult) goes to the one it names and is offered to the rest.
+- [ ] **S15. The whole book through `-Bench`.** Creatures found against the book's CR lines,
+  fields read, paintings found, and a sheet of every token to check by eye (`..\.dev\mm\`).
+
 ## U. Game feel (playtest, 10/7)
 
 Josh's first ten playtest answers (`feedback/playtest-results.jsonl`): the screens read as lists
