@@ -125,6 +125,23 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ANightsRestHealsWounds()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        ana.Death.Wounded = 2;
+        Assert.True(w.Rest("refocus") && ana.Death.Wounded == 2, "A short rest leaves the wounds: " + w.Refusal);
+        // the night's rest is taken at camp; the sheet's part of it
+        Assert.True(ana.HealWounds(w.Rules, "rest") && ana.Death.Wounded == 0);
+        Assert.False(ana.HealWounds(w.Rules, "rest"));
+
+        ContentException error = TestContent.Refused(() => RulesTesting.Rules(
+            """{"id": "x", "name": "X", "abilities": [{"id": "str", "name": "S"}], "death": {"enabled": true, "track": {"woundedClearedBy": ["nap"]}}}"""));
+        Assert.Contains("unknown rest \"nap\"", error.Message);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

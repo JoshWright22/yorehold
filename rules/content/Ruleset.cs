@@ -69,6 +69,8 @@ public sealed class DyingTrack
     public Dictionary<string, int> Change { get; init; } = new(StringComparer.Ordinal);
     /// <summary>Added to wounded each time the creature stops dying.</summary>
     public int WoundedStep { get; init; } = 1;
+    /// <summary>The rests that take wounded back to 0 (PF2e: a night's rest).</summary>
+    public List<string> WoundedClearedBy { get; init; } = new();
 }
 
 public class ScoreMethods
@@ -500,6 +502,10 @@ public class Ruleset
             rules.Conditions.Add(condition);
         }
         rules.CheckConditions(node.File);
+        foreach (string rest in rules.Death.Track?.WoundedClearedBy.Where(id => rules.Rest(id) == null) ?? Enumerable.Empty<string>())
+        {
+            throw new ContentException(node.File, "death.track.woundedClearedBy", $"unknown rest \"{rest}\"");
+        }
         return rules;
     }
 
@@ -734,7 +740,7 @@ public class Ruleset
     private static DyingTrack TrackFrom(ContentNode node)
     {
         node.RequireObject("is an object: start, damage, roll, dc, change, dead");
-        node.Only("start", "damage", "roll", "dc", "change", "dead", "woundedStep");
+        node.Only("start", "damage", "roll", "dc", "change", "dead", "woundedStep", "woundedClearedBy");
         var track = new DyingTrack();
         var change = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (KeyValuePair<string, ContentNode> member in node.Get("change")?.Members() ?? Enumerable.Empty<KeyValuePair<string, ContentNode>>())
@@ -750,6 +756,7 @@ public class Ruleset
             RollKind = node.Text("roll", CheckRules.Check, 64),
             Change = change,
             WoundedStep = node.Int("woundedStep", 1, 0, 100),
+            WoundedClearedBy = node.Ids("woundedClearedBy"),
         };
     }
 

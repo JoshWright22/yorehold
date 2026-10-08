@@ -354,6 +354,7 @@
       "roll": "check",
       "dc": "10 + dying",
       "dead": "dying >= 4",
+      "woundedClearedBy": ["rest"],
       "change": {
         "criticalFailure": 2,
         "failure": 1,

@@ -344,8 +344,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: `death.track` (start, damage, the recovery roll and DC, each outcome's change,
     when it kills, wounded) beside the death saves; `hpFirstLevel` and `hpPerLevel` formulas.
     The log names the recovery check and the dying value; the dying condition carries it.
-  - Left: wounded going away on a rest; the downed card drawing the track (it shows the
-    condition's value for now).
+  - Done 10/8: wounded goes back to 0 on the rests `woundedClearedBy` lists (PF2e: the night's).
+  - Left: the downed card drawing the track (it shows the condition's value for now). Camp
+    loads its own chapter under the game's own ruleset, so a PF2e party resting at camp gets
+    the yorehold set's rests; camp should play the adventure's system.
 - [ ] **R8. Character creation from the system.** Its steps (5e: species, background, class,
   scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
   choices. UI: the creation screen lists the system's steps.

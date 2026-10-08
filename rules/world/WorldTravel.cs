@@ -270,6 +270,10 @@ public sealed partial class World
                 }
                 Creatures[i].MayPrepare = true;
             }
+            if (c.HealWounds(Rules, rest.Id))
+            {
+                Say($"{c.Name} is no longer wounded.");
+            }
             if (c.Hp >= c.MaxHp)
             {
                 continue;

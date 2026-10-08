@@ -576,6 +576,17 @@ public sealed partial class CharacterSheet
         Condition(rule.DeadCondition, Death.Dead);
     }
 
+    /// <summary>A rest the system says heals wounds takes wounded back to 0; true if there were any.</summary>
+    public bool HealWounds(Ruleset rules, string rest)
+    {
+        if (Death.Dead || Death.Wounded == 0 || rules.Death.Track?.WoundedClearedBy.Contains(rest) != true)
+        {
+            return false;
+        }
+        Death.Wounded = 0;
+        return true;
+    }
+
     /// <summary>A plain d20 for someone dying, when the ruleset has death saves. Null when there is nothing to roll.</summary>
     public RollResult? RollDeathSave(Ruleset rules, Rng random)
     {
