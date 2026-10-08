@@ -32,6 +32,17 @@ Read from the game and shared pages (counts of use in brackets). They replace th
    JetBrains Mono as font files shipped under `assets/ui/fonts/`, both OFL), `shapes.json`
    (2 px corners); `Palette.cs`, `hud-theme.tres` and the site's `theme.css` the same. One
    screenshot of the title and the play screen against the pictures.
+   - Done 10/9: the colours, in colors.json, Palette.cs, the theme and every scene (old role to
+     new: greys to the design's, gold to amber `#e8b33a`, red `#ff5c5c`, blue `#6ca6ff`; the
+     darkest red and blue shades, which the design doesn't draw, are darkened from its mains).
+     Corners were already 2 px.
+   - Blocked 10/9: the fonts. Font files loaded at run time (`FontFile.LoadDynamicFont` or
+     from bytes) render, but every one makes the text server log "Parameter fd is null" on
+     ascent, descent and spacing, which fails the check; three ways tried, reverted. Next try:
+     ship the files as Godot-imported resources (`res://` .ttf with .import, loaded with
+     `GD.Load<FontFile>`) and only load a skin's own files at run time. Until then the faces
+     are the system fonts already listed.
+   - Website `theme.css`: with step 5, in yorehold-web.
 2. Game screens, one per step, in the order players meet them: main menu, options, lobby,
    character creation, portrait crop, play screen (with the combat log tab in the chat column),
    party inventory, chest or shop, spellbook, conversation, pause. Each step: look at its

@@ -14,34 +14,34 @@ namespace Yorehold;
 public static class Palette
 {
     // greys, black to white
-    public static Color Night { get; private set; } = Color.Color8(0x17, 0x17, 0x17);
-    public static Color Ink { get; private set; } = Color.Color8(0x1e, 0x1e, 0x1e);
-    public static Color Dusk { get; private set; } = Color.Color8(0x26, 0x26, 0x26);
-    public static Color Iron { get; private set; } = Color.Color8(0x3a, 0x3a, 0x3a);
-    public static Color Slate { get; private set; } = Color.Color8(0x5c, 0x5c, 0x5c);
-    public static Color Smoke { get; private set; } = Color.Color8(0x7d, 0x7d, 0x7d);
-    public static Color Ash { get; private set; } = Color.Color8(0xb4, 0xb4, 0xb4);
-    public static Color Sand { get; private set; } = Color.Color8(0xe9, 0xe9, 0xe9);
-    public static Color Bone { get; private set; } = Color.Color8(0xf7, 0xf7, 0xf7);
+    public static Color Night { get; private set; } = Color.Color8(0x0b, 0x0b, 0x0b);
+    public static Color Ink { get; private set; } = Color.Color8(0x15, 0x15, 0x15);
+    public static Color Dusk { get; private set; } = Color.Color8(0x1f, 0x1f, 0x1f);
+    public static Color Iron { get; private set; } = Color.Color8(0x33, 0x33, 0x33);
+    public static Color Slate { get; private set; } = Color.Color8(0x4d, 0x4d, 0x4d);
+    public static Color Smoke { get; private set; } = Color.Color8(0x70, 0x70, 0x70);
+    public static Color Ash { get; private set; } = Color.Color8(0xa0, 0xa0, 0xa0);
+    public static Color Sand { get; private set; } = Color.Color8(0xc8, 0xc8, 0xc8);
+    public static Color Bone { get; private set; } = Color.Color8(0xed, 0xed, 0xed);
     // gold: the main action, what is picked
-    public static Color Straw { get; private set; } = Color.Color8(0xed, 0xe1, 0x9e);
-    public static Color Amber { get; private set; } = Color.Color8(0xc9, 0xb8, 0x66);
-    public static Color Leather { get; private set; } = Color.Color8(0x8a, 0x7f, 0x45);
+    public static Color Straw { get; private set; } = Color.Color8(0xe8, 0xb3, 0x3a);
+    public static Color Amber { get; private set; } = Color.Color8(0xc9, 0x9a, 0x2e);
+    public static Color Leather { get; private set; } = Color.Color8(0x7a, 0x5d, 0x1c);
     public static Color Sage => Straw;
     // red: danger, enemies, damage
-    public static Color Red { get; private set; } = Color.Color8(0xe0, 0x67, 0x5e);
-    public static Color Rose { get; private set; } = Color.Color8(0xe0, 0x8a, 0x82);
-    public static Color Rust { get; private set; } = Color.Color8(0x8c, 0x3a, 0x34);
-    public static Color Mauve { get; private set; } = Color.Color8(0x5a, 0x24, 0x20);
+    public static Color Red { get; private set; } = Color.Color8(0xff, 0x5c, 0x5c);
+    public static Color Rose { get; private set; } = Color.Color8(0xff, 0x7a, 0x7a);
+    public static Color Rust { get; private set; } = Color.Color8(0xd9, 0x44, 0x44);
+    public static Color Mauve { get; private set; } = Color.Color8(0x4a, 0x1c, 0x1c);
     public static Color Orchid => Red;
     public static Color Plum => Rust;
     public static Color Shade => Mauve;
     // blue: information, allies, healing
-    public static Color Sky { get; private set; } = Color.Color8(0x68, 0xc2, 0xd3);
-    public static Color Mint { get; private set; } = Color.Color8(0xa9, 0xdd, 0xe6);
-    public static Color Blue { get; private set; } = Color.Color8(0x3f, 0x8a, 0x99);
-    public static Color Indigo { get; private set; } = Color.Color8(0x2a, 0x55, 0x60);
-    public static Color Moss { get; private set; } = Color.Color8(0x1b, 0x34, 0x39);
+    public static Color Sky { get; private set; } = Color.Color8(0x6c, 0xa6, 0xff);
+    public static Color Mint { get; private set; } = Color.Color8(0x8f, 0xbc, 0xff);
+    public static Color Blue { get; private set; } = Color.Color8(0x4a, 0x8c, 0xf0);
+    public static Color Indigo { get; private set; } = Color.Color8(0x24, 0x47, 0x7a);
+    public static Color Moss { get; private set; } = Color.Color8(0x16, 0x29, 0x4a);
     public static Color Leaf => Sky;
     public static Color Lime => Mint;
     public static Color Olive => Blue;

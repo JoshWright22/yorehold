@@ -6,8 +6,8 @@ public class UiColorsTests
     public void TheScreensColoursAreData()
     {
         UiColors shipped = UiColors.Read(ContentNode.Read(TestContent.Shipped(), UiColors.File));
-        Assert.Equal(((byte)0x1e, (byte)0x1e, (byte)0x1e), shipped.Roles["greys.bg"]);
-        Assert.Equal(((byte)0xe0, (byte)0x67, (byte)0x5e), shipped.Roles["red.main"]);
+        Assert.Equal(((byte)0x15, (byte)0x15, (byte)0x15), shipped.Roles["greys.bg"]);
+        Assert.Equal(((byte)0xff, (byte)0x5c, (byte)0x5c), shipped.Roles["red.main"]);
         Assert.False(shipped.Roles.ContainsKey("gold.use"), "a highlight's \"use\" is words, not a colour");
 
         // a skin's file names only what it changes

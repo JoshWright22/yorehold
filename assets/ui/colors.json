@@ -1,21 +1,21 @@
 {
   "format": "yorehold.colors",
   "version": 1,
-  "about": "The one colour scheme of the game's screens and the website: black and white with greys between, and three highlights. yorehold-web/app/theme.css and src/hud/Palette.cs hold the same values. Pictures and the map's art keep their own colours.",
+  "about": "The one colour scheme of the game's screens and the website: black and white with greys between, and three highlights (amber, red, blue), as the 10/9 design draws them. yorehold-web/app/theme.css and src/hud/Palette.cs hold the same values. Pictures and the map's art keep their own colours.",
   "greys": {
-    "bg-deep": "#171717",
-    "bg": "#1e1e1e",
-    "panel": "#262626",
-    "line": "#3a3a3a",
-    "soft": "#5c5c5c",
-    "faint": "#7d7d7d",
-    "muted": "#b4b4b4",
-    "paper-2": "#e9e9e9",
-    "paper": "#f7f7f7"
+    "bg-deep": "#0b0b0b",
+    "bg": "#151515",
+    "panel": "#1f1f1f",
+    "line": "#333333",
+    "soft": "#4d4d4d",
+    "faint": "#707070",
+    "muted": "#a0a0a0",
+    "paper-2": "#c8c8c8",
+    "paper": "#ededed"
   },
   "highlights": {
-    "gold": { "main": "#ede19e", "mid": "#c9b866", "dark": "#8a7f45", "use": "the main action, what is picked, scores and ranks" },
-    "red": { "main": "#e0675e", "light": "#e08a82", "dark": "#8c3a34", "deep": "#5a2420", "use": "danger, enemies, damage and hit points lost" },
-    "blue": { "main": "#68c2d3", "light": "#a9dde6", "mid": "#3f8a99", "dark": "#2a5560", "deep": "#1b3439", "use": "information, links, allies, healing and good news" }
+    "gold": { "main": "#e8b33a", "mid": "#c99a2e", "dark": "#7a5d1c", "use": "the main action, what is picked, scores and ranks" },
+    "red": { "main": "#ff5c5c", "light": "#ff7a7a", "dark": "#d94444", "deep": "#4a1c1c", "use": "danger, enemies, damage and hit points lost" },
+    "blue": { "main": "#6ca6ff", "light": "#8fbcff", "mid": "#4a8cf0", "dark": "#24477a", "deep": "#16294a", "use": "information, links, allies, healing and good news" }
   }
 }
