@@ -295,6 +295,31 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     must still pass, so the language is proved before R3-R8 build on it. An unusual mechanic
     (a dice pool, a card draw, a stress track) is then a new system file, not a game update;
     only a new kind of screen (R6's sheet layout, R4's hotbar) needs code.
+- [ ] **R2c. Only the grid is assumed.** Josh, 10/8: the one real assumption is looking down on a
+  square grid, playing a multiplayer BG3-like version of the imported system, with the AI driving
+  the enemies instead of a game master. Everything else is abstracted the way Foundry VTT's
+  systems are: HP, AC, initiative, abilities and skills, levels and XP, and classes are what
+  some systems declare, not what the game assumes. Each slice keeps the yorehold, 5e, PF2e and
+  Fate sets playing with their tests passing; Fate is the proof (no hit die, no AC, no class,
+  stress and consequences instead of HP).
+  - Tracks: a system declares its tracks (5e's HP; Fate's stress boxes and consequence slots;
+    PF2e's dying and wounded; mana), each with a max formula, how damage is spread over them,
+    and "down" and "dead" as formulas over them. HP becomes one system's track.
+  - Defences: named defences, each a formula (AC, a Fortitude DC) or a roll (Fate's Defend);
+    each roll kind and action says which it is rolled against. AC stops being special.
+  - The character's data: a system declares its numbers in groups (abilities, skills,
+    approaches), text fields (Fate's aspects and high concept) and lists. The sheet is drawn from
+    those groups, not a fixed menu of sections.
+  - Options in place of classes: a system declares its option kinds (class, ancestry,
+    heritage, background, archetype; Fate: none) and what each grants as the character advances.
+    Creation's parts come from these.
+  - Advancement: levels and XP are one mode beside milestones, Fate's milestones (swap a skill,
+    +1 to an approach) and none.
+  - Turn order: an initiative roll by formula, side by side, or Fate's order where whoever acted
+    picks who goes next; the AI picks for its side.
+  - Effect steps and triggers name the system's tracks, defences and numbers, not built-in
+    ones, so a system's own mechanic needs no new step kind. The kinds that stay fixed are the
+    language's documented core.
 - [ ] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
   nat 20; PF2e: four degrees, ±10, nat 20/1 move a step), what a critical does (double dice or
   double total), and advantage from the target or the place as well as the attacker. Every
