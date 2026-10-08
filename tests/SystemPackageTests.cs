@@ -158,6 +158,13 @@ public class SystemPackageTests
         using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
         World w = world.World;
         CharacterSheet ana = w.Creatures[0].Sheet;
+        // down, the card reads the system's dying track: the value it dies at comes from its formula
+        ana.Death.Wounded = 1;
+        ana.TakeDamage(ana.Hp + 1, w.Rules);
+        Assert.Equal("dying 2/4", ana.DownedText(w.Rules).Short);
+        Assert.Contains("wounded 1", ana.DownedText(w.Rules).Line);
+        ana.Heal(ana.MaxHp);
+        Assert.Equal("", ana.DownedText(w.Rules).Short);
         ana.Death.Wounded = 2;
         Assert.True(w.Rest("refocus") && ana.Death.Wounded == 2, "A short rest leaves the wounds: " + w.Refusal);
         // the night's rest is taken at camp, which plays the adventure's system

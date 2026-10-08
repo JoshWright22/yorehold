@@ -41,7 +41,9 @@ public partial class PartyCard : TipButton
         _name.Text = sheet.Name;
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
-        _hpText.Text = $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
+        // down, the card shows the system's own track (death saves, a dying value) in place of HP
+        (string downed, string downedLine) = sheet.DownedText(world.Rules);
+        _hpText.Text = downed.Length > 0 ? downed : $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
         _turn.Visible = marked;
         _ready.Visible = ready && !marked;
 
@@ -64,6 +66,6 @@ public partial class PartyCard : TipButton
         TipTitle = sheet.Name;
         TipMeta = HudText.Health(world, sheet);
         TipBody = HudText.ConditionLines(world, sheet);
-        TipWarning = "";
+        TipWarning = downedLine;
     }
 }

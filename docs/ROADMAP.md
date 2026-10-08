@@ -409,14 +409,18 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: wounded goes back to 0 on the rests `woundedClearedBy` lists (PF2e: the night's).
   - Done 10/8: camp plays the adventure's system (a chapter naming no ruleset can borrow one),
     and 5e and PF2e have supplies for their night's rest.
-  - Left: the downed card drawing the track (it shows the condition's value for now).
+  - Done 10/8: a downed hero's card reads the system's track in place of HP ("dying 2/4",
+    "saves 1/3, 2/3", "stable", "taken out"), the death value found from the system's formula;
+    its tip says it in a line.
 - [ ] **R8. Character creation from the system.** Its steps (5e: species, background, class,
   scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
   choices. UI: the creation screen lists the system's steps.
   - Done 10/8: `creation` in ruleset.json: the steps, which parts each picks, what the parts are
     called and the score methods offered; the screen draws its tabs and parts from it (Fate is
     one step: name, concept, approaches; PF2e names Ancestry and Attributes).
-  - Left: PF2e's heritage and boosts as parts; level-up choices beyond skills and feats.
+  - Done 10/8: heritages as the system's own option kind (R2c), fields (Fate's aspects), class
+    optional.
+  - Left: PF2e's ability boosts as a score method; level-up choices beyond skills and feats.
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
   - Done 10/8, first slice: `rulesets/dnd5e` (written by `.dev\make-dnd5e.py`): the six

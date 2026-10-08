@@ -766,6 +766,45 @@ public sealed partial class CharacterSheet
         Condition(rule.DeadCondition, Death.Dead);
     }
 
+    /// <summary>
+    /// Where a downed creature stands, as the system counts it: a short form for a card ("dying
+    /// 2/4", "saves 1/3, 2/3", "stable", "taken out") and a line for its tip. Empty when it stands.
+    /// </summary>
+    public (string Short, string Line) DownedText(Ruleset rules)
+    {
+        if (!Down)
+        {
+            return ("", "");
+        }
+        DeathRules rule = rules.Death;
+        if (Death.Dead)
+        {
+            return ("dead", $"{Name} is dead.");
+        }
+        if (!rule.Enabled || !Death.Saves)
+        {
+            return ("taken out", $"{Name} is taken out of the fight.");
+        }
+        if (Death.Stable)
+        {
+            string wounds = Death.Wounded > 0 ? $", wounded {Death.Wounded}" : "";
+            return ("stable", $"{Name} is stable{wounds}.");
+        }
+        if (rule.Track is DyingTrack track)
+        {
+            // the dying value it dies at, found from the system's own formula
+            int dies = Enumerable.Range(1, 30).FirstOrDefault(d => track.Dead.Whole(name => name switch
+            {
+                "dying" => d, "wounded" => Death.Wounded, _ => null,
+            }) != 0);
+            string of = dies > 0 ? $"/{dies}" : "";
+            string wounds = Death.Wounded > 0 ? $", wounded {Death.Wounded}" : "";
+            return ($"dying {Death.Dying}{of}", $"{Name} is dying {Death.Dying}{(dies > 0 ? $" of {dies}" : "")}{wounds}.");
+        }
+        return ($"saves {Death.Successes}/{rule.Successes}, {Death.Failures}/{rule.Failures}",
+            $"Death saves: {Death.Successes} of {rule.Successes} successes, {Death.Failures} of {rule.Failures} failures.");
+    }
+
     /// <summary>A rest the system says heals wounds takes wounded back to 0; true if there were any.</summary>
     public bool HealWounds(Ruleset rules, string rest)
     {
