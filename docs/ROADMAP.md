@@ -431,11 +431,14 @@ Josh's Downloads; nothing from it goes into a repo.
 
 - [x] **S10. Tokens framed around the creature.** `token.focus` and `token.zoom` on a creature;
   tokens and cards cut a square or the card's shape around it instead of squashing (f95859c).
-- [ ] **S11. Scanned pages read again.** A page that is one full-page picture is read with the
+- [x] **S11. Scanned pages read again.** A page that is one full-page picture is read with the
   OCR built into Windows (a small helper program beside the game, since the game also builds for
   Android), as lines with their places, then laid out like any other page. Windows OCR on the
   excerpt reads names, AC, HP, speeds, the ability rows and actions nearly cleanly; the PDF's own
   text layer does not. Without the helper, scanned pages say they need it.
+  - Done 10/8: `ocr/` (yorehold-ocr, built with the solution, kept out of the game project),
+	`IPageReader`/`OcrHelper` in rules, scans kept as `import/scans/p<n>.jpg` with the page's `scan`
+	field. Not yet run over the whole excerpt; shipping the helper with an export is open.
 - [ ] **S12. Paintings cut out of scans, with a focus.** Prototype in `..\.dev\mm\art.py`: a block
   is art when more than 55% of its pixels are not paper (text is about a fifth ink); the focus is
   the largest part that stands out from the painting's own edges, a little above its middle.

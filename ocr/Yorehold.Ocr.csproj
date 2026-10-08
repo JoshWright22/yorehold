@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    yorehold-ocr: reads pictures of book pages with the text recognition built into Windows.
+    It is its own small program because that engine needs a Windows-only build, and the game and
+    its rules also build for Android. Create runs it when an imported page is a scan.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <AssemblyName>yorehold-ocr</AssemblyName>
+    <RootNamespace>Yorehold.Ocr</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+</Project>

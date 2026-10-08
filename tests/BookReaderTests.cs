@@ -108,6 +108,74 @@ public class BookReaderTests
 
     private static SourceBook.Block BlockWith(SourceBook book, string words) => book.Pages.SelectMany(p => p.Blocks).First(b => b.Text.Contains(words));
 
+    // A page that is one picture over the whole page, with a garbled text layer as a scan's often is.
+    private static byte[] Scanned()
+    {
+        var builder = new PdfDocumentBuilder();
+        PdfDocumentBuilder.AddedFont font = builder.AddStandard14Font(Standard14Font.Helvetica);
+        PdfPageBuilder page = builder.AddPage(600, 800);
+        page.AddPng(Png(300, 400), new PdfRectangle(0, 0, 600, 800));
+        page.AddText("Bucr Dnacoru", 10, new PdfPoint(50, 740), font);
+        return builder.Build();
+    }
+
+    /// <summary>Text recognition as a test sets it: the same lines for every page, at a 300 x 400 picture's scale.</summary>
+    private sealed class FakeOcr : IPageReader
+    {
+        public int Pictures;
+
+        public IReadOnlyList<ReadPage> Read(IReadOnlyList<byte[]> pictures)
+        {
+            Pictures += pictures.Count;
+            var lines = new List<ReadLine>
+            {
+                new("BLACK DRAGONS", 20, 20, 120, 12),
+                new("Black dragons delight in suffering", 20, 40, 120, 6),
+                new("and ruin, and rule what remains.", 20, 47, 118, 6),
+                new("BLACK DRAGON WYRMLING", 160, 40, 110, 6),
+                new("Medium Dragon, Chaotic Evil", 160, 47, 100, 6),
+                new("AC 17", 160, 54, 30, 6),
+            };
+            return pictures.Select(_ => new ReadPage(300, 400, lines)).ToList();
+        }
+    }
+
+    [Fact]
+    public void AScannedPageIsReadAgainAndKept()
+    {
+        var ocr = new FakeOcr();
+        SourceBook book = BookReader.Read("bestiary.pdf", Scanned(), ocr);
+        Assert.Equal(1, ocr.Pictures);
+        SourceBook.Page page = book.Pages[0];
+        Assert.Equal("scans/p1.png", page.Scan);
+        Assert.True(book.PictureFiles.ContainsKey("scans/p1.png"), "The scan is kept for the paintings on it");
+        Assert.Empty(book.Pictures);
+        Assert.DoesNotContain(page.Blocks, b => b.Text.Contains("Bucr"));
+        SourceBook.Block heading = BlockWith(book, "BLACK DRAGONS");
+        Assert.Equal("heading", heading.Kind);
+        Assert.Equal(40, heading.X);
+        Assert.Equal("Black dragons delight in suffering and ruin, and rule what remains.", BlockWith(book, "delight").Text);
+        Assert.True(BlockWith(book, "WYRMLING").Text.EndsWith("AC 17"), "The stat block beside the paragraph is its own block");
+        SourceBook back = SourceBook.Parse("source.json", book.ToJson().ToJsonString());
+        Assert.Equal("scans/p1.png", back.Pages[0].Scan);
+    }
+
+    [Fact]
+    public void WithoutTextRecognitionAScanSaysSo()
+    {
+        SourceBook book = BookReader.Read("bestiary.pdf", Scanned());
+        Assert.Contains(book.Skipped, s => s.Contains("scans") && s.Contains(OcrHelper.Program));
+        Assert.Contains(book.Pages[0].Blocks, b => b.Text.Contains("Bucr"));
+    }
+
+    [Fact]
+    public void TheHelpersAnswerIsRead()
+    {
+        ReadPage page = OcrHelper.Parse("{\"width\":2480,\"height\":3507,\"lines\":[{\"text\":\"AC 17\",\"x\":1242,\"y\":383,\"w\":95,\"h\":29}]}");
+        Assert.Equal(new ReadLine("AC 17", 1242, 383, 95, 29), page.Lines.Single());
+        Assert.Equal("broken", OcrHelper.Parse("{\"error\":\"broken\"}").Error);
+    }
+
     [Fact]
     public void APdfBecomesBlocksInReadingOrder()
     {
@@ -250,7 +318,7 @@ public class BookReaderTests
         {
             return;
         }
-        SourceBook book = BookReader.Read(path);
+        SourceBook book = BookReader.Read(path, OcrHelper.Find());
         book.Save(folder);
         Assert.NotEmpty(book.Pages);
         // and what the layout alone makes of it, next to the source
@@ -269,7 +337,7 @@ public class BookReaderTests
             File.WriteAllLines(Path.Combine(folder, "build-problems.txt"), problems);
         }
         Directory.CreateDirectory(Path.Combine(folder, "cleared"));
-        foreach ((string file, byte[] bytes) in book.PictureFiles)
+        foreach ((string file, byte[] bytes) in book.PictureFiles.Where(f => f.Key.StartsWith("pictures/")))
         {
             if (PaperGround.Clear(bytes) is byte[] cleared)
             {

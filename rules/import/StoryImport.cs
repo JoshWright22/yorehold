@@ -37,6 +37,8 @@ public sealed class StoryImport
     public bool Cast { get; init; } = true;
     /// <summary>Take rooms' shapes, walls and doors off the book's map (BookMap). On unless a comparison run turns it off.</summary>
     public bool Walls { get; init; } = true;
+    /// <summary>Reads a scanned book's pages again: the yorehold-ocr helper when there is one.</summary>
+    public IPageReader? Scans { get; init; } = OcrHelper.Find();
     /// <summary>Add each build's score to the scores folder's history. Off in a comparison run, which keeps its own.</summary>
     public bool KeepHistory { get; init; } = true;
     /// <summary>How much of the book this import got into the game, as of the last read or build.</summary>
@@ -59,7 +61,7 @@ public sealed class StoryImport
     {
         Problems.Clear();
         Stage = "Reading the book";
-        SourceBook source = await Task.Run(() => BookReader.Read(book), cancel);
+        SourceBook source = await Task.Run(() => BookReader.Read(book, Scans), cancel);
         source.Save(Folder);
         Stage = "Finding places and pictures";
         Outline draft = BookLayout.Draft(source);

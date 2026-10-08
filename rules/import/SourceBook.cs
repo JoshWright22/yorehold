@@ -33,6 +33,8 @@ public sealed class SourceBook
     {
         public int Number;
         public float Width, Height;
+        /// <summary>The picture the whole page is, for a scanned book ("scans/p12.jpg"), else "".</summary>
+        public string Scan = "";
         public List<Block> Blocks = new();
     }
 
@@ -86,7 +88,13 @@ public sealed class SourceBook
                 }
                 blocks.Add(entry);
             }
-            pages.Add(new JsonObject { ["number"] = page.Number, ["width"] = Round(page.Width), ["height"] = Round(page.Height), ["blocks"] = blocks });
+            var made = new JsonObject { ["number"] = page.Number, ["width"] = Round(page.Width), ["height"] = Round(page.Height) };
+            if (page.Scan.Length > 0)
+            {
+                made["scan"] = page.Scan;
+            }
+            made["blocks"] = blocks;
+            pages.Add(made);
         }
         var pictures = new JsonArray();
         foreach (Picture picture in Pictures)
@@ -160,7 +168,12 @@ public sealed class SourceBook
                 Number = entry.Int("number", book.Pages.Count + 1, 1),
                 Width = (float)entry.Number("width", 0, 0),
                 Height = (float)entry.Number("height", 0, 0),
+                Scan = entry.Text("scan", "", 300),
             };
+            if (page.Scan.Contains("..") || Path.IsPathRooted(page.Scan))
+            {
+                throw entry.Fail("scan", "is a path inside the import folder");
+            }
             foreach (ContentNode block in entry.Get("blocks")?.Items() ?? Enumerable.Empty<ContentNode>())
             {
                 string kind = block.Text("kind", "text", 20);

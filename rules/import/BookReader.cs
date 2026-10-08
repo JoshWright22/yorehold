@@ -34,21 +34,22 @@ public static class BookReader
         return type is ".pdf" or ".txt" or ".md";
     }
 
-    public static SourceBook Read(string path)
+    /// <param name="scans">Reads scanned pages again; null keeps whatever text the PDF carries.</param>
+    public static SourceBook Read(string path, IPageReader? scans = null)
     {
         if (!File.Exists(path))
         {
             throw new ContentException(Path.GetFileName(path), "", "there is no such file");
         }
-        return Read(Path.GetFileName(path), File.ReadAllBytes(path));
+        return Read(Path.GetFileName(path), File.ReadAllBytes(path), scans);
     }
 
-    public static SourceBook Read(string name, byte[] bytes)
+    public static SourceBook Read(string name, byte[] bytes, IPageReader? scans = null)
     {
         switch (Path.GetExtension(name).ToLowerInvariant())
         {
             case ".pdf":
-                return ReadPdf(name, bytes);
+                return ReadPdf(name, bytes, scans);
             case ".txt":
                 return ReadText(name, new UTF8Encoding(false).GetString(bytes).TrimStart('﻿'), false);
             case ".md":
@@ -118,7 +119,7 @@ public static class BookReader
         public string Box = "";
     }
 
-    public static SourceBook ReadPdf(string name, byte[] bytes)
+    public static SourceBook ReadPdf(string name, byte[] bytes, IPageReader? scans = null)
     {
         PdfDocument document;
         try
@@ -136,19 +137,54 @@ public static class BookReader
             {
                 book.Title = Path.GetFileNameWithoutExtension(name);
             }
-            var pages = new List<(Page Page, List<Draft> Drafts)>();
+            var pages = new List<(Page Page, List<Draft> Drafts, string Scan)>();
             var sizes = new Dictionary<float, int>();
+            var toRead = new List<(int Index, byte[] Scan)>();
             foreach (Page page in document.GetPages())
             {
-                List<Draft> drafts = DraftsOf(page, sizes);
-                pages.Add((page, drafts));
+                (byte[] Bytes, string Type)? scan = ScanOf(page);
+                string scanFile = "";
+                if (scan != null)
+                {
+                    // kept whole: the paintings on it are cut out later, where the text isn't
+                    scanFile = $"scans/p{page.Number}.{scan.Value.Type}";
+                    book.PictureFiles[scanFile] = scan.Value.Bytes;
+                }
+                if (scan != null && scans != null)
+                {
+                    toRead.Add((pages.Count, scan.Value.Bytes));
+                    pages.Add((page, new List<Draft>(), scanFile));
+                }
+                else
+                {
+                    pages.Add((page, DraftsOf(page, sizes), scanFile));
+                }
                 ReadPictures(book, page);
+            }
+            if (toRead.Count > 0)
+            {
+                IReadOnlyList<ReadPage> read = scans!.Read(toRead.Select(r => r.Scan).ToList());
+                for (int i = 0; i < toRead.Count; i++)
+                {
+                    (Page page, List<Draft> drafts, _) = pages[toRead[i].Index];
+                    if (read[i].Error.Length > 0)
+                    {
+                        book.Skipped.Add($"Page {page.Number}: the scan could not be read ({read[i].Error}).");
+                        continue;
+                    }
+                    drafts.AddRange(DraftsOfScan(read[i], (float)page.Width, sizes));
+                }
+            }
+            else if (pages.Any(p => p.Scan.Length > 0))
+            {
+                book.Skipped.Add($"{pages.Count(p => p.Scan.Length > 0)} pages are scans. Their text is the PDF's own, which is often garbled; "
+                    + $"with the {OcrHelper.Program} helper beside the game they are read again.");
             }
             // the body is whatever size most of the letters are; headings are measured against it
             book.BodySize = sizes.Count == 0 ? 0 : sizes.OrderByDescending(s => s.Value).ThenBy(s => s.Key).First().Key;
-            foreach ((Page page, List<Draft> drafts) in pages)
+            foreach ((Page page, List<Draft> drafts, string scanFile) in pages)
             {
-                var made = new SourceBook.Page { Number = page.Number, Width = (float)page.Width, Height = (float)page.Height };
+                var made = new SourceBook.Page { Number = page.Number, Width = (float)page.Width, Height = (float)page.Height, Scan = scanFile };
                 var blocks = new List<SourceBook.Block>();
                 foreach (Draft draft in drafts)
                 {
@@ -223,6 +259,84 @@ public static class BookReader
         }
         return drafts;
     }
+
+    /// <summary>The picture a page is printed as, when the whole page is one: a scanned book.</summary>
+    private static (byte[] Bytes, string Type)? ScanOf(Page page)
+    {
+        double pageArea = page.Width * page.Height;
+        foreach (IPdfImage image in page.GetImages())
+        {
+            PdfRectangle bounds = image.BoundingBox;
+            if (image.IsImageMask || bounds.Width * bounds.Height < pageArea * BackgroundShare)
+            {
+                continue;
+            }
+            byte[] raw = image.RawMemory.ToArray();
+            if (raw.Length > 3 && raw[0] == 0xFF && raw[1] == 0xD8 && raw[2] == 0xFF)
+            {
+                return (raw, "jpg");
+            }
+            if (image.TryGetPng(out byte[]? png) && png != null)
+            {
+                return (png, "png");
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// The lines text recognition read off a scan, gathered into paragraphs: a line joins the one
+    /// just above it when it starts under it and follows closely, so two columns and a stat block
+    /// beside a paragraph stay apart. Sizes come from the lines' heights, so headings still stand out.
+    /// </summary>
+    private static List<Draft> DraftsOfScan(ReadPage read, float pageWidth, Dictionary<float, int> sizes)
+    {
+        var drafts = new List<Draft>();
+        if (read.Width <= 0)
+        {
+            return drafts;
+        }
+        float scale = pageWidth / read.Width;
+        foreach (ReadLine readLine in read.Lines.Where(l => l.Text.Trim().Length > 0).OrderBy(l => l.Y).ThenBy(l => l.X))
+        {
+            var line = new Line
+            {
+                Text = readLine.Text.Trim(),
+                Size = HalfPoint(readLine.Height * scale * ScanLineToSize),
+                Left = readLine.X * scale,
+                Right = (readLine.X + readLine.Width) * scale,
+                Top = readLine.Y * scale,
+                Bottom = (readLine.Y + readLine.Height) * scale,
+            };
+            sizes[line.Size] = sizes.GetValueOrDefault(line.Size) + line.Text.Length;
+            float height = line.Bottom - line.Top;
+            Draft? under = null;
+            float best = float.MaxValue;
+            foreach (Draft draft in drafts)
+            {
+                Line last = draft.Lines[^1];
+                float gap = line.Top - last.Bottom;
+                float overlap = Math.Min(line.Right, last.Right) - Math.Max(line.Left, last.Left);
+                bool below = gap > -0.3f * height && gap < 0.9f * Math.Max(height, last.Bottom - last.Top);
+                bool lined = overlap > 0.3f * Math.Min(line.Right - line.Left, last.Right - last.Left) && Math.Abs(line.Left - last.Left) < 3 * height;
+                if (below && lined && gap < best)
+                {
+                    best = gap;
+                    under = draft;
+                }
+            }
+            if (under == null)
+            {
+                under = new Draft();
+                drafts.Add(under);
+            }
+            under.Lines.Add(line);
+        }
+        return drafts;
+    }
+
+    // a read line's box runs from the tallest letter to the lowest tail: a little more than the type's size
+    private const float ScanLineToSize = 0.9f;
 
     /// <summary>Some books' fonts give their letters no height, and lines and columns can't be told apart from flat letters. Such a letter gets the height its size implies.</summary>
     private static Letter WithHeight(Letter letter)
