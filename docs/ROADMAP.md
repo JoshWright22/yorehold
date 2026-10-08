@@ -341,6 +341,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Effect steps and triggers name the system's tracks, defences and numbers, not built-in
     ones, so a system's own mechanic needs no new step kind. The kinds that stay fixed are the
     language's documented core.
+    Done 10/8: a `resource` step reaches a track by its id, attacks name a defence with
+    `against`, and formulas read `field.<id>`, `stat.<name>` and the defences. Left: a damage
+    step aimed at one track; the documented core (with R2b's reference).
 - [ ] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
   nat 20; PF2e: four degrees, ±10, nat 20/1 move a step), what a critical does (double dice or
   double total), and advantage from the target or the place as well as the attacker. Every

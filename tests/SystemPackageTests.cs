@@ -240,6 +240,9 @@ public class SystemPackageTests
         Assert.Equal(("3 0 1 1", 13), (string.Join(" ", bo.Tracks.Select(t => t.Value)), bo.Hp));
         bo.ClearTracks("scene");
         Assert.Equal(15, bo.Hp);
+        // a step's "resource" names a track too: spending the severe slot, then restoring it
+        Assert.True(bo.AdjustTrack("severe", -1) && bo.Hp == 9 && bo.AdjustTrack("severe", 1) && bo.Hp == 15);
+        Assert.False(bo.AdjustTrack("luck", 1));
 
         // a mook has its own stress and no consequences; the sheet saves its tracks
         CharacterSheet gik = w.Creatures[2].Sheet;

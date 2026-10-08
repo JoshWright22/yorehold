@@ -118,6 +118,11 @@ public abstract class EffectHost
     public virtual bool Resource(int who, string id, int change, EffectContext context)
     {
         CharacterSheet? sheet = Sheet(who);
+        if (sheet != null && sheet.AdjustTrack(id, change))
+        {
+            // one of the system's tracks: Fate's recovering from a consequence
+            return true;
+        }
         if (sheet == null || !sheet.Resources.TryGetValue(id, out Resource? found))
         {
             return false;

@@ -535,6 +535,24 @@ public sealed partial class CharacterSheet
         _trackHp = Hp;
     }
 
+    /// <summary>
+    /// Changes one track's points by change (a step's restore or spend); false when the sheet has
+    /// no track by that id. It never puts anyone down or gets them up by itself.
+    /// </summary>
+    public bool AdjustTrack(string id, int change)
+    {
+        TrackSlot? track = Tracks.Find(t => t.Id == id);
+        if (track == null)
+        {
+            return false;
+        }
+        TracksFollowHp();
+        track.Value = Math.Clamp(track.Value + change, 0, track.Max);
+        Hp = Hp <= 0 ? 0 : Math.Max(1, TrackRoom);
+        _trackHp = Hp;
+        return true;
+    }
+
     /// <summary>Fills the tracks an event clears ("fightEnd", a rest's id); one that is down stays down.</summary>
     public void ClearTracks(string happened)
     {
