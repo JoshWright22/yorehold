@@ -647,7 +647,7 @@ internal sealed class EffectRun
         int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules)
             : step.Ability.Length > 0 ? self.AttackModifier(_rules, step.Ability)
             : self.AttackModifier(_rules);
-        Advantage advantage = self.AttackAdvantage(_rules, subject);
+        Advantage advantage = self.AttackAdvantage(_rules, subject, _host.PlaceConditions(_context.Self, actor));
         outcome.Advantage = advantage == Advantage.Advantage;
         RollResult attack = kind.Roll(bonus + penalty, advantage, _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll

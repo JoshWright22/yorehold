@@ -10,12 +10,16 @@ public class PositioningRules
     public int ThreeQuartersCoverArmorClass { get; init; }
     public bool CreaturesProvideCover { get; init; }
     public bool CoverAgainstMelee { get; init; }
+    /// <summary>A condition the attacker has for the roll when its target can't see it (it stands in the dark).</summary>
+    public string UnseenAttackerCondition { get; init; } = "";
+    /// <summary>A condition the attacker has for the roll when it can't see its target.</summary>
+    public string UnseenTargetCondition { get; init; } = "";
 
     public static PositioningRules Read(ContentNode node)
     {
         node.RequireObject("positioning rules are a JSON object");
         node.Only("enabled", "flankingCondition", "flankingReach", "halfCoverArmorClass", "threeQuartersCoverArmorClass",
-            "creaturesProvideCover", "coverAgainstMelee");
+            "creaturesProvideCover", "coverAgainstMelee", "unseenAttackerCondition", "unseenTargetCondition");
         double reach = node.Number("flankingReach", 1, 0, 100);
         if (reach <= 0)
         {
@@ -37,6 +41,8 @@ public class PositioningRules
             ThreeQuartersCoverArmorClass = threeQuarters,
             CreaturesProvideCover = node.Bool("creaturesProvideCover", false),
             CoverAgainstMelee = node.Bool("coverAgainstMelee", false),
+            UnseenAttackerCondition = node.Text("unseenAttackerCondition", "", 64),
+            UnseenTargetCondition = node.Text("unseenTargetCondition", "", 64),
         };
     }
 
@@ -57,9 +63,15 @@ public class PositioningRules
 
     public void Check(Ruleset rules, string file)
     {
-        if (FlankingCondition.Length > 0 && rules.Condition(FlankingCondition) == null)
+        foreach ((string field, string id) in new[]
         {
-            throw new ContentException(file, "flankingCondition", $"unknown condition \"{FlankingCondition}\"");
+            ("flankingCondition", FlankingCondition), ("unseenAttackerCondition", UnseenAttackerCondition), ("unseenTargetCondition", UnseenTargetCondition),
+        })
+        {
+            if (id.Length > 0 && rules.Condition(id) == null)
+            {
+                throw new ContentException(file, field, $"unknown condition \"{id}\"");
+            }
         }
     }
 }

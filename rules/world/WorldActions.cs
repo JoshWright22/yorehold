@@ -159,7 +159,7 @@ public sealed partial class World
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.AttackDefence(Rules);
         // counted from the system's own dice and outcomes, so it is right for any of them
-        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
+        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null));
     }
 
     /// <summary>The same attack as HitChance, as the chance of each of the system's outcomes by id.</summary>
@@ -168,7 +168,7 @@ public sealed partial class World
         ActionDefinition? action = FindAction(actionId ?? StrikeAction);
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.AttackDefence(Rules);
-        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
+        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null));
     }
 
     /// <summary>The same attack's odds as the aim shows them ("55%, 5% critical").</summary>
@@ -470,6 +470,9 @@ public sealed partial class World
         }
 
         public override bool BeforeHit(int who, int attacker, EffectContext context) => _world.BeforeHitReaction(who, attacker);
+
+        public override IEnumerable<string> PlaceConditions(int attacker, int target) =>
+            _world.Fighting ? _world.PlaceConditions(attacker, target) : Enumerable.Empty<string>();
 
         public override bool HasFlag(int who, string flag, EffectContext context)
         {

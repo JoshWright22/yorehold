@@ -298,6 +298,31 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TheDarkGivesConditionsForTheRoll()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        w.Options.Lighting = 1 + (int)LightingMode.Rules;
+        w.Options.TimeOfDay = 1 + (int)MapTime.Night;
+        w.Creatures[2].Sheet.Stats.SetBase("darkvision", 60);
+        w.Creatures[0].Sheet.Stats.SetBase("darkvision", 0);
+        // far apart: the light the party carries doesn't reach Gik
+        world.Put(0, new Cell(1, 1));
+        world.Put(1, new Cell(1, 2));
+        world.Put(2, new Cell(6, 6));
+        world.Put(3, new Cell(6, 1));
+        world.Fight();
+        Assert.Equal(LightLevel.Dark, w.LightAt(w.Tokens.Tokens[2].Position));
+        // Ana can't see Gik; Gik sees Ana by darkvision, and she can't see him
+        Assert.Equal(new[] { "unseen-target" }, w.PlaceConditions(0, 2));
+        Assert.Equal(new[] { "unseen-attacker" }, w.PlaceConditions(2, 0));
+        Assert.Equal(Advantage.Advantage, w.Creatures[2].Sheet.AttackAdvantage(w.Rules, w.Creatures[0].Sheet, w.PlaceConditions(2, 0)));
+        // in daylight, nothing
+        w.Options.TimeOfDay = 1 + (int)MapTime.Day;
+        Assert.Empty(w.PlaceConditions(0, 2));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

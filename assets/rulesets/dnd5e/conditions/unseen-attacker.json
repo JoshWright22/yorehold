@@ -1,0 +1,6 @@
+{
+  "id": "unseen-attacker",
+  "name": "Unseen attacker",
+  "description": "Its target can't see it in the dark: its attacks have advantage. Given by the place for one roll.",
+  "advantageOnAttacks": true
+}

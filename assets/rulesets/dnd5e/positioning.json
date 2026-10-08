@@ -5,5 +5,7 @@
   "halfCoverArmorClass": 2,
   "threeQuartersCoverArmorClass": 5,
   "creaturesProvideCover": true,
-  "coverAgainstMelee": false
+  "coverAgainstMelee": false,
+  "unseenAttackerCondition": "unseen-attacker",
+  "unseenTargetCondition": "unseen-target"
 }

@@ -43,6 +43,42 @@ public sealed partial class World
         return Positioning.CoverFrom(Grid, CellOf(from), CellOf(target), Map.Walls, bodies, Chapter.Rules.Positioning);
     }
 
+    /// <summary>
+    /// The conditions the place gives an attacker for one roll at target, as positioning.json
+    /// names them: unseen by its target (it stands in the dark beyond the target's darkvision),
+    /// or unable to see the target.
+    /// </summary>
+    public List<string> PlaceConditions(int attacker, int target)
+    {
+        var place = new List<string>();
+        PositioningRules rules = Chapter.Rules.Positioning;
+        if (attacker < 0 || target < 0 || attacker >= Creatures.Count || target >= Creatures.Count || !rules.Enabled)
+        {
+            return place;
+        }
+        if (rules.UnseenAttackerCondition.Length > 0 && !SeesInTheLight(target, attacker))
+        {
+            place.Add(rules.UnseenAttackerCondition);
+        }
+        if (rules.UnseenTargetCondition.Length > 0 && !SeesInTheLight(attacker, target))
+        {
+            place.Add(rules.UnseenTargetCondition);
+        }
+        return place;
+    }
+
+    // Whether viewer can make seen out: it stands in light, or within viewer's darkvision.
+    private bool SeesInTheLight(int viewer, int seen)
+    {
+        if (LightAt(Tokens.Tokens[seen].Position) != LightLevel.Dark)
+        {
+            return true;
+        }
+        float perSquare = Math.Max(1, Rules.FeetPerSquare);
+        float darkvision = Creatures[viewer].Sheet.Stats.Value("darkvision") / perSquare;
+        return Grid.Distance(CellOf(viewer), CellOf(seen)) <= darkvision + 0.01f;
+    }
+
     /// <summary>Its armour class with flanking, which counts as the flanking condition without staying on the sheet.</summary>
     public int PositionalArmorClass(int target, string defence = "")
     {

@@ -134,6 +134,8 @@ public abstract class EffectHost
     public virtual bool Move(int who, string how, int squares, EffectContext context) => false;
     /// <summary>Whether target stands within reach squares of who, for attacks that need it.</summary>
     public virtual bool InReach(int who, int target, int reach) => true;
+    /// <summary>Conditions the place gives an attacker for one roll at target (unseen in the dark); none here.</summary>
+    public virtual IEnumerable<string> PlaceConditions(int attacker, int target) => Enumerable.Empty<string>();
     /// <summary>An attack by attacker is about to hit who: true if who reacted (Shield), so the roll is read again.</summary>
     public virtual bool BeforeHit(int who, int attacker, EffectContext context) => false;
     public virtual bool Summon(string creature, int count, int rounds, EffectContext context) => false;

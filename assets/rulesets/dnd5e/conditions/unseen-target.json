@@ -1,0 +1,6 @@
+{
+  "id": "unseen-target",
+  "name": "Unseen target",
+  "description": "It can't see its target in the dark: its attacks have disadvantage. Given by the place for one roll.",
+  "disadvantageOnAttacks": true
+}

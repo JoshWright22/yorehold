@@ -430,13 +430,14 @@ public sealed partial class CharacterSheet
     }
 
     /// <summary>Conditions can force advantage or disadvantage on attacks; both together cancel out.</summary>
-    public Advantage AttackAdvantage(Ruleset rules, CharacterSheet? target = null)
+    public Advantage AttackAdvantage(Ruleset rules, CharacterSheet? target = null, IEnumerable<string>? place = null)
     {
         bool advantage = false;
         bool disadvantage = false;
-        foreach (ActiveCondition active in Conditions)
+        // its own conditions, and those the place gives it for this roll only (unseen in the dark)
+        foreach (string id in Conditions.Select(c => c.Id).Concat(place ?? Enumerable.Empty<string>()))
         {
-            ConditionDefinition? definition = rules.Condition(active.Id);
+            ConditionDefinition? definition = rules.Condition(id);
             if (definition != null)
             {
                 advantage |= definition.AdvantageOnAttacks;

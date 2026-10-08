@@ -1114,6 +1114,13 @@ provide at most half cover; downed creatures provide none. `halfCoverArmorClass:
 unaffected by cover. `enabled: false` disables positioning. The generic defaults and validation
 are in FRAMEWORK.md; an unknown flanking condition names the file and problem when loading.
 
+The place can give an attacker a condition for one roll, as flanking does the target:
+`unseenAttackerCondition` when its target can't see it (it stands where no light reaches,
+beyond the target's darkvision) and `unseenTargetCondition` when it can't see its target. The
+conditions say what that means (5e: `unseen-attacker` with `advantageOnAttacks`,
+`unseen-target` with `disadvantageOnAttacks`). They count only under the rules lighting mode,
+for the roll and the hit chance shown, and never stay on the sheet.
+
 The HUD marks visible flanked creatures and previews cover against the selected ranged action.
 The **Flanking/cover** test scene gives the first hero a ranged test Strike: the enemy is
 flanked by two allies and screened by one of them. The shipped Strike remains melee.
