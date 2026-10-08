@@ -1,0 +1,18 @@
+{
+  "id": "spider-venom",
+  "name": "Spider Venom",
+  "description": "A bite carries venom: 1d6 poison, half on a Fortitude save.",
+  "on": "hit",
+  "save": {
+    "ability": "fortitude",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d6",
+      "type": "poison",
+      "onSave": "half"
+    }
+  ]
+}

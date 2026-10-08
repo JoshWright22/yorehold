@@ -1,0 +1,17 @@
+{
+  "id": "trip-bite",
+  "name": "Knockdown",
+  "description": "A hit can bring the target down: prone on a failed Reflex save.",
+  "on": "hit",
+  "save": {
+    "ability": "reflex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "prone",
+      "onSave": "none"
+    }
+  ]
+}

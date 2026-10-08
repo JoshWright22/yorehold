@@ -1,0 +1,13 @@
+{
+  "id": "claw",
+  "name": "Claw",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "dex",
+  "weight": 0,
+  "damageType": "slashing",
+  "traits": [
+    "agile"
+  ]
+}

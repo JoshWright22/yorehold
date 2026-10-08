@@ -498,6 +498,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: classes to level 5 (R8) and ten more spells for ranks 1 to 3 (Breathe Fire,
     Thunderstrike, Harm, Acid Grip, Blazing Bolt, Spiritual Armament, Fireball, Slow, Chilling
     Darkness, Heroism), massive damage.
+  - Done 10/8: a bestiary of 16: zombie shambler, ghoul, ogre warrior, hobgoblin soldier,
+    hunting spider, giant rat, cultist, cult leader (a caster), guard, grizzly bear, warg and
+    owlbear beside the first four; knockdown, venom and paralysis as triggers with a save.
   - Done 10/8: deadly and backstabber as general triggers (anyone wielding the trait), the
     hidden as a DC 11 flat check (`attackersFlatCheck`), heritages, boosts, a free action named.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more

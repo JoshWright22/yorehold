@@ -1,16 +1,16 @@
 {
-  "id": "wolf",
-  "name": "Wolf",
-  "description": "A pack hunter.",
-  "level": 1,
-  "hp": 24,
-  "armorClass": 15,
+  "id": "bear",
+  "name": "Grizzly Bear",
+  "description": "Big enough to go where it likes.",
+  "level": 3,
+  "hp": 45,
+  "armorClass": 17,
   "speed": 35,
   "abilities": {
-    "str": 14,
-    "dex": 16,
-    "con": 14,
-    "int": 4,
+    "str": 20,
+    "dex": 12,
+    "con": 18,
+    "int": 2,
     "wis": 14,
     "cha": 8
   },
@@ -23,22 +23,18 @@
     "perception": "trained"
   },
   "items": [
-    "jaws"
+    "fangs"
   ],
   "token": {
     "color": [
-      130,
       120,
-      110
+      85,
+      60
     ],
-    "size": 0.4
+    "size": 0.5
   },
-  "ai": "animal",
+  "ai": "brute",
   "stats": {
-    "attack": 4
-  },
-  "dcAbility": "str",
-  "actions": [
-    "trip-bite"
-  ]
+    "attack": 11
+  }
 }

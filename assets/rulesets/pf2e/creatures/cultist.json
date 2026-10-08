@@ -1,0 +1,44 @@
+{
+  "id": "cultist",
+  "name": "Cultist",
+  "description": "Chants, and stabs when the chant runs out.",
+  "level": 1,
+  "hp": 18,
+  "armorClass": 16,
+  "speed": 25,
+  "abilities": {
+    "str": 12,
+    "dex": 14,
+    "con": 12,
+    "int": 10,
+    "wis": 14,
+    "cha": 14
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "shortsword",
+    "studded-leather"
+  ],
+  "loot": {
+    "coins": "1d10"
+  },
+  "token": {
+    "color": [
+      110,
+      60,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning",
+  "stats": {
+    "attack": 7
+  }
+}

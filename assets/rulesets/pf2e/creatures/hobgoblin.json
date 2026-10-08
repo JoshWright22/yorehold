@@ -1,0 +1,45 @@
+{
+  "id": "hobgoblin",
+  "name": "Hobgoblin Soldier",
+  "description": "Disciplined, armoured and patient.",
+  "level": 1,
+  "hp": 20,
+  "armorClass": 18,
+  "speed": 25,
+  "abilities": {
+    "str": 16,
+    "dex": 12,
+    "con": 14,
+    "int": 10,
+    "wis": 12,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "longsword",
+    "chain-mail"
+  ],
+  "darkvision": 60,
+  "loot": {
+    "coins": "2d6"
+  },
+  "token": {
+    "color": [
+      180,
+      100,
+      60
+    ],
+    "size": 0.4
+  },
+  "ai": "tactical",
+  "stats": {
+    "attack": 7
+  }
+}

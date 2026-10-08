@@ -1,0 +1,19 @@
+{
+  "id": "ghoul-fever",
+  "name": "Paralysis",
+  "description": "A hit locks the target's limbs: stunned for a round on a failed Fortitude save.",
+  "on": "hit",
+  "once": "turn",
+  "save": {
+    "ability": "fortitude",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "stunned",
+      "duration": 1,
+      "onSave": "none"
+    }
+  ]
+}

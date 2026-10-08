@@ -1,0 +1,45 @@
+{
+  "id": "giant-spider",
+  "name": "Hunting Spider",
+  "description": "Drops from above with venom ready.",
+  "level": 1,
+  "hp": 16,
+  "armorClass": 17,
+  "speed": 25,
+  "abilities": {
+    "str": 12,
+    "dex": 18,
+    "con": 12,
+    "int": 1,
+    "wis": 12,
+    "cha": 4
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "spider-fangs"
+  ],
+  "darkvision": 60,
+  "dcAbility": "con",
+  "actions": [
+    "spider-venom"
+  ],
+  "token": {
+    "color": [
+      70,
+      60,
+      80
+    ],
+    "size": 0.5
+  },
+  "ai": "animal",
+  "stats": {
+    "attack": 7
+  }
+}

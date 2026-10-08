@@ -1,0 +1,44 @@
+{
+  "id": "ogre",
+  "name": "Ogre Warrior",
+  "description": "Huge, hungry and fond of hooks.",
+  "level": 3,
+  "hp": 50,
+  "armorClass": 17,
+  "speed": 25,
+  "abilities": {
+    "str": 20,
+    "dex": 8,
+    "con": 18,
+    "int": 6,
+    "wis": 10,
+    "cha": 6
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "ogre-club"
+  ],
+  "darkvision": 60,
+  "loot": {
+    "coins": "2d10"
+  },
+  "token": {
+    "color": [
+      150,
+      140,
+      100
+    ],
+    "size": 0.6
+  },
+  "ai": "brute",
+  "stats": {
+    "attack": 12
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "warg",
+  "name": "Warg",
+  "description": "A wolf with a grudge and a voice.",
+  "level": 2,
+  "hp": 36,
+  "armorClass": 17,
+  "speed": 40,
+  "abilities": {
+    "str": 18,
+    "dex": 14,
+    "con": 16,
+    "int": 6,
+    "wis": 14,
+    "cha": 10
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "fangs"
+  ],
+  "darkvision": 60,
+  "dcAbility": "str",
+  "actions": [
+    "trip-bite"
+  ],
+  "token": {
+    "color": [
+      80,
+      75,
+      80
+    ],
+    "size": 0.5
+  },
+  "ai": "cunning",
+  "stats": {
+    "attack": 10
+  }
+}

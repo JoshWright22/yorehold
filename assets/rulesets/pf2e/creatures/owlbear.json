@@ -1,0 +1,41 @@
+{
+  "id": "owlbear",
+  "name": "Owlbear",
+  "description": "Screeching, clawing and never satisfied.",
+  "level": 4,
+  "hp": 70,
+  "armorClass": 21,
+  "speed": 25,
+  "abilities": {
+    "str": 20,
+    "dex": 12,
+    "con": 18,
+    "int": 2,
+    "wis": 14,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "fangs"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      140,
+      110,
+      80
+    ],
+    "size": 0.6
+  },
+  "ai": "brute",
+  "stats": {
+    "attack": 14
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "ogre-club",
+  "name": "Ogre Hook",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d10",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "piercing",
+  "hands": 2,
+  "traits": [
+    "deadly"
+  ]
+}

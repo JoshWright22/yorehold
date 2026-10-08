@@ -1,0 +1,59 @@
+{
+  "id": "cult-leader",
+  "name": "Cult Leader",
+  "description": "Speaks for something that answers.",
+  "level": 3,
+  "hp": 40,
+  "armorClass": 18,
+  "speed": 25,
+  "abilities": {
+    "str": 10,
+    "dex": 14,
+    "con": 12,
+    "int": 12,
+    "wis": 18,
+    "cha": 16
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "mace",
+    "studded-leather"
+  ],
+  "dcAbility": "wis",
+  "spells": [
+    "divine-lance",
+    "fear",
+    "harm",
+    "spiritual-armament"
+  ],
+  "resources": {
+    "slots-1": {
+      "max": 3
+    },
+    "slots-2": {
+      "max": 2
+    }
+  },
+  "loot": {
+    "coins": "4d10"
+  },
+  "token": {
+    "color": [
+      140,
+      50,
+      130
+    ],
+    "size": 0.42
+  },
+  "ai": "tactical",
+  "stats": {
+    "attack": 9
+  }
+}

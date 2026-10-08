@@ -1,18 +1,18 @@
 {
-  "id": "wolf",
-  "name": "Wolf",
-  "description": "A pack hunter.",
-  "level": 1,
-  "hp": 24,
+  "id": "giant-rat",
+  "name": "Giant Rat",
+  "description": "Mangy, quick and everywhere.",
+  "level": -1,
+  "hp": 8,
   "armorClass": 15,
-  "speed": 35,
+  "speed": 30,
   "abilities": {
-    "str": 14,
+    "str": 8,
     "dex": 16,
-    "con": 14,
-    "int": 4,
-    "wis": 14,
-    "cha": 8
+    "con": 12,
+    "int": 2,
+    "wis": 12,
+    "cha": 4
   },
   "proficiencyRanks": {
     "weapons": "trained",
@@ -23,22 +23,19 @@
     "perception": "trained"
   },
   "items": [
-    "jaws"
+    "rat-jaws"
   ],
+  "darkvision": 60,
   "token": {
     "color": [
-      130,
       120,
-      110
+      100,
+      90
     ],
-    "size": 0.4
+    "size": 0.3
   },
   "ai": "animal",
   "stats": {
-    "attack": 4
-  },
-  "dcAbility": "str",
-  "actions": [
-    "trip-bite"
-  ]
+    "attack": 7
+  }
 }

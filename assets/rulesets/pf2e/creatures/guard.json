@@ -1,0 +1,45 @@
+{
+  "id": "guard",
+  "name": "Guard",
+  "description": "Watches a door for a living.",
+  "level": 1,
+  "hp": 20,
+  "armorClass": 18,
+  "speed": 25,
+  "abilities": {
+    "str": 16,
+    "dex": 12,
+    "con": 14,
+    "int": 10,
+    "wis": 12,
+    "cha": 10
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "spear",
+    "chain-mail",
+    "wooden-shield"
+  ],
+  "loot": {
+    "coins": "1d10"
+  },
+  "token": {
+    "color": [
+      100,
+      120,
+      160
+    ],
+    "size": 0.4
+  },
+  "ai": "lookout",
+  "stats": {
+    "attack": 7
+  }
+}
