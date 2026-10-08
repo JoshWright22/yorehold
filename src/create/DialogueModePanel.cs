@@ -88,8 +88,9 @@ public partial class DialogueModePanel : VBoxContainer
             }
         }
         string path = package.DialoguePath;
-        _file.Text = path.Length == 0 ? "No conversations yet" : path.StartsWith(package.Chapter + "/", StringComparison.Ordinal) ? path[(package.Chapter.Length + 1)..] : path;
-        _count.Text = _listed.Count == 0 ? "" : _listed.Count == 1 ? "   1 file" : $"   {_listed.Count} files";
+        // the conversation by its name, not its file; < and > step through the chapter's others
+        _file.Text = path.Length == 0 ? "No conversations yet" : "Conversation: " + System.IO.Path.GetFileNameWithoutExtension(path);
+        _count.Text = _listed.Count < 2 ? "" : $"   {_listed.IndexOf(path) + 1} of {_listed.Count}";
         _back.Disabled = _on.Disabled = _listed.Count < 2;
 
         DialogueEditor? editor = package.DialogueEditor();
@@ -183,14 +184,14 @@ public partial class DialogueModePanel : VBoxContainer
 
     private void BuildNodes(DialogueEditor editor)
     {
-        _nodes.Dim("Conversation id");
+        _nodes.Dim("Its name, for people and triggers to start it by");
         _nodes.Field(() => editor.Id, typed =>
         {
             _hint = typed == editor.Id || editor.SetId(typed) ? "" : "An id is 1 to 64 characters, no spaces.";
         }, editor.EndTyping, "id");
         _nodes.Gap();
-        _nodes.Heading("Nodes");
-        _nodes.Dim("> is where it starts");
+        _nodes.Heading("Lines");
+        _nodes.Dim("Each is something said, with the player's replies. > is the first.");
         for (int i = 0; i < editor.Nodes.Count; i++)
         {
             int index = i;
@@ -227,8 +228,8 @@ public partial class DialogueModePanel : VBoxContainer
         DialogueEditor.Node Now() => editor.Nodes[Math.Min(index, editor.Nodes.Count - 1)];
 
         HBoxContainer heads = _node.Row();
-        _node.Dim("Node", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        _node.Dim("Speaker", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _node.Dim("Its name, for replies to go to", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _node.Dim("Who says it", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
         HBoxContainer names = _node.Row();
         _node.Field(() => Now().Id, typed =>
         {
@@ -238,7 +239,7 @@ public partial class DialogueModePanel : VBoxContainer
         _node.Field(() => Now().Speaker, typed => editor.SetSpeaker(index, typed), editor.EndTyping, "nobody", names);
 
         HBoxContainer lineHead = _node.Row();
-        _node.Dim("Line", lineHead).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _node.Dim("What they say", lineHead).SizeFlagsHorizontal = SizeFlags.ExpandFill;
         Label from = _node.Live(() =>
         {
             int links = editor.LinksTo(Now().Id);
@@ -306,8 +307,8 @@ public partial class DialogueModePanel : VBoxContainer
     private static string About(DialogueEditor.Choice c)
     {
         string about = c.Check is DialogueCheck check
-            ? $"{check.Skill} {check.Difficulty}: {(check.Success.Length == 0 ? "end" : check.Success)} / {(check.Failure.Length == 0 ? "end" : check.Failure)}"
-            : "-> " + (c.Next.Length == 0 ? "end" : c.Next);
+            ? $"{check.Skill} check {check.Difficulty}: goes to {(check.Success.Length == 0 ? "the end" : check.Success)}, or {(check.Failure.Length == 0 ? "the end" : check.Failure)} on a fail"
+            : c.Next.Length == 0 ? "ends the conversation" : "goes to " + c.Next;
         if (c.Require.Count > 0)
         {
             about += "   needs " + string.Join(", ", c.Require);
@@ -334,8 +335,8 @@ public partial class DialogueModePanel : VBoxContainer
         int index = _picked;
         if (_choice is not int at)
         {
-            _reply.Heading("On reaching " + editor.Nodes[index].Id);
-            _reply.Dim("Pick a reply to edit it instead.");
+            _reply.Heading("When " + editor.Nodes[index].Id + " is said");
+            _reply.Dim("What changes in the story as this line is said. Pick a reply to edit that instead.");
             FlagFields(editor, () => editor.Nodes[Math.Min(index, editor.Nodes.Count - 1)].Flags, flags => editor.SetNodeFlags(index, flags));
             _reply.Gap();
             _reply.Live(() => _hint, "WarnLabel");
@@ -345,8 +346,8 @@ public partial class DialogueModePanel : VBoxContainer
 
         HBoxContainer head = _reply.Row();
         _reply.Heading($"Reply {at + 1}", head).SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        ToolColumn.Narrow(_reply.Act("Node's own", () => _choice = null, null, head), 110);
-        _reply.Dim("Id");
+        ToolColumn.Narrow(_reply.Act("The line's own", () => _choice = null, null, head), 110);
+        _reply.Dim("Its name");
         _reply.Field(() => Now().Id, typed =>
         {
             bool fine = typed == Now().Id || editor.SetChoiceId(index, at, typed);
@@ -362,7 +363,7 @@ public partial class DialogueModePanel : VBoxContainer
 
         // where it goes: a node, the end, or a roll that picks between two
         List<string> Targets() => new[] { "" }.Concat(editor.Nodes.Select(n => n.Id)).ToList();
-        static string Shown(string id) => id.Length == 0 ? "end" : id;
+        static string Shown(string id) => id.Length == 0 ? "the end" : id;
         _reply.Toggle("Skill check", () => Now().Check != null, () =>
         {
             editor.EndTyping();
@@ -404,7 +405,7 @@ public partial class DialogueModePanel : VBoxContainer
             Stepper("Pass", () => Shown(Check().Success), step => editor.SetCheck(index, at, Check() with { Success = StepName(Targets(), Check().Success, step) }));
             Stepper("Fail", () => Shown(Check().Failure), step => editor.SetCheck(index, at, Check() with { Failure = StepName(Targets(), Check().Failure, step) }));
         }
-        _reply.Act(() => Now().Check != null ? "New node for an empty way" : "New node after it", () =>
+        _reply.Act(() => Now().Check != null ? "New line where it ends" : "New line after it", () =>
         {
             if (editor.Branch(index, at) is int added)
             {
@@ -415,8 +416,8 @@ public partial class DialogueModePanel : VBoxContainer
         _reply.Gap();
 
         HBoxContainer conditionHeads = _reply.Row();
-        _reply.Dim("Needs flags", conditionHeads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        _reply.Dim("Hidden if", conditionHeads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _reply.Dim("Shown only with flags", conditionHeads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _reply.Dim("Hidden by flags", conditionHeads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
         HBoxContainer conditions = _reply.Row();
         LineEdit? forbidBox = null;
         LineEdit requireBox = _reply.Field(() => string.Join(", ", Now().Require), typed => Conditions(typed, forbidBox?.Text ?? ""), editor.EndTyping, "none", conditions);
@@ -448,11 +449,11 @@ public partial class DialogueModePanel : VBoxContainer
             Typed(changed);
             editor.EndTyping();
         }
-        _reply.Dim("Sets flags");
+        _reply.Dim("Story flags it sets, for doors, fights and other lines to wait for (comma between)");
         _reply.Field(() => string.Join(", ", flags().Set), typed => Typed(flags() with { Set = ListFrom(typed) }), editor.EndTyping, "none");
-        _reply.Dim("Clears flags");
+        _reply.Dim("Story flags it takes away");
         _reply.Field(() => string.Join(", ", flags().Clear), typed => Typed(flags() with { Clear = ListFrom(typed) }), editor.EndTyping, "none");
-        _reply.Dim("Does");
+        _reply.Dim("What happens (the buttons below fill it in)");
         _reply.Field(() => string.Join(", ", flags().Actions), typed => Typed(flags() with { Actions = ListFrom(typed) }), editor.EndTyping, "nothing");
 
         // the companion actions, so nobody has to remember how they are spelled; approve steps the one being talked to by one each click

@@ -141,7 +141,7 @@ public partial class EncountersModePanel : HBoxContainer
         _tools.Toggle("Select", () => !_placing, () => _placing = false, tools, "TabButton").Alignment = HorizontalAlignment.Center;
         _tools.Toggle("Place", () => _placing, () => _placing = true, tools, "TabButton").Alignment = HorizontalAlignment.Center;
         _tools.Gap();
-        _tools.Heading("Groups");
+        _tools.Heading("Fights");
         for (int g = 0; g < editor.Groups.Count; g++)
         {
             int group = g;
@@ -204,7 +204,7 @@ public partial class EncountersModePanel : HBoxContainer
     private void BuildPalette(EncountersEditor editor)
     {
         _props.Heading("Place");
-        _props.Live(() => editor.Groups.Count == 0 ? "into a new group" : "into " + editor.Groups[Math.Min(_group, editor.Groups.Count - 1)].Id);
+        _props.Live(() => editor.Groups.Count == 0 ? "into a new fight" : "into " +editor.Groups[Math.Min(_group, editor.Groups.Count - 1)].Id);
         if (editor.Names.Creatures.Count == 0)
         {
             _props.Dim("No creatures in this package.");
@@ -221,14 +221,15 @@ public partial class EncountersModePanel : HBoxContainer
     {
         if (editor.Groups.Count == 0)
         {
-            _props.Heading("No groups yet");
-            _props.Dim("Pick Place, then click the map. The first creature makes the first group.");
+            _props.Heading("No fights yet");
+            _props.Dim("Pick Place, then click the map. The first creature makes the first fight; more join it.");
             return;
         }
         int group = _group;
         EncountersEditor.Group Now() => editor.Groups[Math.Min(group, editor.Groups.Count - 1)];
 
-        _props.Heading("Group").AddThemeColorOverride("font_color", ColorOf(group));
+        _props.Heading("Fight").AddThemeColorOverride("font_color", ColorOf(group));
+        _props.Dim("Its name, for the story and triggers");
         _props.Field(() => Now().Id, typed =>
         {
             if (typed != Now().Id && !editor.SetGroupId(group, typed))
@@ -240,9 +241,9 @@ public partial class EncountersModePanel : HBoxContainer
                 _hint = "";
             }
         }, editor.EndTyping, "id");
-        _props.Dim("Line when the fight starts");
-        _props.Field(() => Now().Text, typed => editor.SetGroupText(group, typed), editor.EndTyping, "none");
-        _props.Dim("Flags set on a win");
+        _props.Dim("What the game says as it starts");
+        _props.Field(() => Now().Text, typed => editor.SetGroupText(group, typed), editor.EndTyping, "nothing");
+        _props.Dim("Story flags it sets when won, for a door or a conversation to wait for (comma between)");
         _props.Field(() => string.Join(", ", Now().Set), typed =>
         {
             List<string> flags = FlagsFrom(typed);
@@ -251,13 +252,13 @@ public partial class EncountersModePanel : HBoxContainer
                 _hint = "Flags are 1 to 64 characters.";
             }
         }, editor.EndTyping, "none");
-        _props.Dim("AI for all of them");
+        _props.Dim("How they fight");
         Stepper(() => EncountersEditor.ProfileOf(Now().Ai) is { Length: > 0 } p ? p : "each one's own",
             step => editor.SetGroupAi(group, StepName(Profiles(editor), EncountersEditor.ProfileOf(Now().Ai), step)));
 
         HBoxContainer heads = _props.Row();
-        _props.Dim("XP", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        _props.Dim("Chapter's", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _props.Dim("XP for this fight", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _props.Dim("XP for any other", heads).SizeFlagsHorizontal = SizeFlags.ExpandFill;
         HBoxContainer xp = _props.Row();
         _props.Field(() => Now().Xp?.ToString(CultureInfo.InvariantCulture) ?? "", typed =>
         {
@@ -270,12 +271,12 @@ public partial class EncountersModePanel : HBoxContainer
             bool fine = int.TryParse(typed, NumberStyles.None, CultureInfo.InvariantCulture, out int value) && (value == editor.ChapterXp || editor.SetChapterXp(value));
             _hint = fine ? "" : "XP is a whole number.";
         }, editor.EndTyping, "0", xp);
-        _props.Act(() => $"Use {editor.ProposedXp(group)} from levels", () => editor.SetGroupXp(group, editor.ProposedXp(group)),
+        _props.Act(() => $"Use {editor.ProposedXp(group)}, from the foes' levels",() => editor.SetGroupXp(group, editor.ProposedXp(group)),
             () => Now().Xp != editor.ProposedXp(group) && Now().Creatures.Count > 0);
         _props.Gap();
 
         _props.Heading("Loot");
-        _props.Dim("Coins, as dice");
+        _props.Dim("Coins dropped, as dice like 2d6");
         _props.Field(() => Now().Loot.Coins, typed =>
         {
             var loot = new LootTable { Coins = typed.Trim(), Items = Now().Loot.Items };
@@ -346,7 +347,7 @@ public partial class EncountersModePanel : HBoxContainer
         }
         _props.Dim("Name");
         _props.Field(() => Now().Name, typed => editor.SetCreatureName(group, index, typed), editor.EndTyping, look?.Name ?? p.Creature);
-        _props.Dim("Group");
+        _props.Dim("In the fight");
         Stepper(() => editor.Groups[group].Id, step =>
         {
             int count = editor.Groups.Count;
@@ -371,8 +372,8 @@ public partial class EncountersModePanel : HBoxContainer
             double? way = degrees < 0 ? null : degrees;
             _props.Toggle(name, () => Now().Facing == way, () => editor.SetFacing(group, index, way), grid, "TabButton").Alignment = HorizontalAlignment.Center;
         }
-        _props.Dim("AI");
-        Stepper(() => EncountersEditor.ProfileOf(Now().Ai) is { Length: > 0 } profile ? profile : "the group's",
+        _props.Dim("How it fights");
+        Stepper(() => EncountersEditor.ProfileOf(Now().Ai) is { Length: > 0 } profile ? profile : "as the fight says",
             step => editor.SetCreatureAi(group, index, StepName(Profiles(editor), EncountersEditor.ProfileOf(Now().Ai), step)));
         _props.Gap();
         _props.Act("Remove (Del)", () =>

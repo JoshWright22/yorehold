@@ -544,9 +544,10 @@ reopened (`playtest.ps1 -Problems`).
     body would read better as two lists side by side (yours, theirs) with Take and Give between.
   - Done 10/7: a companion's journal page says how they feel and when they would join or leave
     in words, the numbers in small print under it.
-  - Create: Dialogue and Encounters show file and engine words (dialogue/tobb.json, "Node",
-	"-> freed", "Flags set on a win", "Coins, as dice", "Use 50 from levels"). Each field gets
-	a plain label and a one-line help, the way Settings rows do.
+  - Done 10/7: Create's Dialogue and Encounters say what each field is for in plain words
+    ("Conversation: tobb", "Lines", "Who says it", "goes to freed", "Story flags it sets when won,
+    for a door or a conversation to wait for", "Fights" for groups). Map, Compendium, Cutscene
+    and Story still use some engine words; they get the same pass when next touched.
   - Done 10/7: the character library opened from the title has no Lobby tab.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.
