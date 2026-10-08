@@ -1,0 +1,9 @@
+{
+  "id": "blurred",
+  "name": "Blurred",
+  "description": "Attacks against it have disadvantage.",
+  "flags": [
+    "blurred"
+  ],
+  "attackersDisadvantage": true
+}

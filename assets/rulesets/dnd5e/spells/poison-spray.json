@@ -1,0 +1,27 @@
+{
+  "id": "poison-spray",
+  "name": "Poison Spray",
+  "description": "A puff of toxic gas: a ranged spell attack for 1d12 poison.",
+  "level": 0,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d12",
+          "type": "poison",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

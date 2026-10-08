@@ -1,0 +1,15 @@
+{
+  "id": "chilled",
+  "name": "Chilled",
+  "description": "Speed 10 feet lower.",
+  "modifiers": [
+    {
+      "stat": "speed",
+      "op": "add",
+      "value": -10
+    }
+  ],
+  "ends": [
+    "turnStart"
+  ]
+}

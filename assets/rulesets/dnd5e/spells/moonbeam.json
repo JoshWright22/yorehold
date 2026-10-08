@@ -1,0 +1,33 @@
+{
+  "id": "moonbeam",
+  "name": "Moonbeam",
+  "description": "A silvery beam: 2d10 radiant in a 5-foot radius, half on a Constitution save.",
+  "level": 2,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 24
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d10",
+      "type": "radiant",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 2,
+        "dice": "1d10"
+      }
+    }
+  ]
+}

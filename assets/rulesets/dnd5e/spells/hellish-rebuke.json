@@ -1,0 +1,29 @@
+{
+  "id": "hellish-rebuke",
+  "name": "Hellish Rebuke",
+  "description": "Cast as a reaction when a creature hits you: 2d10 fire to it, half on a Dexterity save.",
+  "level": 1,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d10",
+      "type": "fire",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d10"
+      }
+    }
+  ]
+}

@@ -28,15 +28,21 @@
       "healing-word",
       "thunderwave",
       "command",
-      "cure-wounds"
+      "cure-wounds",
+      "faerie-fire",
+      "charm-person"
     ],
     "2": [
       "hold-person",
       "shatter",
-      "lesser-restoration"
+      "lesser-restoration",
+      "invisibility",
+      "aid"
     ],
     "3": [
-      "mass-healing-word"
+      "mass-healing-word",
+      "hypnotic-pattern",
+      "slow"
     ]
   },
   "levels": [

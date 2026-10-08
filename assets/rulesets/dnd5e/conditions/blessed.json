@@ -1,0 +1,17 @@
+{
+  "id": "blessed",
+  "name": "Blessed",
+  "description": "+2 to attack rolls and saves.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 2
+    },
+    {
+      "stat": "saves",
+      "op": "add",
+      "value": 2
+    }
+  ]
+}

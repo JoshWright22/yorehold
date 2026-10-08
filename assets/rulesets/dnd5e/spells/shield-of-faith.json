@@ -1,0 +1,21 @@
+{
+  "id": "shield-of-faith",
+  "name": "Shield of Faith",
+  "description": "As a bonus action, a shimmering field gives an ally +2 AC while you concentrate.",
+  "level": 1,
+  "hands": 0,
+  "cost": "bonus",
+  "concentration": true,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 12
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "shielded-by-faith",
+      "duration": 10
+    }
+  ]
+}

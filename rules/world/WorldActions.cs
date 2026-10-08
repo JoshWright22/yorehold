@@ -586,6 +586,17 @@ public sealed partial class World
             {
                 return Approach(context.Self, who, squares);
             }
+            if (how == "teleport")
+            {
+                // to the square the action was aimed at, when it is open and near enough
+                if (Sheet(who) == null || _world._aim is not Cell to || !_world.Walkable(to) || _world.Occupied(to, who)
+                    || (squares > 0 && _world.Grid.Distance(_world.CellOf(who), to) > squares + 0.01f))
+                {
+                    return false;
+                }
+                _world.Place(who, to);
+                return true;
+            }
             if (Sheet(who) == null || Sheet(context.Self) == null || (how != "push" && how != "pull") || who == context.Self)
             {
                 return false;

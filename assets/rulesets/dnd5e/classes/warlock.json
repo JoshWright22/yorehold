@@ -21,16 +21,24 @@
   "casting": "known",
   "spells": {
     "0": [
-      "eldritch-blast"
+      "eldritch-blast",
+      "chill-touch",
+      "poison-spray",
+      "toll-the-dead"
     ],
     "1": [
-      "hex"
+      "hex",
+      "hellish-rebuke",
+      "charm-person"
     ],
     "2": [
-      "hold-person"
+      "hold-person",
+      "misty-step",
+      "invisibility"
     ],
     "3": [
-      "counterspell"
+      "counterspell",
+      "hypnotic-pattern"
     ]
   },
   "levels": [

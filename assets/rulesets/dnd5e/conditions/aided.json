@@ -1,0 +1,15 @@
+{
+  "id": "aided",
+  "name": "Aided",
+  "description": "Hit point maximum 5 higher until a rest.",
+  "modifiers": [
+    {
+      "stat": "maxHp",
+      "op": "add",
+      "value": 5
+    }
+  ],
+  "ends": [
+    "rest"
+  ]
+}

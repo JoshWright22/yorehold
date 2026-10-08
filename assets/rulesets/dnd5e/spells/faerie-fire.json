@@ -1,0 +1,29 @@
+{
+  "id": "faerie-fire",
+  "name": "Faerie Fire",
+  "description": "Outlines creatures in a 20-foot cube with light: attacks against them have advantage. A Dexterity save avoids it.",
+  "level": 1,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 12
+  },
+  "area": {
+    "shape": "burst",
+    "size": 2
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "outlined",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

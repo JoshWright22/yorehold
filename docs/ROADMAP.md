@@ -496,6 +496,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     Dwarven Resilience, Adrenaline Rush, Infernal Legacy), the four SRD backgrounds with their
     origin feats (Alert, Magic Initiate, Savage Attacker, Skilled), two fighting styles. Feats,
     features and options can grant spells.
+  - Done 10/8: 23 more spells: Ray of Frost, Shocking Grasp, Chill Touch, Toll the Dead, Poison
+    Spray; Bless, Faerie Fire, Entangle, Charm Person, Hellish Rebuke (a reaction to a hit),
+    False Life, Shield of Faith, Divine Favor; Misty Step (teleport, now played), Web, Blur,
+    Invisibility, Aid, Magic Weapon, Spiritual Weapon, Moonbeam; Haste, Slow, Hypnotic Pattern,
+    Call Lightning, Bestow Curse; on the class lists they belong to.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
     move, Strike/Stride/Raise a Shield/Demoralize/Hide/Stand, the multiple attack penalty with

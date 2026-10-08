@@ -23,10 +23,15 @@
   "spells": {
     "1": [
       "cure-wounds",
-      "command"
+      "command",
+      "bless",
+      "shield-of-faith",
+      "divine-favor"
     ],
     "2": [
-      "lesser-restoration"
+      "lesser-restoration",
+      "aid",
+      "magic-weapon"
     ]
   },
   "levels": [

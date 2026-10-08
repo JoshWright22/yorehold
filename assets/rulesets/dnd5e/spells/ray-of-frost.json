@@ -1,0 +1,33 @@
+{
+  "id": "ray-of-frost",
+  "name": "Ray of Frost",
+  "description": "A frigid beam: a ranged spell attack for 1d8 cold, and the target's speed drops by 10 feet until your next turn.",
+  "level": 0,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d8",
+          "type": "cold",
+          "when": "hit"
+        },
+        {
+          "do": "condition",
+          "id": "chilled",
+          "duration": 1,
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

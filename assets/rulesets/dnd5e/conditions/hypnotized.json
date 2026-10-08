@@ -1,0 +1,12 @@
+{
+  "id": "hypnotized",
+  "name": "Hypnotized",
+  "description": "Dazed by a pattern: can't act or move until hurt.",
+  "flags": [
+    "cantAct",
+    "cantMove"
+  ],
+  "ends": [
+    "damage"
+  ]
+}

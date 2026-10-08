@@ -1,0 +1,29 @@
+{
+  "id": "web",
+  "name": "Web",
+  "description": "Sticky webs fill a 20-foot cube; those who fail a Dexterity save are restrained.",
+  "level": 2,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 12
+  },
+  "area": {
+    "shape": "burst",
+    "size": 2
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "restrained",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

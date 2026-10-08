@@ -1,0 +1,25 @@
+{
+  "id": "bestow-curse",
+  "name": "Bestow Curse",
+  "description": "A touch that curses: disadvantage on attacks unless the target makes a Wisdom save.",
+  "level": 3,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "cursed",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

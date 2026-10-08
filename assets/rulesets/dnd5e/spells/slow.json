@@ -1,0 +1,29 @@
+{
+  "id": "slow",
+  "name": "Slow",
+  "description": "Up to six creatures in a 40-foot cube: -2 AC and one action fewer each turn unless they make a Wisdom save.",
+  "level": 3,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 24
+  },
+  "area": {
+    "shape": "burst",
+    "size": 4
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "slowed",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

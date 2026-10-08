@@ -1,0 +1,19 @@
+{
+  "id": "divine-favor",
+  "name": "Divine Favor",
+  "description": "As a bonus action, your weapon hits deal 1d4 radiant more for a minute.",
+  "level": 1,
+  "hands": 0,
+  "cost": "bonus",
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "favored",
+      "duration": 10,
+      "target": "self"
+    }
+  ]
+}

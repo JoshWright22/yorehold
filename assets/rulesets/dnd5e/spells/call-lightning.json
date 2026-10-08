@@ -1,0 +1,33 @@
+{
+  "id": "call-lightning",
+  "name": "Call Lightning",
+  "description": "A bolt from a storm cloud: 3d10 lightning in a 5-foot radius, half on a Dexterity save.",
+  "level": 3,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 24
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "3d10",
+      "type": "lightning",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 3,
+        "dice": "1d10"
+      }
+    }
+  ]
+}

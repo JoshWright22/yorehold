@@ -1,0 +1,27 @@
+{
+  "id": "shocking-grasp",
+  "name": "Shocking Grasp",
+  "description": "Lightning from your hand: a melee spell attack for 1d8 lightning.",
+  "level": 0,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d8",
+          "type": "lightning",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

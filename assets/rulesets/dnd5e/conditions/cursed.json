@@ -1,0 +1,9 @@
+{
+  "id": "cursed",
+  "name": "Cursed",
+  "description": "Disadvantage on attack rolls.",
+  "flags": [
+    "cursed"
+  ],
+  "disadvantageOnAttacks": true
+}

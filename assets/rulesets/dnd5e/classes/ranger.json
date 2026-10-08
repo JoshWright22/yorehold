@@ -24,10 +24,13 @@
   "spells": {
     "1": [
       "hunters-mark",
-      "cure-wounds"
+      "cure-wounds",
+      "entangle"
     ],
     "2": [
-      "lesser-restoration"
+      "lesser-restoration",
+      "misty-step",
+      "magic-weapon"
     ]
   },
   "levels": [

@@ -22,16 +22,24 @@
   "casting": "prepared",
   "spells": {
     "0": [
-      "produce-flame"
+      "produce-flame",
+      "poison-spray"
     ],
     "1": [
       "cure-wounds",
       "healing-word",
-      "thunderwave"
+      "thunderwave",
+      "entangle",
+      "faerie-fire",
+      "charm-person"
     ],
     "2": [
       "lesser-restoration",
-      "hold-person"
+      "hold-person",
+      "moonbeam"
+    ],
+    "3": [
+      "call-lightning"
     ]
   },
   "levels": [

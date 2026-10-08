@@ -61,21 +61,27 @@
   "casting": "prepared",
   "spells": {
     "0": [
-      "sacred-flame"
+      "sacred-flame",
+      "toll-the-dead"
     ],
     "1": [
       "cure-wounds",
       "healing-word",
       "guiding-bolt",
       "inflict-wounds",
-      "command"
+      "command",
+      "bless",
+      "shield-of-faith"
     ],
     "2": [
       "hold-person",
-      "lesser-restoration"
+      "lesser-restoration",
+      "aid",
+      "spiritual-weapon"
     ],
     "3": [
-      "mass-healing-word"
+      "mass-healing-word",
+      "bestow-curse"
     ]
   }
 }

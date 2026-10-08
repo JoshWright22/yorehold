@@ -511,6 +511,37 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void MistyStepRebukeAndHaste()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "warlock");
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet;
+        foreach (string id in new[] { "misty-step", "hellish-rebuke", "haste" })
+        {
+            bo.Spells.Add(id);
+        }
+        bo.Resources["slots-1"] = new Resource(2, 2);
+        bo.Resources["slots-2"] = new Resource(2, 2);
+        bo.Resources["slots-3"] = new Resource(2, 2);
+        bo.Stats.SetBase("initiative", 2000); // Bo first
+        bo.Stats.SetBase("maxHp", 200);
+        bo.Hp = 200;
+        w.Creatures[2].Sheet.Stats.SetBase("attack", 1000); // and Gik's attack on Bo hits
+        world.Fight();
+        Assert.True(world.TurnTo(1) && world.Use("misty-step", null, new Cell(5, 2)), w.Refusal);
+        Assert.Equal(new Cell(5, 2), w.CellOf(1));
+        // haste on Ana: one more action on her turn
+        int before = 1;
+        Assert.True(world.Use("haste", 0), w.Refusal);
+        Assert.True(w.Creatures[0].Sheet.HasCondition("hasted"));
+        Assert.True(world.TurnTo(0) && w.ActionsLeft == before + 1, $"actions {w.ActionsLeft}");
+        // a goblin hits Bo; Bo answers with Hellish Rebuke
+        world.Put(2, new Cell(5, 3));
+        Assert.True(world.TurnTo(2) && world.Use("attack", 1), w.Refusal);
+        Assert.True(world.Said("Bo takes Hellish Rebuke"), string.Join("\n", world.Log.TakeLast(6)));
+    }
+
+    [Fact]
     public void ACounterspellLosesTheSpell()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");

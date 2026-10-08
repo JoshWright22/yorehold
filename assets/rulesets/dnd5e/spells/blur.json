@@ -1,0 +1,19 @@
+{
+  "id": "blur",
+  "name": "Blur",
+  "description": "Your body blurs: attacks against you have disadvantage while you concentrate.",
+  "level": 2,
+  "hands": 0,
+  "concentration": true,
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "blurred",
+      "duration": 10,
+      "target": "self"
+    }
+  ]
+}

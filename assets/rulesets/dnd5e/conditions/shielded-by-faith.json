@@ -1,0 +1,12 @@
+{
+  "id": "shielded-by-faith",
+  "name": "Shield of Faith",
+  "description": "+2 AC.",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 2
+    }
+  ]
+}

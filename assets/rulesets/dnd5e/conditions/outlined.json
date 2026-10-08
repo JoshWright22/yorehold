@@ -1,0 +1,9 @@
+{
+  "id": "outlined",
+  "name": "Outlined",
+  "description": "Shining with faerie fire: attacks against it have advantage.",
+  "flags": [
+    "outlined"
+  ],
+  "attackersAdvantage": true
+}

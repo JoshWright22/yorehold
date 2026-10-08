@@ -1,0 +1,22 @@
+{
+  "id": "aid",
+  "name": "Aid",
+  "description": "An ally's hit point maximum and current HP rise by 5 until it next rests.",
+  "level": 2,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 6
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "aided"
+    },
+    {
+      "do": "heal",
+      "dice": "5"
+    }
+  ]
+}

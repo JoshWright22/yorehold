@@ -1,0 +1,25 @@
+{
+  "id": "misty-step",
+  "name": "Misty Step",
+  "description": "As a bonus action, you teleport up to 30 feet to a square you can see.",
+  "level": 2,
+  "hands": 0,
+  "cost": "bonus",
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 6
+  },
+  "area": {
+    "shape": "burst",
+    "size": 0.5
+  },
+  "effects": [
+    {
+      "do": "move",
+      "how": "teleport",
+      "distance": 6,
+      "target": "self"
+    }
+  ]
+}

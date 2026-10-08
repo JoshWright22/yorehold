@@ -1,0 +1,22 @@
+{
+  "id": "false-life",
+  "name": "False Life",
+  "description": "Necromantic vigour: 2d4+4 temporary HP.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "tempHp",
+      "dice": "2d4+4",
+      "target": "self",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "magic-weapon",
+  "name": "Magic Weapon",
+  "description": "+1 to weapon attack and damage rolls.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 1
+    },
+    {
+      "stat": "damage",
+      "op": "add",
+      "value": 1
+    }
+  ],
+  "ends": [
+    "rest"
+  ]
+}

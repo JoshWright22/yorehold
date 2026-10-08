@@ -1,0 +1,17 @@
+{
+  "id": "slowed",
+  "name": "Slowed",
+  "description": "-2 AC and one action fewer each turn.",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -2
+    },
+    {
+      "stat": "actions",
+      "op": "add",
+      "value": -1
+    }
+  ]
+}

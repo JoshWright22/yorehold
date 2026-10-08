@@ -1,0 +1,22 @@
+{
+  "id": "hasted",
+  "name": "Hasted",
+  "description": "+2 AC, 10 more feet of speed and one more action each turn.",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 2
+    },
+    {
+      "stat": "speed",
+      "op": "add",
+      "value": 10
+    },
+    {
+      "stat": "actions",
+      "op": "add",
+      "value": 1
+    }
+  ]
+}

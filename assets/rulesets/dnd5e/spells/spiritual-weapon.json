@@ -1,0 +1,28 @@
+{
+  "id": "spiritual-weapon",
+  "name": "Spiritual Weapon",
+  "description": "As a bonus action, a spectral weapon strikes: a melee spell attack for 1d8 force from up to 60 feet.",
+  "level": 2,
+  "hands": 0,
+  "cost": "bonus",
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "1d8+{mod.caster}",
+          "type": "force",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

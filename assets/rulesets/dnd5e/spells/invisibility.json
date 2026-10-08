@@ -1,0 +1,20 @@
+{
+  "id": "invisibility",
+  "name": "Invisibility",
+  "description": "An ally turns invisible until it attacks or casts, or you stop concentrating.",
+  "level": 2,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "invisible",
+      "duration": 10
+    }
+  ]
+}

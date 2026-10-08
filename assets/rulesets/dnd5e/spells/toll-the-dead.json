@@ -1,0 +1,24 @@
+{
+  "id": "toll-the-dead",
+  "name": "Toll the Dead",
+  "description": "A dolorous bell: 1d8 necrotic unless the target makes a Wisdom save.",
+  "level": 0,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d8",
+      "type": "necrotic",
+      "onSave": "none"
+    }
+  ]
+}

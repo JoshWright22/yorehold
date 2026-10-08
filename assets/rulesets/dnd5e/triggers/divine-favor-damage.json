@@ -1,0 +1,15 @@
+{
+  "id": "divine-favor-damage",
+  "name": "Divine Favor",
+  "description": "While favored, weapon hits deal 1d4 radiant more.",
+  "on": "hit",
+  "if": "flag.favored",
+  "general": true,
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d4",
+      "type": "radiant"
+    }
+  ]
+}

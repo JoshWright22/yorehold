@@ -1,0 +1,18 @@
+{
+  "id": "magic-weapon",
+  "name": "Magic Weapon",
+  "description": "As a bonus action, your weapon becomes magical: +1 to attack and damage rolls.",
+  "level": 2,
+  "hands": 1,
+  "cost": "bonus",
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "magic-weapon",
+      "target": "self"
+    }
+  ]
+}

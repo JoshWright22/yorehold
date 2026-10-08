@@ -1,0 +1,8 @@
+{
+  "id": "favored",
+  "name": "Divine Favor",
+  "description": "Weapon hits deal 1d4 radiant more.",
+  "flags": [
+    "favored"
+  ]
+}

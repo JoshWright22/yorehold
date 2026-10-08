@@ -59,23 +59,38 @@
   "casting": "prepared",
   "spells": {
     "0": [
-      "fire-bolt"
+      "fire-bolt",
+      "ray-of-frost",
+      "shocking-grasp",
+      "chill-touch",
+      "toll-the-dead"
     ],
     "1": [
       "magic-missile",
       "shield",
       "burning-hands",
-      "thunderwave"
+      "thunderwave",
+      "charm-person",
+      "false-life"
     ],
     "2": [
       "scorching-ray",
       "shatter",
-      "hold-person"
+      "hold-person",
+      "misty-step",
+      "web",
+      "blur",
+      "invisibility",
+      "magic-weapon"
     ],
     "3": [
       "fireball",
       "lightning-bolt",
-      "counterspell"
+      "counterspell",
+      "haste",
+      "slow",
+      "hypnotic-pattern",
+      "bestow-curse"
     ]
   }
 }

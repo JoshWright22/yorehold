@@ -1,0 +1,29 @@
+{
+  "id": "hypnotic-pattern",
+  "name": "Hypnotic Pattern",
+  "description": "A twisting pattern of colours: creatures in a 30-foot cube that fail a Wisdom save are dazed, unable to act, until hurt.",
+  "level": 3,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 24
+  },
+  "area": {
+    "shape": "burst",
+    "size": 3
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "hypnotized",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}
