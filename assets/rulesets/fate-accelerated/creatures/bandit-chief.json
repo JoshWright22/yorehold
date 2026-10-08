@@ -3,6 +3,9 @@
   "name": "Bandit chief",
   "description": "A named foe with stress and consequences to burn.",
   "hp": 8,
+  "stats": {
+    "stress": 2
+  },
   "armorClass": 2,
   "speed": 30,
   "level": 1,

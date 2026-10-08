@@ -472,6 +472,11 @@ public sealed partial class World
             token.Selected = false;
         }
         Raise("fightEnd");
+        foreach (WorldCreature c in Creatures)
+        {
+            // Fate's stress clears when the conflict is over
+            c.Sheet.ClearTracks(TrackDefinition.FightEnd);
+        }
         FallenConditions();
 
         if (Encounter.WinningTeam != 0)

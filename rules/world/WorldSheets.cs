@@ -56,6 +56,8 @@ public static class WorldSheets
         {
             sheet.Unequip(sheet.Inventory.IndexOf(item));
         }
+        // a system with tracks counts harm on them, not on the stat block's HP
+        sheet.UseTracks(rules);
         return sheet;
     }
 }

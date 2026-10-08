@@ -10,13 +10,13 @@ public sealed class SheetLayout
     /// <summary>The parts a sheet can have: vitals (AC, HP, speed), level (hit die, XP), the scores, then the lists.</summary>
     public static readonly string[] Sections =
     {
-        "vitals", "level", "scores", "saves", "skills", "defences", "weapon", "feats", "uses", "conditions", "carrying",
+        "vitals", "tracks", "level", "scores", "saves", "skills", "defences", "weapon", "feats", "uses", "conditions", "carrying",
     };
 
     // the labels inside those parts a system may rename
     private static readonly Dictionary<string, string> DefaultNames = new(StringComparer.Ordinal)
     {
-        ["ac"] = "AC", ["hp"] = "HP", ["speed"] = "Speed", ["hitDie"] = "Hit die", ["xp"] = "XP",
+        ["ac"] = "AC", ["hp"] = "HP", ["tracks"] = "Tracks", ["speed"] = "Speed", ["hitDie"] = "Hit die", ["xp"] = "XP",
         ["saves"] = "Saves", ["skills"] = "Skills", ["defences"] = "Defences", ["weapon"] = "Weapon",
         ["feats"] = "Feats", ["uses"] = "Uses", ["conditions"] = "Conditions", ["carrying"] = "Carrying",
     };

@@ -166,6 +166,8 @@ public class Ruleset
     public TurnWords Words { get; init; } = new();
     /// <summary>The parts of a character sheet the system shows, and their names.</summary>
     public SheetLayout Sheet { get; init; } = new();
+    /// <summary>What harm uses up, in the order it does; empty = plain HP.</summary>
+    public List<TrackDefinition> Tracks { get; init; } = new();
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -465,6 +467,7 @@ public class Ruleset
             Creation = CreationRules.Read(node.Get("creation")),
             Words = TurnWords.Read(node.Get("turnWords")),
             Sheet = SheetLayout.Read(node.Get("sheet")),
+            Tracks = (node.Get("tracks")?.Items() ?? Array.Empty<ContentNode>()).Select(TrackDefinition.Read).ToList(),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,
@@ -511,6 +514,17 @@ public class Ruleset
         foreach (string rest in rules.Death.Track?.WoundedClearedBy.Where(id => rules.Rest(id) == null) ?? Enumerable.Empty<string>())
         {
             throw new ContentException(node.File, "death.track.woundedClearedBy", $"unknown rest \"{rest}\"");
+        }
+        if (rules.Tracks.Select(t => t.Id).Distinct().Count() != rules.Tracks.Count)
+        {
+            throw new ContentException(node.File, "tracks", "tracks have different ids");
+        }
+        foreach (TrackDefinition track in rules.Tracks)
+        {
+            if (track.Clears.FirstOrDefault(e => e != TrackDefinition.FightEnd && rules.Rest(e) == null) is string unknown)
+            {
+                throw new ContentException(node.File, $"tracks.{track.Id}.clears", $"unknown rest \"{unknown}\"; it is fightEnd or a rest's id");
+            }
         }
         return rules;
     }

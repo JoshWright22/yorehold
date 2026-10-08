@@ -3,6 +3,10 @@
   "name": "Goblin thug",
   "description": "A nameless mook: one good hit takes it out.",
   "hp": 2,
+  "stats": {
+    "stress": 2,
+    "mook": 1
+  },
   "armorClass": 1,
   "speed": 30,
   "level": 1,

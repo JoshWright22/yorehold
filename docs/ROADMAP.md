@@ -305,6 +305,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Tracks: a system declares its tracks (5e's HP; Fate's stress boxes and consequence slots;
     PF2e's dying and wounded; mana), each with a max formula, how damage is spread over them,
     and "down" and "dead" as formulas over them. HP becomes one system's track.
+    Done 10/8: `tracks` (max formula, damage per point, heals, cleared by the fight's end or a
+    rest), damage running through them in order and down when none takes the rest; HP is their
+    total. Fate plays stress and consequences. Left: "dead" as a formula, the downed card and
+    hotbar drawing tracks as boxes, effect steps aimed at one track.
   - Defences: named defences, each a formula (AC, a Fortitude DC) or a roll (Fate's Defend);
     each roll kind and action says which it is rolled against. AC stops being special.
   - The character's data: a system declares its numbers in groups (abilities, skills,

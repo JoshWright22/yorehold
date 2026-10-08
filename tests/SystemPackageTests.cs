@@ -181,9 +181,44 @@ public class SystemPackageTests
 
         using WorldFixture fate = Yard("rulesets/fate-accelerated", "character", "character");
         SheetLayout layout = fate.World.Rules.Sheet;
-        Assert.True(!layout.Shows("level") && layout.Shows("vitals") && layout.NameOf("hp") == "Stress" && layout.NameOf("xp") == "XP");
+        Assert.True(!layout.Shows("level") && layout.Shows("tracks") && layout.NameOf("hp") == "Shifts left" && layout.NameOf("xp") == "XP");
         ContentException error = TestContent.Refused(() => SheetLayout.Read(TestContent.Json("""{"sections": ["vitals", "luck"]}""")));
         Assert.Contains("unknown section \"luck\"", error.Message);
+    }
+
+    [Fact]
+    public void FateHarmIsStressThenConsequences()
+    {
+        using WorldFixture world = Yard("rulesets/fate-accelerated", "character", "character");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        string Tracks() => string.Join(" ", ana.Tracks.Select(t => t.Value));
+        // 3 stress, then mild (2), moderate (4) and severe (6) consequences: 15 shifts in all
+        Assert.Equal(("3 1 1 1", 15, 15), (Tracks(), ana.Hp, ana.MaxHp));
+        ana.TakeDamage(2);
+        Assert.Equal(("1 1 1 1", 13), (Tracks(), ana.Hp));
+        ana.TakeDamage(3); // the last stress box and the mild consequence
+        Assert.Equal(("0 0 1 1", 10), (Tracks(), ana.Hp));
+        ana.Heal(5); // healing clears stress, never a consequence
+        Assert.Equal("3 0 1 1", Tracks());
+        ana.TakeDamage(13); // stress, moderate, severe: all taken, still standing
+        Assert.True(Tracks() == "0 0 0 0" && !ana.Down, Tracks());
+        Assert.True(ana.TakeDamage(1) && ana.Down, "A shift no track takes takes Ana out");
+
+        // stress clears once the conflict ends, consequences between scenes; down stays down
+        CharacterSheet bo = w.Creatures[1].Sheet;
+        bo.TakeDamage(5);
+        bo.ClearTracks(TrackDefinition.FightEnd);
+        Assert.Equal(("3 0 1 1", 13), (string.Join(" ", bo.Tracks.Select(t => t.Value)), bo.Hp));
+        bo.ClearTracks("scene");
+        Assert.Equal(15, bo.Hp);
+
+        // a mook has its own stress and no consequences; the sheet saves its tracks
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        Assert.Equal(("2 0 0 0", 2), (string.Join(" ", gik.Tracks.Select(t => t.Value)), gik.MaxHp));
+        bo.TakeDamage(4);
+        CharacterSheet loaded = CharacterSheet.Read(TestContent.Json(bo.ToJson().ToJsonString()));
+        Assert.Equal(string.Join(" ", bo.Tracks.Select(t => t.Value)), string.Join(" ", loaded.Tracks.Select(t => t.Value)));
     }
 
     [Fact]

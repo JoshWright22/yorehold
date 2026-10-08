@@ -31,6 +31,10 @@ public static class SheetPage
                     string hp = $"{System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}" + (sheet.TempHp > 0 ? $" (+{sheet.TempHp})" : "");
                     page.Stats((layout.NameOf("ac"), sheet.ArmorClass(rules).ToString()), (layout.NameOf("hp"), hp), (layout.NameOf("speed"), $"{sheet.SpeedFeet} ft"));
                     break;
+                case "tracks":
+                    // "Stress 2/3, Mild consequence 1/1"
+                    page.Stat(layout.NameOf("tracks"), string.Join(", ", sheet.Tracks.Where(t => t.Max > 0).Select(t => $"{t.Name} {t.Value}/{t.Max}")));
+                    break;
                 case "level":
                     int xp = choices != null ? System.Math.Max(choices.Xp, sheet.Xp) : sheet.Xp;
                     string next = sheet.Level - 1 < rules.XpForLevel.Count ? $" of {rules.XpForLevel[sheet.Level - 1]}" : "";

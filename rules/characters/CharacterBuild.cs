@@ -307,6 +307,7 @@ public static class CharacterBuild
         {
             GiveItems(c, compendium, background.Items);
         }
+        c.UseTracks(rules);
         return c;
     }
 

@@ -438,6 +438,10 @@ public sealed partial class CharacterSheet
     public bool TakeDamage(int amount)
     {
         amount = Math.Max(0, amount);
+        if (Tracks.Count > 0)
+        {
+            return TrackDamage(amount);
+        }
         bool wasUp = Hp > 0;
         int absorbed = Math.Min(TempHp, amount);
         TempHp -= absorbed;
@@ -452,10 +456,151 @@ public sealed partial class CharacterSheet
         {
             return;
         }
-        Hp = Math.Min(MaxHp, Hp + Math.Max(0, amount));
+        if (Tracks.Count > 0)
+        {
+            TrackHeal(Math.Max(0, amount));
+        }
+        else
+        {
+            Hp = Math.Min(MaxHp, Hp + Math.Max(0, amount));
+        }
         if (Hp > 0)
         {
             Death.Clear();
+        }
+    }
+
+    // ---------------------------------------------------------------- tracks
+
+    /// <summary>The system's tracks on this sheet, in the order damage runs through them; empty = plain HP.</summary>
+    public List<TrackSlot> Tracks { get; } = new();
+    // Hp as the tracks last set it, so a change made straight to Hp can be put on the tracks
+    private int _trackHp;
+
+    /// <summary>The damage the tracks can still take.</summary>
+    public int TrackRoom => Tracks.Sum(t => t.Room);
+
+    /// <summary>
+    /// Sets up the system's tracks from this sheet's numbers, keeping the points of any it had.
+    /// With tracks, Hp is what they can still take and MaxHp what they could when full.
+    /// </summary>
+    public void UseTracks(Ruleset rules)
+    {
+        if (rules.Tracks.Count == 0)
+        {
+            Tracks.Clear();
+            return;
+        }
+        var had = Tracks.ToDictionary(t => t.Id, t => t.Value);
+        Tracks.Clear();
+        Func<string, double?> names = name => Named(rules, name);
+        foreach (TrackDefinition track in rules.Tracks)
+        {
+            int max = Math.Max(0, track.Max.Whole(names));
+            Tracks.Add(new TrackSlot
+            {
+                Id = track.Id, Name = track.Name, Max = max, Absorbs = Math.Max(1, track.Absorbs.Whole(names)),
+                Heals = track.Heals, Clears = track.Clears,
+                Value = had.TryGetValue(track.Id, out int value) ? Math.Clamp(value, 0, max) : max,
+            });
+        }
+        Stats.SetBase("maxHp", Tracks.Sum(t => t.Max * t.Absorbs));
+        Hp = had.Count == 0 ? TrackRoom : Hp <= 0 ? 0 : Math.Max(1, TrackRoom);
+        _trackHp = Hp;
+    }
+
+    /// <summary>Fills the tracks an event clears ("fightEnd", a rest's id); one that is down stays down.</summary>
+    public void ClearTracks(string happened)
+    {
+        TracksFollowHp();
+        bool any = false;
+        foreach (TrackSlot track in Tracks.Where(t => t.Clears.Contains(happened)))
+        {
+            any |= track.Value != track.Max;
+            track.Value = track.Max;
+        }
+        if (any && Hp > 0)
+        {
+            Hp = TrackRoom;
+        }
+        _trackHp = Hp;
+    }
+
+    // Damage through the tracks in order, a point at a time; what none of them take puts it down.
+    private bool TrackDamage(int amount)
+    {
+        TracksFollowHp();
+        bool wasUp = Hp > 0;
+        int absorbed = Math.Min(TempHp, amount);
+        TempHp -= absorbed;
+        int left = amount - absorbed;
+        foreach (TrackSlot track in Tracks)
+        {
+            if (left <= 0)
+            {
+                break;
+            }
+            int taken = Math.Min(left, track.Room);
+            if (taken <= 0)
+            {
+                continue;
+            }
+            // a consequence slot is used up whole, however little of it the hit needed
+            track.Value -= (taken + track.Absorbs - 1) / track.Absorbs;
+            left -= taken;
+        }
+        // all of it taken: still up, even with every track spent; anything over: down
+        Hp = left > 0 || !wasUp ? 0 : Math.Max(1, TrackRoom);
+        _trackHp = Hp;
+        return wasUp && Hp == 0;
+    }
+
+    // Healing fills the tracks that heal, first listed first.
+    private void TrackHeal(int amount)
+    {
+        TracksFollowHp();
+        foreach (TrackSlot track in Tracks.Where(t => t.Heals))
+        {
+            int points = Math.Min(track.Max - track.Value, amount / track.Absorbs);
+            track.Value += points;
+            amount -= points * track.Absorbs;
+        }
+        Hp = Math.Max(Hp, TrackRoom);
+        _trackHp = Hp;
+    }
+
+    // Something set Hp straight (a revive, a test): the change goes onto the tracks, healing first
+    // listed first, harm the way damage runs.
+    private void TracksFollowHp()
+    {
+        int change = Hp - _trackHp;
+        _trackHp = Hp;
+        if (change > 0)
+        {
+            foreach (TrackSlot track in Tracks)
+            {
+                int points = Math.Min(track.Max - track.Value, (change + track.Absorbs - 1) / track.Absorbs);
+                track.Value += points;
+                change -= points * track.Absorbs;
+                if (change <= 0)
+                {
+                    break;
+                }
+            }
+        }
+        else if (change < 0 && Hp > 0)
+        {
+            int harm = -change;
+            foreach (TrackSlot track in Tracks)
+            {
+                int points = Math.Min(track.Value, (harm + track.Absorbs - 1) / track.Absorbs);
+                track.Value -= points;
+                harm -= points * track.Absorbs;
+                if (harm <= 0)
+                {
+                    break;
+                }
+            }
         }
     }
 

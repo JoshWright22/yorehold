@@ -68,6 +68,11 @@ public sealed partial class CharacterSheet
                 ["saves"] = Death.Saves, ["successes"] = Death.Successes, ["failures"] = Death.Failures,
                 ["stable"] = Death.Stable, ["dead"] = Death.Dead, ["dying"] = Death.Dying, ["wounded"] = Death.Wounded,
             },
+            ["tracks"] = new JsonArray(Tracks.Select(t => (JsonNode)new JsonObject
+            {
+                ["id"] = t.Id, ["name"] = t.Name, ["max"] = t.Max, ["absorbs"] = t.Absorbs, ["heals"] = t.Heals,
+                ["clears"] = Strings(t.Clears), ["value"] = t.Value,
+            }).ToArray()),
             ["spells"] = Strings(Spells),
             ["granted"] = Strings(Granted),
             ["preparable"] = Strings(Preparable),
@@ -139,6 +144,17 @@ public sealed partial class CharacterSheet
             sheet.Death.Dying = death.Int("dying", 0, 0, 100);
             sheet.Death.Wounded = death.Int("wounded", 0, 0, 100);
         }
+        // the tracks as they were worked out, so a save loads without the ruleset at hand
+        foreach (ContentNode t in node.Get("tracks")?.Items() ?? Array.Empty<ContentNode>())
+        {
+            int max = t.Int("max", 0, 0, 100000);
+            sheet.Tracks.Add(new TrackSlot
+            {
+                Id = t.At("id").AsText(64), Name = t.Text("name", "", 64), Max = max, Absorbs = t.Int("absorbs", 1, 1, 100000),
+                Heals = t.Bool("heals", true), Clears = t.Texts("clears"), Value = t.Int("value", max, 0, max),
+            });
+        }
+        sheet._trackHp = sheet.Hp;
         sheet.Spells.AddRange(node.Texts("spells"));
         sheet.Granted.UnionWith(node.Texts("granted"));
         sheet.Preparable.AddRange(node.Texts("preparable"));
