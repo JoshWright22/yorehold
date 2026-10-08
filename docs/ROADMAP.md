@@ -270,10 +270,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: `formulas` in ruleset.json for a creature's own numbers (ability modifier,
     proficiency, attack, damage, AC, checks, saves, DC, passive scores).
   - Done 10/8: exploding dice, success counts and Fate dice ("1d6!", "6d6s5", "4dF").
-  - Left: typed
-    bonuses and saves as their own list (R6); death saves (R7); a trap's "fumbled by 5" and
-    dialogue checks still read a bare total; expected damage and simulated fights in the evaluator; the fight AI's own odds
-    (`Tactics`, R12).
+  - Done 10/8: the fight AI scores attacks with the system's own odds (`Tactics.HitChance`).
+  - Left: a trap's "fumbled by 5" and dialogue checks still read a bare total; opposed rolls;
+    triggered effects; expected damage and simulated fights in the evaluator; the schema and
+    reference for the story model.
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The
     import (R13) writes systems in it, and the game checks the draft by loading and running it.

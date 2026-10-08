@@ -39,6 +39,8 @@ public sealed class TacticalView
     public string BreakAs { get; set; } = "";
     /// <summary>Squares of walking to the nearest ally not yet fighting, for "alarm"; empty = none.</summary>
     public Dictionary<Cell, float> AllyDistance { get; set; } = new();
+    /// <summary>The rules system's attack roll, so the odds are its own; null = a d20 against AC.</summary>
+    public CheckKind? Attack { get; set; }
 }
 
 public enum ChoiceKind
@@ -72,9 +74,16 @@ public static class Tactics
 {
     private const float Unreachable = 1e6f;
 
-    /// <summary>A d20 plus the bonus against AC; a 1 always misses and a 20 always hits.</summary>
-    public static float HitChance(TacticalUnit attacker, TacticalUnit target)
+    /// <summary>
+    /// The system's chance to hit, counted from its dice and outcomes; without one, a d20 plus the
+    /// bonus against AC where a 1 always misses and a 20 always hits.
+    /// </summary>
+    public static float HitChance(TacticalUnit attacker, TacticalUnit target, CheckKind? attack = null)
     {
+        if (attack != null)
+        {
+            return (float)attack.ChanceToPass(attacker.AttackBonus, target.ArmorClass);
+        }
         return Math.Clamp((21 + attacker.AttackBonus - target.ArmorClass) / 20.0f, 0.05f, 0.95f);
     }
 
@@ -151,7 +160,7 @@ public static class Tactics
                 }
                 float distance = grid.Distance(cell, foe.At);
                 float share = distance <= 1.01f ? 1.0f : distance <= foe.Speed + 1.01f ? 0.5f : 0.0f;
-                total += share * HitChance(foe, me) * foe.AverageDamage;
+                total += share * HitChance(foe, me, view.Attack) * foe.AverageDamage;
             }
             return total;
         }
@@ -242,7 +251,7 @@ public static class Tactics
                 {
                     continue;
                 }
-                float expected = HitChance(me, target) * me.AverageDamage;
+                float expected = HitChance(me, target, view.Attack) * me.AverageDamage;
                 int friends = 0;
                 int mine = 0;
                 for (int other = 0; other < view.Units.Count; other++)

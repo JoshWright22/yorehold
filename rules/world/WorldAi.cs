@@ -225,6 +225,7 @@ public sealed partial class World
         }
         int team = Creatures[me].Team;
         view.Actions = Encounter!.Current.Budget.Actions;
+        view.Attack = Rules.Checks.Kind(CheckRules.Attack);
         ActionDefinition? strike = FindAction(StrikeAction);
         view.StrikeCost = strike != null ? ActionCost(me, strike) : Encounter.StrikeCost;
         if (view.Actions >= 1)
