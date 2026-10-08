@@ -24,12 +24,16 @@ public sealed class DeathState
     public int Failures { get; set; }
     public bool Stable { get; set; }
     public bool Dead { get; set; }
+    /// <summary>With a dying track: how near death, and what earlier brushes with it left.</summary>
+    public int Dying { get; set; }
+    public int Wounded { get; set; }
 
-    /// <summary>Back to no successes or failures, keeping whether it rolls saves at all.</summary>
+    /// <summary>Back to no successes or failures, keeping whether it rolls saves at all and its wounds.</summary>
     public void Clear()
     {
         Successes = 0;
         Failures = 0;
+        Dying = 0;
         Stable = false;
         Dead = false;
     }
@@ -406,6 +410,22 @@ public sealed partial class CharacterSheet
         int harm = Math.Max(0, amount - TempHp);
         bool dropped = TakeDamage(amount);
         DeathRules rule = rules.Death;
+        if (rule.Enabled && rule.Track is DyingTrack track && Death.Saves && !Death.Dead && Down && (harm > 0 || !wasDown))
+        {
+            // dropping starts the dying value; a hit while down raises it
+            Func<string, double?> names = name => name switch
+            {
+                "dying" => Death.Dying,
+                "wounded" => Death.Wounded,
+                "critical" => critical ? 1 : 0,
+                _ => null,
+            };
+            Death.Dying = wasDown && !Death.Stable ? Death.Dying + track.Damage.Whole(names) : track.Start.Whole(names);
+            Death.Stable = false;
+            Death.Dead = track.Dead.Whole(names) != 0;
+            SyncDeath(rules);
+            return dropped;
+        }
         if (rule.Enabled && wasDown && harm > 0 && Death.Saves && !Death.Dead)
         {
             if (Death.Stable)
@@ -460,6 +480,11 @@ public sealed partial class CharacterSheet
         }
         Condition(rule.DownedCondition, Down && !Death.Dead);
         Condition(rule.DyingCondition, Down && !Death.Dead && !Death.Stable);
+        if (rule.Track != null && rule.DyingCondition.Length > 0 && HasCondition(rule.DyingCondition))
+        {
+            // the dying condition shows the value, as a track system writes it ("Dying 2")
+            AddCondition(rules, rule.DyingCondition, value: Math.Max(1, Death.Dying));
+        }
         Condition(rule.StableCondition, Down && !Death.Dead && Death.Stable);
         Condition(rule.DeadCondition, Death.Dead);
     }
@@ -472,6 +497,25 @@ public sealed partial class CharacterSheet
         if (!rule.Enabled || !Down || !Death.Saves || Death.Stable || Death.Dead)
         {
             return null;
+        }
+        if (rule.Track is DyingTrack track)
+        {
+            Func<string, double?> names = name => name switch { "dying" => Death.Dying, "wounded" => Death.Wounded, _ => null };
+            int dc = track.Dc.Whole(names);
+            CheckKind kind = rules.Checks.Kind(track.RollKind);
+            RollResult roll = kind.Roll(0, Advantage.None, random);
+            Death.Dying = Math.Max(0, Death.Dying + track.Change.GetValueOrDefault(kind.Resolve(roll, dc).Id));
+            if (track.Dead.Whole(names) != 0)
+            {
+                Death.Dead = true;
+            }
+            else if (Death.Dying == 0)
+            {
+                Death.Stable = true;
+                Death.Wounded += track.WoundedStep;
+            }
+            SyncDeath(rules);
+            return roll;
         }
         RollResult result = Dice.RollD20(0, Advantage.None, random);
         if (result.Natural20 && rule.NaturalTwentyHp > 0)

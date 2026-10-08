@@ -23,6 +23,9 @@ public sealed class SheetFormulas
         ["save"] = new[] { "ability", "proficiency" },
         ["dc"] = new[] { "base", "ability", "proficiency", "bonus" },
         ["passive"] = new[] { "base", "modifier" },
+        // HP: the first level from the class's hit die, the race's and class's bonus HP and the HP ability; each level after
+        ["hpFirstLevel"] = new[] { "hitDie", "bonus", "ability" },
+        ["hpPerLevel"] = new[] { "hitDie", "ability" },
     };
 
     private static readonly string[] Prefixes = { "mod.", "score.", "stat.", "prof." };

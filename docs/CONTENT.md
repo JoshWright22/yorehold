@@ -759,7 +759,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `proficiencyRanks` | Optional list of ranks with unique `id`, display `name`, `bonus` (0 to 100) and `addsLevel`. |
 | `proficientRank`, `untrainedRank` | Rank IDs used when a sheet has no explicit choice, according to its old proficiency list. |
 | `baseDc` | Base for a character's action DC before ability and proficiency, 10 by default. |
-| `death` | Optional death-save rules; absent/disabled keeps older play (see Downed and death). |
+| `death` | Optional death-save rules; absent/disabled keeps older play (see Downed and death). With `track`, a dying value replaces death saves: `start` (from `wounded`, `critical`) when the creature drops, `damage` (from `dying`, `wounded`, `critical`) added by a hit while down, each turn a roll of the check kind `roll` (default `check`) against `dc` (from `dying`, `wounded`) moving it by `change` (outcome id to a number: `{"criticalFailure": 2, "failure": 1, "success": -1, "criticalSuccess": -2}`), death when `dead` holds (`"dying >= 4"`), and at 0 it is stable and `wounded` goes up by `woundedStep` (1). The dying condition carries the value. |
 | `xpForLevel` | Total XP needed for each level, level 2 first. |
 | `actionsPerTurn`, `bonusActions`, `strikeCostsHands` | Actions in a turn (1 to 10), whether there is a bonus action as well, and whether a Strike costs one action per hand the weapon needs. |
 | `freeMove`, `attackPenalty` | Whether a turn starts with its speed to move for free (true; false: moving takes an action, the Stride/Dash action), and a formula added to each attack from `attacks`, the attacks made earlier that turn (`"attacks >= 2 ? -10 : attacks * -5"`; none by default). A condition adds or takes actions with a modifier on the `actions` stat (`{"stat": "actions", "op": "add", "value": -1}`). An action's `cost` may be `"bonus"`: it takes the bonus action instead. |
@@ -808,6 +808,8 @@ A formula is arithmetic: numbers, the names listed for its place, `+ - * / %`, c
 | `save` | `ability`, `proficiency` | `ability + proficiency` |
 | `dc` | `base`, `ability`, `proficiency`, `bonus` | `base + ability + proficiency + bonus` |
 | `passive` | `base`, `modifier` | `base + modifier` |
+| `hpFirstLevel` | `hitDie`, `bonus` (the race's and class's bonus HP), `ability` (`roles.hpAbility`'s modifier) | `hitDie + bonus + ability` |
+| `hpPerLevel` | `hitDie`, `ability` | `floor(hitDie / 2) + 1 + ability` |
 
 ```json
 "formulas": {

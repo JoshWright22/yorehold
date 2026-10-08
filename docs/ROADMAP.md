@@ -312,6 +312,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
 - [ ] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
   (5e) or dying and wounded values with a recovery check (PF2e). UI: a downed hero's card shows
   the system's track.
+  - Done 10/8: `death.track` (start, damage, the recovery roll and DC, each outcome's change,
+    when it kills, wounded) beside the death saves; `hpFirstLevel` and `hpPerLevel` formulas.
+    The log names the recovery check and the dying value; the dying condition carries it.
+  - Left: wounded going away on a rest; the downed card drawing the track (it shows the
+    condition's value for now).
 - [ ] **R8. Character creation from the system.** Its steps (5e: species, background, class,
   scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
   choices. UI: the creation screen lists the system's steps.

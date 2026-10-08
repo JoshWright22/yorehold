@@ -270,10 +270,22 @@ public static class CharacterBuild
 
         // HP last, so race and feat changes to the HP ability (CON) count
         int con = rules.Roles.HpAbility.Length == 0 ? 0 : c.AbilityModifier(rules, rules.Roles.HpAbility);
-        int hp = Math.Max(1, first.HitDie + first.BonusHp + (race?.BonusHp ?? 0) + con);
+        // the system's own formulas where it has them (PF2e: ancestry HP once, class HP + CON each level)
+        Formula? firstLevel = rules.Formulas.Of("hpFirstLevel");
+        Formula? perLevel = rules.Formulas.Of("hpPerLevel");
+        int bonus = first.BonusHp + (race?.BonusHp ?? 0);
+        int hp = Math.Max(1, firstLevel?.Whole(name => name switch
+        {
+            "hitDie" => first.HitDie, "bonus" => bonus, "ability" => con, "level" => 1, _ => null,
+        }) ?? first.HitDie + bonus + con);
         for (int i = 1; i < classes.Count; i++)
         {
-            hp += Math.Max(1, classes[i].HitDie / 2 + 1 + con);
+            int die = classes[i].HitDie;
+            int level = i + 1;
+            hp += Math.Max(1, perLevel?.Whole(name => name switch
+            {
+                "hitDie" => die, "ability" => con, "level" => level, _ => null,
+            }) ?? die / 2 + 1 + con);
         }
         c.Stats.SetBase("maxHp", hp);
         c.Hp = c.MaxHp;

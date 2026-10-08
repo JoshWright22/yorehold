@@ -60,7 +60,7 @@ public sealed partial class CharacterSheet
             ["death"] = new JsonObject
             {
                 ["saves"] = Death.Saves, ["successes"] = Death.Successes, ["failures"] = Death.Failures,
-                ["stable"] = Death.Stable, ["dead"] = Death.Dead,
+                ["stable"] = Death.Stable, ["dead"] = Death.Dead, ["dying"] = Death.Dying, ["wounded"] = Death.Wounded,
             },
             ["spells"] = Strings(Spells),
             ["preparable"] = Strings(Preparable),
@@ -129,6 +129,8 @@ public sealed partial class CharacterSheet
             sheet.Death.Failures = death.Int("failures", 0, 0);
             sheet.Death.Stable = death.Bool("stable", false);
             sheet.Death.Dead = death.Bool("dead", false);
+            sheet.Death.Dying = death.Int("dying", 0, 0, 100);
+            sheet.Death.Wounded = death.Int("wounded", 0, 0, 100);
         }
         sheet.Spells.AddRange(node.Texts("spells"));
         sheet.Preparable.AddRange(node.Texts("preparable"));

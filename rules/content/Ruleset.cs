@@ -45,6 +45,24 @@ public class DeathRules
     public string DyingCondition { get; init; } = "";
     public string StableCondition { get; init; } = "";
     public string DeadCondition { get; init; } = "";
+    /// <summary>
+    /// Null: death saves (successes and failures). Else a dying value: it starts at Start when the
+    /// creature drops, damage while down adds Damage, each turn a roll of RollKind against Dc moves
+    /// it by the outcome's Change, it dies when Dead holds, and at 0 it is stable and Wounded goes up.
+    /// </summary>
+    public DyingTrack? Track { get; init; }
+}
+
+public sealed class DyingTrack
+{
+    public Formula Start { get; init; } = Formula.Parse("1", out _)!;
+    public Formula Damage { get; init; } = Formula.Parse("1", out _)!;
+    public Formula Dc { get; init; } = Formula.Parse("10 + dying", out _)!;
+    public Formula Dead { get; init; } = Formula.Parse("dying >= 4", out _)!;
+    public string RollKind { get; init; } = CheckRules.Check;
+    public Dictionary<string, int> Change { get; init; } = new(StringComparer.Ordinal);
+    /// <summary>Added to wounded each time the creature stops dying.</summary>
+    public int WoundedStep { get; init; } = 1;
 }
 
 public class ScoreMethods
@@ -549,6 +567,7 @@ public class Ruleset
             DyingCondition = node.Text("dyingCondition", "", 64),
             StableCondition = node.Text("stableCondition", "", 64),
             DeadCondition = node.Text("deadCondition", "", 64),
+            Track = node.Get("track") is ContentNode track ? TrackFrom(track) : null,
         };
         string[] named = new[] { death.DownedCondition, death.DyingCondition, death.StableCondition, death.DeadCondition }
             .Where(name => name.Length > 0).ToArray();
@@ -627,6 +646,28 @@ public class Ruleset
             Interact = Name("interact", defaults.Interact),
             SlotPrefix = prefix,
             Focus = Name("focus", defaults.Focus),
+        };
+    }
+
+    private static DyingTrack TrackFrom(ContentNode node)
+    {
+        node.RequireObject("is an object: start, damage, roll, dc, change, dead");
+        node.Only("start", "damage", "roll", "dc", "change", "dead", "woundedStep");
+        var track = new DyingTrack();
+        var change = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, ContentNode> member in node.Get("change")?.Members() ?? Enumerable.Empty<KeyValuePair<string, ContentNode>>())
+        {
+            change[member.Key] = member.Value.AsInt(-100, 100);
+        }
+        return new DyingTrack
+        {
+            Start = node.Get("start") is ContentNode start ? FormulaOf(start, "wounded", "critical") : track.Start,
+            Damage = node.Get("damage") is ContentNode damage ? FormulaOf(damage, "dying", "wounded", "critical") : track.Damage,
+            Dc = node.Get("dc") is ContentNode dc ? FormulaOf(dc, "dying", "wounded") : track.Dc,
+            Dead = node.Get("dead") is ContentNode dead ? FormulaOf(dead, "dying", "wounded") : track.Dead,
+            RollKind = node.Text("roll", CheckRules.Check, 64),
+            Change = change,
+            WoundedStep = node.Int("woundedStep", 1, 0, 100),
         };
     }
 

@@ -16,6 +16,25 @@ public class CheckRulesTests
     }
 
     [Fact]
+    public void DyingCanBeATrack()
+    {
+        // Dying 1 (2 on a critical) plus wounded; a hit while down adds 1; dead at 4.
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "t", "name": "T", "abilities": [{"id": "con", "name": "Constitution"}],
+             "death": {"enabled": true, "track": {"start": "1 + wounded + (critical ? 1 : 0)", "damage": "critical ? 2 : 1",
+                       "dc": "10 + dying", "dead": "dying >= 4", "change": {"failure": 1, "success": -1}}}}
+            """);
+        var sheet = new CharacterSheet { Name = "Ash", Hp = 5 };
+        sheet.Stats.SetBase("maxHp", 5);
+        sheet.TakeDamage(9, rules, critical: true);
+        Assert.Equal(2, sheet.Death.Dying);
+        sheet.TakeDamage(1, rules);
+        Assert.Equal(3, sheet.Death.Dying);
+        sheet.TakeDamage(1, rules);
+        Assert.True(sheet.Death.Dead, "Dying 4 is dead");
+    }
+
+    [Fact]
     public void ASystemCountsACreaturesNumbersItsOwnWay()
     {
         // Proficiency is the rank's bonus plus the level, AC starts at 10 with it, checks add half the level.

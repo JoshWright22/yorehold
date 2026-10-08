@@ -494,8 +494,10 @@ public sealed class Encounter
         string state = sheet.Death.Dead ? "dead"
             : sheet.Death.Stable ? "stable"
             : !sheet.Down ? "gets up"
+            : _rules.Death.Track != null ? $"dying {sheet.Death.Dying}"
             : $"{sheet.Death.Successes} successes, {sheet.Death.Failures} failures";
-        AddLog($"{sheet.Name} death save (DC {_rules.Death.SaveDc}): {result.Describe()} - {state}");
+        string roll = _rules.Death.Track != null ? "recovery check" : $"death save (DC {_rules.Death.SaveDc})";
+        AddLog($"{sheet.Name} {roll}: {result.Describe()} - {state}");
     }
 
     private void EndRound()
