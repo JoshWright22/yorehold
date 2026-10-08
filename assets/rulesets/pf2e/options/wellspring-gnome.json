@@ -1,0 +1,12 @@
+{
+  "id": "wellspring-gnome",
+  "name": "Wellspring gnome",
+  "description": "Magic from another source wells up: the Daze cantrip.",
+  "kind": "heritage",
+  "races": [
+    "gnome"
+  ],
+  "spells": [
+    "daze"
+  ]
+}
