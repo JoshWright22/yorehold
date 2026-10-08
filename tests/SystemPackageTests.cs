@@ -74,6 +74,33 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TriggersAnswerBeingHitAKillAndATurnStarting()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard",
+            ("rulesets/pf2e/triggers/thorns.json", """{"id": "thorns", "name": "Thorns", "on": "hitBy", "effects": [{"do": "damage", "dice": "2"}]}"""),
+            ("rulesets/pf2e/triggers/bloodlust.json", """{"id": "bloodlust", "name": "Bloodlust", "on": "kill", "effects": [{"do": "heal", "dice": "1"}]}"""),
+            ("rulesets/pf2e/triggers/regrow.json", """{"id": "regrow", "name": "Regrow", "on": "turnStart", "if": "level >= 0", "effects": [{"do": "heal", "dice": "1"}]}"""));
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        ana.Stats.SetBase("perception", 2000); // acts first
+        gik.Stats.SetBase("ac", -1000); // always hit
+        ana.Granted.Add("bloodlust");
+        gik.Granted.Add("thorns");
+        w.Creatures[3].Sheet.Granted.Add("regrow");
+        world.Fight();
+        Assert.True(world.TurnTo(0));
+        int hp = ana.Hp;
+        gik.Hp = 1000;
+        Assert.True(world.Use("strike", 2) && world.Said("Gik: Thorns") && ana.Hp < hp, "Being hit burns the attacker");
+        Assert.False(world.Said("Ana: Bloodlust"));
+        gik.Hp = 1;
+        Assert.True(world.Use("strike", 2) && gik.Down && world.Said("Ana: Bloodlust"), "Dropping Gik sets off Ana's kill trigger");
+        Assert.Single(world.Log, line => line.Contains("Gik: Thorns")); // down, it burns no one
+        Assert.True(world.TurnTo(3) && world.Said("Rak: Regrow"), "Rak's turn starting sets off its own");
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

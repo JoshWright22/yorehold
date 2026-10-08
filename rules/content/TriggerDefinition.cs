@@ -3,13 +3,15 @@ namespace Yorehold.Rules;
 /// <summary>
 /// triggers/&lt;id&gt;.json: an effect that happens by itself when something happens to whoever
 /// was granted it, like Sneak Attack's extra damage on a hit. "on" is "hit", "miss" or "crit"
-/// (after one of its attacks); "if" a formula that must hold, reading the attacker's sheet names
-/// (level, mod.dex, trait.finesse...) and advantage, critical, flag.&lt;flag&gt; and
-/// targetFlag.&lt;flag&gt;; "once" is "turn" for at most once in each of its turns.
+/// (after one of its attacks, landing on the one attacked), "hitBy" (an attack hit it, landing
+/// on the attacker), "kill" (it dropped someone) or "turnStart" (its turn began), the last two
+/// landing on itself; "if" a formula that must hold, reading its own sheet names (level, mod.dex,
+/// trait.finesse...), flag.&lt;flag&gt; and targetFlag.&lt;flag&gt;, and for attacks advantage
+/// and critical; "once" is "turn" for at most once in each of its turns.
 /// </summary>
 public sealed class TriggerDefinition
 {
-    public static readonly string[] On = { "hit", "miss", "crit" };
+    public static readonly string[] On = { "hit", "miss", "crit", "hitBy", "kill", "turnStart" };
 
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";

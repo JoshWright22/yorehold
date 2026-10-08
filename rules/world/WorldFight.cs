@@ -384,6 +384,11 @@ public sealed partial class World
         }
         ComputeReach(current.Value);
         _events.Add(new WorldEvent(WorldEventKind.Turn, Creatures[current.Value].Sheet.Name) { At = Tokens.Tokens[current.Value].Position });
+        if (TurnStartTriggers(current.Value) && Encounter.Finished)
+        {
+            EndFight();
+            return;
+        }
         if (SurfacesAt(CellOf(current.Value)).Count > 0)
         {
             SurfaceDamage(current.Value);
@@ -392,6 +397,26 @@ public sealed partial class World
                 EndFight();
             }
         }
+    }
+
+    // Its granted triggers that go off as its turn begins (regeneration, a rage's upkeep).
+    private bool TurnStartTriggers(int creature)
+    {
+        var context = new EffectContext(Rules, Encounter!.Random)
+        {
+            Self = creature, Targets = new List<int> { creature }, Dc = Creatures[creature].Sheet.DifficultyClass(Rules),
+        };
+        var result = new EffectResult();
+        result.Events.AddRange(EffectRun.Fire(new WorldEffectHost(this), context, creature, trigger => trigger.When == "turnStart", creature));
+        if (result.Events.Count == 0)
+        {
+            return false;
+        }
+        Narrate(result);
+        ConcentrationChecks(result, Encounter.Random);
+        AfterEffect(result);
+        TidyConcentration();
+        return true;
     }
 
     private void EndCurrentTurn()

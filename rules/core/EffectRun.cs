@@ -408,46 +408,94 @@ internal sealed class EffectRun
         }
     }
 
-    // The doer's granted triggers that answer how its attack on target went (Sneak Attack on a hit).
+    // Granted triggers that answer how an attack on target went: the doer's on its hit, miss or
+    // crit (Sneak Attack), and the target's on being hit, landing on the attacker.
     private void Triggered(int target)
     {
-        CharacterSheet? self = _host.Sheet(_context.Self);
-        CharacterSheet? subject = _host.Sheet(target);
-        if (self == null || subject == null || _outcomes.GetValueOrDefault(target) is not { Attack: CheckOutcome attack } rolled)
+        if (_outcomes.GetValueOrDefault(target) is not { Attack: CheckOutcome attack } rolled)
         {
             return;
         }
         // as the attack was rolled: whatever gave advantage may have ended with it
         bool advantage = rolled.Advantage;
-        foreach (string id in self.Granted)
+        double? Attack(string name) => name switch
         {
-            if (_rules.Trigger(id) is not TriggerDefinition trigger || (trigger.OncePerTurn && self.TriggersUsed.Contains(id)))
+            "advantage" => advantage ? 1 : 0,
+            "critical" => attack.Critical ? 1 : 0,
+            _ => null,
+        };
+        _result.Events.AddRange(Fire(_host, _context, _context.Self, trigger => trigger.When switch
+        {
+            "hit" => attack.Passes,
+            "crit" => attack.Critical,
+            "miss" => !attack.Passes,
+            _ => false,
+        }, target, Attack));
+        if (attack.Passes)
+        {
+            _result.Events.AddRange(Fire(_host, _context, target, trigger => trigger.When == "hitBy", _context.Self, Attack));
+        }
+    }
+
+    // Triggers set off by other triggers stop this deep, so two that answer each other end.
+    private const int MostTriggerDepth = 4;
+    [ThreadStatic] private static int _triggerDepth;
+
+    /// <summary>
+    /// Runs owner's granted triggers that fit, each landing on target. Their "if" reads owner's
+    /// sheet names, flag.&lt;flag&gt;, targetFlag.&lt;flag&gt; and whatever extra knows. Returns
+    /// what they did, a Triggered event before each.
+    /// </summary>
+    public static List<EffectEvent> Fire(EffectHost host, EffectContext context, int owner, Func<TriggerDefinition, bool> fits, int target,
+        Func<string, double?>? extra = null)
+    {
+        var events = new List<EffectEvent>();
+        CharacterSheet? self = host.Sheet(owner);
+        CharacterSheet? subject = host.Sheet(target);
+        // one that is down does nothing by itself, Sneak Attack or thorns
+        if (self == null || subject == null || self.Down || _triggerDepth >= MostTriggerDepth)
+        {
+            return events;
+        }
+        Ruleset rules = context.Rules;
+        foreach (string id in self.Granted.ToList())
+        {
+            if (rules.Trigger(id) is not TriggerDefinition trigger || !fits(trigger) || (trigger.OncePerTurn && self.TriggersUsed.Contains(id)))
             {
                 continue;
             }
-            bool fits = trigger.When switch
+            double? Name(string name) => extra?.Invoke(name) ?? name switch
             {
-                "hit" => attack.Passes,
-                "crit" => attack.Critical,
-                _ => !attack.Passes,
+                _ when name.StartsWith("targetFlag.", StringComparison.Ordinal) => subject.HasFlag(rules, name[11..]) ? 1 : 0,
+                _ when name.StartsWith("flag.", StringComparison.Ordinal) => self.HasFlag(rules, name[5..]) ? 1 : 0,
+                _ => self.Named(rules, name),
             };
-            double? Name(string name) => name switch
-            {
-                "advantage" => advantage ? 1 : 0,
-                "critical" => attack.Critical ? 1 : 0,
-                _ when name.StartsWith("targetFlag.", StringComparison.Ordinal) => subject.HasFlag(_rules, name[11..]) ? 1 : 0,
-                _ when name.StartsWith("flag.", StringComparison.Ordinal) => self.HasFlag(_rules, name[5..]) ? 1 : 0,
-                _ => self.Named(_rules, name),
-            };
-            if (!fits || (trigger.If != null && trigger.If.Evaluate(Name) == 0))
+            if (trigger.If != null && trigger.If.Evaluate(Name) == 0)
             {
                 continue;
             }
             self.TriggersUsed.Add(id);
-            _result.Events.Add(new EffectEvent { Kind = EffectEventKind.Triggered, Who = target, By = _context.Self, Id = trigger.Name });
-            var context = _context with { Targets = new List<int> { target }, Source = trigger.Id, Event = "" };
-            _result.Events.AddRange(new EffectRun(trigger.Effect, _host, context).Run().Events);
+            events.Add(new EffectEvent { Kind = EffectEventKind.Triggered, Who = target, By = owner, Id = trigger.Name });
+            var run = context with
+            {
+                Self = owner,
+                Targets = new List<int> { target },
+                Source = trigger.Id,
+                Event = "",
+                Dc = owner == context.Self ? context.Dc : self.DifficultyClass(rules),
+                AttacksMade = owner == context.Self ? context.AttacksMade : 0,
+            };
+            _triggerDepth++;
+            try
+            {
+                events.AddRange(new EffectRun(trigger.Effect, host, run).Run().Events);
+            }
+            finally
+            {
+                _triggerDepth--;
+            }
         }
+        return events;
     }
 
     private void DamageStep(EffectStep step, List<int> who)
@@ -500,6 +548,11 @@ internal sealed class EffectRun
                 Critical = doubled, Dropped = wasUp && sheet.Down, Id = step.Type,
             });
             Ended(actor, sheet.ConditionEvent(_rules, "damage"));
+            if (wasUp && sheet.Down && actor != _context.Self)
+            {
+                // the doer dropped someone: its "kill" triggers, on itself
+                _result.Events.AddRange(Fire(_host, _context, _context.Self, trigger => trigger.When == "kill", _context.Self));
+            }
         }
     }
 

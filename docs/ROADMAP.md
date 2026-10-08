@@ -321,8 +321,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     creature files (`"actions": [...]`), checked against the ruleset, kept on the sheet.
   - Done 10/8: triggers (`triggers/`, on hit, miss or crit, with a formula and once a turn),
     granted like actions; Sneak Attack in 5e and PF2e.
-  - Left: triggers on turn start, on being hit and on a kill; feat kinds from the system; the
-    Features tab and Create's "grants" fields.
+  - Done 10/8: triggers on being hit (`hitBy`, landing on the attacker), on a kill and on turn
+    start.
+  - Left: feat kinds from the system; the Features tab and Create's "grants" fields.
 - [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's
