@@ -160,6 +160,25 @@
     "hpFirstLevel": "15",
     "hpPerLevel": "0"
   },
+  "creation": {
+    "steps": [
+      {
+        "name": "Character",
+        "parts": [
+          "name",
+          "class",
+          "scores"
+        ]
+      }
+    ],
+    "names": {
+      "class": "Concept",
+      "scores": "Approaches"
+    },
+    "scoreMethods": [
+      "array"
+    ]
+  },
   "passiveBase": 0,
   "baseDc": 0,
   "trapFumble": "margin <= -3",

@@ -147,6 +147,8 @@ public class Ruleset
     public CheckRules Checks { get; init; } = new();
     /// <summary>How a creature's own numbers are counted, where the system says.</summary>
     public SheetFormulas Formulas { get; init; } = new();
+    /// <summary>The steps of making a character.</summary>
+    public CreationRules Creation { get; init; } = new();
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -421,6 +423,7 @@ public class Ruleset
             Roles = RolesFrom(node, abilities, skills, AbilityOrNone("initiativeAbility", "dex"), AbilityOrNone("hitDieAbility", "con")),
             Checks = CheckRules.Read(node.Get("checks")),
             Formulas = SheetFormulas.Read(node.Get("formulas")),
+            Creation = CreationRules.Read(node.Get("creation")),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,

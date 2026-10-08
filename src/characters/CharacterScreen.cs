@@ -544,103 +544,46 @@ public partial class CharacterScreen : CanvasLayer
         else
         {
             _title.Text = "New character";
-            for (int i = 0; i < CharacterDraft.StepNames.Length; i++)
+            for (int i = 0; i < d.Steps.Count; i++)
             {
                 // an earlier step can always be reopened, the next one once this one is done
                 bool open = i <= d.Step || (i == d.Step + 1 && d.StepDone(d.Step));
                 int step = i;
-                Button tab = Toggle(_tabs, $"{i + 1}. {CharacterDraft.StepNames[i]}", i == d.Step, () => d.Step = step);
+                Button tab = Toggle(_tabs, $"{i + 1}. {d.Steps[i].Name}", i == d.Step, () => d.Step = step);
                 tab.Disabled = !open;
             }
         }
 
-        if (d.Step == 0 && !d.LevellingUp)
+        // the parts of this step, in the order the rules system lists them
+        IReadOnlyList<string> parts = d.LevellingUp ? new[] { "skills", "feats" } : d.Steps[d.Step].Parts;
+        foreach (string part in parts)
         {
-            Heading(_body, "Name");
-            var name = new LineEdit { Text = d.Choices.Name, MaxLength = 64, PlaceholderText = "Type a name", CustomMinimumSize = new Vector2(0, 36) };
-            name.TextChanged += text =>
+            switch (part)
             {
-                d.SetName(text);
-                ShowDraftSide(d);
-            };
-            _body.AddChild(name);
-            if (_compendium.Races.Count > 0)
-            {
-                Heading(_body, "Race");
-                Grid(d.RaceIds(), id => _compendium.Races[id].Name, id => id == d.Choices.Race, 4, d.SetRace);
-            }
-            if (_compendium.Backgrounds.Count > 0)
-            {
-                Heading(_body, "Background");
-                Grid(d.BackgroundIds(), id => _compendium.Backgrounds[id].Name, id => id == d.Choices.Background, 3, d.SetBackground);
-            }
-        }
-        else if (d.Step == 1 && !d.LevellingUp)
-        {
-            Heading(_body, "Class");
-            ClassPicker(d);
-            string method = d.Choices.ScoreMethod;
-            Heading(_body, method switch
-            {
-                "pointBuy" => $"Ability scores: {d.PointsLeft()} of {_rules.ScoreMethods.PointBudget} points left",
-                "roll" => "Ability scores: press Roll again to reroll",
-                _ => "Ability scores: + and - swap two scores",
-            });
-            var methods = new HBoxContainer();
-            methods.AddThemeConstantOverride("separation", 6);
-            _body.AddChild(methods);
-            foreach ((string id, string label) in new[] { ("array", "Standard array"), ("pointBuy", "Point buy"), ("roll", "Roll") })
-            {
-                Toggle(methods, label, method == id, () =>
-                {
-                    if (d.Choices.ScoreMethod != id)
-                    {
-                        d.SetMethod(id, _dice);
-                    }
-                    else if (id == "roll")
-                    {
-                        d.Reroll(_dice);
-                    }
-                });
-            }
-            foreach (AbilityDefinition ability in _rules.Abilities)
-            {
-                var row = new HBoxContainer();
-                row.AddThemeConstantOverride("separation", 6);
-                _body.AddChild(row);
-                int score = d.Choices.Scores.GetValueOrDefault(ability.Id);
-                row.AddChild(new Label { Text = ability.Name, CustomMinimumSize = new Vector2(150, 0) });
-                row.AddChild(new Label { Text = $"{score}  ({SheetView.Signed(_rules.AbilityModifier(score))})", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-                if (method != "roll")
-                {
-                    string id = ability.Id;
-                    Push(row, "-", d.CanLower(id), () => d.Lower(id)).CustomMinimumSize = new Vector2(34, 30);
-                    Push(row, "+", d.CanRaise(id), () => d.Raise(id)).CustomMinimumSize = new Vector2(34, 30);
-                }
-            }
-        }
-        else
-        {
-            if (d.SkillPicks() > 0)
-            {
-                Heading(_body, $"Skills: train {d.SkillPicks()}");
-                List<string> picked = d.Picked("skills");
-                Grid(d.SkillOptions.ToList(), id => _rules.Skill(id)?.Name ?? id, picked.Contains, 3, d.ToggleSkill);
-            }
-            foreach (string kind in d.FeatKinds())
-            {
-                Heading(_body, char.ToUpperInvariant(kind[0]) + kind[1..] + " feat");
-                List<string> picked = d.Picked("feats");
-                List<string> options = d.FeatOptions(kind);
-                if (options.Count == 0)
-                {
-                    Dim(_body, "None the character can take yet.");
-                }
-                Grid(options, id => _compendium.Feats[id].Name, picked.Contains, 2, d.PickFeat);
-            }
-            if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0)
-            {
-                Dim(_body, $"Nothing to pick at this {className} level.");
+                case "name":
+                    NamePart(d);
+                    break;
+                case "race" when _compendium.Races.Count > 0:
+                    Heading(_body, _rules.Creation.NameOf("race"));
+                    Grid(d.RaceIds(), id => _compendium.Races[id].Name, id => id == d.Choices.Race, 4, d.SetRace);
+                    break;
+                case "background" when _compendium.Backgrounds.Count > 0:
+                    Heading(_body, _rules.Creation.NameOf("background"));
+                    Grid(d.BackgroundIds(), id => _compendium.Backgrounds[id].Name, id => id == d.Choices.Background, 3, d.SetBackground);
+                    break;
+                case "class":
+                    Heading(_body, _rules.Creation.NameOf("class"));
+                    ClassPicker(d);
+                    break;
+                case "scores":
+                    ScoresPart(d);
+                    break;
+                case "skills":
+                    SkillsPart(d, className);
+                    break;
+                case "feats" when !parts.Contains("skills"):
+                    SkillsPart(d, className);
+                    break;
             }
         }
 
@@ -651,7 +594,7 @@ public partial class CharacterScreen : CanvasLayer
         {
             Push(_buttons, "Back", true, () => d.Step--);
         }
-        bool last = d.LevellingUp || d.Step == CharacterDraft.StepNames.Length - 1;
+        bool last = d.LevellingUp || d.Step == d.Steps.Count - 1;
         if (!last)
         {
             Push(_buttons, "Next", d.StepDone(d.Step), () => d.Step++);
@@ -659,6 +602,90 @@ public partial class CharacterScreen : CanvasLayer
         else
         {
             Push(_buttons, d.LevellingUp ? "Level up" : "Finish", d.Finished(), FinishDraft);
+        }
+    }
+
+    private void NamePart(CharacterDraft d)
+    {
+        Heading(_body, "Name");
+        var name = new LineEdit { Text = d.Choices.Name, MaxLength = 64, PlaceholderText = "Type a name", CustomMinimumSize = new Vector2(0, 36) };
+        name.TextChanged += text =>
+        {
+            d.SetName(text);
+            ShowDraftSide(d);
+        };
+        _body.AddChild(name);
+    }
+
+    private void ScoresPart(CharacterDraft d)
+    {
+        string method = d.Choices.ScoreMethod;
+        string scores = _rules.Creation.NameOf("scores");
+        Heading(_body, method switch
+        {
+            "pointBuy" => $"{scores}: {d.PointsLeft()} of {_rules.ScoreMethods.PointBudget} points left",
+            "roll" => $"{scores}: press Roll again to reroll",
+            _ => $"{scores}: + and - swap two",
+        });
+        var methods = new HBoxContainer();
+        methods.AddThemeConstantOverride("separation", 6);
+        _body.AddChild(methods);
+        // only the ways the rules system offers
+        foreach ((string id, string label) in new[] { ("array", "Standard array"), ("pointBuy", "Point buy"), ("roll", "Roll") }
+            .Where(m => _rules.Creation.ScoreMethods.Contains(m.Item1)))
+        {
+            Toggle(methods, label, method == id, () =>
+            {
+                if (d.Choices.ScoreMethod != id)
+                {
+                    d.SetMethod(id, _dice);
+                }
+                else if (id == "roll")
+                {
+                    d.Reroll(_dice);
+                }
+            });
+        }
+        foreach (AbilityDefinition ability in _rules.Abilities)
+        {
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 6);
+            _body.AddChild(row);
+            int score = d.Choices.Scores.GetValueOrDefault(ability.Id);
+            row.AddChild(new Label { Text = ability.Name, CustomMinimumSize = new Vector2(150, 0) });
+            row.AddChild(new Label { Text = $"{score}  ({SheetView.Signed(_rules.AbilityModifier(score))})", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+            if (method != "roll")
+            {
+                string id = ability.Id;
+                Push(row, "-", d.CanLower(id), () => d.Lower(id)).CustomMinimumSize = new Vector2(34, 30);
+                Push(row, "+", d.CanRaise(id), () => d.Raise(id)).CustomMinimumSize = new Vector2(34, 30);
+            }
+        }
+    }
+
+    // skills to train and feats to take, as a level brings them
+    private void SkillsPart(CharacterDraft d, string className)
+    {
+        if (d.SkillPicks() > 0)
+        {
+            Heading(_body, $"Skills: train {d.SkillPicks()}");
+            List<string> picked = d.Picked("skills");
+            Grid(d.SkillOptions.ToList(), id => _rules.Skill(id)?.Name ?? id, picked.Contains, 3, d.ToggleSkill);
+        }
+        foreach (string kind in d.FeatKinds())
+        {
+            Heading(_body, char.ToUpperInvariant(kind[0]) + kind[1..] + " feat");
+            List<string> picked = d.Picked("feats");
+            List<string> options = d.FeatOptions(kind);
+            if (options.Count == 0)
+            {
+                Dim(_body, "None the character can take yet.");
+            }
+            Grid(options, id => _compendium.Feats[id].Name, picked.Contains, 2, d.PickFeat);
+        }
+        if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0)
+        {
+            Dim(_body, $"Nothing to pick at this {className} level.");
         }
     }
 

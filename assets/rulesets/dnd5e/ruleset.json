@@ -233,6 +233,12 @@
     "damageTaken": "immune ? 0 : floor(amount / (resist > 0 ? 2 : 1)) * (weak > 0 ? 2 : 1)",
     "armorClass": "armor + (stat.armorDexCap > 0 ? min(ability, stat.armorDexCap - 1) : ability)"
   },
+  "creation": {
+    "names": {
+      "race": "Species",
+      "scores": "Ability scores"
+    }
+  },
   "passiveBase": 10,
   "proficiencyByLevel": [
     2,

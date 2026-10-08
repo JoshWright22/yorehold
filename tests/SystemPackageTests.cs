@@ -50,6 +50,30 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void CreationStepsAreTheSystems()
+    {
+        ContentFiles files = TestContent.Shipped();
+        (Ruleset Rules, Compendium Compendium) Load(string folder)
+        {
+            RulesFolder rules = RulesFolder.Load(files, folder);
+            var compendium = new Compendium();
+            compendium.Load(files, folder, "");
+            compendium.LoadOptions(files, folder);
+            return (rules.Rules, compendium);
+        }
+        (Ruleset fate, Compendium fateCompendium) = Load("rulesets/fate-accelerated");
+        var draft = new CharacterDraft(fate, fateCompendium);
+        Assert.Single(draft.Steps);
+        draft.SetName("Zed");
+        Assert.True(draft.Finished(), "A Fate character is a name and approaches: " + draft.StepProblem(0) + draft.Problem);
+
+        (Ruleset pf2e, Compendium pf2eCompendium) = Load("rulesets/pf2e");
+        var hero = new CharacterDraft(pf2e, pf2eCompendium);
+        hero.SetName("Ana");
+        Assert.Equal("Pick an ancestry.", hero.StepProblem(0));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

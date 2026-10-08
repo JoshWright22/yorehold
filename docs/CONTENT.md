@@ -875,6 +875,23 @@ With a server set and the player signed in, the game keeps the adventure saves (
 
 Characters are made and levelled up under Play > Characters, always with the game's own ruleset (`rulesets/yorehold`), the built-in classes plus those of installed packages, and the ruleset's races, backgrounds and feats. The score methods' numbers are `scoreMethods` in `ruleset.json` (FRAMEWORK.md, "Character choices").
 
+The steps of making a character are `creation` in `ruleset.json`; every key is optional and the default is the yorehold set's three steps:
+
+```json
+"creation": {
+  "steps": [ { "name": "Ancestry and background", "parts": ["name", "race", "background"] },
+             { "name": "Class and attributes", "parts": ["class", "scores"] },
+             { "name": "Skills and feats", "parts": ["skills", "feats"] } ],
+  "names": { "race": "Ancestry", "scores": "Attributes" },
+  "scoreMethods": ["array", "pointBuy", "roll"]
+}
+```
+
+- `steps`: 1 to 8, each a tab on the creation screen. Parts are `name`, `race`, `background`, `class`, `scores`, `skills` and `feats`; each is in at most one step, a part left out is not asked (Fate has no race or background), and `name` and `class` must be in one.
+- `names`: what the screen and its messages call a part ("Pick an ancestry.").
+- `scoreMethods`: the ways offered to set scores, the first picked to start with.
+- A level-up makes its picks in the step that has `skills` or `feats`.
+
 ## Proficiency ranks
 
 Yorehold uses Untrained/Trained/Expert/Master/Legendary: bonuses 0/2/4/6/8, with level added

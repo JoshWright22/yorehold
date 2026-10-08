@@ -305,6 +305,36 @@
   ],
   "proficientRank": "trained",
   "untrainedRank": "untrained",
+  "creation": {
+    "steps": [
+      {
+        "name": "Ancestry and background",
+        "parts": [
+          "name",
+          "race",
+          "background"
+        ]
+      },
+      {
+        "name": "Class and attributes",
+        "parts": [
+          "class",
+          "scores"
+        ]
+      },
+      {
+        "name": "Skills and feats",
+        "parts": [
+          "skills",
+          "feats"
+        ]
+      }
+    ],
+    "names": {
+      "race": "Ancestry",
+      "scores": "Attributes"
+    }
+  },
   "passiveBase": 10,
   "baseDc": 10,
   "death": {

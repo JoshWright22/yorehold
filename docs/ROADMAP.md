@@ -339,6 +339,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
 - [ ] **R8. Character creation from the system.** Its steps (5e: species, background, class,
   scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
   choices. UI: the creation screen lists the system's steps.
+  - Done 10/8: `creation` in ruleset.json: the steps, which parts each picks, what the parts are
+    called and the score methods offered; the screen draws its tabs and parts from it (Fate is
+    one step: name, concept, approaches; PF2e names Ancestry and Attributes).
+  - Left: PF2e's heritage and boosts as parts; level-up choices beyond skills and feats.
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
   - Done 10/8, first slice: `rulesets/dnd5e` (written by `.dev\make-dnd5e.py`): the six

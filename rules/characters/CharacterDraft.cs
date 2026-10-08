@@ -7,8 +7,6 @@ namespace Yorehold.Rules;
 /// </summary>
 public sealed class CharacterDraft
 {
-    /// <summary>Making a character: origin (name, race, background), then class and scores, then the first level's picks.</summary>
-    public static readonly string[] StepNames = { "Origin", "Class and scores", "Skills and feats" };
 
     private readonly Ruleset _rules;
     private readonly Compendium _compendium;
@@ -25,13 +23,27 @@ public sealed class CharacterDraft
         // the first class a new player sees: the plainest there is, if the ruleset has it
         string first = compendium.Class("fighter") != null ? "fighter" : classes.FirstOrDefault() ?? "";
         _choices.Levels.Add(new LevelChoice(first));
-        SetMethod("array", new Rng(1));
+        SetMethod(rules.Creation.ScoreMethods[0], new Rng(1));
     }
+
+    /// <summary>The system's steps of making a character.</summary>
+    public IReadOnlyList<CreationStep> Steps => _rules.Creation.Steps;
+
+    // "a class", "an ancestry"
+    private static string Article(string name)
+    {
+        string lower = name.ToLowerInvariant();
+        return (lower.Length > 0 && "aeiou".Contains(lower[0]) ? "an " : "a ") + lower;
+    }
+
+    private bool StepHas(int which, string part) => which >= 0 && which < Steps.Count && Steps[which].Parts.Contains(part);
 
     /// <summary>One more level for a character, going into its latest class to start with.</summary>
     public static CharacterDraft LevelUp(Ruleset rules, Compendium compendium, CharacterChoices choices)
     {
-        var draft = new CharacterDraft(rules, compendium) { LevellingUp = true, Step = StepNames.Length - 1 };
+        // a new level's picks are made where the system makes skill and feat picks
+        int picks = Math.Max(rules.Creation.StepOf("skills"), rules.Creation.StepOf("feats"));
+        var draft = new CharacterDraft(rules, compendium) { LevellingUp = true, Step = picks >= 0 ? picks : rules.Creation.Steps.Count - 1 };
         draft._choices = choices.Copy();
         draft._choices.Levels.Add(new LevelChoice(draft._choices.Levels[^1].ClassId));
         draft.Rebuild();
@@ -52,34 +64,35 @@ public sealed class CharacterDraft
     /// <summary>What a step still needs, or empty.</summary>
     public string StepProblem(int which)
     {
-        if (which == 0 && !LevellingUp)
+        CreationRules creation = _rules.Creation;
+        if (!LevellingUp)
         {
-            if (_choices.Name.Trim().Length == 0)
+            if (StepHas(which, "name") && _choices.Name.Trim().Length == 0)
             {
                 return "Give the character a name.";
             }
-            if (_compendium.Races.Count > 0 && !_compendium.Races.ContainsKey(_choices.Race))
+            if (StepHas(which, "race") && _compendium.Races.Count > 0 && !_compendium.Races.ContainsKey(_choices.Race))
             {
-                return "Pick a race.";
+                return $"Pick {Article(creation.NameOf("race"))}.";
             }
-            if (_compendium.Backgrounds.Count > 0 && !_compendium.Backgrounds.ContainsKey(_choices.Background))
+            if (StepHas(which, "background") && _compendium.Backgrounds.Count > 0 && !_compendium.Backgrounds.ContainsKey(_choices.Background))
             {
-                return "Pick a background.";
+                return $"Pick {Article(creation.NameOf("background"))}.";
+            }
+            if (StepHas(which, "class") && _compendium.Class(Current.ClassId) == null)
+            {
+                return $"Pick {Article(creation.NameOf("class"))}.";
+            }
+            if (StepHas(which, "scores") || StepHas(which, "class"))
+            {
+                string error = _choices.Check(_rules);
+                if (error.Length > 0)
+                {
+                    return error;
+                }
             }
         }
-        if (which == 1 && !LevellingUp)
-        {
-            if (_compendium.Class(Current.ClassId) == null)
-            {
-                return "Pick a class.";
-            }
-            string error = _choices.Check(_rules);
-            if (error.Length > 0)
-            {
-                return error;
-            }
-        }
-        if (which == 2)
+        if (StepHas(which, "skills") || StepHas(which, "feats") || (LevellingUp && which == Step))
         {
             if (_compendium.Class(Current.ClassId) == null)
             {
@@ -110,7 +123,7 @@ public sealed class CharacterDraft
 
     public bool Finished()
     {
-        for (int i = 0; i < StepNames.Length; i++)
+        for (int i = 0; i < Steps.Count; i++)
         {
             if (!StepDone(i))
             {
