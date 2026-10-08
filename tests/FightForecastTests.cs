@@ -17,5 +17,10 @@ public class FightForecastTests
 
         Assert.Equal("this fight: won 9 in 10, 1 in 5 lose a hero, 3 rounds", new FightForecast(10, 9, 2, 0, 3, 0).Summary());
         Assert.Equal("this fight: won always, no hero lost, 2.5 rounds", new FightForecast(4, 4, 0, 0, 2.5, 0).Summary());
+
+        // what it says about the fight for the party
+        Assert.StartsWith("too hard", new FightForecast(10, 5, 6, 1, 4, 0).Verdict());
+        Assert.StartsWith("too easy", new FightForecast(10, 10, 0, 0, 1.5, 0).Verdict());
+        Assert.Equal("", new FightForecast(10, 9, 2, 0, 3, 0).Verdict());
     }
 }

@@ -381,7 +381,8 @@ public partial class EncountersModePanel : HBoxContainer
             return "Could not play it: " + (_forecast.Exception?.InnerException?.Message ?? "unknown");
         }
         FightForecast result = _forecast.Result;
-        return result.Unfinished > 0 ? $"{result.Summary()}; {result.Unfinished} never ended" : result.Summary();
+        string line = result.Unfinished > 0 ? $"{result.Summary()}; {result.Unfinished} never ended" : result.Summary();
+        return result.Verdict() is { Length: > 0 } verdict ? $"{line}\n{verdict}" : line;
     }
 
     private void BuildCreature(EncountersEditor editor, int index)

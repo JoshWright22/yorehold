@@ -285,6 +285,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: `docs/RULES_LANGUAGE.md`, the whole language on one page for people and the
     story model: the folder, formulas and their names, dice, every ruleset.json key, effect
     steps, moments, the fixed core and how a draft is checked and measured.
+  - Done 10/8: the forecast says when a fight is too hard (wins under 3 in 4, or loses a hero
+    over a third of the time) or too easy (always won in two rounds unscathed); Create shows it.
   - Left: the builder's balancing by forecast (and parties of a chosen level, not only the
     chapter's own); a machine-readable schema beside the reference.
   - Readable by the AI: the language has a schema and a reference written for people and for

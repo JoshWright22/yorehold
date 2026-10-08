@@ -19,6 +19,28 @@ public sealed record FightForecast(int Fights, int Won, int LostAHero, int Heroe
         return $"this fight: won {InN(WinChance)}, {lost}, {AverageRounds:0.#} rounds";
     }
 
+    /// <summary>
+    /// What the forecast says about the fight for a party: too hard when it wins less often than
+    /// wantWin or loses a hero more often than mostLoss, too easy when it always wins in a round
+    /// or two without a scratch. Empty when it fits, or nothing was played.
+    /// </summary>
+    public string Verdict(double wantWin = 0.75, double mostLoss = 0.35)
+    {
+        if (Fights == 0 || Fights == Unfinished)
+        {
+            return "";
+        }
+        if (WinChance < wantWin || HeroLossChance > mostLoss)
+        {
+            return "too hard for this party: take a creature out, or give it a weaker one";
+        }
+        if (WinChance >= 0.995 && LostAHero == 0 && AverageRounds <= 2)
+        {
+            return "too easy for this party: add a creature, or a stronger one";
+        }
+        return "";
+    }
+
     // 0.2 as "1 in 5", 0.9 as "9 in 10": the plainest fraction near it
     private static string InN(double share)
     {
