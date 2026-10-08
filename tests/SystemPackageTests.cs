@@ -472,7 +472,9 @@ public class SystemPackageTests
     [Fact]
     public void AWizardCastsShieldAsAReaction()
     {
-        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        // a Shield strong enough that any hit it is cast against turns into a miss
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard",
+            ("rulesets/dnd5e/conditions/shielded.json", """{"id": "shielded", "name": "Shielded", "modifiers": [{"stat": "ac", "op": "add", "value": 5000}], "ends": ["turnStart"]}"""));
         World w = world.World;
         CharacterSheet bo = w.Creatures[1].Sheet;
         if (!bo.Spells.Contains("shield"))
@@ -487,6 +489,25 @@ public class SystemPackageTests
         Assert.True(world.TurnTo(2) && world.Use("attack", 1), w.Refusal);
         Assert.True(world.Said("Bo takes Shield") && bo.HasCondition("shielded"), string.Join("\n", world.Log.TakeLast(6)));
         Assert.Equal(slots - 1, bo.Resources.Where(r => r.Key.StartsWith("slots-", StringComparison.Ordinal)).Sum(r => r.Value.Current));
+    }
+
+    [Fact]
+    public void AShieldThatCantTurnTheHitIsKept()
+    {
+        // the real Shield (+5) against a hit that beats AC by a thousand: not worth the slot
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet;
+        if (!bo.Spells.Contains("shield"))
+        {
+            bo.Spells.Add("shield");
+        }
+        bo.Stats.SetBase("ac", -1000);
+        w.Creatures[2].Sheet.Stats.SetBase("dex", 2000);
+        world.Put(2, new Cell(3, 4));
+        world.Fight();
+        Assert.True(world.TurnTo(2) && world.Use("attack", 1), w.Refusal);
+        Assert.False(world.Said("Bo takes Shield"));
     }
 
     [Fact]

@@ -376,7 +376,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: a hero's reactions to hits and misses are asked for when prompts are on (the
     fight waits on the answer); spells cast as reactions (Shield, slot spent).
   - Left: prompts for reactions taken in the middle of an attack (`beforeHit`) and to a spell
-    (`spellCast`), which are still taken at once; the AI always takes its reactions.
+    (`spellCast`), which are still taken at once.
+  - Done 10/8: a `beforeHit` guard is taken only when the defence it adds would make the roll
+    miss (a Shield against a hit by 10 is kept, slot and all).
 - [ ] **R5. Features that do things.** Classes, subclasses, races, heritages and feats grant
   actions, reactions, passive modifiers and triggered effects, not only numbers; feat kinds come
   from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's

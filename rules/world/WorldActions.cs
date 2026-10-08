@@ -469,7 +469,7 @@ public sealed partial class World
             return _world.AttackArmorClass(context.Self, who, action != null && action.Range > 1, defence);
         }
 
-        public override bool BeforeHit(int who, int attacker, EffectContext context) => _world.BeforeHitReaction(who, attacker);
+        public override bool BeforeHit(int who, int attacker, EffectContext context, int margin = 0) => _world.BeforeHitReaction(who, attacker, margin);
 
         public override double Distance(int a, int b) =>
             a >= 0 && b >= 0 && a < _world.Creatures.Count && b < _world.Creatures.Count ? _world.Grid.Distance(_world.CellOf(a), _world.CellOf(b)) : 1;

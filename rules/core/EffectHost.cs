@@ -139,7 +139,7 @@ public abstract class EffectHost
     /// <summary>Conditions the place gives an attacker for one roll at target (unseen in the dark); none here.</summary>
     public virtual IEnumerable<string> PlaceConditions(int attacker, int target) => Enumerable.Empty<string>();
     /// <summary>An attack by attacker is about to hit who: true if who reacted (Shield), so the roll is read again.</summary>
-    public virtual bool BeforeHit(int who, int attacker, EffectContext context) => false;
+    public virtual bool BeforeHit(int who, int attacker, EffectContext context, int margin = 0) => false;
     public virtual bool Summon(string creature, int count, int rounds, EffectContext context) => false;
     public virtual bool Light(int who, float radius, int rounds, EffectContext context) => false;
     public virtual bool Surface(string id, float size, int rounds, EffectContext context) => false;

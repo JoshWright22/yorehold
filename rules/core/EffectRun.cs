@@ -660,7 +660,7 @@ internal sealed class EffectRun
             Note(EffectEventKind.Defence, actor, "defence", ac, defended);
         }
         outcome.Attack = kind.Resolve(attack, ac);
-        if (outcome.Attack.Passes && _host.BeforeHit(actor, _context.Self, _context))
+        if (outcome.Attack.Passes && _host.BeforeHit(actor, _context.Self, _context, attack.Total - ac))
         {
             // its reaction may have raised its defence: the same roll, read against the new one
             ac += _host.ArmorClass(actor, _context, step.Against) - armor;

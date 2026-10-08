@@ -286,6 +286,28 @@ public sealed partial class World
         return action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, source) ? null : action;
     }
 
+    // Whether a guard taken now would make a hit that beat the defence by margin miss: the
+    // defence the action's conditions add on itself, counted on a copy of its sheet. An action
+    // that adds none to the defence is taken anyway (it does something else).
+    private bool TurnsTheHit(int target, ActionDefinition action, int margin)
+    {
+        CharacterSheet sheet = Creatures[target].Sheet;
+        List<string> gained = action.Effect.Steps
+            .Where(s => s.Kind == EffectKind.Condition && !s.Remove && Rules.Condition(s.Id) != null && !sheet.HasCondition(s.Id))
+            .Select(s => s.Id).ToList();
+        if (gained.Count == 0)
+        {
+            return true;
+        }
+        CharacterSheet guarded = sheet.Copy();
+        foreach (string id in gained)
+        {
+            guarded.AddCondition(Rules, id);
+        }
+        int raised = guarded.AttackDefence(Rules) - sheet.AttackDefence(Rules);
+        return raised <= 0 || raised > margin;
+    }
+
     // The one who set the reaction off has the flag that stops it (disengaged).
     private bool Unless(ReactionDefinition definition, int source) =>
         definition.Unless.Length > 0 && source >= 0 && source < Creatures.Count && Creatures[source].Sheet.HasFlag(Rules, definition.Unless);
@@ -326,7 +348,7 @@ public sealed partial class World
 
     // An attack on target would land: a reaction it has for that (Shield) is taken at once, in the
     // middle of the attack, which is then read again against what the reaction changed.
-    internal bool BeforeHitReaction(int target, int attacker)
+    internal bool BeforeHitReaction(int target, int attacker, int margin = 0)
     {
         if (!Fighting || _pendingReaction != null || target < 0 || attacker < 0 || target >= Creatures.Count
             || OrderIndex(target) is not int index || !Encounter!.Order[index].Standing || !Encounter.Order[index].Budget.Reaction
@@ -338,6 +360,11 @@ public sealed partial class World
         {
             if (Unless(definition, attacker) || ReactionAction(definition, target, attacker) is not ActionDefinition action)
             {
+                continue;
+            }
+            if (!TurnsTheHit(target, action, margin))
+            {
+                // what it would raise wouldn't make this roll miss: keep the reaction (and the slot)
                 continue;
             }
             // the attack's own aim stays as it was for the rest of its steps
