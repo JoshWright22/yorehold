@@ -443,9 +443,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     hindering checks (`disadvantageOnChecks`).
   - Done 10/8: prone caring how far the attacker is, hits on the paralysed and unconscious from
     beside them as critical hits; Shield cast as a reaction (a reaction may name a spell; the
-    slot is spent).
+    slot is spent); versatile weapons by the hands they leave free (`hands.free` in weapon dice).
   - Doesn't fit yet (back to the steps):
-    versatile and two-weapon fighting; Counterspell (the `spellCast` moment and spell reactions
+    two-weapon fighting; Counterspell (the `spellCast` moment and spell reactions
     are there; a 3rd-level slot needs wizard level 5 content). Then the rest of the SRD: all
     classes and levels, the spell list, the bestiary.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.

@@ -3,7 +3,7 @@
   "name": "Battleaxe",
   "value": 1000,
   "slot": "mainHand",
-  "damage": "1d8",
+  "damage": "1d{hands.free >= 1 ? 10 : 8}",
   "attackAbility": "str",
   "weight": 4,
   "traits": [

@@ -312,7 +312,11 @@ public sealed class GearPanel
         if (d.Damage.Length > 0)
         {
             string ability = d.AttackAbility.Length > 0 ? d.AttackAbility : world.Rules.Roles.AttackAbility;
-            page.Stat("Damage", ability.Length > 0 ? $"{d.Damage} ({ability.ToUpperInvariant()})" : d.Damage);
+            // dice that read the wielder (versatile) show both ways they can come out
+            string low = DiceText.Fill(d.Damage, _ => 0);
+            string high = DiceText.Fill(d.Damage, _ => 1);
+            string dice = low == high ? low : $"{low} or {high}";
+            page.Stat("Damage", ability.Length > 0 ? $"{dice} ({ability.ToUpperInvariant()})" : dice);
         }
         foreach (Modifier m in d.Modifiers)
         {

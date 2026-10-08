@@ -271,6 +271,8 @@ public sealed partial class CharacterSheet
             "stat" => Stats.Integer(of),
             "prof" => ProficiencyModifier(rules, of),
             "trait" => Weapon?.Has(of) == true ? 1 : 0,
+            // hands with nothing in them, for a versatile weapon held in both
+            "hands" => of == "free" ? FreeHands : null,
             // how many of a field's lines are written: aspects to invoke
             "field" => Fields.TryGetValue(of, out List<string>? lines) ? lines.Count(l => l.Trim().Length > 0) : 0,
             _ => null,
@@ -435,7 +437,8 @@ public sealed partial class CharacterSheet
     {
         int ability = AbilityModifier(rules, AttackAbility(rules));
         int bonus = Counted(rules, "damage", ability + Stats.Integer("damage"), ("ability", ability), ("bonus", Stats.Integer("damage")));
-        string dice = Weapon != null && Weapon.Damage.Length > 0 ? Weapon.Damage : "1";
+        // a weapon's dice may read the wielder: "1d{hands.free >= 1 ? 10 : 8}" for a versatile one
+        string dice = Weapon != null && Weapon.Damage.Length > 0 ? DiceText.Fill(Weapon.Damage, name => Named(rules, name)) : "1";
         if (bonus != 0)
         {
             dice += (bonus > 0 ? "+" : "") + bonus;

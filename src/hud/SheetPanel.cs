@@ -319,7 +319,7 @@ public partial class SheetPanel : PanelContainer
             case "Features":
                 if (sheet.WeaponItem is Item weapon)
                 {
-                    page.Heading("Weapon").Stat(weapon.Name, weapon.Definition.Damage).Gap();
+                    page.Heading("Weapon").Stat(weapon.Name, DiceText.Fill(weapon.Definition.Damage, name => sheet.Named(rules, name))).Gap();
                 }
                 // the system's words for who they are (Fate's aspects), then its own picks (a heritage)
                 foreach (FieldDefinition field in rules.Fields)

@@ -490,6 +490,21 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AVersatileWeaponHitsHarderInBothHands()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        ana.Inventory.Clear();
+        ana.Inventory.Add(new Item(w.Chapter.Compendium.Item("longsword")!, 1));
+        ana.Equip(0);
+        Assert.StartsWith("1d10", ana.DamageDice(w.Rules));
+        ana.Inventory.Add(new Item(w.Chapter.Compendium.Item("shield")!, 1));
+        ana.Equip(1);
+        Assert.StartsWith("1d8", ana.DamageDice(w.Rules));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

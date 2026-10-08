@@ -74,7 +74,7 @@ public static class SheetPage
                     page.Stat(layout.NameOf("defences"), string.Join(", ", SheetLayout.Defences(sheet)));
                     break;
                 case "weapon" when sheet.WeaponItem is Item weapon:
-                    page.Stat(layout.NameOf("weapon"), $"{weapon.Name}, {weapon.Definition.Damage}");
+                    page.Stat(layout.NameOf("weapon"), $"{weapon.Name}, {DiceText.Fill(weapon.Definition.Damage, name => sheet.Named(rules, name))}");
                     break;
                 case "feats":
                     page.Stat(layout.NameOf("feats"), string.Join(", ", Feats(compendium, choices).Select(f => f.Name)));
