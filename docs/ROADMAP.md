@@ -399,8 +399,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   system's actions, costs and odds (R3, R4, through R2b's evaluator) instead of d20 maths and the `strike` action, so it
   plays a PF2e turn (three actions, the attack penalty, Raise a Shield) as well as a 5e one, and
   keeps its flee, surrender and stealth behaviour. What a GM would decide outside fights (an
-  NPC's answer, whether a guard believes a bluff) comes from the adventure's words and, where it
-  has a story model, the model, within what the system allows.
+  NPC's answer, whether a guard believes a bluff) comes from the adventure's words and the
+  system's checks; no story model runs during play (Josh, 10/8: models are for creating, S5c).
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each
@@ -639,7 +639,20 @@ Rules for all of it:
     aim; the outline sent with every chunk is most of it, and is the first thing to trim.
   - Not done: pictures aren't sent to the model, and the per-book cost log and same-book cache
     belong to the server (S5b).
-- [ ] **S5b. Import on the server, metered.** A `yorehold-server` module takes the request, queues
+- [ ] **S5c. A local model first, or the player's own (Josh, 10/8).** The story model is used
+  only while creating (imports, drafting adventures and systems in Create), never in play: NPCs
+  answer from the adventure's written dialogue and the fight AI is the game's own code. The
+  default is the best model the player's PC can run: Create looks at the machine (GPU memory,
+  RAM), recommends a model that fits from a list kept as data (`assets/import/models.json`:
+  name, size, memory needed, what it is good at), and talks to it through a local service
+  (Ollama or llama.cpp's server, the same chat request `ChatModel` already sends). A player can
+  instead give their own model: any OpenAI-compatible address and model name, local or
+  hosted, with their own key kept on their machine. The server (S5b) becomes the fallback for a
+  PC that can't run anything useful. Prompts get shorter for small models (the outline so far
+  is trimmed first), and a run says how long it will take on this machine before it starts.
+  UI: Settings > Story model (detected hardware, the recommended model and a Get button, or an
+  address and name), and the same choice at the top of Create > Import.
+- [ ] **S5b. Import on the server, metered.** Now the fallback (S5c). A `yorehold-server` module takes the request, queues
   it, runs it on the GPU backend and returns outline entries, so the game never holds a model
   key. Each account has an allowance (pages a month, data in the server's config) with a paid
   tier as a flag; the game shows what is left before a run and says plainly when it is used up.
