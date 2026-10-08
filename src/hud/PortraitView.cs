@@ -1,4 +1,5 @@
 using Godot;
+using Yorehold.Rules;
 
 namespace Yorehold;
 
@@ -19,6 +20,7 @@ public partial class PortraitView : Control
     private Color _color = Palette.Smoke;
     private bool _down;
     private Texture2D? _picture;
+    private PictureFocus _focus = PictureFocus.Middle;
 
     public override void _Ready()
     {
@@ -26,12 +28,14 @@ public partial class PortraitView : Control
         TextureFilter = TextureFilterEnum.Nearest;
     }
 
-    public void Show(string name, Color color, bool down, Texture2D? picture = null)
+    public void Show(string name, Color color, bool down, Texture2D? picture = null, PictureFocus? focus = null)
     {
-        if (name == _name && Palette.Nearest(color) == _color && down == _down && picture == _picture)
+        PictureFocus framing = focus ?? PictureFocus.Middle;
+        if (name == _name && Palette.Nearest(color) == _color && down == _down && picture == _picture && framing == _focus)
         {
             return;
         }
+        _focus = framing;
         _name = name;
         // token colours come from content, so they land on the palette here like on the map
         _color = Palette.Nearest(color);
@@ -88,11 +92,10 @@ public partial class PortraitView : Control
         }
         else if (_picture != null)
         {
-            // the picture covers the card: its middle is kept and what sticks out is cut off
+            // the picture covers the card around its focus; what sticks out is cut off
             Vector2 whole = _picture.GetSize();
-            float scale = Mathf.Max(size.X / whole.X, size.Y / whole.Y);
-            Vector2 part = size / scale;
-            DrawTextureRectRegion(_picture, new Rect2(Vector2.Zero, size), new Rect2((whole - part) / 2, part), _down ? Palette.Slate : Colors.White);
+            (double cx, double cy, double cw, double ch) = _focus.Cut(whole.X, whole.Y, size.X / size.Y);
+            DrawTextureRectRegion(_picture, new Rect2(Vector2.Zero, size), new Rect2((float)cx, (float)cy, (float)cw, (float)ch), _down ? Palette.Slate : Colors.White);
             // the token's colour along the bottom ties the card to the disc on the map
             DrawRect(new Rect2(0, size.Y - 3, size.X, 3), color);
         }

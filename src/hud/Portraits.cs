@@ -22,4 +22,15 @@ public static class Portraits
         string id = string.IsNullOrEmpty(who.CreatureId) ? who.Sheet.ClassName.ToLowerInvariant() : who.CreatureId;
         return id.Length > 0 ? PlayerArt.Texture(world.Files, $"portraits/{id}.png") : null;
     }
+
+    /// <summary>
+    /// Where that picture is cut for a token or a card: the creature file's focus, kept with the
+    /// creature rather than the map token so saves and online play carry nothing new.
+    /// </summary>
+    public static PictureFocus FocusOf(World world, int creature)
+    {
+        string id = world.Creatures[creature].CreatureId;
+        return string.IsNullOrEmpty(id) ? PictureFocus.Middle
+            : world.Chapter.Compendium.Creature(id)?.Token.Framing ?? PictureFocus.Middle;
+    }
 }

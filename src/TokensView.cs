@@ -64,8 +64,9 @@ public partial class TokensView : Node2D
             // heroes always show; the rest only where the party sees them, or where they fell once that is explored
             bool seen = hero || (dead ? w.Fog.State(team, 0, w.CellOf(i)) != FogState.Unexplored : token.Floor == 0);
             TokenSide side = w.SideOf(i);
-            _views[i].Show(token, hero, dead, seen, i < w.Creatures.Count ? Portraits.Of(w, i) : null,
-                side, PlayerArt.Texture(w.Files, TokenSkin.FramePath(side)), _skin);
+            bool creature = i < w.Creatures.Count;
+            _views[i].Show(token, hero, dead, seen, creature ? Portraits.Of(w, i) : null,
+                side, PlayerArt.Texture(w.Files, TokenSkin.FramePath(side)), _skin, creature ? Portraits.FocusOf(w, i) : PictureFocus.Middle);
         }
         QueueRedraw();
     }

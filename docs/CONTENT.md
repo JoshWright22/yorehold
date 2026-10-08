@@ -15,8 +15,12 @@ What the port reads so far, and where it differs:
   `chapters/pit/chapter.json: encounters[0].creatures[1].at: Nib starts on an occupied cell`.
 - Faces: a creature's cards and its token show the picture its `token.image` names, or else
   `portraits/<creature id>.png`, and a hero's show `portraits/<class name in lower case>.png`. Any
-  size, square is best; small pixel art is drawn sharp. Paths are content paths, from the package's
+  size; small pixel art is drawn sharp. Paths are content paths, from the package's
   root (not the chapter folder). With no picture the disc and initial are drawn.
+  The token and the cards are cut from the picture around `token.focus`, `[x, y]` from 0 to 1
+  across it (default `[0.5, 0.5]`), as large as the frame's shape fits, divided by `token.zoom`
+  (1 to 8, default 1). A focus near an edge is pushed back in, so nothing outside the picture
+  shows.
   The game ships no faces: every picture comes from the content, and a package's own pictures win
   over the game's folder. png, jpg or webp. A conversation shows the same picture whole and large,
   standing on the bottom of the screen, so a tall picture with a see-through background (a figure
@@ -240,7 +244,7 @@ One file per id. Filenames must match `id`, which uses lowercase letters, digits
 
 An item's `slot` is where it is worn or held (`mainHand`, `offHand`, `armor`...; none = it can only be carried). Slots ending in `Hand` are held, and `hands` (default 1) is how many of a character's two hands the item takes: a `"hands": 2` weapon can't be held with a shield. Players change gear in the gear panel (I): free between fights, the Interact action's cost on the hero's turn in one. `"magic": true` makes an item count toward the ruleset's `magicItemLimit` (3), carried or worn; weight counts toward the carrying capacity (STR x `carryPerStrength`), past which a hero is slowed and then stopped (`encumberedAt`, `immobileAt`, `encumberedSpeed` in `ruleset.json`).
 
-Modifiers use `stat`, `op` (`add`, `multiply`, `override`) and `value`. `token` supports `color`, radius `size` in cells and optional `image`. Token image paths resolve in the chapter folder first, then at the content root. Unknown item/class/creature ids, invalid values and missing token images are reported before play. The framework's `Compendium` also serializes these three definitions back to JSON.
+Modifiers use `stat`, `op` (`add`, `multiply`, `override`) and `value`. `token` supports `color`, radius `size` in cells, optional `image` and where it is cut, `focus` and `zoom` (see Faces above). Token image paths resolve in the chapter folder first, then at the content root. Unknown item/class/creature ids, invalid values and missing token images are reported before play. The framework's `Compendium` also serializes these three definitions back to JSON.
 
 ## Maps
 
@@ -644,7 +648,7 @@ report.json's `rooms`, with the `spot` square its number is on).
 ```json
 {"format": "yorehold.import-bench",
  "versions": [{"name": "layout", "cast": false, "walls": false}, {"name": "full"},
-              {"name": "local", "model": "http://127.0.0.1:11434", "modelName": "qwen"}]}
+			  {"name": "local", "model": "http://127.0.0.1:11434", "modelName": "qwen"}]}
 ```
 
 `cast` (BookCast) and `walls` (the map's walls) default to on; `model` is a chat address, none

@@ -36,7 +36,7 @@ public partial class InitiativeCard : TipButton
         Creature = creature;
         WorldCreature who = world.Creatures[creature];
         CharacterSheet sheet = who.Sheet;
-        _portrait.Show(sheet.Name, world.Tokens.Tokens[creature].Color.ToGodot(), sheet.Down, Portraits.Of(world, creature));
+        _portrait.Show(sheet.Name, world.Tokens.Tokens[creature].Color.ToGodot(), sheet.Down, Portraits.Of(world, creature), Portraits.FocusOf(world, creature));
         // a card that has had its turn greys its side strip instead of going see-through
         _side.Color = done && !current ? Palette.Slate : who.Team == 0 ? PartyColor : EnemyColor;
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);

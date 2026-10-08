@@ -21,6 +21,7 @@ public partial class TokenView : Node2D
     private const int Sides = 32;
 
     private Token _token = new();
+    private PictureFocus _focus = PictureFocus.Middle;
     private bool _dead;
     private bool _hero;
     private Texture2D? _picture;
@@ -34,8 +35,9 @@ public partial class TokenView : Node2D
     }
 
     /// <summary>Called each frame with what the rules say about it now.</summary>
-    public void Show(Token token, bool hero, bool dead, bool seen, Texture2D? picture, TokenSide side, Texture2D? frame, TokenSkin skin)
+    public void Show(Token token, bool hero, bool dead, bool seen, Texture2D? picture, TokenSide side, Texture2D? frame, TokenSkin skin, PictureFocus focus)
     {
+        _focus = focus;
         _token = token;
         _hero = hero;
         _dead = dead;
@@ -94,20 +96,24 @@ public partial class TokenView : Node2D
         }
         if (_picture != null)
         {
+            // a square of the picture around its focus, so a wide painting isn't squashed onto the disc
+            Vector2 whole = _picture.GetSize();
+            (double cx, double cy, double cw, double ch) = _focus.Cut(whole.X, whole.Y, 1);
             if (square)
             {
-                DrawTextureRect(_picture, new Rect2(-face, -face, face * 2, face * 2), false);
+                DrawTextureRectRegion(_picture, new Rect2(-face, -face, face * 2, face * 2), new Rect2((float)cx, (float)cy, (float)cw, (float)ch));
             }
             else
             {
-                // the face is cut round: a many-sided shape with the picture laid across it
+                // the face is cut round: a many-sided shape with that square laid across it
                 var points = new Vector2[Sides];
                 var uvs = new Vector2[Sides];
                 for (int i = 0; i < Sides; i++)
                 {
                     Vector2 way = Vector2.Right.Rotated(Mathf.Tau * i / Sides);
                     points[i] = way * face;
-                    uvs[i] = way * 0.5f + new Vector2(0.5f, 0.5f);
+                    Vector2 inSquare = way * 0.5f + new Vector2(0.5f, 0.5f);
+                    uvs[i] = new Vector2((float)((cx + inSquare.X * cw) / whole.X), (float)((cy + inSquare.Y * ch) / whole.Y));
                 }
                 DrawColoredPolygon(points, Colors.White, uvs, _picture);
             }

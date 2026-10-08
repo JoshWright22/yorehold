@@ -615,7 +615,7 @@ public partial class PlayHud : Control
     private void ShowBar(World world, FightAim aim, int shown, bool fighting)
     {
         CharacterSheet sheet = world.Creatures[shown].Sheet;
-        _portrait.Show(sheet.Name, world.Tokens.Tokens[shown].Color.ToGodot(), sheet.Down, Portraits.Of(world, shown));
+        _portrait.Show(sheet.Name, world.Tokens.Tokens[shown].Color.ToGodot(), sheet.Down, Portraits.Of(world, shown), Portraits.FocusOf(world, shown));
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
         _hpText.Text = $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";

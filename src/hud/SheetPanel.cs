@@ -178,7 +178,7 @@ public partial class SheetPanel : PanelContainer
         Ruleset rules = world.Rules;
         Compendium compendium = world.Chapter.Compendium;
 
-        _portrait.Show(sheet.Name, world.Tokens.Tokens[hero].Color.ToGodot(), sheet.Down, Portraits.Of(world, hero));
+        _portrait.Show(sheet.Name, world.Tokens.Tokens[hero].Color.ToGodot(), sheet.Down, Portraits.Of(world, hero), Portraits.FocusOf(world, hero));
         _name.Text = sheet.Name;
         _who.Text = SheetPage.Who(compendium, sheet, c.Choices);
         int xp = c.Choices != null ? Math.Max(c.Choices.Xp, sheet.Xp) : sheet.Xp;

@@ -1,7 +1,11 @@
 namespace Yorehold.Rules;
 
 /// <summary>How a creature looks on the map until it has art.</summary>
-public record CreatureToken(ContentColor Color, double Size = 0.4, string Image = "");
+public record CreatureToken(ContentColor Color, double Size = 0.4, string Image = "", PictureFocus? Focus = null)
+{
+    /// <summary>Where its image is cut for a round token or a card; the middle unless the file says.</summary>
+    public PictureFocus Framing => Focus ?? PictureFocus.Middle;
+}
 
 /// <summary>One creature file: creatures/goblin.json.</summary>
 public class CreatureDefinition
@@ -42,7 +46,7 @@ public class CreatureDefinition
             {
                 throw t.Fail("size", "is above 0 and at most 10");
             }
-            token = new CreatureToken(t.Get("color") is ContentNode color ? ContentParts.ColorFrom(color) : token.Color, size, t.Text("image", ""));
+            token = new CreatureToken(t.Get("color") is ContentNode color ? ContentParts.ColorFrom(color) : token.Color, size, t.Text("image", ""), PictureFocus.Read(t));
         }
         ContentNode? ai = node.Get("ai");
         if (ai is ContentNode aiNode && !aiNode.IsString && !aiNode.IsObject)
