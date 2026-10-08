@@ -1,0 +1,21 @@
+{
+  "id": "interact",
+  "name": "Stand",
+  "description": "Stand up from prone.",
+  "order": 90,
+  "cost": 1,
+  "requires": {
+    "flags": [
+      "prone"
+    ]
+  },
+  "log": "{name} stands.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "prone",
+      "target": "self",
+      "remove": true
+    }
+  ]
+}

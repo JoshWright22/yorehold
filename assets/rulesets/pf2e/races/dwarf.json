@@ -1,0 +1,13 @@
+{
+  "id": "dwarf",
+  "name": "Dwarf",
+  "description": "Stout, tough and stubborn.",
+  "bonusHp": 10,
+  "speed": 20,
+  "abilities": {
+    "con": 2,
+    "wis": 2,
+    "cha": -2
+  },
+  "darkvision": 60
+}

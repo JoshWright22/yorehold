@@ -1,0 +1,14 @@
+{
+  "id": "hidden",
+  "name": "Hidden",
+  "description": "Its foes know roughly where it is but not exactly: attacks against it suffer.",
+  "flags": [
+    "hidden"
+  ],
+  "attackersDisadvantage": true,
+  "ends": [
+    "attack",
+    "move",
+    "fightEnd"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "elf",
+  "name": "Elf",
+  "description": "Long-lived and quick.",
+  "bonusHp": 6,
+  "speed": 30,
+  "abilities": {
+    "dex": 2,
+    "int": 2,
+    "con": -2
+  }
+}

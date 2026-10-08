@@ -31,6 +31,17 @@ public class SystemPackageTests
         Assert.True(world.Said("Fire Bolt") || world.Said("attacks"), "Heroes attack under the system's own actions");
     }
 
+    [Fact]
+    public void Pathfinder2ePlaysAFight()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        Assert.True(w.Rules.Id == "pf2e" && w.Rules.ActionsPerTurn == 3 && !w.Rules.FreeMove);
+        Assert.Contains(w.ActionsOf(1), a => a.Id == "electric-arc");
+        Assert.Equal(4, w.Rules.Checks.Kind(CheckRules.Attack).Outcomes.Count);
+        PlayOut(world);
+    }
+
     // Heroes attack the nearest goblin in reach or fire at any, else end the turn; enemies play themselves.
     private static void PlayOut(WorldFixture world)
     {

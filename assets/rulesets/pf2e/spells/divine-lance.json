@@ -1,0 +1,28 @@
+{
+  "id": "divine-lance",
+  "name": "Divine Lance",
+  "description": "Two actions: a spell attack of divine light, 2d4 plus 1d4 per rank above 1.",
+  "level": 0,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{1 + ceil(level / 2)}d4",
+          "type": "spirit",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "goblin",
+  "name": "Goblin Warrior",
+  "description": "A wiry goblin with a dogslicer.",
+  "level": 0,
+  "hp": 6,
+  "armorClass": 16,
+  "speed": 25,
+  "abilities": {
+    "str": 10,
+    "dex": 16,
+    "con": 12,
+    "int": 10,
+    "wis": 8,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "dogslicer"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      120,
+      150,
+      60
+    ],
+    "size": 0.36
+  },
+  "ai": "cunning",
+  "loot": {
+    "coins": "2d6"
+  },
+  "stats": {
+    "attack": 3
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "grabbed",
+  "name": "Grabbed",
+  "description": "Off-guard and immobilized until it escapes.",
+  "flags": [
+    "grabbed",
+    "offGuard",
+    "cantMove"
+  ],
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -2,
+      "type": "circumstance"
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

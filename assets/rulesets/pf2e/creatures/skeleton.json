@@ -1,0 +1,44 @@
+{
+  "id": "skeleton",
+  "name": "Skeleton Guard",
+  "description": "Animated bones; slashing and piercing barely bite.",
+  "level": -1,
+  "hp": 4,
+  "armorClass": 16,
+  "speed": 25,
+  "abilities": {
+    "str": 12,
+    "dex": 16,
+    "con": 10,
+    "int": 6,
+    "wis": 10,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "shortsword"
+  ],
+  "darkvision": 60,
+  "stats": {
+    "resist.slashing": 5,
+    "resist.piercing": 5,
+    "immune.poison": 1,
+    "attack": 1
+  },
+  "token": {
+    "color": [
+      220,
+      215,
+      200
+    ],
+    "size": 0.4
+  },
+  "ai": "mindless"
+}

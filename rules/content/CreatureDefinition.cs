@@ -63,7 +63,7 @@ public class CreatureDefinition
             Name = node.Text("name", id),
             Description = node.Text("description", ""),
             Hp = node.Int("hp", 7, 1, 100000),
-            Level = node.Int("level", 1, 1, 1000),
+            Level = node.Int("level", 1, -1, 1000),
             ArmorClass = node.Int("armorClass", 12, 0, 100),
             Speed = node.Int("speed", 30, 0, 1000),
             Darkvision = node.Int("darkvision", 0, 0, 10000),

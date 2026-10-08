@@ -1,0 +1,9 @@
+{
+  "id": "reactive-strike",
+  "name": "Reactive Strike",
+  "trigger": "leavesReach",
+  "action": "strike",
+  "order": 10,
+  "promptSeconds": 2,
+  "general": false
+}

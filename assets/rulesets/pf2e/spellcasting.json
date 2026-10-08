@@ -1,0 +1,15 @@
+{
+  "hands": "free",
+  "slotPrefix": "slots-",
+  "upcast": true,
+  "prepareAfter": [
+    "rest"
+  ],
+  "concentration": {
+    "onDamage": "ignored",
+    "ability": "con",
+    "minimumDc": 10,
+    "damageShare": 0.5,
+    "endsWhenDown": true
+  }
+}

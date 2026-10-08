@@ -222,7 +222,7 @@ public class ClassDefinition
         }
         foreach (KeyValuePair<string, string> choice in ranks)
         {
-            bool known = choice.Key is "weapons" or "armor" or "dc" || rules.Skill(choice.Key) != null || rules.Ability(choice.Key) != null;
+            bool known = choice.Key is "weapons" or "armor" or "dc" || rules.Skill(choice.Key) != null || rules.IsSave(choice.Key);
             if (!known)
             {
                 throw new ContentException(file, "proficiencyRanks." + choice.Key, "unknown proficiency target");

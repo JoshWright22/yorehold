@@ -1,0 +1,13 @@
+{
+  "id": "dogslicer",
+  "name": "Dogslicer",
+  "value": 10,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "weight": 1,
+  "traits": [
+    "agile",
+    "backstabber",
+    "finesse"
+  ]
+}

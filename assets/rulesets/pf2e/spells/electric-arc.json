@@ -1,0 +1,25 @@
+{
+  "id": "electric-arc",
+  "name": "Electric Arc",
+  "description": "Two actions: lightning at a foe, 2d4 plus 1d4 per rank above 1, basic Reflex save.",
+  "level": 0,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "save": {
+    "ability": "reflex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{1 + ceil(level / 2)}d4",
+      "type": "electricity",
+      "onSave": "half"
+    }
+  ]
+}

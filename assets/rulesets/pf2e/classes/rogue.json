@@ -1,0 +1,36 @@
+{
+  "id": "rogue",
+  "name": "Rogue",
+  "description": "A skilled, sneaky striker.",
+  "hitDie": 8,
+  "bonusHp": 0,
+  "speed": 25,
+  "dcAbility": "dex",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "armor": "trained",
+    "fortitude": "trained",
+    "reflex": "expert",
+    "will": "expert",
+    "perception": "expert",
+    "dc": "trained",
+    "stealth": "trained",
+    "thievery": "trained",
+    "acrobatics": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "stealth",
+    "thievery"
+  ],
+  "items": [
+    "rapier",
+    "studded-leather"
+  ],
+  "levels": [
+    {},
+    {},
+    {}
+  ]
+}

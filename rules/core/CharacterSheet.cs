@@ -326,6 +326,11 @@ public sealed partial class CharacterSheet
     /// <summary>For an ability or a skill; a skill adds its proficiency.</summary>
     public int CheckModifier(Ruleset rules, string abilityOrSkill)
     {
+        // a check against one of the system's saves (Demoralize against Will) uses the save
+        if (rules.SaveOf(abilityOrSkill) != null)
+        {
+            return SaveModifier(rules, abilityOrSkill);
+        }
         SkillDefinition? skill = rules.Skill(abilityOrSkill);
         int ability = AbilityModifier(rules, skill?.Ability ?? abilityOrSkill);
         int proficiency = skill != null ? ProficiencyModifier(rules, skill.Id) : 0;

@@ -1,0 +1,20 @@
+{
+  "id": "studded-leather",
+  "name": "Studded leather armor",
+  "value": 300,
+  "slot": "armor",
+  "weight": 1,
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 2,
+      "type": "item"
+    },
+    {
+      "stat": "armorDexCap",
+      "op": "override",
+      "value": 4
+    }
+  ]
+}

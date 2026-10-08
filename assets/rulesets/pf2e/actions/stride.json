@@ -1,0 +1,17 @@
+{
+  "id": "stride",
+  "name": "Stride",
+  "description": "Move up to your Speed.",
+  "order": 20,
+  "cost": 1,
+  "log": "{name} strides.",
+  "effects": [
+    {
+      "do": "resource",
+      "target": "self",
+      "id": "movement",
+      "op": "restore",
+      "amount": "speed"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "unconscious",
+  "name": "Unconscious",
+  "description": "Out cold at 0 HP: can't act, -4 status penalty to AC.",
+  "flags": [
+    "unconscious",
+    "downed",
+    "offGuard",
+    "cantAct",
+    "cantMove"
+  ],
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -4,
+      "type": "status"
+    }
+  ],
+  "ends": [
+    "healed"
+  ],
+  "removes": [
+    "hidden"
+  ]
+}

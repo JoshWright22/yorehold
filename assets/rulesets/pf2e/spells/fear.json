@@ -1,0 +1,37 @@
+{
+  "id": "fear",
+  "name": "Fear",
+  "description": "Two actions: a Will save or frightened 1, 2 on a failure, 3 on a critical failure.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "save": {
+    "ability": "will",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "frightened",
+      "value": 1,
+      "when": "success"
+    },
+    {
+      "do": "condition",
+      "id": "frightened",
+      "value": 2,
+      "when": "failure"
+    },
+    {
+      "do": "condition",
+      "id": "frightened",
+      "value": 3,
+      "when": "criticalFailure"
+    }
+  ]
+}

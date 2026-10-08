@@ -1,0 +1,12 @@
+{
+  "id": "longsword",
+  "name": "Longsword",
+  "value": 100,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "attackAbility": "str",
+  "weight": 1,
+  "traits": [
+    "versatile"
+  ]
+}

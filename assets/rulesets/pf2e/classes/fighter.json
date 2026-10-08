@@ -1,0 +1,46 @@
+{
+  "id": "fighter",
+  "name": "Fighter",
+  "description": "A weapon master: expert with every weapon from the start.",
+  "hitDie": 10,
+  "bonusHp": 0,
+  "speed": 25,
+  "dcAbility": "str",
+  "proficiencyRanks": {
+    "weapons": "expert",
+    "armor": "trained",
+    "fortitude": "expert",
+    "reflex": "expert",
+    "will": "trained",
+    "perception": "expert",
+    "dc": "trained",
+    "athletics": "trained",
+    "intimidation": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics"
+  ],
+  "items": [
+    "longsword",
+    "chain-mail",
+    "wooden-shield"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "reactive-strike",
+          "name": "Reactive Strike",
+          "description": "Strike a foe that moves out of your reach.",
+          "actions": [
+            "reactive-strike"
+          ]
+        }
+      ]
+    },
+    {},
+    {}
+  ]
+}

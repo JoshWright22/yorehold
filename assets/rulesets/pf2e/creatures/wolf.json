@@ -1,0 +1,40 @@
+{
+  "id": "wolf",
+  "name": "Wolf",
+  "description": "A pack hunter.",
+  "level": 1,
+  "hp": 24,
+  "armorClass": 15,
+  "speed": 35,
+  "abilities": {
+    "str": 14,
+    "dex": 16,
+    "con": 14,
+    "int": 4,
+    "wis": 14,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "jaws"
+  ],
+  "token": {
+    "color": [
+      130,
+      120,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "animal",
+  "stats": {
+    "attack": 4
+  }
+}

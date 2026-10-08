@@ -1,0 +1,19 @@
+{
+  "id": "off-guard",
+  "name": "Off-guard",
+  "description": "-2 circumstance penalty to AC.",
+  "flags": [
+    "offGuard"
+  ],
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -2,
+      "type": "circumstance"
+    }
+  ],
+  "ends": [
+    "turnStart"
+  ]
+}

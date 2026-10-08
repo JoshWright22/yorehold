@@ -1,0 +1,3 @@
+This rules system uses game mechanics from Pathfinder Player Core and GM Core, licensed under the
+ORC License (Open RPG Creative License), https://paizo.com/orclicense. Pathfinder is a trademark of
+Paizo Inc.; this package is not published, endorsed or approved by Paizo. The text is our own.

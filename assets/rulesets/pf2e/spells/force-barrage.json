@@ -1,0 +1,26 @@
+{
+  "id": "force-barrage",
+  "name": "Force Barrage",
+  "description": "Two actions: two shards of force that never miss, 1d4+1 each.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d4+2",
+      "type": "force",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "every": 2,
+        "dice": "1d4+1"
+      }
+    }
+  ]
+}

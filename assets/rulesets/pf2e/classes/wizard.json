@@ -1,0 +1,54 @@
+{
+  "id": "wizard",
+  "name": "Wizard",
+  "description": "An arcane scholar with a book of spells.",
+  "hitDie": 6,
+  "bonusHp": 0,
+  "speed": 25,
+  "dcAbility": "int",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "expert",
+    "perception": "trained",
+    "dc": "trained",
+    "arcana": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "arcana"
+  ],
+  "items": [
+    "staff"
+  ],
+  "levels": [
+    {
+      "slots": {
+        "1": 2
+      },
+      "spells": 2
+    },
+    {
+      "slots": {
+        "1": 3
+      }
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 2
+      }
+    }
+  ],
+  "casting": "prepared",
+  "spells": {
+    "0": [
+      "electric-arc"
+    ],
+    "1": [
+      "force-barrage",
+      "fear"
+    ]
+  }
+}

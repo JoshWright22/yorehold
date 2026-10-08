@@ -1,0 +1,10 @@
+{
+  "id": "stunned",
+  "name": "Stunned",
+  "description": "Can't act until it recovers.",
+  "flags": [
+    "stunned",
+    "cantAct"
+  ],
+  "duration": 1
+}

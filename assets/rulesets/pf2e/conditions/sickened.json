@@ -1,0 +1,34 @@
+{
+  "id": "sickened",
+  "name": "Sickened",
+  "description": "A status penalty equal to its value on checks, saves and attacks.",
+  "flags": [
+    "sickened"
+  ],
+  "stacking": "value",
+  "maxValue": 4,
+  "perValue": true,
+  "ends": [
+    "rest"
+  ],
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    },
+    {
+      "stat": "checks",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    },
+    {
+      "stat": "saves",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    }
+  ]
+}

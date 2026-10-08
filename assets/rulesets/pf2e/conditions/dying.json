@@ -1,0 +1,13 @@
+{
+  "id": "dying",
+  "name": "Dying",
+  "description": "Slipping toward death; at dying 4 it dies.",
+  "flags": [
+    "dying",
+    "cantAct",
+    "cantMove"
+  ],
+  "ends": [
+    "healed"
+  ]
+}

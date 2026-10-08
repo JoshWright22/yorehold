@@ -436,7 +436,7 @@ public class Effect
 
     private static void CheckSteps(List<EffectStep> steps, string path, Ruleset rules, string file, bool hasSave)
     {
-        bool Measurable(string name) => rules.Ability(name) != null || rules.Skill(name) != null;
+        bool Measurable(string name) => rules.Ability(name) != null || rules.Skill(name) != null || rules.SaveOf(name) != null;
         for (int i = 0; i < steps.Count; i++)
         {
             EffectStep step = steps[i];

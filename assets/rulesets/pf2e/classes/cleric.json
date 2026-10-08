@@ -1,0 +1,57 @@
+{
+  "id": "cleric",
+  "name": "Cleric",
+  "description": "A divine caster who heals and protects.",
+  "hitDie": 8,
+  "bonusHp": 0,
+  "speed": 25,
+  "dcAbility": "wis",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "armor": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "expert",
+    "perception": "trained",
+    "dc": "trained",
+    "religion": "trained",
+    "medicine": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "religion"
+  ],
+  "items": [
+    "staff",
+    "studded-leather"
+  ],
+  "levels": [
+    {
+      "slots": {
+        "1": 2
+      },
+      "spells": 2
+    },
+    {
+      "slots": {
+        "1": 3
+      }
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 2
+      }
+    }
+  ],
+  "casting": "prepared",
+  "spells": {
+    "0": [
+      "divine-lance"
+    ],
+    "1": [
+      "heal",
+      "fear"
+    ]
+  }
+}

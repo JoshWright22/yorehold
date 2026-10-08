@@ -1,0 +1,35 @@
+{
+  "id": "demoralize",
+  "name": "Demoralize",
+  "description": "Intimidation against an enemy's Will: frightened 1, or 2 on a critical success.",
+  "order": 40,
+  "cost": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "log": "{name} tries to demoralize.",
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "check",
+      "ability": "intimidation",
+      "against": "will",
+      "steps": [
+        {
+          "do": "condition",
+          "id": "frightened",
+          "value": 1,
+          "when": "success"
+        },
+        {
+          "do": "condition",
+          "id": "frightened",
+          "value": 2,
+          "when": "criticalSuccess"
+        }
+      ]
+    }
+  ]
+}

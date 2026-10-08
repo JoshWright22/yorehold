@@ -1,0 +1,19 @@
+{
+  "id": "shield-raised",
+  "name": "Shield raised",
+  "description": "+2 circumstance bonus to AC until its next turn.",
+  "flags": [
+    "shieldRaised"
+  ],
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 2,
+      "type": "circumstance"
+    }
+  ],
+  "ends": [
+    "turnStart"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "frightened",
+  "name": "Frightened",
+  "description": "A status penalty equal to its value on checks, saves, attacks and AC; it drops by 1 each turn.",
+  "flags": [
+    "frightened"
+  ],
+  "stacking": "value",
+  "maxValue": 4,
+  "perValue": true,
+  "decay": 1,
+  "ends": [
+    "fightEnd"
+  ],
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    },
+    {
+      "stat": "checks",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    },
+    {
+      "stat": "saves",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    },
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -1,
+      "type": "status"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "prone",
+  "name": "Prone",
+  "description": "On the ground: off-guard and -2 to attacks.",
+  "flags": [
+    "prone",
+    "offGuard"
+  ],
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -2,
+      "type": "circumstance"
+    },
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": -2,
+      "type": "circumstance"
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

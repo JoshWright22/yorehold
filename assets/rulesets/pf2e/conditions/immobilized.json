@@ -1,0 +1,12 @@
+{
+  "id": "immobilized",
+  "name": "Immobilized",
+  "description": "Can't move.",
+  "flags": [
+    "immobilized",
+    "cantMove"
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

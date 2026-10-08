@@ -1,0 +1,21 @@
+{
+  "id": "slowed",
+  "name": "Slowed",
+  "description": "Loses actions equal to its value each turn.",
+  "flags": [
+    "slowed"
+  ],
+  "stacking": "value",
+  "maxValue": 3,
+  "perValue": true,
+  "ends": [
+    "fightEnd"
+  ],
+  "modifiers": [
+    {
+      "stat": "actions",
+      "op": "add",
+      "value": -1
+    }
+  ]
+}

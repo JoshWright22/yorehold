@@ -1,0 +1,11 @@
+{
+  "id": "human",
+  "name": "Human",
+  "description": "Adaptable and ambitious.",
+  "bonusHp": 8,
+  "speed": 25,
+  "abilities": {
+    "str": 2,
+    "int": 2
+  }
+}

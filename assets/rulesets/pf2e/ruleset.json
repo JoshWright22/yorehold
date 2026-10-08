@@ -1,0 +1,400 @@
+{
+  "version": 1,
+  "id": "pf2e",
+  "name": "Pathfinder 2e (Remaster)",
+  "abilities": [
+    {
+      "id": "str",
+      "name": "Strength"
+    },
+    {
+      "id": "dex",
+      "name": "Dexterity"
+    },
+    {
+      "id": "con",
+      "name": "Constitution"
+    },
+    {
+      "id": "int",
+      "name": "Intelligence"
+    },
+    {
+      "id": "wis",
+      "name": "Wisdom"
+    },
+    {
+      "id": "cha",
+      "name": "Charisma"
+    }
+  ],
+  "skills": [
+    {
+      "id": "perception",
+      "name": "Perception",
+      "ability": "wis"
+    },
+    {
+      "id": "acrobatics",
+      "name": "Acrobatics",
+      "ability": "dex"
+    },
+    {
+      "id": "arcana",
+      "name": "Arcana",
+      "ability": "int"
+    },
+    {
+      "id": "athletics",
+      "name": "Athletics",
+      "ability": "str"
+    },
+    {
+      "id": "crafting",
+      "name": "Crafting",
+      "ability": "int"
+    },
+    {
+      "id": "deception",
+      "name": "Deception",
+      "ability": "cha"
+    },
+    {
+      "id": "diplomacy",
+      "name": "Diplomacy",
+      "ability": "cha"
+    },
+    {
+      "id": "intimidation",
+      "name": "Intimidation",
+      "ability": "cha"
+    },
+    {
+      "id": "medicine",
+      "name": "Medicine",
+      "ability": "wis"
+    },
+    {
+      "id": "nature",
+      "name": "Nature",
+      "ability": "wis"
+    },
+    {
+      "id": "occultism",
+      "name": "Occultism",
+      "ability": "int"
+    },
+    {
+      "id": "performance",
+      "name": "Performance",
+      "ability": "cha"
+    },
+    {
+      "id": "religion",
+      "name": "Religion",
+      "ability": "wis"
+    },
+    {
+      "id": "society",
+      "name": "Society",
+      "ability": "int"
+    },
+    {
+      "id": "stealth",
+      "name": "Stealth",
+      "ability": "dex"
+    },
+    {
+      "id": "survival",
+      "name": "Survival",
+      "ability": "wis"
+    },
+    {
+      "id": "thievery",
+      "name": "Thievery",
+      "ability": "dex"
+    }
+  ],
+  "saves": [
+    {
+      "id": "fortitude",
+      "name": "Fortitude",
+      "ability": "con"
+    },
+    {
+      "id": "reflex",
+      "name": "Reflex",
+      "ability": "dex"
+    },
+    {
+      "id": "will",
+      "name": "Will",
+      "ability": "wis"
+    }
+  ],
+  "modifierTable": "d20",
+  "scoreMin": 1,
+  "scoreMax": 30,
+  "scoreMethods": {
+    "roll": "4d6kh3",
+    "standardArray": [
+      18,
+      16,
+      14,
+      12,
+      10,
+      10
+    ],
+    "pointBudget": 27,
+    "pointCosts": {
+      "8": 0,
+      "9": 1,
+      "10": 2,
+      "11": 3,
+      "12": 4,
+      "13": 5,
+      "14": 7,
+      "15": 9
+    }
+  },
+  "baseArmorClass": 10,
+  "armorClassAbility": "dex",
+  "roles": {
+    "hpAbility": "con",
+    "attackAbility": "str",
+    "initiative": "perception",
+    "perception": "perception",
+    "stealth": "stealth",
+    "thievery": "thievery",
+    "hidden": "hidden",
+    "downed": "unconscious",
+    "dead": "dead",
+    "strike": "strike",
+    "stride": "stride",
+    "endTurn": "end-turn",
+    "interact": "interact",
+    "slotPrefix": "slots-",
+    "focus": "focus"
+  },
+  "checks": {
+    "criticalDamage": "(dice + flat) * 2",
+    "attack": {
+      "dice": "1d20",
+      "advantage": "1d20",
+      "disadvantage": "1d20",
+      "outcomes": [
+        {
+          "id": "criticalFailure",
+          "name": "Critical failure"
+        },
+        {
+          "id": "failure",
+          "name": "Failure"
+        },
+        {
+          "id": "success",
+          "name": "Success",
+          "passes": true
+        },
+        {
+          "id": "criticalSuccess",
+          "name": "Critical success",
+          "passes": true,
+          "critical": true
+        }
+      ],
+      "degree": "clamp((total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (die == 20 ? 1 : 0) - (die == 1 ? 1 : 0), 0, 3)"
+    },
+    "check": {
+      "dice": "1d20",
+      "advantage": "1d20",
+      "disadvantage": "1d20",
+      "outcomes": [
+        {
+          "id": "criticalFailure",
+          "name": "Critical failure"
+        },
+        {
+          "id": "failure",
+          "name": "Failure"
+        },
+        {
+          "id": "success",
+          "name": "Success",
+          "passes": true
+        },
+        {
+          "id": "criticalSuccess",
+          "name": "Critical success",
+          "passes": true
+        }
+      ],
+      "degree": "clamp((total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (die == 20 ? 1 : 0) - (die == 1 ? 1 : 0), 0, 3)"
+    },
+    "save": {
+      "dice": "1d20",
+      "advantage": "1d20",
+      "disadvantage": "1d20",
+      "outcomes": [
+        {
+          "id": "criticalFailure",
+          "name": "Critical failure",
+          "damage": 2
+        },
+        {
+          "id": "failure",
+          "name": "Failure",
+          "damage": 1
+        },
+        {
+          "id": "success",
+          "name": "Success",
+          "passes": true,
+          "damage": 0.5
+        },
+        {
+          "id": "criticalSuccess",
+          "name": "Critical success",
+          "passes": true,
+          "damage": 0
+        }
+      ],
+      "degree": "clamp((total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (die == 20 ? 1 : 0) - (die == 1 ? 1 : 0), 0, 3)"
+    }
+  },
+  "formulas": {
+    "check": "ability + proficiency + stat.checks",
+    "save": "ability + proficiency + stat.saves",
+    "attack": "ability + proficiency + bonus",
+    "armorClass": "armor + (stat.armorDexCap > 0 ? min(ability, stat.armorDexCap - 1) : ability) + proficiency",
+    "hpFirstLevel": "bonus + hitDie + ability",
+    "hpPerLevel": "hitDie + ability",
+    "damageTaken": "immune ? 0 : max(0, amount - resist) + (amount > 0 ? weak : 0)"
+  },
+  "proficiencyRanks": [
+    {
+      "id": "untrained",
+      "name": "Untrained",
+      "bonus": 0,
+      "addsLevel": false
+    },
+    {
+      "id": "trained",
+      "name": "Trained",
+      "bonus": 2,
+      "addsLevel": true
+    },
+    {
+      "id": "expert",
+      "name": "Expert",
+      "bonus": 4,
+      "addsLevel": true
+    },
+    {
+      "id": "master",
+      "name": "Master",
+      "bonus": 6,
+      "addsLevel": true
+    },
+    {
+      "id": "legendary",
+      "name": "Legendary",
+      "bonus": 8,
+      "addsLevel": true
+    }
+  ],
+  "proficientRank": "trained",
+  "untrainedRank": "untrained",
+  "passiveBase": 10,
+  "baseDc": 10,
+  "death": {
+    "enabled": true,
+    "downedCondition": "unconscious",
+    "dyingCondition": "dying",
+    "deadCondition": "dead",
+    "track": {
+      "start": "1 + wounded + (critical ? 1 : 0)",
+      "damage": "critical ? 2 : 1",
+      "roll": "check",
+      "dc": "10 + dying",
+      "dead": "dying >= 4",
+      "change": {
+        "criticalFailure": 2,
+        "failure": 1,
+        "success": -1,
+        "criticalSuccess": -2
+      }
+    }
+  },
+  "xpForLevel": [
+    1000,
+    2000,
+    3000,
+    4000,
+    5000,
+    6000,
+    7000,
+    8000,
+    9000,
+    10000,
+    11000,
+    12000,
+    13000,
+    14000,
+    15000,
+    16000,
+    17000,
+    18000,
+    19000
+  ],
+  "actionsPerTurn": 3,
+  "bonusActions": false,
+  "freeMove": false,
+  "strikeCostsHands": false,
+  "sharedTurns": false,
+  "attackPenalty": "attacks == 0 ? 0 : (trait.agile ? -4 : -5) * min(attacks, 2)",
+  "feetPerSquare": 5,
+  "carryPerStrength": 15,
+  "magicItemLimit": 10,
+  "rests": [
+    {
+      "id": "refocus",
+      "name": "Refocus",
+      "perAdventure": 0,
+      "recovery": {
+        "kind": "none"
+      },
+      "restores": [
+        "focus"
+      ]
+    },
+    {
+      "id": "rest",
+      "name": "Rest for the night",
+      "perAdventure": 0,
+      "recovery": {
+        "kind": "full",
+        "reviveDowned": true
+      },
+      "restores": [
+        "slots-*",
+        "focus"
+      ],
+      "supplyCost": 40,
+      "campOnly": true
+    }
+  ],
+  "afterVictory": {
+    "kind": "none"
+  },
+  "reviveAfterVictory": 0,
+  "revivePrice": 30000,
+  "reviveHp": 1,
+  "companions": {
+    "limit": 2,
+    "partyLimit": 6,
+    "approvalMin": -100,
+    "approvalMax": 100
+  },
+  "defaultHitDie": 8
+}

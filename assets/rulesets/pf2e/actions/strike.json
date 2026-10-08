@@ -1,0 +1,26 @@
+{
+  "id": "strike",
+  "name": "Strike",
+  "description": "Attack with the weapon in hand. Each Strike after the first in a turn takes the multiple attack penalty.",
+  "order": 10,
+  "cost": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

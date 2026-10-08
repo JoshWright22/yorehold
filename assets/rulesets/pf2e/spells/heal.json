@@ -1,0 +1,25 @@
+{
+  "id": "heal",
+  "name": "Heal",
+  "description": "Two actions: 1d8+8 HP to a creature within 30 feet, 1d8+8 more per rank above 1.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 6,
+    "downed": true
+  },
+  "effects": [
+    {
+      "do": "heal",
+      "dice": "1d8+8",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d8+8"
+      }
+    }
+  ]
+}

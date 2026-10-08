@@ -1,0 +1,8 @@
+{
+  "id": "end-turn",
+  "name": "End turn",
+  "description": "Finish your turn.",
+  "order": 1000,
+  "cost": 0,
+  "endsTurn": true
+}

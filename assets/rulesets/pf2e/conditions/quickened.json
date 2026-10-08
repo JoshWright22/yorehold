@@ -1,0 +1,18 @@
+{
+  "id": "quickened",
+  "name": "Quickened",
+  "description": "One extra action each turn.",
+  "flags": [
+    "quickened"
+  ],
+  "ends": [
+    "fightEnd"
+  ],
+  "modifiers": [
+    {
+      "stat": "actions",
+      "op": "add",
+      "value": 1
+    }
+  ]
+}

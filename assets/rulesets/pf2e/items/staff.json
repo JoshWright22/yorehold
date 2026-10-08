@@ -1,0 +1,12 @@
+{
+  "id": "staff",
+  "name": "Staff",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d4",
+  "attackAbility": "str",
+  "weight": 1,
+  "traits": [
+    "two-hand"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "kobold",
+  "name": "Kobold Warrior",
+  "description": "A small scaled skirmisher.",
+  "level": 0,
+  "hp": 8,
+  "armorClass": 16,
+  "speed": 25,
+  "abilities": {
+    "str": 12,
+    "dex": 16,
+    "con": 12,
+    "int": 10,
+    "wis": 10,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "shortsword"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      170,
+      90,
+      60
+    ],
+    "size": 0.36
+  },
+  "ai": "skirmisher",
+  "stats": {
+    "attack": 3
+  }
+}

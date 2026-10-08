@@ -1,0 +1,15 @@
+{
+  "id": "raise-a-shield",
+  "name": "Raise a Shield",
+  "description": "With a shield in hand: +2 circumstance bonus to AC until your next turn.",
+  "order": 30,
+  "cost": 1,
+  "log": "{name} raises a shield.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "shield-raised",
+      "target": "self"
+    }
+  ]
+}
