@@ -458,7 +458,8 @@ internal sealed class EffectRun
             return events;
         }
         Ruleset rules = context.Rules;
-        foreach (string id in self.Granted.ToList())
+        // its granted triggers, and those everyone has (a weapon trait's rider)
+        foreach (string id in self.Granted.Concat(rules.Triggers.Where(t => t.General).Select(t => t.Id)).Distinct().ToList())
         {
             if (rules.Trigger(id) is not TriggerDefinition trigger || !fits(trigger) || (trigger.OncePerTurn && self.TriggersUsed.Contains(id)))
             {
@@ -664,6 +665,20 @@ internal sealed class EffectRun
             // its reaction may have raised its defence: the same roll, read against the new one
             ac += _host.ArmorClass(actor, _context, step.Against) - armor;
             outcome.Attack = kind.Resolve(attack, ac);
+        }
+        int flat = subject.Conditions.Select(c => _rules.Condition(c.Id)).OfType<ConditionDefinition>().Select(d => d.AttackersFlatCheck).DefaultIfEmpty(0).Max();
+        if (outcome.Attack.Passes && flat > 0)
+        {
+            // a flat check first (the hidden): a plain d20 that has to reach it, or the attack misses
+            RollResult check = Dice.Roll("1d20", _random);
+            _result.Events.Add(new EffectEvent
+            {
+                Kind = EffectEventKind.Check, Who = actor, By = _context.Self, Roll = check, Dc = flat, Success = check.Total >= flat, Id = "flat check",
+            });
+            if (check.Total < flat)
+            {
+                outcome.Attack = kind.Outcomes.Last(o => !o.Passes);
+            }
         }
         if (outcome.Attack.Passes && !outcome.Attack.Critical && kind.Outcomes.FirstOrDefault(o => o.Passes && o.Critical) is CheckOutcome critical)
         {

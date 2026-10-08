@@ -461,9 +461,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: weapons carry a `damageType`, so resistances meet Strikes in both systems.
   - Done 10/8: Sudden Charge (`approach` moves and attacks with `reach`).
   - Doesn't fit yet:
-    monsters use the PC proficiency maths plus a flat `attack` stat;
-    backstabber, deadly and versatile traits do nothing yet; hidden is plain disadvantage, not
-    a DC 11 flat check; heightening cantrips by rank is written per spell as a formula.
+    monsters use the PC proficiency maths plus a flat `attack` stat; PF2e's versatile (a
+    damage type choice); deadly's die by weapon (all d8 here); heightening cantrips by rank is
+    written per spell as a formula.
+  - Done 10/8: deadly and backstabber as general triggers (anyone wielding the trait), the
+    hidden as a DC 11 flat check (`attackersFlatCheck`), heritages, boosts, a free action named.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more
   abstract free system. No classes, no HP, no d20: 4dF plus an approach (Careful, Clever,
   Flashy, Forceful, Quick, Sneaky) against the ladder, four outcomes (fail, tie, succeed,

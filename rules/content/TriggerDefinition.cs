@@ -19,12 +19,14 @@ public sealed class TriggerDefinition
     public string When { get; init; } = "hit";
     public Formula? If { get; init; }
     public bool OncePerTurn { get; init; }
+    /// <summary>Everyone has it, granted or not: a weapon trait's rider (deadly) that its "if" narrows.</summary>
+    public bool General { get; init; }
     public Effect Effect { get; init; } = new();
 
     public static TriggerDefinition Read(ContentNode node)
     {
         node.RequireObject("a trigger is a JSON object");
-        node.Only("id", "name", "description", "on", "if", "once", "effects", "save");
+        node.Only("id", "name", "description", "on", "if", "once", "general", "effects", "save");
         string on = node.Name("on", "");
         if (!On.Contains(on))
         {
@@ -49,6 +51,7 @@ public sealed class TriggerDefinition
             When = on,
             If = condition,
             OncePerTurn = once == "turn",
+            General = node.Bool("general", false),
             Effect = Effect.Read(node.Get("effects"), node.Get("save")),
         };
     }

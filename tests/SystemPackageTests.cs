@@ -505,6 +505,27 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void WeaponTraitsAndTheHiddenFlatCheck()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        ana.Inventory.Clear();
+        ana.Inventory.Add(new Item(w.Chapter.Compendium.Item("rapier")!, 1));
+        ana.Equip(0);
+        ana.Stats.SetBase("perception", 2000);
+        gik.Stats.SetBase("ac", -1000); // every Strike is a critical hit
+        gik.Hp = 1000;
+        world.Fight();
+        Assert.True(world.TurnTo(0) && world.Use("strike", 2) && world.Said("Ana: Deadly"), "A deadly weapon's critical adds its die, granted to nobody");
+
+        // the hidden: an attack has to pass a DC 11 flat check before it can land
+        gik.AddCondition(w.Rules, "hidden");
+        Assert.True(world.Use("strike", 2) && world.Said("flat check, DC 11"), string.Join("\n", world.Log.TakeLast(4)));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

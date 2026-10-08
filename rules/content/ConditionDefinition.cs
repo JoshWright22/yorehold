@@ -32,6 +32,11 @@ public class ConditionDefinition
     /// </summary>
     public double AttackersWithin { get; init; }
     public string AttackersBeyond { get; init; } = "";
+    /// <summary>
+    /// A plain d20 an attacker has to reach before its attack can land (PF2e: 11 against the
+    /// hidden, 5 against the concealed); 0 = none. Failing it, the attack misses whatever it rolls.
+    /// </summary>
+    public int AttackersFlatCheck { get; init; }
     /// <summary>A hit on it from within AttackersWithin (or next to it) is a critical hit (5e's paralysed, unconscious).</summary>
     public bool HitsAreCritical { get; init; }
     /// <summary>Its checks (skills and abilities, not attacks or saves) are rolled with advantage or disadvantage (5e's poisoned, frightened).</summary>
@@ -99,6 +104,7 @@ public class ConditionDefinition
             AttackersBeyond = node.Text("attackersBeyond", "", 16) is var beyond && beyond is "" or "advantage" or "disadvantage" ? beyond
                 : throw node.Fail("attackersBeyond", "is advantage or disadvantage"),
             HitsAreCritical = node.Bool("hitsAreCritical", false),
+            AttackersFlatCheck = node.Int("attackersFlatCheck", 0, 0, 20),
             AdvantageOnChecks = node.Bool("advantageOnChecks", false),
             DisadvantageOnChecks = node.Bool("disadvantageOnChecks", false),
             Flags = DifferentNames(node, "flags"),

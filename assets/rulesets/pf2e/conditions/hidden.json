@@ -1,11 +1,11 @@
 {
   "id": "hidden",
   "name": "Hidden",
-  "description": "Its foes know roughly where it is but not exactly: attacks against it suffer.",
+  "description": "Its foes know roughly where it is but not exactly: an attack on it has to pass a DC 11 flat check first.",
   "flags": [
     "hidden"
   ],
-  "attackersDisadvantage": true,
+  "attackersFlatCheck": 11,
   "ends": [
     "attack",
     "move",

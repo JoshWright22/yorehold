@@ -1,0 +1,15 @@
+{
+  "id": "backstabber",
+  "name": "Backstabber",
+  "description": "A hit with a backstabber weapon on an off-guard foe deals 1 more precision damage.",
+  "on": "hit",
+  "if": "trait.backstabber && targetFlag.offGuard",
+  "general": true,
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1",
+      "type": "precision"
+    }
+  ]
+}

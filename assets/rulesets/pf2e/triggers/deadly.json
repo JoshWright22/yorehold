@@ -1,0 +1,14 @@
+{
+  "id": "deadly",
+  "name": "Deadly",
+  "description": "A critical hit with a deadly weapon adds one more weapon die after doubling (d8 for the weapons here).",
+  "on": "crit",
+  "if": "trait.deadly",
+  "general": true,
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d8"
+    }
+  ]
+}
