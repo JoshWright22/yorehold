@@ -390,7 +390,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: the sheet's Features tab lists fields, options, feats by the system's kind names,
     and every granted action, trigger and reaction with its cost in the system's words; a
     system without levels shows no hit die or proficiency.
-  - Left: Create's "grants" fields.
+  - Done 10/8: Create's creature and feat forms have an "actions" list from the system's actions,
+    reactions and triggers, and a feat's kind is picked from the system's feat kinds.
+  - Left: grants on class features inside the levels table (edited as JSON there).
 - [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's

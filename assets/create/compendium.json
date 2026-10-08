@@ -36,6 +36,7 @@
         { "key": "proficiencyRanks", "type": "json" },
         { "key": "deathSaves", "type": "flag" },
         { "key": "items", "type": "list", "optionsFrom": "items" },
+        { "key": "actions", "type": "list", "optionsFrom": "grants", "help": "the system's actions, reactions and triggers it has beyond everyone's" },
         { "key": "loot", "type": "json", "help": "a loot table: {\"coins\": \"2d6\"}" },
         { "key": "token", "type": "json", "help": "{\"color\": [r, g, b], \"size\": 0.4}" },
         { "key": "ai", "type": "choice", "optionsFrom": "ai", "default": "cunning", "help": "a profile's name" }
@@ -134,13 +135,14 @@
       "fields": [
         { "key": "name", "required": true, "default": "New feat" },
         { "key": "description" },
-        { "key": "kind", "type": "choice", "options": ["class", "skill", "general", "race"], "default": "general" },
+        { "key": "kind", "type": "choice", "optionsFrom": "featKinds", "default": "general" },
         { "key": "repeatable", "type": "flag" },
         { "key": "requires", "type": "json", "help": "{\"level\": 2, \"races\": [...], \"classes\": [...]}" },
         { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
         { "key": "ranks", "type": "json" },
         { "key": "resources", "type": "json" },
-        { "key": "modifiers", "type": "json" }
+        { "key": "modifiers", "type": "json" },
+        { "key": "actions", "type": "list", "optionsFrom": "grants", "help": "the system's actions, reactions and triggers it grants" }
       ]
     }
   ]

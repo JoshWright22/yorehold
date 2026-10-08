@@ -117,7 +117,15 @@ public sealed partial class CreatePackage
         {
             options["abilities"] = rules.Abilities.Select(a => a.Id).ToList();
             options["skills"] = rules.Skills.Select(s => s.Id).ToList();
+            // what a feat's kind can be: the system's own
+            options["featKinds"] = rules.FeatKinds.Select(k => k.Id).ToList();
         }
+        options.TryAdd("featKinds", FeatDefinition.Kinds.ToList());
+        // what a class feature, feat or creature can grant: the system's actions, reactions and triggers
+        string system = rulesets.FirstOrDefault() ?? RulesFolder.Default;
+        options["grants"] = new[] { "actions", "reactions", "triggers" }
+            .SelectMany(folder => files.List(system + "/" + folder).Concat(game.List(system + "/" + folder)))
+            .Select(ContentFiles.Stem).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToList();
         options["ai"] = new List<string> { "mindless", "animal", "cunning", "tactical" };
         foreach (CompendiumEditor.Kind kind in editor.Kinds)
         {
