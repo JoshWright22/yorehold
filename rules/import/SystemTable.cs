@@ -76,7 +76,7 @@ public sealed class SystemTable
     /// A copy of the outline with the book's numbers made the game's. isGameSkill says which
     /// names the game already has (skills and abilities); those are kept as they are.
     /// </summary>
-    public Outline Apply(Outline outline, Func<string, bool> isGameSkill, List<OutlineBuilder.ReportLine> report)
+    public Outline Apply(Outline outline, Func<string, bool> isGameSkill, List<OutlineBuilder.ReportLine> report, string? otherwise = null)
     {
         var converted = new Outline { Title = outline.Title, System = outline.System };
         foreach (OutlineEntry entry in outline.Entries)
@@ -96,14 +96,14 @@ public sealed class SystemTable
                     break;
                 case OutlineKind.Link:
                 case OutlineKind.Container:
-                    ConvertCheck(entry.Id, data["check"] as JsonObject, isGameSkill, report);
+                    ConvertCheck(entry.Id, data["check"] as JsonObject, isGameSkill, report, otherwise);
                     break;
                 case OutlineKind.Dialogue:
                     foreach (JsonNode? node in data["nodes"] as JsonArray ?? new JsonArray())
                     {
                         foreach (JsonNode? choice in node?["choices"] as JsonArray ?? new JsonArray())
                         {
-                            ConvertCheck(entry.Id, choice?["check"] as JsonObject, isGameSkill, report);
+                            ConvertCheck(entry.Id, choice?["check"] as JsonObject, isGameSkill, report, otherwise);
                         }
                     }
                     break;
@@ -113,7 +113,7 @@ public sealed class SystemTable
         return converted;
     }
 
-    private void ConvertCheck(string entry, JsonObject? check, Func<string, bool> isGameSkill, List<OutlineBuilder.ReportLine> report)
+    private void ConvertCheck(string entry, JsonObject? check, Func<string, bool> isGameSkill, List<OutlineBuilder.ReportLine> report, string? otherwise)
     {
         if (check == null)
         {
@@ -122,14 +122,16 @@ public sealed class SystemTable
         string skill = Key(check["skill"]?.GetValue<string>() ?? "");
         if (!isGameSkill(skill))
         {
-            if (Skills.TryGetValue(skill, out string? game))
+            // what the table falls back on, or the chosen system's own when it hasn't that either
+            string fallback = isGameSkill(Otherwise) || otherwise == null ? Otherwise : otherwise;
+            if (Skills.TryGetValue(skill, out string? game) && isGameSkill(game))
             {
                 skill = game;
             }
             else
             {
-                report.Add(new OutlineBuilder.ReportLine(entry, $"the book's \"{skill}\" check has no match in {Name}; it is {Otherwise}"));
-                skill = Otherwise;
+                report.Add(new OutlineBuilder.ReportLine(entry, $"the book's \"{skill}\" check has no match in {Name}; it is {fallback}"));
+                skill = fallback;
             }
         }
         check["skill"] = skill;

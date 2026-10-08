@@ -22,6 +22,35 @@ public class OutlineBuilderTests
         return files;
     }
 
+    [Theory]
+    [InlineData("rulesets/dnd5e", "dnd5e")]
+    [InlineData("rulesets/pf2e", "pf2e")]
+    public void TheSampleBuildsForAnotherSystem(string system, string id)
+    {
+        using var scratch = new Scratch();
+        string package = Path.Combine(scratch.Folder, "old-mill");
+        string import = Path.Combine(package, "import");
+        Directory.CreateDirectory(Path.Combine(import, "pictures"));
+        File.WriteAllBytes(Path.Combine(import, "pictures", "p1-1.png"), PaperGroundTests.Figure(235));
+        var builder = new OutlineBuilder(Outline.Parse("outline.json", SampleOutline.Json), import, TestContent.Shipped(), system);
+        List<string> problems = builder.Build(package);
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+
+        // the chapter names the chosen system, loads under it, and its fight plays out
+        using WorldFixture world = WorldFixture.LoadFrom(Play(package), "chapters/mill-chapter", 3);
+        World w = world.World;
+        Assert.Equal(id, w.Rules.Id);
+        Assert.All(w.Creatures.Take(w.HeroCount), c => Assert.NotNull(w.Chapter.Compendium.Class(c.Choices!.Levels[0].ClassId)));
+        w.Options.AutoPlay = true;
+        while (w.Talk != null)
+        {
+            w.EndTalk();
+        }
+        Assert.True(FightSimulation.PlacePartyNear(w, 0));
+        world.Fight(0);
+        Assert.True(world.StepUntil(() => !w.Fighting, 3600), string.Join("\n", world.Log.TakeLast(20)));
+    }
+
     [Fact]
     public void TheSampleBuildsIntoAPackageThatLoads()
     {

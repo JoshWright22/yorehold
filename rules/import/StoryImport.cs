@@ -37,6 +37,8 @@ public sealed class StoryImport
     public bool Cast { get; init; } = true;
     /// <summary>Take rooms' shapes, walls and doors off the book's map (BookMap). On unless a comparison run turns it off.</summary>
     public bool Walls { get; init; } = true;
+    /// <summary>The ruleset folder the adventure is built for; the game's own unless the writer picks another.</summary>
+    public string RulesSystem { get; set; } = RulesFolder.Default;
     /// <summary>Reads a scanned book's pages again: the yorehold-ocr helper when there is one.</summary>
     public IPageReader? Scans { get; init; } = OcrHelper.Find();
     /// <summary>Add each build's score to the scores folder's history. Off in a comparison run, which keeps its own.</summary>
@@ -191,7 +193,7 @@ public sealed class StoryImport
         Stage = "Building the package";
         try
         {
-            Problems.AddRange(new OutlineBuilder(Kept(), Folder, _game) { ClearPaper = clearPaper, ReadWalls = Walls }.Build(Package));
+            Problems.AddRange(new OutlineBuilder(Kept(), Folder, _game, RulesSystem) { ClearPaper = clearPaper, ReadWalls = Walls }.Build(Package));
         }
         catch (Exception error) when (error is ContentException or IOException or UnauthorizedAccessException)
         {

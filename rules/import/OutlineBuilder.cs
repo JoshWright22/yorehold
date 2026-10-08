@@ -35,14 +35,22 @@ public sealed class OutlineBuilder
     // the square each place is centred on, and whether its walls are the book's map's
     private readonly Dictionary<string, (Cell Spot, bool Drawn)> _spots = new(StringComparer.Ordinal);
     private string _package = "";
+    // the rules system the adventure is built for: its ruleset folder and the id it gives itself
+    private readonly string _system;
+    private string _systemId = "yorehold";
 
-    public OutlineBuilder(Outline outline, string importFolder, ContentFiles game)
+    // the plainest class the system has, for a seat the book names no class for
+    private string DefaultClass() =>
+        _gameCompendium.Class("fighter") != null ? "fighter" : _gameCompendium.Classes.Keys.FirstOrDefault() ?? "fighter";
+
+    public OutlineBuilder(Outline outline, string importFolder, ContentFiles game, string system = RulesFolder.Default)
     {
         _source = outline;
         _outline = outline;
         _importFolder = importFolder;
         _game = game;
-        _gameCompendium.Load(game, RulesFolder.Default, "");
+        _system = system;
+        _gameCompendium.Load(game, system, "");
     }
 
     public IReadOnlyList<ReportLine> Report => _report;
@@ -60,19 +68,41 @@ public sealed class OutlineBuilder
         _report.Clear();
         _rooms.Clear();
         _outline = _source;
+        Ruleset rules;
+        try
+        {
+            rules = RulesFolder.Load(_game, _system).Rules;
+        }
+        catch (ContentException error)
+        {
+            return new List<string> { $"the rules system \"{_system}\": {error.Message}" };
+        }
+        _systemId = rules.Id;
+        bool known(string s) => rules.Skill(s) != null || rules.Ability(s) != null;
+        // a check the system has no skill for is rolled with what it notices things with
+        string otherwise = new[] { rules.Roles.Perception, rules.Skills.FirstOrDefault()?.Id ?? "", rules.Abilities.FirstOrDefault()?.Id ?? "" }
+            .FirstOrDefault(id => id.Length > 0) ?? "";
         if (_outline.System.Length > 0)
         {
             // the book's numbers become the game's before anything is written
             try
             {
                 SystemTable table = SystemTable.Load(_game, _outline.System);
-                Ruleset rules = RulesFolder.Load(_game).Rules;
-                _outline = table.Apply(_outline, s => rules.Skill(s) != null || rules.Ability(s) != null, _report);
+                _outline = table.Apply(_outline, known, _report, otherwise);
             }
             catch (ContentException error)
             {
                 return new List<string> { $"the book's system \"{_outline.System}\": {error.Message}" };
             }
+        }
+        else if (_system != RulesFolder.Default)
+        {
+            // written in the game's own words: what the chosen system lacks takes its nearest
+            _outline = new SystemTable { Name = rules.Name }.Apply(_outline, known, _report, otherwise);
+        }
+        if (_system != RulesFolder.Default)
+        {
+            FitHeroes();
         }
         List<string> problems = _outline.Check(_gameCompendium);
         if (problems.Count > 0)
@@ -114,6 +144,70 @@ public sealed class OutlineBuilder
         CopyPictures();
         WriteReport();
         return Check(chapterIds);
+    }
+
+    // What the outline names from the game's own set that the chosen system doesn't have: heroes
+    // take its plainest class; items and creatures take the system's one of the same name, or
+    // are left out. The report says each.
+    private void FitHeroes()
+    {
+        var own = new Compendium();
+        own.Load(_game, RulesFolder.Default, "");
+        bool HasItem(string id) => _outline.Find(id)?.Kind == OutlineKind.Item || _gameCompendium.Item(id) != null;
+        bool HasCreature(string id) => _outline.Find(id)?.Kind == OutlineKind.Creature || _gameCompendium.Creature(id) != null;
+        string? ItemLike(string id) => own.Item(id) is ItemDefinition item
+            ? _gameCompendium.Items.Values.FirstOrDefault(i => string.Equals(i.Name, item.Name, StringComparison.OrdinalIgnoreCase))?.Id : null;
+        string? CreatureLike(string id) => own.Creature(id) is CreatureDefinition creature
+            ? _gameCompendium.Creatures.Values.FirstOrDefault(c => string.Equals(c.Name, creature.Name, StringComparison.OrdinalIgnoreCase))?.Id : null;
+
+        var fitted = new Outline { Title = _outline.Title, System = _outline.System };
+        foreach (OutlineEntry entry in _outline.Entries)
+        {
+            var data = (JsonObject)entry.Data.DeepClone();
+            switch (entry.Kind)
+            {
+                case OutlineKind.Hero when _gameCompendium.Class(entry.Text("class")) == null:
+                    _report.Add(new ReportLine(entry.Id, $"this system has no class \"{entry.Text("class")}\"; {entry.Text("name", entry.Id)} is a {DefaultClass()}"));
+                    data["class"] = DefaultClass();
+                    break;
+                case OutlineKind.Container when data["items"] is JsonArray items:
+                    var kept = new JsonArray();
+                    foreach (string id in entry.Texts("items"))
+                    {
+                        if (HasItem(id) || ItemLike(id) is not null)
+                        {
+                            kept.Add(HasItem(id) ? id : ItemLike(id));
+                        }
+                        else
+                        {
+                            _report.Add(new ReportLine(entry.Id, $"this system has no item \"{id}\"; left out"));
+                        }
+                    }
+                    data["items"] = kept;
+                    break;
+                case OutlineKind.Encounter when data["creatures"] is JsonArray creatures:
+                    for (int i = creatures.Count - 1; i >= 0; i--)
+                    {
+                        string id = creatures[i]?["creature"]?.GetValue<string>() ?? "";
+                        if (HasCreature(id))
+                        {
+                            continue;
+                        }
+                        if (CreatureLike(id) is string like && creatures[i] is JsonObject placed)
+                        {
+                            placed["creature"] = like;
+                        }
+                        else
+                        {
+                            _report.Add(new ReportLine(entry.Id, $"this system has no creature \"{id}\"; left out"));
+                            creatures.RemoveAt(i);
+                        }
+                    }
+                    break;
+            }
+            fitted.Entries.Add(new OutlineEntry { Id = entry.Id, Kind = entry.Kind, Data = data, From = entry.From, Picture = entry.Picture, Chapter = entry.Chapter });
+        }
+        _outline = fitted;
     }
 
     // ---------------------------------------------------------------- creatures, items, pictures
@@ -223,6 +317,11 @@ public sealed class OutlineBuilder
             ["title"] = chapter?.Text("title") is { Length: > 0 } title ? title : _outline.Title,
             ["map"] = "map.json",
         };
+        if (_system != RulesFolder.Default)
+        {
+            // the system the writer chose; left out, a chapter plays the game's own
+            j["ruleset"] = _system;
+        }
         var intro = chapter?.Texts("intro") ?? new List<string>();
         if (layout.Start is OutlineEntry start)
         {
@@ -263,8 +362,8 @@ public sealed class OutlineBuilder
         }
         if (heroes.Count == 0)
         {
-            party.Add(new JsonObject { ["name"] = "Hero", ["class"] = "fighter", ["at"] = Cell(layout.Take(layout.Start?.Id ?? "")) });
-            _report.Add(new ReportLine("", "the book names no heroes; one fighter seat stands in"));
+            party.Add(new JsonObject { ["name"] = "Hero", ["class"] = DefaultClass(), ["at"] = Cell(layout.Take(layout.Start?.Id ?? "")) });
+            _report.Add(new ReportLine("", $"the book names no heroes; one {DefaultClass()} seat stands in"));
         }
         j["party"] = party;
 
@@ -273,7 +372,7 @@ public sealed class OutlineBuilder
         foreach (OutlineEntry npc in _outline.OfKind(OutlineKind.Npc).Where(n => EntryChapter(n) == id))
         {
             var n = new JsonObject { ["id"] = npc.Id, ["name"] = npc.Text("name") };
-            string creature = npc.Text("creature") is { Length: > 0 } c ? IdOf(c) : "commoner";
+            string creature = npc.Text("creature") is { Length: > 0 } c ? IdOf(c) : Bystander();
             if (Picture(npc) is { Length: > 0 } face)
             {
                 // the picture needs a creature to carry it: the NPC's own, made from the one it names
@@ -546,6 +645,31 @@ public sealed class OutlineBuilder
     private bool IsStarted(string dialogue) =>
         _outline.Entries.Any(e => e.Kind is OutlineKind.Npc or OutlineKind.Trigger && e.Text("dialogue") == dialogue);
 
+    private const string BystanderId = "bystander";
+
+    // An ordinary person nobody wrote numbers for: only what every system's creature file has.
+    private static JsonObject BystanderData() => new()
+    {
+        ["id"] = BystanderId, ["name"] = "Bystander", ["description"] = "Ordinary folk who'd rather not fight.",
+        ["hp"] = 4, ["armorClass"] = 10, ["speed"] = 30, ["items"] = new JsonArray(),
+        ["token"] = new JsonObject { ["color"] = new JsonArray(200, 180, 140), ["size"] = 0.4 },
+    };
+
+    // The creature an NPC with none named stands as: the system's commoner, or a plain bystander
+    // written into the package when it has none.
+    private string Bystander()
+    {
+        if (_gameCompendium.Creature("commoner") != null)
+        {
+            return "commoner";
+        }
+        if (!File.Exists(Path.Combine(_package, "creatures", BystanderId + ".json")))
+        {
+            WriteJson($"creatures/{BystanderId}.json", BystanderData());
+        }
+        return BystanderId;
+    }
+
     private string NpcCreature(OutlineEntry npc, string creature, string face)
     {
         JsonObject data;
@@ -553,10 +677,14 @@ public sealed class OutlineBuilder
         {
             data = Copy(own.Data);
         }
+        else if (creature == BystanderId && _gameCompendium.Creature(BystanderId) == null)
+        {
+            data = BystanderData();
+        }
         else
         {
             // The game's creatures belong to its system now; older content kept them at the root.
-            string path = $"{RulesFolder.Default}/creatures/{creature}.json";
+            string path = $"{_system}/creatures/{creature}.json";
             data = (JsonObject)JsonNode.Parse(_game.ReadText(_game.Exists(path) ? path : $"creatures/{creature}.json"))!;
         }
         data["id"] = npc.Id;
@@ -601,7 +729,7 @@ public sealed class OutlineBuilder
             ["kind"] = "adventure",
             ["id"] = id,
             ["revision"] = 1,
-            ["ruleset"] = "yorehold@1.0",
+            ["ruleset"] = _systemId + "@1.0",
             ["requires"] = new JsonArray(),
             ["defaultChapter"] = "chapters/" + chapters[0],
             ["chapters"] = folders,

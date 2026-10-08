@@ -517,6 +517,16 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   blocks land in its creature format (S12-S15). DCs and encounters are set by R2b's evaluator
   for that system. Speed: rules, odds and the fight AI stay local; simulated fights for balance
   run in the background in Create, never in play; only what the story model writes waits on it.
+  - Done 10/8: the builder takes a target system (`OutlineBuilder(..., system)`,
+    `StoryImport.RulesSystem`): chapters name it, checks the system has no skill for go to what
+    it notices with, heroes take its plainest class, the game's own items and creatures take
+    the system's of the same name or are left out, NPCs with no creature stand as a bystander
+    written into the package, and the report says each. The sample adventure builds and plays
+    under 5e and PF2e.
+  - Left: the system picker in Create's import screen; the reading stage (`BookCast`) still
+    writes the game's own ids for the builder to fit; stat blocks in the system's own creature
+    format (a Fate target needs its approaches); the story model given the system's lists; DCs
+    and encounters set by the forecast.
 - [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
   with licence, author, links and the no-AI-uploads declaration; credits built from what an
   adventure uses. The site runs the game's checks on each upload and refuses one that wouldn't
