@@ -359,6 +359,7 @@
     "downedCondition": "unconscious",
     "dyingCondition": "dying",
     "deadCondition": "dead",
+    "dead": "amount >= maxHp * 2",
     "track": {
       "start": "1 + wounded + (critical ? 1 : 0)",
       "damage": "critical ? 2 : 1",

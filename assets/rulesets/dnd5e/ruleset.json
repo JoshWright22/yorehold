@@ -281,7 +281,8 @@
     "downedCondition": "unconscious",
     "dyingCondition": "dying",
     "stableCondition": "stable",
-    "deadCondition": "dead"
+    "deadCondition": "dead",
+    "dead": "over >= maxHp"
   },
   "xpForLevel": [
     300,

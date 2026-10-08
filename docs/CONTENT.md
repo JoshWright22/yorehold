@@ -946,6 +946,11 @@ make it stable at 0 HP; three failures make it dead. A natural 1 counts as two f
 again with fresh counters. `downedCondition`, `dyingCondition`, `stableCondition`, `deadCondition`
 name condition files. Modern/classic do not enable these rules.
 
+`dead` is a formula for a blow that kills outright, past any saves or dying value; it reads
+`amount` (the damage after temporary HP), `over` (what was left after dropping to 0), `maxHp`,
+`level`, `critical` and `down` (1 when it was down already). 5e: `"over >= maxHp"`; PF2e:
+`"amount >= maxHp * 2"`. Without it nothing does.
+
 Sheets save `death: {saves, successes, failures, stable, dead}`. Old sheets without the object
 use their original class/creature eligibility and begin with no counters. Creature files may
 opt into saves with `deathSaves: true`; the default is immediate death. Ordinary healing, rests

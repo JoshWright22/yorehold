@@ -87,6 +87,24 @@ public class CheckRulesTests
     }
 
     [Fact]
+    public void ASystemSaysWhatKillsOutright()
+    {
+        // 5e's massive damage: what is left after dropping to 0 is the hit point maximum or more.
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "t", "name": "T", "abilities": [{"id": "con", "name": "Constitution"}],
+             "death": {"enabled": true, "dead": "over >= maxHp"}}
+            """);
+        var sheet = new CharacterSheet { Name = "Ash", Hp = 5 };
+        sheet.Stats.SetBase("maxHp", 8);
+        sheet.TakeDamage(12, rules);
+        Assert.True(sheet.Down && !sheet.Death.Dead, "7 over of 8: dying, not dead");
+        sheet.Hp = 5;
+        sheet.Death.Clear();
+        sheet.TakeDamage(13, rules);
+        Assert.True(sheet.Death.Dead, "8 over of 8 kills outright");
+    }
+
+    [Fact]
     public void ASystemCountsACreaturesNumbersItsOwnWay()
     {
         // Proficiency is the rank's bonus plus the level, AC starts at 10 with it, checks add half the level.

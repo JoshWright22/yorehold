@@ -711,8 +711,24 @@ public sealed partial class CharacterSheet
         SyncDeath(rules);
         bool wasDown = Down;
         int harm = Math.Max(0, amount - TempHp);
+        int over = Math.Max(0, harm - Hp);
         bool dropped = TakeDamage(amount, aimed);
         DeathRules rule = rules.Death;
+        if (rule.Enabled && rule.Dead is Formula dead && Down && !Death.Dead && harm > 0)
+        {
+            // the system's own word on a blow that kills outright
+            bool kills = dead.Whole(name => name switch
+            {
+                "amount" => harm, "over" => over, "maxHp" => MaxHp, "level" => Level,
+                "critical" => critical ? 1 : 0, "down" => wasDown ? 1 : 0, _ => null,
+            }) != 0;
+            if (kills)
+            {
+                Death.Dead = true;
+                SyncDeath(rules);
+                return dropped;
+            }
+        }
         if (rule.Enabled && rule.Track is DyingTrack track && Death.Saves && !Death.Dead && Down && (harm > 0 || !wasDown))
         {
             // dropping starts the dying value; a hit while down raises it

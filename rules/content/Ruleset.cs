@@ -57,6 +57,12 @@ public class DeathRules
     /// it by the outcome's Change, it dies when Dead holds, and at 0 it is stable and Wounded goes up.
     /// </summary>
     public DyingTrack? Track { get; init; }
+    /// <summary>
+    /// Holds when damage kills outright, whatever saves or dying value the creature would have had
+    /// (5e's massive damage: "over >= maxHp"). Reads amount, over (the damage past what it could
+    /// take), maxHp, level, critical and down (it was down already). Null: nothing does.
+    /// </summary>
+    public Formula? Dead { get; init; }
 }
 
 public sealed class DyingTrack
@@ -716,6 +722,7 @@ public class Ruleset
             StableCondition = node.Text("stableCondition", "", 64),
             DeadCondition = node.Text("deadCondition", "", 64),
             Track = node.Get("track") is ContentNode track ? TrackFrom(track) : null,
+            Dead = node.Get("dead") is ContentNode dead ? FormulaOf(dead, "amount", "over", "maxHp", "level", "critical", "down") : null,
         };
         string[] named = new[] { death.DownedCondition, death.DyingCondition, death.StableCondition, death.DeadCondition }
             .Where(name => name.Length > 0).ToArray();
