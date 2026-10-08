@@ -161,6 +161,9 @@
     "hpFirstLevel": "15",
     "hpPerLevel": "0"
   },
+  "turnOrder": {
+    "roll": false
+  },
   "defences": [
     { "id": "defend", "name": "Defend", "value": "max(mod.quick, mod.careful)" }
   ],

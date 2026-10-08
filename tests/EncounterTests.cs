@@ -27,6 +27,32 @@ public class EncounterTests
             """);
     }
 
+    [Fact]
+    public void TurnOrderIsTheSystems()
+    {
+        // side by side, the party first, each side by its initiative modifier with no roll
+        Ruleset rules = RulesTesting.Rules($$"""
+            {"id":"t","name":"Test",{{Abilities}},"turnOrder":{"mode":"sides","first":"party","roll":false} }
+            """);
+        CharacterSheet[] people = People(4);
+        var fight = new Encounter(rules, 3);
+        fight.Add(people[0], 1);
+        fight.Add(people[1], 0);
+        fight.Add(people[2], 1);
+        fight.Add(people[3], 0);
+        fight.Start();
+        Assert.Equal(new[] { "1", "3", "0", "2" }, fight.Order.Select(c => c.Sheet.Name));
+        Assert.True(fight.Order.All(c => c.Initiative == c.Sheet.InitiativeModifier(rules)), "No roll: the modifier alone");
+        // one joining waits on its own side
+        CharacterSheet late = RulesTesting.Plain("late");
+        late.Stats.SetBase("dex", 3000);
+        fight.Join(late, 0);
+        Assert.Equal(new[] { "late", "1", "3", "0", "2" }, fight.Order.Select(c => c.Sheet.Name));
+
+        ContentException error = TestContent.Refused(() => RulesTesting.Rules($$"""{"id":"t","name":"T",{{Abilities}},"turnOrder":{"mode":"popcorn"} }"""));
+        Assert.Equal("turnOrder.mode", error.Field);
+    }
+
     private static CharacterSheet[] People(int count, int hp = 200)
     {
         var people = new CharacterSheet[count];

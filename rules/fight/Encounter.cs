@@ -103,14 +103,28 @@ public sealed class Encounter
             return;
         }
         var joining = new Combatant(sheet, team);
-        joining.InitiativeRoll = _rules.Checks.Kind("initiative").Roll(sheet.InitiativeModifier(_rules), Advantage.None, Random);
-        joining.Initiative = joining.InitiativeRoll.Total;
-        AddLog($"{sheet.Name} joins the fight, initiative {joining.InitiativeRoll.Describe()}");
-        // After everyone who rolled at least as high; whoever's turn it is keeps it.
+        RollInitiative(joining, "joins the fight, ");
+        // After everyone who rolled at least as high (side by side: within its own side, else
+        // after everyone); whoever's turn it is keeps it.
         int at = 0;
-        while (at < _order.Count && _order[at].Initiative >= joining.Initiative)
+        if (_rules.TurnOrder.BySides && _order.Exists(c => c.Team == team))
         {
-            at++;
+            at = _order.FindIndex(c => c.Team == team);
+            while (at < _order.Count && _order[at].Team == team && _order[at].Initiative >= joining.Initiative)
+            {
+                at++;
+            }
+        }
+        else if (_rules.TurnOrder.BySides)
+        {
+            at = _order.Count;
+        }
+        else
+        {
+            while (at < _order.Count && _order[at].Initiative >= joining.Initiative)
+            {
+                at++;
+            }
         }
         if (_rules.SharedTurns)
         {
@@ -160,7 +174,17 @@ public sealed class Encounter
         }
     }
 
-    /// <summary>Rolls initiative (d20 plus the initiative modifier, ties to the higher modifier) and starts round 1.</summary>
+    // The system's initiative roll plus the modifier, or the modifier alone where it doesn't roll.
+    private void RollInitiative(Combatant c, string how = "")
+    {
+        int modifier = c.Sheet.InitiativeModifier(_rules);
+        c.InitiativeRoll = _rules.TurnOrder.Roll ? _rules.Checks.Kind("initiative").Roll(modifier, Advantage.None, Random)
+            : new RollResult { Expression = modifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Flat = modifier, Total = modifier };
+        c.Initiative = c.InitiativeRoll.Total;
+        AddLog($"{c.Sheet.Name} {how}initiative {c.InitiativeRoll.Describe()}");
+    }
+
+    /// <summary>Rolls initiative (the system's roll plus the initiative modifier, ties to the higher modifier) and starts round 1.</summary>
     public void Start()
     {
         if (Started || _order.Count == 0)
@@ -169,14 +193,21 @@ public sealed class Encounter
         }
         foreach (Combatant c in _order)
         {
-            c.InitiativeRoll = _rules.Checks.Kind("initiative").Roll(c.Sheet.InitiativeModifier(_rules), Advantage.None, Random);
-            c.Initiative = c.InitiativeRoll.Total;
-            AddLog($"{c.Sheet.Name} initiative {c.InitiativeRoll.Describe()}");
+            RollInitiative(c);
         }
+        // the side that goes first, when the system plays side by side
+        TurnOrder order = _rules.TurnOrder;
+        int firstTeam = order.First switch
+        {
+            "party" => 0,
+            "foes" => _order.Select(c => c.Team).FirstOrDefault(t => t != 0, 0),
+            _ => _order.OrderByDescending(c => c.Initiative).ThenByDescending(c => c.Sheet.InitiativeModifier(_rules)).First().Team,
+        };
         // A stable sort, like std::stable_sort, so equal rolls keep the order they were added in.
         List<Combatant> sorted = _order
             .Select((c, i) => (c, i))
-            .OrderByDescending(p => p.c.Initiative)
+            .OrderBy(p => order.BySides ? (p.c.Team == firstTeam ? 0 : 1 + p.c.Team) : 0)
+            .ThenByDescending(p => p.c.Initiative)
             .ThenByDescending(p => p.c.Sheet.InitiativeModifier(_rules))
             .ThenBy(p => p.i)
             .Select(p => p.c)

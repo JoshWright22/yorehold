@@ -324,6 +324,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     +1 to an approach) and none.
   - Turn order: an initiative roll by formula, side by side, or Fate's order where whoever acted
     picks who goes next; the AI picks for its side.
+    Done 10/8: `turnOrder`: one initiative order or side by side, which side first, rolled or
+    by the modifier alone (Fate orders by Quick). Left: Fate's "whoever acted picks who's next".
   - Effect steps and triggers name the system's tracks, defences and numbers, not built-in
     ones, so a system's own mechanic needs no new step kind. The kinds that stay fixed are the
     language's documented core.

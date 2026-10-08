@@ -168,6 +168,8 @@ public class Ruleset
     public SheetLayout Sheet { get; init; } = new();
     /// <summary>What harm uses up, in the order it does; empty = plain HP.</summary>
     public List<TrackDefinition> Tracks { get; init; } = new();
+    /// <summary>Who acts when: one initiative order, or side by side.</summary>
+    public TurnOrder TurnOrder { get; init; } = new();
     /// <summary>Defences of its own beside armour class.</summary>
     public List<DefenceDefinition> Defences { get; init; } = new();
     public DefenceDefinition? Defence(string id) => Defences.Find(d => d.Id == id);
@@ -475,6 +477,7 @@ public class Ruleset
             Words = TurnWords.Read(node.Get("turnWords")),
             Sheet = SheetLayout.Read(node.Get("sheet")),
             Tracks = (node.Get("tracks")?.Items() ?? Array.Empty<ContentNode>()).Select(TrackDefinition.Read).ToList(),
+            TurnOrder = TurnOrder.Read(node.Get("turnOrder")),
             Defences = (node.Get("defences")?.Items() ?? Array.Empty<ContentNode>()).Select(DefenceDefinition.Read).ToList(),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
