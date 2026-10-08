@@ -1,0 +1,14 @@
+{
+  "id": "sneak-attack",
+  "name": "Sneak Attack",
+  "description": "Once a turn: +1d6 per two rogue levels on a hit with a finesse weapon while you have advantage.",
+  "on": "hit",
+  "if": "trait.finesse && advantage",
+  "once": "turn",
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{ceil(level / 2)}d6"
+    }
+  ]
+}

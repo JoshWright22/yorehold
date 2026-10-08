@@ -265,7 +265,7 @@
   "formulas": {
     "check": "ability + proficiency + stat.checks",
     "save": "ability + proficiency + stat.saves",
-    "attack": "ability + proficiency + bonus",
+    "attack": "(trait.finesse ? max(mod.str, mod.dex) : ability) + proficiency + bonus",
     "armorClass": "armor + (stat.armorDexCap > 0 ? min(ability, stat.armorDexCap - 1) : ability) + proficiency",
     "hpFirstLevel": "bonus + hitDie + ability",
     "hpPerLevel": "hitDie + ability",

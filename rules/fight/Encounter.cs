@@ -459,6 +459,7 @@ public sealed class Encounter
     private void RefreshTurn(Combatant c)
     {
         ConditionsEnded(c.Sheet, c.Sheet.ConditionEvent(_rules, "turnStart"));
+        c.Sheet.TriggersUsed.Clear();
         // conditions add or take actions through the "actions" stat (quickened +1, slowed -1)
         c.Budget = new TurnBudget
         {

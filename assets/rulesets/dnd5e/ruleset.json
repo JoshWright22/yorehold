@@ -226,6 +226,8 @@
     }
   },
   "formulas": {
+    "attack": "(trait.finesse ? max(mod.str, mod.dex) : ability) + proficiency + bonus",
+    "damage": "(trait.finesse ? max(mod.str, mod.dex) : ability) + bonus",
     "check": "ability + proficiency + stat.checks",
     "save": "ability + proficiency + stat.saves",
     "damageTaken": "immune ? 0 : floor(amount / (resist > 0 ? 2 : 1)) * (weak > 0 ? 2 : 1)",

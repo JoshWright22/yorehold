@@ -134,6 +134,9 @@ public class Ruleset
     /// <summary>Filled from the file's own list and then from the folder's conditions/ files.</summary>
     public List<ConditionDefinition> Conditions { get; } = new();
     public List<SurfaceDefinition> Surfaces { get; } = new();
+    /// <summary>Effects that happen by themselves for whoever is granted them (triggers/).</summary>
+    public List<TriggerDefinition> Triggers { get; } = new();
+    public TriggerDefinition? Trigger(string id) => Triggers.Find(t => t.Id == id);
     public ModifierTable ModifierTable { get; init; }
     public int ScoreMin { get; init; } = 3;
     public int ScoreMax { get; init; } = 20;
@@ -476,6 +479,22 @@ public class Ruleset
             Conditions.Add(condition);
         }
         CheckConditions(folder);
+    }
+
+    public void LoadTriggers(ContentFiles files, string folder)
+    {
+        foreach (string path in files.List(folder))
+        {
+            ContentNode node = ContentNode.Read(files, path);
+            TriggerDefinition trigger = TriggerDefinition.Read(node);
+            if (trigger.Id != ContentFiles.Stem(path))
+            {
+                throw node.Fail("id", $"\"{trigger.Id}\" doesn't match the file name");
+            }
+            trigger.Effect.Check(this, path);
+            Triggers.RemoveAll(t => t.Id == trigger.Id);
+            Triggers.Add(trigger);
+        }
     }
 
     public void LoadSurfaces(ContentFiles files, string folder)

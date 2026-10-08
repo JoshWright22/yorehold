@@ -29,7 +29,18 @@
     "studded-leather"
   ],
   "levels": [
-    {},
+    {
+      "features": [
+        {
+          "id": "sneak-attack",
+          "name": "Sneak Attack",
+          "description": "Extra precision damage against an off-guard foe.",
+          "actions": [
+            "sneak-attack"
+          ]
+        }
+      ]
+    },
     {},
     {}
   ]

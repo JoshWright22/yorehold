@@ -50,6 +50,7 @@ public class RulesFolder
         {
             rules.LoadConditions(files, folder + "/conditions");
             rules.LoadSurfaces(files, folder + "/surfaces");
+            rules.LoadTriggers(files, folder + "/triggers");
             ActionDefinition.LoadFolder(files, folder + "/actions", rules, actions);
             reactions = ReactionDefinition.LoadFolder(files, folder + "/reactions", actions);
             if (files.Exists(folder + "/positioning.json"))
@@ -95,9 +96,9 @@ public class RulesFolder
         // what classes, feats and creatures grant has to be one of the ruleset's actions or reactions
         void Granted(IEnumerable<string> ids, string file)
         {
-            foreach (string id in ids.Where(id => Action(id) == null && Reactions.All(r => r.Id != id)))
+            foreach (string id in ids.Where(id => Action(id) == null && Reactions.All(r => r.Id != id) && Rules.Trigger(id) == null))
             {
-                throw new ContentException(file, "actions", $"no action or reaction \"{id}\" in the ruleset");
+                throw new ContentException(file, "actions", $"no action, reaction or trigger \"{id}\" in the ruleset");
             }
         }
         foreach (ClassDefinition definition in compendium.Classes.Values)

@@ -1,0 +1,14 @@
+{
+  "id": "sneak-attack",
+  "name": "Sneak Attack",
+  "description": "On a hit with an agile or finesse weapon against an off-guard foe: +1d6 precision (2d6 from level 5).",
+  "on": "hit",
+  "if": "targetFlag.offGuard && (trait.agile || trait.finesse)",
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d6",
+      "type": "precision"
+    }
+  ]
+}

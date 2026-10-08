@@ -22,7 +22,18 @@
     "dagger"
   ],
   "levels": [
-    {},
+    {
+      "features": [
+        {
+          "id": "sneak-attack",
+          "name": "Sneak Attack",
+          "description": "Once a turn, extra damage on a hit with a finesse weapon and advantage.",
+          "actions": [
+            "sneak-attack"
+          ]
+        }
+      ]
+    },
     {
       "features": [
         {

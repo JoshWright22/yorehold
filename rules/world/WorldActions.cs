@@ -399,6 +399,9 @@ public sealed partial class World
                     after.Add($"{Name(e.Who)} saves ({e.Id}, DC {e.Dc}): {e.Roll.Describe()}{(e.Success ? " - saved" : " - failed")}");
                     Float(e.Success ? "Saved" : "Failed", e.Who);
                     break;
+                case EffectEventKind.Triggered:
+                    after.Add($"{Name(e.By)}: {e.Id}");
+                    break;
                 case EffectEventKind.Defence:
                     after.Add($"{Name(e.Who)} defends: {e.Roll.Describe()}");
                     break;

@@ -32,6 +32,23 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void SneakAttackIsATrigger()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "rogue", "wizard");
+        World w = world.World;
+        CharacterSheet rogue = w.Creatures[0].Sheet;
+        rogue.Stats.SetBase("dex", 2000); // acts first, and hits
+        world.Fight();
+        Assert.True(world.TurnTo(0));
+        rogue.AddCondition(w.Rules, "helped");
+        Assert.True(world.Use("attack", 2) && world.Said("Ana: Sneak Attack"), "A hit with advantage sets off Sneak Attack");
+        int said = world.Log.Count(line => line.Contains("Sneak Attack"));
+        rogue.AddCondition(w.Rules, "helped");
+        world.Use("attack", 3);
+        Assert.Equal(said, world.Log.Count(line => line.Contains("Sneak Attack")));
+    }
+
+    [Fact]
     public void Pathfinder2ePlaysAFight()
     {
         using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");

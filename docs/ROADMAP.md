@@ -308,7 +308,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   Features tab; Create's class, feat and creature editors gain "grants".
   - Done 10/8: `"general": false` actions and reactions, granted by class features, feats and
     creature files (`"actions": [...]`), checked against the ruleset, kept on the sheet.
-  - Left: triggered effects (on hit, at turn start) as grants; feat kinds from the system; the
+  - Done 10/8: triggers (`triggers/`, on hit, miss or crit, with a formula and once a turn),
+    granted like actions; Sneak Attack in 5e and PF2e.
+  - Left: triggers on turn start, on being hit and on a kill; feat kinds from the system; the
     Features tab and Create's "grants" fields.
 - [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and

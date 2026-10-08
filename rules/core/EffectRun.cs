@@ -15,6 +15,8 @@ internal sealed class EffectRun
 
         /// <summary>How far the last roll about this creature beat its DC (below 0: missed by).</summary>
         public int? Margin;
+        /// <summary>The attack about it was rolled with advantage.</summary>
+        public bool Advantage;
 
         public bool Critical => Attack is { Critical: true };
         public bool? Saved => Save?.Passes;
@@ -371,6 +373,10 @@ internal sealed class EffectRun
                 if (RollFor(step, actor))
                 {
                     Steps(step.Steps, new List<int> { actor }, false);
+                    if (step.How == "attack")
+                    {
+                        Triggered(actor);
+                    }
                 }
             }
             break;
@@ -399,6 +405,48 @@ internal sealed class EffectRun
             Steps(step.Options[choice].Steps, gated ? who : subjects, false);
             break;
         }
+        }
+    }
+
+    // The doer's granted triggers that answer how its attack on target went (Sneak Attack on a hit).
+    private void Triggered(int target)
+    {
+        CharacterSheet? self = _host.Sheet(_context.Self);
+        CharacterSheet? subject = _host.Sheet(target);
+        if (self == null || subject == null || _outcomes.GetValueOrDefault(target) is not { Attack: CheckOutcome attack } rolled)
+        {
+            return;
+        }
+        // as the attack was rolled: whatever gave advantage may have ended with it
+        bool advantage = rolled.Advantage;
+        foreach (string id in self.Granted)
+        {
+            if (_rules.Trigger(id) is not TriggerDefinition trigger || (trigger.OncePerTurn && self.TriggersUsed.Contains(id)))
+            {
+                continue;
+            }
+            bool fits = trigger.When switch
+            {
+                "hit" => attack.Passes,
+                "crit" => attack.Critical,
+                _ => !attack.Passes,
+            };
+            double? Name(string name) => name switch
+            {
+                "advantage" => advantage ? 1 : 0,
+                "critical" => attack.Critical ? 1 : 0,
+                _ when name.StartsWith("targetFlag.", StringComparison.Ordinal) => subject.HasFlag(_rules, name[11..]) ? 1 : 0,
+                _ when name.StartsWith("flag.", StringComparison.Ordinal) => self.HasFlag(_rules, name[5..]) ? 1 : 0,
+                _ => self.Named(_rules, name),
+            };
+            if (!fits || (trigger.If != null && trigger.If.Evaluate(Name) == 0))
+            {
+                continue;
+            }
+            self.TriggersUsed.Add(id);
+            _result.Events.Add(new EffectEvent { Kind = EffectEventKind.Triggered, Who = target, By = _context.Self, Id = trigger.Name });
+            var context = _context with { Targets = new List<int> { target }, Source = trigger.Id, Event = "" };
+            _result.Events.AddRange(new EffectRun(trigger.Effect, _host, context).Run().Events);
         }
     }
 
@@ -541,7 +589,9 @@ internal sealed class EffectRun
         int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules)
             : step.Ability.Length > 0 ? self.AttackModifier(_rules, step.Ability)
             : self.AttackModifier(_rules);
-        RollResult attack = kind.Roll(bonus + penalty, self.AttackAdvantage(_rules, subject), _random);
+        Advantage advantage = self.AttackAdvantage(_rules, subject);
+        outcome.Advantage = advantage == Advantage.Advantage;
+        RollResult attack = kind.Roll(bonus + penalty, advantage, _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
         int ac = kind.Defence(_host.ArmorClass(actor, _context), _random, out RollResult? defended);
         if (defended != null)

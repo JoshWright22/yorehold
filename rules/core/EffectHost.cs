@@ -29,6 +29,8 @@ public enum EffectEventKind
     Check,
     /// <summary>The other side's roll in an opposed attack or contest; Amount is what it came to.</summary>
     Defence,
+    /// <summary>A granted trigger went off (Id is its name).</summary>
+    Triggered,
     Save,
     Damage,
     Heal,
