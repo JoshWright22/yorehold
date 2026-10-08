@@ -1,0 +1,20 @@
+{
+  "id": "heroism",
+  "name": "Heroism",
+  "description": "Two actions: a touched ally fights like a hero, +1 status bonus to attacks, checks and saves for 10 rounds.",
+  "level": 3,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "heroic",
+      "duration": 10
+    }
+  ]
+}

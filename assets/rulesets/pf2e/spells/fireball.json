@@ -1,0 +1,34 @@
+{
+  "id": "fireball",
+  "name": "Fireball",
+  "description": "Two actions: a burst of fire 20 feet across, 6d6 with a basic Reflex save, 2d6 more per rank above 3.",
+  "level": 3,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 100
+  },
+  "area": {
+    "shape": "burst",
+    "size": 4
+  },
+  "save": {
+    "ability": "reflex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "6d6",
+      "type": "fire",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 3,
+        "dice": "2d6"
+      }
+    }
+  ]
+}

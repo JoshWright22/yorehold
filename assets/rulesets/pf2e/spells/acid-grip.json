@@ -1,0 +1,31 @@
+{
+  "id": "acid-grip",
+  "name": "Acid Grip",
+  "description": "Two actions: a hand of acid closes on a foe, 2d8 acid with a basic Reflex save, 2d8 more per two ranks above 2.",
+  "level": 2,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "save": {
+    "ability": "reflex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d8",
+      "type": "acid",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 2,
+        "dice": "2d8",
+        "every": 2
+      }
+    }
+  ]
+}

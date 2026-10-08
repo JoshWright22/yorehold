@@ -1,0 +1,34 @@
+{
+  "id": "spiritual-armament",
+  "name": "Spiritual Armament",
+  "description": "Two actions: a ghostly echo of your weapon strikes a foe, a spell attack for 2d8 spirit, 1d8 more per two ranks above 2.",
+  "level": 2,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "2d8",
+          "type": "spirit",
+          "when": "hit",
+          "scale": {
+            "by": "slot",
+            "from": 2,
+            "dice": "1d8",
+            "every": 2
+          }
+        }
+      ]
+    }
+  ]
+}

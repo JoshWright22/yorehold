@@ -469,9 +469,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     beside them as critical hits; Shield cast as a reaction (a reaction may name a spell; the
     slot is spent); versatile weapons by the hands they leave free (`hands.free` in weapon dice).
   - Doesn't fit yet (back to the steps):
-    two-weapon fighting; Counterspell (the `spellCast` moment and spell reactions
-    are there; a 3rd-level slot needs wizard level 5 content). Then the rest of the SRD: all
-    classes and levels, the spell list, the bestiary.
+    two-weapon fighting; Scorching Ray's extra ray per slot; Hold Person's repeat save at the
+    caster's DC (the held condition saves at 13). Then the rest of the SRD: all classes and
+    levels, the spell list, the bestiary.
+  - Done 10/8: ten spells for the 2nd and 3rd level slots (Inflict Wounds, Command, Scorching
+    Ray, Shatter, Hold Person, Lesser Restoration, Fireball, Lightning Bolt, Mass Healing Word,
+    and Counterspell as a reaction to a casting), prepared counts by level, massive damage.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
     move, Strike/Stride/Raise a Shield/Demoralize/Hide/Stand, the multiple attack penalty with
@@ -488,6 +491,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     monsters use the PC proficiency maths plus a flat `attack` stat; PF2e's versatile (a
     damage type choice); deadly's die by weapon (all d8 here); heightening cantrips by rank is
     written per spell as a formula.
+  - Done 10/8: classes to level 5 (R8) and ten more spells for ranks 1 to 3 (Breathe Fire,
+    Thunderstrike, Harm, Acid Grip, Blazing Bolt, Spiritual Armament, Fireball, Slow, Chilling
+    Darkness, Heroism), massive damage.
   - Done 10/8: deadly and backstabber as general triggers (anyone wielding the trait), the
     hidden as a DC 11 flat check (`attackersFlatCheck`), heritages, boosts, a free action named.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more

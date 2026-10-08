@@ -1,0 +1,30 @@
+{
+  "id": "harm",
+  "name": "Harm",
+  "description": "Two actions: void energy at a living foe within 30 feet, 1d8 with a basic Fortitude save, 1d8 more per rank above 1.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "save": {
+    "ability": "fortitude",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d8",
+      "type": "void",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "id": "blazing-bolt",
+  "name": "Blazing Bolt",
+  "description": "Two actions: a ray of fire, a spell attack for 4d6, 2d6 more per rank above 2.",
+  "level": 2,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "4d6",
+          "type": "fire",
+          "when": "hit",
+          "scale": {
+            "by": "slot",
+            "from": 2,
+            "dice": "2d6"
+          }
+        }
+      ]
+    }
+  ]
+}

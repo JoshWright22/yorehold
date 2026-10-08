@@ -32,20 +32,23 @@
     {
       "slots": {
         "1": 3
-      }
+      },
+      "spells": 3
     },
     {
       "slots": {
         "1": 3,
         "2": 2
       },
-      "skills": 1
+      "skills": 1,
+      "spells": 5
     },
     {
       "slots": {
         "1": 3,
         "2": 3
-      }
+      },
+      "spells": 6
     },
     {
       "boosts": 4,
@@ -65,7 +68,8 @@
           "name": "Reflex Expertise",
           "description": "Reflex saves become expert."
         }
-      ]
+      ],
+      "spells": 8
     }
   ],
   "casting": "prepared",
@@ -75,7 +79,17 @@
     ],
     "1": [
       "force-barrage",
-      "fear"
+      "fear",
+      "breathe-fire",
+      "thunderstrike"
+    ],
+    "2": [
+      "acid-grip",
+      "blazing-bolt"
+    ],
+    "3": [
+      "fireball",
+      "slow"
     ]
   }
 }

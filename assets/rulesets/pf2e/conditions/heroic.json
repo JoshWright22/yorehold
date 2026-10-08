@@ -1,0 +1,28 @@
+{
+  "id": "heroic",
+  "name": "Heroic",
+  "description": "+1 status bonus to attacks, checks and saves from Heroism.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 1,
+      "type": "status"
+    },
+    {
+      "stat": "checks",
+      "op": "add",
+      "value": 1,
+      "type": "status"
+    },
+    {
+      "stat": "saves",
+      "op": "add",
+      "value": 1,
+      "type": "status"
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

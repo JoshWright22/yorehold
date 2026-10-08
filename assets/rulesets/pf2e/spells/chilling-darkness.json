@@ -1,0 +1,33 @@
+{
+  "id": "chilling-darkness",
+  "name": "Chilling Darkness",
+  "description": "Two actions: a ray of freezing dark, a spell attack for 5d6 cold, 2d6 more per rank above 3.",
+  "level": 3,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "5d6",
+          "type": "cold",
+          "when": "hit",
+          "scale": {
+            "by": "slot",
+            "from": 3,
+            "dice": "2d6"
+          }
+        }
+      ]
+    }
+  ]
+}

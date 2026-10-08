@@ -1,0 +1,41 @@
+{
+  "id": "thunderstrike",
+  "name": "Thunderstrike",
+  "description": "Two actions: lightning and its thunderclap on one foe, 1d12 electricity and 1d4 sonic with a basic Reflex save, as much again per rank above 1.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "save": {
+    "ability": "reflex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d12",
+      "type": "electricity",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d12"
+      }
+    },
+    {
+      "do": "damage",
+      "dice": "1d4",
+      "type": "sonic",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d4"
+      }
+    }
+  ]
+}

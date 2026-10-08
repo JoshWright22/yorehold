@@ -1,0 +1,40 @@
+{
+  "id": "slow",
+  "name": "Slow",
+  "description": "Two actions: a Fortitude save or slowed 1: for a round on a success, a minute on a failure, slowed 2 on a critical failure.",
+  "level": 3,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "save": {
+    "ability": "fortitude",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "slowed",
+      "value": 1,
+      "duration": 1,
+      "when": "success"
+    },
+    {
+      "do": "condition",
+      "id": "slowed",
+      "value": 1,
+      "duration": 10,
+      "when": "failure"
+    },
+    {
+      "do": "condition",
+      "id": "slowed",
+      "value": 2,
+      "duration": 10,
+      "when": "criticalFailure"
+    }
+  ]
+}
