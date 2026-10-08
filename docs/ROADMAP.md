@@ -203,6 +203,77 @@ builds, passes `check.ps1` and is committed.
   - Not done: the APK on a phone. No device was attached and the SDK here has no emulator; `adb install` steps are in EXPORT.md.
   - Blocked: iOS. Godot refuses C# iOS exports off macOS (NativeAOT needs Xcode). Needs a Mac with Xcode and an Apple developer team ID; the preset is ready.
 
+## R. Any rules system, a free table for players (Josh, 10/8)
+
+Josh, 10/8: "a player-facing Foundry VTT, free to download, for assets and making adventures;
+the current structure is very close, it needs abstracting a bit." Yorehold stays a video game to
+play (the fight screen, hotbar, portraits, BG3 feel), but what a turn, a check, a save or dying
+means comes from the rules system the adventure names, and systems, adventures and art are
+packages players make and share, like Foundry's systems and modules.
+
+Where it stands (audit, 10/8): the numbers are data already (`rulesets/yorehold`: abilities,
+skills, ranks, conditions, actions, reactions, spells, rests). The procedures are C#: checks are
+hit/miss except attacks, a free move each turn, one reaction with two triggers, 5e death saves
+and level-up HP, untyped bonuses, saves are abilities, class features can't grant actions, and
+classes, items and creatures sit at the content root rather than in their system. The shipped
+"yorehold" set mixes 5e and PF2e. Systems to prove it: D&D 5e from SRD 5.2 (CC BY 4.0) and
+Pathfinder 2e Remaster (ORC); only their open text is used. Each step below also changes the
+screens it touches, so the game shows whatever the system says, and is tried on both systems.
+
+- [ ] **R1. Names the code leans on become the system's.** One `roles` object in `ruleset.json`:
+  the HP ability, default attack ability, initiative, perception and stealth skills, the hidden and
+  downed conditions, the strike, stride and end-turn actions, the slot prefix and focus pool.
+  Every hard-coded "con", "str", "dex", "perception", "hidden", "downed", "focus", "slots-" goes
+  through it. UI: the sheet's initiative uses the system's (it reads "dex" today).
+- [ ] **R2. A system owns its classes, items, creatures, races and feats.** They load from the
+  ruleset folder first, the content root after (so today's packages keep loading). Manifests'
+  `ruleset` and `requires` are read; a character records its system and is refused, with the
+  reason, by an adventure on another. UI: New adventure in Create asks which system; the library
+  shows each adventure's system.
+- [ ] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
+  nat 20; PF2e: four degrees, ±10, nat 20/1 move a step), what a critical does (double dice or
+  double total), and advantage from the target or the place as well as the attacker. Every
+  effect branches on all four outcomes for attacks, saves and checks. UI: hit chance at the
+  cursor shows the system's outcomes (one figure for 5e, four bands for PF2e); the log names them.
+- [ ] **R4. The turn in data.** Action kinds per system (5e: action, bonus action, reaction,
+  movement; PF2e: three actions, a reaction, free actions), a switch for the free move, attacks
+  counted for a multiple attack penalty and `agile`, conditions that add or take actions
+  (slowed, stunned, quickened), reaction triggers beyond leaving and entering reach (hit, missed,
+  ally hit, spell cast, turn start). UI: the hotbar's pips and move bar are drawn from the
+  system's turn; costs read "2 actions", "bonus action" or "reaction" as the system names them.
+- [ ] **R5. Features that do things.** Classes, subclasses, races, heritages and feats grant
+  actions, reactions, passive modifiers and triggered effects, not only numbers; feat kinds come
+  from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's
+  Features tab; Create's class, feat and creature editors gain "grants".
+- [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
+  Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
+  weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's
+  Dex cap. UI: the sheet's layout (vitals, saves, defences) is a list the system gives.
+- [ ] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
+  (5e) or dying and wounded values with a recovery check (PF2e). UI: a downed hero's card shows
+  the system's track.
+- [ ] **R8. Character creation from the system.** Its steps (5e: species, background, class,
+  scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
+  choices. UI: the creation screen lists the system's steps.
+- [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
+  what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
+- [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
+- [ ] **R11. Packages stack.** A game is a system, any add-on packages and an adventure, with art
+  packs over them, loaded in that order from what each manifest requires; `.yore` archives are
+  ported. UI: a Library screen (systems, adventures, add-ons, art packs: installed, update,
+  remove), and an adventure's page says what it needs and gets it.
+- [ ] **R12. The host runs the table.** The player who hosts can step in while playing: drop a
+  creature or object from the compendium, move or remove tokens, change HP and conditions, reveal
+  fog, start or end a fight, take over an NPC, and build a scene from the story graph mid-game.
+  It is Create's tools brought into play behind a key. Online, only the host has them.
+- [ ] **R13. Sharing.** Upload and download systems, adventures and art packs through the site
+  and in the game, with licence, author, links and the no-AI-uploads declaration; credits built
+  from what an adventure uses. UI: the Library's Browse tab; the site's Submit form.
+
+Order: R1 and R2 first (small, and every later step needs them), then R3-R8 each tried on both
+systems, R9 and R10 alongside them as the checks, then R11-R13. The bestiary import (S12-S15)
+waits until R6, so stat blocks land in a system's creature format.
+
 ## S. Story import
 
 A writer brings a book (an adventure module as a PDF, a manuscript, a pitch) and gets a package
