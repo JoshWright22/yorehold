@@ -406,6 +406,20 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ConditionsCanHinderChecks()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        Assert.Equal(Advantage.None, ana.CheckAdvantage(w.Rules));
+        ana.AddCondition(w.Rules, "poisoned");
+        Assert.Equal(Advantage.Disadvantage, ana.CheckAdvantage(w.Rules));
+        // a check asked for plainly is rolled with the condition's disadvantage: two d20s, the lower kept
+        RollResult roll = ana.RollCheck(w.Rules, "athletics", Advantage.None, new Rng(5));
+        Assert.Equal(2, roll.Dice.Count);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

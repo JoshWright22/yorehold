@@ -25,6 +25,9 @@ public class ConditionDefinition
     /// <summary>Attacks against whoever has it are made with advantage or disadvantage (prone, dodging, restrained).</summary>
     public bool AttackersAdvantage { get; init; }
     public bool AttackersDisadvantage { get; init; }
+    /// <summary>Its checks (skills and abilities, not attacks or saves) are rolled with advantage or disadvantage (5e's poisoned, frightened).</summary>
+    public bool AdvantageOnChecks { get; init; }
+    public bool DisadvantageOnChecks { get; init; }
     public List<string> Flags { get; init; } = new();
     /// <summary>Rounds it lasts when applied without one; -1 until something ends it.</summary>
     public int Duration { get; init; } = -1;
@@ -83,6 +86,8 @@ public class ConditionDefinition
             DisadvantageOnAttacks = node.Bool("disadvantageOnAttacks", false),
             AttackersAdvantage = node.Bool("attackersAdvantage", false),
             AttackersDisadvantage = node.Bool("attackersDisadvantage", false),
+            AdvantageOnChecks = node.Bool("advantageOnChecks", false),
+            DisadvantageOnChecks = node.Bool("disadvantageOnChecks", false),
             Flags = DifferentNames(node, "flags"),
             Duration = duration,
             Stacking = stacking,

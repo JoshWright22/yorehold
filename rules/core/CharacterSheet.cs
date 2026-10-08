@@ -387,7 +387,21 @@ public sealed partial class CharacterSheet
 
     public RollResult RollCheck(Ruleset rules, string abilityOrSkill, Advantage advantage, Rng random)
     {
-        return rules.Checks.Kind(CheckRules.Check).Roll(CheckModifier(rules, abilityOrSkill), advantage, random);
+        // asked for none: whatever its conditions give its checks
+        return rules.Checks.Kind(CheckRules.Check).Roll(CheckModifier(rules, abilityOrSkill), advantage == Advantage.None ? CheckAdvantage(rules) : advantage, random);
+    }
+
+    /// <summary>What its conditions do to its checks: advantage, disadvantage, or neither when both or none.</summary>
+    public Advantage CheckAdvantage(Ruleset rules)
+    {
+        bool advantage = false;
+        bool disadvantage = false;
+        foreach (ConditionDefinition definition in Conditions.Select(c => rules.Condition(c.Id)).OfType<ConditionDefinition>())
+        {
+            advantage |= definition.AdvantageOnChecks;
+            disadvantage |= definition.DisadvantageOnChecks;
+        }
+        return advantage == disadvantage ? Advantage.None : advantage ? Advantage.Advantage : Advantage.Disadvantage;
     }
 
     public RollResult RollSave(Ruleset rules, string ability, Advantage advantage, Rng random)

@@ -439,9 +439,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     bonus-action spells.
   - Done 10/8: Sneak Attack as a trigger; Disengage and the rogue's bonus-action Disengage (a
     reaction's `unless` flag); unseen attackers and targets in the dark; origin, general,
-    fighting-style and epic-boon feat kinds; supplies for the long rest.
+    fighting-style and epic-boon feat kinds; supplies for the long rest; poisoned and frightened
+    hindering checks (`disadvantageOnChecks`).
   - Doesn't fit yet (back to the steps): prone and paralysed caring about distance;
-    disadvantage on ability checks from conditions; Shield and Counterspell as spells cast as
+    Shield and Counterspell as spells cast as
     reactions (the `beforeHit` and `spellCast` moments are there, a reaction spending a slot is
     not); monster Multiattack; versatile and two-weapon fighting. Then the rest of the SRD: all
     classes and levels, the spell list, the bestiary.
