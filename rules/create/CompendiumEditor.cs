@@ -186,6 +186,33 @@ public sealed class CompendiumEditor
         return _state.Count - 1;
     }
 
+    /// <summary>
+    /// Entries brought in whole (an import from Foundry), as one change Undo takes back: each of a
+    /// kind this editor has, into the folder given for it. Returns the paths that were already
+    /// taken or of no kind here, which are left as they were.
+    /// </summary>
+    public List<string> AddAll(IEnumerable<(string Kind, string Folder, JsonObject Value)> entries)
+    {
+        var added = new List<Entry>();
+        var skipped = new List<string>();
+        foreach ((string kind, string folder, JsonObject value) in entries)
+        {
+            string id = FormJson.IsString(value["id"], out string? named) ? named : "";
+            string path = $"{folder}/{id}.json";
+            if (KindOf(kind) == null || folder.Length == 0 || !ValidId(id) || Find(path) != null || _saved.ContainsKey(path) || added.Any(e => e.Path == path))
+            {
+                skipped.Add(path);
+                continue;
+            }
+            added.Add(new Entry(kind, id, path, (JsonObject)value.DeepClone()));
+        }
+        if (added.Count > 0)
+        {
+            Edit($"Import {added.Count}", () => _state.AddRange(added.Select(e => e.Copy())));
+        }
+        return skipped;
+    }
+
     /// <summary>A copy of an entry beside it, under a new id.</summary>
     public int? Copy(int index, string id = "")
     {

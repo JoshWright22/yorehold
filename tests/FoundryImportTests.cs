@@ -1,0 +1,78 @@
+using System.Text.Json.Nodes;
+
+namespace Yorehold.Rules.Tests;
+
+public class FoundryImportTests
+{
+    // Shaped like Foundry's exports; the numbers and words are made up for the test.
+    private const string Dnd5e = """
+        [
+          {"name": "Bone Sabre", "type": "weapon", "system": {
+            "damage": {"base": {"number": 1, "denomination": 8, "bonus": "", "types": ["slashing"]}},
+            "properties": ["fin", "lgt"], "range": {"value": null}, "weight": {"value": 2}, "price": {"value": 12, "denomination": "gp"},
+            "activities": {"a": {"type": "attack"}}}},
+          {"name": "Ember Burst", "type": "spell", "system": {
+            "level": 2, "properties": ["vocal"], "range": {"value": 60, "units": "ft"},
+            "description": {"value": "<p>A burst of embers. See @UUID[Compendium.x.y]{Fire}.</p>"},
+            "activities": {"s": {"type": "save", "activation": {"type": "action"},
+              "target": {"template": {"type": "sphere", "size": "10"}},
+              "save": {"ability": ["dex"]}, "damage": {"onSave": "half", "parts": [{"number": 3, "denomination": 6, "types": ["fire"]}]}}}}},
+          {"name": "Marsh Raider", "type": "npc", "system": {
+            "abilities": {"str": {"value": 12}, "dex": {"value": 14}, "con": {"value": 11}},
+            "attributes": {"hp": {"max": 13}, "ac": {"flat": 13}, "movement": {"walk": "30"}, "senses": {"ranges": {"darkvision": 60}}},
+            "details": {"cr": "1/2", "biography": {"value": "<p>Lives in the reeds.</p>"}}},
+           "items": [
+             {"name": "Bone Sabre", "type": "weapon", "system": {"damage": {"base": {"number": 1, "denomination": 8, "types": ["slashing"]}}, "properties": ["fin"]}},
+             {"name": "Reed Armor", "type": "equipment", "system": {"type": {"value": "light"}, "armor": {"value": 12}}},
+             {"name": "Ambusher", "type": "feat", "system": {}}]},
+          {"name": "Gold Chalice", "type": "loot", "system": {}}
+        ]
+        """;
+
+    private const string Pf2e = """
+        {"name": "Tunnel Biter", "type": "npc", "system": {
+          "abilities": {"str": {"mod": 2}, "dex": {"mod": 3}, "con": {"mod": 1}},
+          "attributes": {"hp": {"max": 18}, "ac": {"value": 17}, "speed": {"value": 25}},
+          "perception": {"mod": 6, "senses": [{"type": "darkvision"}]}, "traits": {"value": ["animal"]},
+          "details": {"level": {"value": 1}, "publicNotes": "<p>Digs and bites.</p>"}},
+         "items": [
+           {"name": "Jaws", "type": "melee", "system": {"bonus": {"value": 9}, "traits": {"value": ["agile", "deadly-d8"]},
+             "damageRolls": {"x": {"damage": "1d8+2", "damageType": "piercing"}}}}]}
+        """;
+
+    [Fact]
+    public void A5eExportBecomesTheGamesFiles()
+    {
+        FoundryImport import = FoundryImport.Read(Dnd5e);
+        Assert.Equal(new[] { "creatures/marsh-raider.json", "items/bone-sabre.json", "items/reed-armor.json", "spells/ember-burst.json" },
+            import.Files.Keys.OrderBy(k => k));
+        // each loads with the game's own reader
+        ItemDefinition sabre = ItemDefinition.Read(Node(import, "items/bone-sabre.json"));
+        Assert.Equal(("1d8", "slashing", "dex", 1200), (sabre.Damage, sabre.DamageType, sabre.AttackAbility, sabre.Value));
+        Assert.Contains("finesse", sabre.Traits);
+        SpellDefinition burst = SpellDefinition.Read(Node(import, "spells/ember-burst.json"));
+        Assert.Equal(2, burst.Level);
+        Assert.Equal("A burst of embers. See Fire.", burst.Action.Description);
+        CreatureDefinition raider = CreatureDefinition.Read(Node(import, "creatures/marsh-raider.json"));
+        Assert.Equal((13, 13, 1, 60), (raider.Hp, raider.ArmorClass, raider.Level, raider.Darkvision));
+        Assert.Equal(new[] { "bone-sabre", "reed-armor" }, raider.Items);
+        // what had no place is named
+        Assert.Contains(import.Report, line => line.Contains("Gold Chalice") && line.Contains("loot"));
+        Assert.Contains(import.Report, line => line.Contains("Ambusher"));
+    }
+
+    [Fact]
+    public void APf2eCreatureStrikesAsPrinted()
+    {
+        FoundryImport import = FoundryImport.Read(Pf2e);
+        CreatureDefinition biter = CreatureDefinition.Read(Node(import, "creatures/tunnel-biter.json"));
+        Assert.Equal((18, 17, 1, 16), (biter.Hp, biter.ArmorClass, biter.Level, biter.Abilities["dex"]));
+        // +9 printed = dex 3 + trained 2 + level 1 + 3 more
+        Assert.Equal(3, biter.Stats["attack"]);
+        ItemDefinition jaws = ItemDefinition.Read(Node(import, "items/tunnel-biter-jaws.json"));
+        Assert.Equal(("1d8+2", "piercing"), (jaws.Damage, jaws.DamageType));
+        Assert.Contains("deadly", jaws.Traits);
+    }
+
+    private static ContentNode Node(FoundryImport import, string path) => ContentNode.Parse(path, import.Files[path].ToJsonString());
+}

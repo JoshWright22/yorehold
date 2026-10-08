@@ -93,6 +93,7 @@ public partial class CompendiumModePanel : Control
             new("add", kind == null ? "Add" : "Add " + Singular(kind), kind != null && folder.Length > 0 && (_newId.Length == 0 || CompendiumEditor.ValidId(_newId)),
                 kind == null ? "Pick a kind's tab first." : folder.Length == 0 ? "There is no ruleset folder in this package to add to." : "Ids are a-z, 0-9, - and _."),
             new("copy", "Copy", picked != null && (_newId.Length == 0 || CompendiumEditor.ValidId(_newId)), picked == null ? "Pick an entry to copy." : "Ids are a-z, 0-9, - and _."),
+            new("foundry", "From Foundry...", package.CompendiumFolders.Count > 0, "There is no ruleset folder in this package to import into."),
         };
         _list.SetEntry("", actions, _hint);
         _list.SetFoot(folder.Length == 0 ? (kind == null ? "" : "No ruleset folder to add to") : $"New {Singular(kind!)} entries go in {folder}/");
@@ -161,6 +162,11 @@ public partial class CompendiumModePanel : Control
         }
         int? picked = _editor.Find(_list.Picked);
         CompendiumEditor.Kind? kind = TabKind(_editor) ?? (picked is int p ? _editor.KindOf(_editor.Entries[p].Kind) : null);
+        if (id == "foundry")
+        {
+            PickFoundryFile();
+            return;
+        }
         int? made = null;
         if (id == "add" && kind != null && _package.CompendiumFolders.TryGetValue(kind.Form.Id, out string? folder))
         {
@@ -180,6 +186,55 @@ public partial class CompendiumModePanel : Control
         {
             _hint = "That id is taken.";
         }
+    }
+
+    // A Foundry export (an Item or Actor's JSON, or a list of them) chosen from disk.
+    private void PickFoundryFile()
+    {
+        var dialog = new FileDialog
+        {
+            FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, UseNativeDialog = true,
+            Filters = new[] { "*.json ; Foundry export" }, Title = "A Foundry VTT export",
+        };
+        dialog.FileSelected += path =>
+        {
+            ImportFoundry(System.IO.File.ReadAllText(path));
+            dialog.QueueFree();
+        };
+        dialog.Canceled += dialog.QueueFree;
+        AddChild(dialog);
+        dialog.PopupCentered(new Vector2I(900, 600));
+    }
+
+    // What the import made, into the folders the package keeps each kind in; what didn't fit goes to the log.
+    private void ImportFoundry(string json)
+    {
+        if (_editor == null || _package == null)
+        {
+            return;
+        }
+        FoundryImport import = FoundryImport.Read(json);
+        var entries = new List<(string, string, System.Text.Json.Nodes.JsonObject)>();
+        foreach ((string path, System.Text.Json.Nodes.JsonObject value) in import.Files)
+        {
+            string folder = path[..path.IndexOf('/')];
+            if (_editor.Kinds.FirstOrDefault(k => k.Form.Folder == folder) is CompendiumEditor.Kind kind
+                && _package.CompendiumFolders.TryGetValue(kind.Form.Id, out string? into))
+            {
+                entries.Add((kind.Form.Id, into, value));
+            }
+            else
+            {
+                import.Report.Add($"{path}: this package has no folder for it");
+            }
+        }
+        List<string> skipped = _editor.AddAll(entries);
+        foreach (string line in import.Report.Concat(skipped.Select(p => p + ": that id is taken; left as it was")))
+        {
+            GD.Print("Foundry import: " + line);
+        }
+        int notes = import.Report.Count + skipped.Count;
+        _hint = $"Brought in {entries.Count - skipped.Count} from Foundry" + (notes > 0 ? $"; {notes} notes in the log" : "") + ". Undo takes them back.";
     }
 
     private void BuildForm(CompendiumEditor editor, int? picked)

@@ -58,5 +58,24 @@ sources ours does, and is written fresh here). R21 in the roadmap carries what w
 | Roll data `@abilities.str.mod`, `@details.level`, `@prof`, `@scale.x.y` | the same, or `mod.str`, `level`, `proficiency`, `scale.y` |
 | Journal entries | the chapter's journal |
 
+## Bringing your own Foundry content across
+
+Create > Compendium > From Foundry... reads a JSON file exported from your own Foundry world
+(right-click an Item or Actor > Export Data, or a list of them) and adds what it can to the
+package as one change Undo takes back (`rules/import/FoundryImport.cs`):
+
+| Foundry | Becomes |
+| --- | --- |
+| dnd5e weapon | an item: damage dice and type, finesse and other properties as traits, two hands, range in squares, price in copper |
+| dnd5e armour and shield | an item: AC as the 5e rules here read it (override, Dex cap), a shield's bonus |
+| dnd5e spell | a spell from its first activity: attack, save (with half on a save), heal or damage; range, area, concentration, bonus action |
+| dnd5e npc | a creature: HP, AC, speed, CR as level, scores, darkvision, and its weapons and armour as items |
+| pf2e npc | a creature: level, HP, AC, speed, scores from modifiers, its strikes as items, its printed attack bonus kept as a flat `attack` stat |
+| pf2e weapon, armour, spell | an item or spell the same way |
+| a feat (either) | a feat; pf2e FlatModifier rule elements as modifiers (fortitude, reflex, will and skill checks with an `if`) |
+
+Everything else (loot, journal entries, other rule elements, predicates, activities on feats)
+is named in the log and left out, so nothing goes missing quietly.
+
 Not taken: Foundry's document ids and folder records (our file names are the ids), its
 per-document permission data, and its HTML descriptions (ours are plain words).
