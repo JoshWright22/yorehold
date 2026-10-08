@@ -30,6 +30,8 @@ public sealed class OutlineBuilder
     private readonly Dictionary<string, string> _ids = new(StringComparer.Ordinal);
     // the book's pictures in use: where each goes in the package, and its cleared bytes when its paper was taken out
     private readonly SortedDictionary<string, (string Target, byte[]? Cleared)> _pictures = new(StringComparer.Ordinal);
+    // where each place's floor was put, for the report: the import's score holds it against the book's map
+    private readonly SortedDictionary<string, (string Chapter, (int X, int Y, int W, int H) At)> _rooms = new(StringComparer.Ordinal);
     private string _package = "";
 
     public OutlineBuilder(Outline outline, string importFolder, ContentFiles game)
@@ -54,6 +56,7 @@ public sealed class OutlineBuilder
     {
         _package = folder;
         _report.Clear();
+        _rooms.Clear();
         _outline = _source;
         if (_outline.System.Length > 0)
         {
@@ -427,6 +430,10 @@ public sealed class OutlineBuilder
         }
         WriteJson($"{folder}/chapter.json", j);
         JsonObject map = layout.Map(j["title"]!.GetValue<string>());
+        foreach (OutlineEntry place in PlacesOf(id))
+        {
+            _rooms[place.Id] = (id, layout.Room(place.Id));
+        }
         if (chapter?.Text("mapPicture") is { Length: > 0 } bookMap)
         {
             if (File.Exists(Path.Combine(_importFolder, bookMap.Replace('/', Path.DirectorySeparatorChar))))
@@ -623,9 +630,14 @@ public sealed class OutlineBuilder
         {
             lines.Add(new JsonObject { ["entry"] = line.Entry, ["text"] = line.Text });
         }
+        var rooms = new JsonObject();
+        foreach ((string place, (string chapter, (int X, int Y, int W, int H) at)) in _rooms)
+        {
+            rooms[place] = new JsonObject { ["chapter"] = chapter, ["at"] = new JsonArray(at.X, at.Y, at.W, at.H) };
+        }
         Directory.CreateDirectory(_importFolder);
         File.WriteAllText(Path.Combine(_importFolder, ReportFile),
-            CreateJson.Write(new JsonObject { ["format"] = "yorehold.import-report", ["version"] = 1, ["lines"] = lines }) + "\n");
+            CreateJson.Write(new JsonObject { ["format"] = "yorehold.import-report", ["version"] = 1, ["lines"] = lines, ["rooms"] = rooms }) + "\n");
     }
 
     private void CopyPictures()

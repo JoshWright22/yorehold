@@ -58,7 +58,7 @@ public partial class CreateScreen
             return;
         }
         string folder = StoryImport.FolderFor(Places.CreateFolder(), book);
-        _import = new StoryImport(folder, App.Content());
+        _import = new StoryImport(folder, App.Content()) { ScoresFolder = Places.ImportScores() };
         _buildWhenRead = build;
         _startNote = "";
         _start.Reset();
@@ -87,7 +87,7 @@ public partial class CreateScreen
     {
         try
         {
-            _import = StoryImport.Open(folder, App.Content());
+            _import = StoryImport.Open(folder, App.Content(), Places.ImportScores());
             _importTask = null;
             _start.Reset();
         }
@@ -175,6 +175,7 @@ public partial class CreateScreen
                 .Stats(("Entries", outline.Entries.Count.ToString()), ("Places", outline.OfKind(OutlineKind.Place).Count().ToString()),
                     ("Fights", outline.OfKind(OutlineKind.Encounter).Count().ToString()), ("Dropped", import.Dropped.Count.ToString()))
                 .Text("Pick an entry to see it and where its words came from. Drop what shouldn't be in the game; Build writes the rest as an adventure and opens it.");
+            DescribeScore(page, import);
         }
         else
         {
@@ -185,6 +186,39 @@ public partial class CreateScreen
         actions.Add(new DataAction("import-close", "Close"));
         _start.SetEntry(page.ToString(), actions, import.Problems.Count > 0 ? "Couldn't build: " + string.Join("; ", import.Problems) : "");
         _start.SetFoot(import.Folder);
+    }
+
+    // how much of the book got in, part by part, with what is missing under each
+    private static void DescribeScore(BookPage page, StoryImport import)
+    {
+        if (import.Score is not ImportScore score)
+        {
+            page.Gap().Note(import.ScoreProblem.Length > 0 ? "No score: " + import.ScoreProblem : "");
+            return;
+        }
+        page.Gap().Heading("How much of the book got in");
+        if (!score.ModelRan)
+        {
+            page.Warn("No story model ran. Only the book's layout was read: its numbered places, the passages to read out and the map. "
+                + "Fights, people, talk, items, heroes and the ways between places come from the story model (Settings file: storyModel).");
+        }
+        page.Stats(("Score", $"{score.Overall} of 100"), ("Answer key", score.HasKey ? "yes" : "none for this book"));
+        foreach (ImportScore.Part part in score.Parts)
+        {
+            page.Entry(part.Name, part.Scored ? $"{part.Found} of {part.Of}" : string.Join("; ", part.Facts));
+            if (part.Scored)
+            {
+                foreach (string fact in part.Facts)
+                {
+                    page.Note(fact);
+                }
+            }
+            foreach (string missing in part.Missing)
+            {
+                page.Note("missing: " + missing);
+            }
+        }
+        page.Gap().Note("Kept in import/score.json. The map's shape is counted once it is built.");
     }
 
     private static string KindTab(OutlineKind kind) => kind switch
@@ -280,6 +314,10 @@ public partial class CreateScreen
         StoryImport import = _import!;
         List<string> problems = import.Build();
         GD.Print(problems.Count == 0 ? $"Imported into {import.Package}" : "Import couldn't build: " + string.Join("; ", problems));
+        foreach (string line in import.Score?.Lines() ?? new List<string>())
+        {
+            GD.Print(line);
+        }
         if (problems.Count == 0)
         {
             _import = null;

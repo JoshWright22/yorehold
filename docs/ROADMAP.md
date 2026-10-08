@@ -264,7 +264,7 @@ Rules for all of it:
   - Default: `story node` from the list above isn't a kind: the builder makes the story graph from
     places, fights and flags. Read-aloud text sits on its place.
   - Default: every entry has one id and the model must use ids, not names, after first mention
-    (Story2Game's main failure was one key called "Key" and "Metallic Key"). Things in the way
+	(Story2Game's main failure was one key called "Key" and "Metallic Key"). Things in the way
     are written as preconditions and effects (needs a key; opens the door), which is what made
     Story2Game's actions work.
 - [x] **S3. Building.** `OutlineBuilder`: since entries already have the files' shapes, building
@@ -381,6 +381,34 @@ Rules for all of it:
     reaches go where the book draws them, and the trace is lined up with them. Caves of Shadow
     with no model comes out as its seven caves in the book's shape (`.dev\import-caves.png`).
   - Later, as written: the model reading the walls and doors off the picture.
+- [x] **S8. Scoring an import.** (Josh, 10/7: in-game dialogue doesn't feel right, no pictures, walls
+  wrong, no fights.) `ImportScore` counts each import part by part against what the book itself
+  shows: pictures copied, the book's words in the game, numbered places, read-out passages, ways
+  given, the map's shape (rooms left/right and over/under as the book's numbers lie) and quoted
+  speech in conversations; a hand-written answer key per book (`ImportKey`) adds what only a reader
+  knows (the fights and who is in them, the heroes, what people say, what is in each chest). Kept
+  in `import/score.json`, shown on the review's first page, printed on build, and every build adds
+  a line to `user://import-scores/history.jsonl` so a change is held against the runs before it.
+  Described in CONTENT.md.
+  - Caves of Shadow, with its key (`caves-of-shadow.key.json` in the scores folder): Josh's run
+    from Create had **no story model** (`storyModel` empty in settings), so 31 of 100 and 7 of 42
+    key lines: no fights, no Jeffries, no heroes, no hero pictures, no ways (all joined by
+    corridors). The 10/7 run through the stand-in scored 82 and 40 of 42 (missing: the storeroom's
+    and the den's things in chests). Both: rooms 8 by 8 boxes, walls not read from the map.
+  - Default: the overall score is the plain mean of the counted parts; `words` counts rules and
+    credits too, so it stays low and is read for its list of what's missing, not its number.
+- [ ] **S9. What the scores show is missing**, each held against the Caves of Shadow key and history:
+  - Create > Import says before reading that no story model is set and what that leaves out, with
+    Read anyway; today it is only said in small text while it reads.
+  - The layout draft gives heroes from captioned pictures (a short heading under a picture
+    followed by a race and class line, "Human Fighter"), so their pictures come in with no model.
+  - Room text: a place's passages are read as one line spoken by the room's name; show them as a
+    narrator's caption instead, and keep conversations for people. Quoted lines of a person
+    (Jeffries' answers) become their conversation's replies, in the book's words.
+  - Things in a room the book describes (the sack of 50 gold, the cart's greatsword, the bag
+    under the bed) become chests or searchable spots in that room.
+  - Walls: rooms from the map picture (the model reading its grid, walls and doors, S7's later
+    part), scored by `shape`; places sized from the map rather than 8 by 8.
 
 ## U. Game feel (playtest, 10/7)
 
@@ -440,12 +468,12 @@ reopened (`playtest.ps1 -Problems`).
     the lobby. A seat can also take the ready-made hero or one of the player's characters.
   - Not done: the adventure's picture (adventures have no cover yet; U8), and the lobby still
     has the character screen's look rather than the band (`.dev\p7-seats.png`). Every seat says
-    "you" until seats have owners online.
+	"you" until seats have owners online.
 - [x] **U7. Character creation visuals** (`character-creation`). The hero's picture large in the
   middle (from art packs by race and class, or picked from the player's own pictures), the steps
   down one side, what each pick gives shown beside it, as in BG3.
   - Default: a 260 px square picture between the steps and the sheet, with the name and "Level 1
-    Dwarf Fighter" under it, in creation and the lobby. It is `portraits/<race>-<class>.png`,
+	Dwarf Fighter" under it, in creation and the lobby. It is `portraits/<race>-<class>.png`,
     else `<class>.png`, else `<race>.png`, from content or art packs; else the disc and initial.
     What each pick gives is the sheet on the right, rebuilt after every click (`.dev\p7-scores.png`).
   - Not done: picking a picture of the player's own for a character; that needs a picture field
@@ -460,7 +488,7 @@ reopened (`playtest.ps1 -Problems`).
     game's content. An import's cover is the first of the book's pictures it uses
     (`.dev\p11-adventures.png`).
   - Default: covers fill the background rather than a row of small tiles; sections are the tabs
-    (the game's, made here, imported), since there are no worlds or "new" marks yet.
+	(the game's, made here, imported), since there are no worlds or "new" marks yet.
   - Saves remember their package (`package` in the save's data); Continue and Load play from it
     again, and a save whose package was deleted says so on the load screen.
   - Not done: the playtest's `library` answer was about the character library, which is the

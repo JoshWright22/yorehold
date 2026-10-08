@@ -50,6 +50,12 @@ public static class Places
         return ProjectSettings.GlobalizePath("user://create");
     }
 
+    /// <summary>
+    /// Where the answer keys for imported books are and each import's score is added to
+    /// history.jsonl. The same folder in a screenshot run, which only reads keys and adds a line.
+    /// </summary>
+    public static string ImportScores() => ProjectSettings.GlobalizePath("user://import-scores");
+
     /// <summary>What account sync keeps the same as the account: the saves and the characters, with sync.json and sync-backup/ in the user folder.</summary>
     public static Rules.SyncFolders SyncFolders() => new(SavesFolder(), CharactersFolder(), ProjectSettings.GlobalizePath("user://"));
 

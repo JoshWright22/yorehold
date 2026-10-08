@@ -31,6 +31,10 @@ public sealed class StoryImport
     /// <summary>Ids of the entries the writer dropped in review; the build leaves them out.</summary>
     public SortedSet<string> Dropped { get; } = new(StringComparer.Ordinal);
     public List<string> Problems { get; } = new();
+    /// <summary>Where the books' answer keys are and the history of scores is kept; null for neither.</summary>
+    public string? ScoresFolder { get; init; }
+    /// <summary>How much of the book this import got into the game, as of the last read or build.</summary>
+    public ImportScore? Score { get; private set; }
 
     /// <summary>A new folder for a book in the create folder, named after it and not taken yet.</summary>
     public static string FolderFor(string createFolder, string book)
@@ -59,21 +63,28 @@ public sealed class StoryImport
             Stage = "The story model is reading it";
             StoryReader.Result read = await new StoryReader(model, _game).Read(source, draft, cancel);
             Outline = read.Outline;
+            string named = model is ChatModel chat ? $"model {chat.Model}, " : "";
             File.WriteAllLines(Path.Combine(Folder, ModelLogFile),
-                new[] { $"calls {read.Calls}, tokens in {read.InputTokens}, out {read.OutputTokens}" }
+                new[] { $"{named}calls {read.Calls}, tokens in {read.InputTokens}, out {read.OutputTokens}" }
                     .Concat(read.Notes)
                     .Concat(read.Dropped.Select(d => $"left out {d.Entry}: {d.Why}")));
         }
         Outline.Save(Folder);
         Dropped.Clear();
         SaveDropped();
+        Rescore(built: false);
         Stage = "Ready to review";
     }
 
     /// <summary>An import read before: its outline and what was dropped from it.</summary>
-    public static StoryImport Open(string package, ContentFiles game)
+    public static StoryImport Open(string package, ContentFiles game, string? scoresFolder = null)
     {
-        var import = new StoryImport(package, game) { Outline = Outline.Load(Path.Combine(package, ImportFolder)), Stage = "Ready to review" };
+        var import = new StoryImport(package, game)
+        {
+            Outline = Outline.Load(Path.Combine(package, ImportFolder)),
+            Stage = "Ready to review",
+            ScoresFolder = scoresFolder,
+        };
         string dropped = Path.Combine(import.Folder, DroppedFile);
         if (File.Exists(dropped) && JsonNode.Parse(File.ReadAllText(dropped)) is JsonArray ids)
         {
@@ -82,8 +93,62 @@ public sealed class StoryImport
                 import.Dropped.Add(id?.ToString() ?? "");
             }
         }
+        import.Rescore(built: false);
         return import;
     }
+
+    /// <summary>The outline without what the writer dropped, and without what names something dropped (a fight in a dropped room).</summary>
+    public Outline Kept()
+    {
+        var kept = new Outline { Title = Outline?.Title ?? "", System = Outline?.System ?? "" };
+        if (Outline == null)
+        {
+            return kept;
+        }
+        var gone = new HashSet<string>(Dropped, StringComparer.Ordinal);
+        bool more = true;
+        while (more)
+        {
+            more = false;
+            foreach (OutlineEntry e in Outline.Entries.Where(e => !gone.Contains(e.Id)))
+            {
+                bool namesGone = new[] { "place", "from", "to", "dialogue" }.Any(key => gone.Contains(e.Text(key))) || gone.Contains(e.Chapter);
+                if (namesGone)
+                {
+                    gone.Add(e.Id);
+                    more = true;
+                }
+            }
+        }
+        kept.Entries.AddRange(Outline.Entries.Where(e => !gone.Contains(e.Id)));
+        return kept;
+    }
+
+    // The score is a look at the import, never a reason for it to fail: a key that can't be read
+    // or a source file gone missing is said in the score's place and the import goes on.
+    private void Rescore(bool built)
+    {
+        Score = null;
+        ScoreProblem = "";
+        try
+        {
+            string book = SourceBook.Load(Folder).File;
+            ImportKey? key = ScoresFolder != null ? ImportKey.Find(ScoresFolder, book) : null;
+            Score = ImportScore.Of(Folder, Kept(), built ? Package : null, key);
+            Score.Save(Folder);
+            if (built && ScoresFolder != null)
+            {
+                Score.AddToHistory(ScoresFolder, Package);
+            }
+        }
+        catch (Exception error) when (error is ContentException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            ScoreProblem = error.Message;
+        }
+    }
+
+    /// <summary>Why there is no score, when there is none.</summary>
+    public string ScoreProblem { get; private set; } = "";
 
     public static bool IsImport(string package) => File.Exists(Path.Combine(package, ImportFolder, Outline.FileName));
 
@@ -110,30 +175,17 @@ public sealed class StoryImport
             return Problems;
         }
         Stage = "Building the package";
-        var kept = new Outline { Title = Outline.Title, System = Outline.System };
-        var gone = new HashSet<string>(Dropped, StringComparer.Ordinal);
-        bool more = true;
-        while (more)
-        {
-            more = false;
-            foreach (OutlineEntry e in Outline.Entries.Where(e => !gone.Contains(e.Id)))
-            {
-                bool namesGone = new[] { "place", "from", "to", "dialogue" }.Any(key => gone.Contains(e.Text(key))) || gone.Contains(e.Chapter);
-                if (namesGone)
-                {
-                    gone.Add(e.Id);
-                    more = true;
-                }
-            }
-        }
-        kept.Entries.AddRange(Outline.Entries.Where(e => !gone.Contains(e.Id)));
         try
         {
-            Problems.AddRange(new OutlineBuilder(kept, Folder, _game) { ClearPaper = clearPaper }.Build(Package));
+            Problems.AddRange(new OutlineBuilder(Kept(), Folder, _game) { ClearPaper = clearPaper }.Build(Package));
         }
         catch (Exception error) when (error is ContentException or IOException or UnauthorizedAccessException)
         {
             Problems.Add(error.Message);
+        }
+        if (Problems.Count == 0)
+        {
+            Rescore(built: true);
         }
         Stage = Problems.Count == 0 ? "Built" : "Couldn't build";
         return Problems;

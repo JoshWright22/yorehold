@@ -462,7 +462,7 @@ into a package (`rules/import/Outline.cs`; the tests' `SampleOutline.cs` is a wh
 ```json
 {"format": "yorehold.outline", "version": 1, "title": "The Old Mill", "system": "",
  "entries": [{"id": "marn", "kind": "hero", "data": {"name": "Marn", "class": "fighter"},
-              "from": {"page": 1, "quote": "MARN"}, "picture": "pictures/p1-1.png"}]}
+			  "from": {"page": 1, "quote": "MARN"}, "picture": "pictures/p1-1.png"}]}
 ```
 
 - Each entry has an `id` (a-z, 0-9, - and _, one per outline), a `kind`, its `data`, `from`
@@ -506,8 +506,8 @@ is taken as 60 squares across: a first place with `mapAt` sits where its number 
 no link reaches sits where its number is too (in the nearest free spot), joined to the nearest
 room by an open way; the picture goes in the map's `trace`, lined up with them.
 Every chapter gets `xpPerVictory` 50. `import/report.json` lists what didn't go in as written:
-`{"format": "yorehold.import-report", "version": 1, "lines": [{"entry", "text"}]}`. The same
-outline always gives the same files.
+`{"format": "yorehold.import-report", "version": 1, "lines": [{"entry", "text"}], "rooms": {"<place>": {"chapter", "at": [x, y, w, h]}}}`;
+`rooms` is where each place's floor was put. The same outline always gives the same files.
 
 A picture of a hero, creature or person standing on plain light paper (most of its edge one
 colour, lighter than 170 of 255) is written as a PNG with that paper see-through, flooded in from
@@ -562,6 +562,45 @@ the adventure and one chapter named for the book, a place for every numbered hea
 and its framed boxes as notes, and a note with the map picture: the picture with the most place
 numbers printed on it, and where each number sits on it. `BookLayout.PictureNames` gives each
 picture the short heading set right under it in its column (or over it), the name of who it shows.
+
+### How much of the book got in
+
+Every import is scored when it is read and again when it is built (`ImportScore`), into
+`import/score.json`: `{"format": "yorehold.import-score", "version": 1, "book", "modelRun", "built",
+"key", "overall", "parts": [{"id", "name", "found", "of", "missing", "facts"}]}`. Each part counts
+something the book itself shows against what is in the kept outline or the built package:
+
+- `pictures`: the book's pictures copied into the package (before the build: named by an entry).
+- `words`: the book's paragraphs of 8 words or more, by the share of their runs of three words
+  found in what the game shows or says (notes don't count). The book's rules and credits are in it
+  too, so it never reaches the whole; its `missing` is the largest paragraphs left out.
+- `places`: numbered headings with a place of that label. `readout`: shaded passages found in the game.
+- `ways`: places with a link given (the rest are joined by the builder). `shape`: for each two
+  places numbered on the book's map, whether their rooms lie left/right and over/under the way the
+  numbers do (built only). `spoken`: paragraphs opening with a quotation mark found in a conversation.
+- `cast`: counts only (fights, creatures, heroes, people, items, chests, quests).
+- `key`: the lines of the book's answer key the outline meets, when it has one.
+
+`overall` is the mean of the counted parts. The review shows the score on its first page and a
+build prints it to the log. Answer keys and `history.jsonl` (one line per build: when, book,
+package, model run, overall, each part's found and of) are in `user://import-scores/`. A key is
+`<book-slug>.key.json`, written by hand by someone who read the book:
+
+```json
+{"format": "yorehold.import-key", "version": 1, "book": "Caves of Shadow",
+ "notPictures": ["pictures/p2-1.jpg"],
+ "expect": [{"place": "3"}, {"way": ["5", "6"], "how": "locked"},
+            {"fight": "3", "creatures": {"orc": 1, "rat": 1}}, {"creature": "ogre|jezer"},
+            {"hero": "Lidda", "class": "rogue", "picture": true},
+            {"person": "Jeffries", "place": "1", "talks": true},
+            {"says": "My name is Jeffries", "who": "Jeffries"}, {"item": "crossbow"},
+            {"chest": "6", "holds": ["crossbow"], "coins": 50}, {"quest": "orcs|ogre"}]}
+```
+
+A line's first field is its kind; places are named by the book's labels; `a|b` takes either name,
+matched as whole words in the id, name or the foe's own name. `notPictures` aren't counted in
+`pictures`. Setting `YOREHOLD_SCORE_IMPORT` (with `_PACKAGE` and `_KEY`) makes the tests score an
+import folder into its `score.txt`.
 
 ## Adventures
 
