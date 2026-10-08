@@ -742,6 +742,8 @@ An item's `supplies` is how many supply points each unit is worth (0 = not food)
 
 ## Rulesets
 
+RULES_LANGUAGE.md has the whole rules language on one page; this section is the long form.
+
 The game's rules are a folder, `rulesets/yorehold/`, and every number the rules use is in it. Changing a number there changes the game; nothing in the code repeats it. `ruleset.json` is the framework's ruleset format:
 
 | Field | Meaning |
