@@ -621,7 +621,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     drawn in code; a role it leaves out keeps the game's own.
   - Done 10/8: the shared Godot theme follows: every fill, edge and text colour in it that
     matches a role the file changed takes the new colour at start.
-  - Left: fonts, edges, corners and icons; skins as
+  - Done 10/8: the faces come from `ui/fonts.json` the same way (sans, book, mono: system font
+    lists swapped into the shared theme at start).
+  - Left: font files a skin brings, edges, corners and icons; skins as
     packages picked in Settings; the stylesheet and layout files.
 - [ ] **R17. 3D dice.** Josh, 10/8: dice render in 3D when rolled, like Foundry's Dice So Nice. The
   result comes first from the game's seeded dice (R2b), so rolls stay fair and replayable; the

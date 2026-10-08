@@ -72,6 +72,7 @@ public static class App
         Settings = GameSettings.Load(Places.SettingsFile());
         // the screens' colours are data: ui/colors.json, a skin's when one is on top
         Palette.Load(Content());
+        Palette.LoadFonts(Content());
         try
         {
             Keys = KeyBindings.Read(ContentNode.Read(Content(), "ui/keys.json"));

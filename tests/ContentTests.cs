@@ -55,7 +55,8 @@ public class ContentTests
         Try("ui/keys.json", () => KeyBindings.Read(ContentNode.Read(files, "ui/keys.json")));
         Try("ui/credits.json", () => Credits.Read(ContentNode.Read(files, "ui/credits.json")));
         // the screens' colours, shared with the site; src/hud/Palette.cs holds them and PaletteTests checks they agree
-        Try("ui/colors.json", () => ContentNode.Read(files, "ui/colors.json").RequireObject("is an object of colours"));
+        Try("ui/colors.json", () => UiColors.Read(ContentNode.Read(files, UiColors.File)));
+        Try("ui/fonts.json", () => UiFonts.Read(ContentNode.Read(files, UiFonts.File)));
         Try("create/compendium.json", () =>
         {
             if (!new CompendiumEditor(new History()).SetKinds(files.ReadText("create/compendium.json"), out string error))

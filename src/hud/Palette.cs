@@ -121,6 +121,61 @@ public static class Palette
         }
     }
 
+    // The first font each role's list starts with in the hand-made theme, to know which is which.
+    private static readonly (string Role, string First)[] FontRoles = { ("sans", "Inter Tight"), ("book", "Arial"), ("mono", "JetBrains Mono") };
+
+    /// <summary>
+    /// Takes the screens' faces from ui/fonts.json (a skin's when one is laid on top): every system
+    /// font in the shared theme of a role the file names gets that role's list.
+    /// </summary>
+    public static void LoadFonts(Rules.ContentFiles files)
+    {
+        if (!files.Exists(Rules.UiFonts.File))
+        {
+            return;
+        }
+        Rules.UiFonts fonts;
+        try
+        {
+            fonts = Rules.UiFonts.Read(Rules.ContentNode.Read(files, Rules.UiFonts.File));
+        }
+        catch (Rules.ContentException error)
+        {
+            GD.PushWarning($"The screens' fonts can't be read, so they are the game's own: {error.Message}");
+            return;
+        }
+        Theme theme = GD.Load<Theme>("res://scenes/hud/hud-theme.tres");
+        var seen = new System.Collections.Generic.HashSet<Font>();
+        foreach (string type in theme.GetTypeList())
+        {
+            foreach (string name in theme.GetFontList(type))
+            {
+                if (theme.GetFont(name, type) is not SystemFont font || !seen.Add(font) || font.FontNames.Length == 0)
+                {
+                    continue;
+                }
+                foreach ((string role, string first) in FontRoles)
+                {
+                    if (font.FontNames[0] == first && fonts.Faces.TryGetValue(role, out System.Collections.Generic.List<string>? names))
+                    {
+                        font.FontNames = names.ToArray();
+                        break;
+                    }
+                }
+            }
+        }
+        if (theme.DefaultFont is SystemFont fallback && fallback.FontNames.Length > 0)
+        {
+            foreach ((string role, string first) in FontRoles)
+            {
+                if (fallback.FontNames[0] == first && fonts.Faces.TryGetValue(role, out System.Collections.Generic.List<string>? names))
+                {
+                    fallback.FontNames = names.ToArray();
+                }
+            }
+        }
+    }
+
     // Every role, in one order, to see which a scheme changed.
     private static Color[] Roles() => new[]
     {
