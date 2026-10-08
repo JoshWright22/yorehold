@@ -145,6 +145,30 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AReactionCanTurnAHitIntoAMiss()
+    {
+        // a Shield: as a hit lands, the defence goes up and the same roll is read again
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard",
+            ("rulesets/pf2e/actions/ward.json", """
+                {"id": "ward", "name": "Ward", "cost": 1, "general": false, "target": {"kind": "self"},
+                 "effects": [{"do": "modifier", "stat": "ac", "value": 2000, "duration": 1}]}
+                """),
+            ("rulesets/pf2e/reactions/ward.json", """{"id": "ward", "name": "Ward", "trigger": "beforeHit", "action": "ward", "general": false}"""));
+        World w = world.World;
+        w.Creatures[0].Sheet.Stats.SetBase("perception", 2000); // acts first
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        gik.Stats.SetBase("ac", -1000); // every roll would hit
+        gik.Granted.Add("ward");
+        world.Fight();
+        int hp = gik.Hp;
+        Assert.True(world.TurnTo(0) && world.Use("strike", 2), "Ana strikes");
+        Assert.True(world.Said("Gik takes Ward") && gik.Hp == hp, "Gik's ward turns the hit aside:\n" + string.Join("\n", world.Log.TakeLast(6)));
+        // the reaction is spent: the next strike lands against the warded AC, so it still misses, and no second ward
+        world.Use("strike", 2);
+        Assert.Single(world.Log, line => line.Contains("Gik takes Ward"));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

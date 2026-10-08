@@ -459,6 +459,8 @@ public sealed partial class World
             return _world.AttackArmorClass(context.Self, who, action != null && action.Range > 1);
         }
 
+        public override bool BeforeHit(int who, int attacker, EffectContext context) => _world.BeforeHitReaction(who, attacker);
+
         public override bool HasFlag(int who, string flag, EffectContext context)
         {
             if (base.HasFlag(who, flag, context))

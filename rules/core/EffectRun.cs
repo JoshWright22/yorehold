@@ -651,13 +651,20 @@ internal sealed class EffectRun
         outcome.Advantage = advantage == Advantage.Advantage;
         RollResult attack = kind.Roll(bonus + penalty, advantage, _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
-        int ac = kind.Defence(_host.ArmorClass(actor, _context), _random, out RollResult? defended);
+        int armor = _host.ArmorClass(actor, _context);
+        int ac = kind.Defence(armor, _random, out RollResult? defended);
         if (defended != null)
         {
             // the defender's own roll, shown before the attack it meets
             Note(EffectEventKind.Defence, actor, "defence", ac, defended);
         }
         outcome.Attack = kind.Resolve(attack, ac);
+        if (outcome.Attack.Passes && _host.BeforeHit(actor, _context.Self, _context))
+        {
+            // its reaction may have raised its defence: the same roll, read against the new one
+            ac += _host.ArmorClass(actor, _context) - armor;
+            outcome.Attack = kind.Resolve(attack, ac);
+        }
         outcome.Margin = attack.Total - ac;
         _result.Events.Add(new EffectEvent
         {

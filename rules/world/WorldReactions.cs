@@ -250,6 +250,38 @@ public sealed partial class World
         }
     }
 
+    // An attack on target would land: a reaction it has for that (Shield) is taken at once, in the
+    // middle of the attack, which is then read again against what the reaction changed.
+    internal bool BeforeHitReaction(int target, int attacker)
+    {
+        if (!Fighting || _pendingReaction != null || target < 0 || attacker < 0 || target >= Creatures.Count
+            || OrderIndex(target) is not int index || !Encounter!.Order[index].Standing || !Encounter.Order[index].Budget.Reaction
+            || Creatures[target].Sheet.HasFlag(Rules, "cantAct"))
+        {
+            return false;
+        }
+        foreach (ReactionDefinition definition in Chapter.Rules.Reactions.Where(r => r.Trigger == ReactionTrigger.BeforeHit))
+        {
+            if (!definition.General && !Creatures[target].Sheet.Granted.Contains(definition.Id))
+            {
+                continue;
+            }
+            ActionDefinition? action = FindAction(definition.Action);
+            if (action == null || !action.Meets(Creatures[target].Sheet, Rules, out _)
+                || (action.Target == ActionTarget.Creature && !ValidTarget(target, action, attacker)))
+            {
+                continue;
+            }
+            // the attack's own aim stays as it was for the rest of its steps
+            Cell? aim = _aim;
+            _pendingReaction = new PendingReaction(target, attacker, action.Id, definition.Name, false);
+            ResolveReaction(true);
+            _aim = aim;
+            return true;
+        }
+        return false;
+    }
+
     // A prompt nobody answers in time takes the reaction.
     private void ReactionTime(double seconds)
     {

@@ -10,6 +10,8 @@ public enum ReactionTrigger
     Missed,
     /// <summary>An attack hit one of the reactor's allies.</summary>
     AllyHit,
+    /// <summary>An attack on the reactor would hit: taken before it lands, the roll is read again (Shield).</summary>
+    BeforeHit,
 }
 
 /// <summary>A movement trigger and the action it offers: rulesets/yorehold/reactions/opportunity.json.</summary>
@@ -45,7 +47,8 @@ public class ReactionDefinition
             "hit" => ReactionTrigger.Hit,
             "missed" => ReactionTrigger.Missed,
             "allyHit" => ReactionTrigger.AllyHit,
-            _ => throw node.Fail("trigger", "is leavesReach, entersReach, hit, missed or allyHit"),
+            "beforeHit" => ReactionTrigger.BeforeHit,
+            _ => throw node.Fail("trigger", "is leavesReach, entersReach, hit, missed, allyHit or beforeHit"),
         };
         bool readied = node.Bool("readied", false);
         string action = node.Name("action", "");
