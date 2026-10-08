@@ -29,6 +29,36 @@ public static class App
         return files;
     }
 
+    /// <summary>
+    /// The game's content with the content sets installed for the system the chapter (or the
+    /// package's first chapter) plays laid on top, then the package itself, which has the last word.
+    /// </summary>
+    public static ContentFiles ContentFor(string chapterFolder, string package = "")
+    {
+        ContentFiles probe = Content();
+        if (package.Length > 0)
+        {
+            probe.Add(package);
+        }
+        string system = RulesFolder.SystemOf(probe, chapterFolder).Id;
+        var left = new List<string>();
+        List<string> sets = ContentSets.For(Places.SetFolders(), system, null, left);
+        foreach (string why in left)
+        {
+            GD.Print($"Content set left out: {why}");
+        }
+        ContentFiles files = Content();
+        foreach (string set in sets)
+        {
+            files.Add(set);
+        }
+        if (package.Length > 0)
+        {
+            files.Add(package);
+        }
+        return files;
+    }
+
     /// <summary>The account server. Off unless the settings or YOREHOLD_SERVER name one; playing never waits on it.</summary>
     public static Online Online { get; } = new(new HttpTransport());
     /// <summary>Keeps the saves and characters the same as the account's copies.</summary>

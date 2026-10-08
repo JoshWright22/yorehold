@@ -150,23 +150,7 @@ public partial class Main : Node
             {
                 _play.ChapterFolder = Rules.Adventure.Load(files).ChapterFolders[0];
                 // the content sets for the system it plays join under the adventure, which keeps the last word
-                string system = Rules.RulesFolder.SystemOf(files, _play.ChapterFolder).Id;
-                var left = new System.Collections.Generic.List<string>();
-                System.Collections.Generic.List<string> sets = Rules.ContentSets.For(Places.SetFolders(), system, null, left);
-                if (sets.Count > 0)
-                {
-                    files = App.Content();
-                    foreach (string set in sets)
-                    {
-                        files.Add(set);
-                    }
-                    files.Add(package);
-                    _play.Content = files;
-                }
-                foreach (string why in left)
-                {
-                    GD.Print($"Content set left out: {why}");
-                }
+                _play.Content = App.ContentFor(_play.ChapterFolder, package);
             }
             catch (Rules.ContentException error)
             {

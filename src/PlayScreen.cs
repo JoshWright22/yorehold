@@ -124,7 +124,7 @@ public partial class PlayScreen : Node2D
         _seed = seed;
         try
         {
-            _world = World.Load(Content ?? App.Content(), folder, (ulong)seed);
+            _world = World.Load(Content ?? App.ContentFor(folder), folder, (ulong)seed);
             _world.Package = Package;
         }
         catch (ContentException e)
