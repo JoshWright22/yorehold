@@ -363,6 +363,28 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void DisengagingKeepsOpportunityAttacksOff()
+    {
+        bool Provokes(bool disengage)
+        {
+            using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+            World w = world.World;
+            w.Creatures[0].Sheet.Stats.SetBase("dex", 2000); // Ana acts first, beside Gik
+            world.Fight();
+            Assert.True(world.TurnTo(0) && w.Adjacent(0, 2));
+            if (disengage)
+            {
+                Assert.True(world.Use("disengage"), w.Refusal);
+            }
+            Assert.True(world.MoveTo(new Cell(1, 6)), w.Refusal);
+            world.StepUntil(() => !world.Walking, 10);
+            return world.Said("Gik takes Opportunity Attack");
+        }
+        Assert.True(Provokes(false), "Walking out of reach provokes");
+        Assert.False(Provokes(true), "Disengaged, it doesn't");
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

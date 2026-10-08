@@ -4,5 +4,6 @@
   "trigger": "leavesReach",
   "action": "attack",
   "order": 10,
-  "promptSeconds": 2
+  "promptSeconds": 2,
+  "unless": "disengaged"
 }

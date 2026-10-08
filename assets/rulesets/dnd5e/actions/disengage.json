@@ -1,0 +1,15 @@
+{
+  "id": "disengage",
+  "name": "Disengage",
+  "description": "Your movement doesn't provoke opportunity attacks for the rest of the turn.",
+  "order": 32,
+  "cost": 1,
+  "log": "{name} disengages.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "disengaged",
+      "target": "self"
+    }
+  ]
+}

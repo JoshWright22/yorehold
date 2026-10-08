@@ -128,7 +128,7 @@ public sealed partial class World
                 }
                 foreach (ReactionDefinition definition in Chapter.Rules.Reactions)
                 {
-                    if (definition.Trigger != phase || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
+                    if (definition.Trigger != phase || Unless(definition, mover) || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
                     {
                         continue;
                     }
@@ -232,7 +232,7 @@ public sealed partial class World
                         ReactionTrigger.AllyHit => reactor != target && Creatures[target].Team == Creatures[reactor].Team && e.Success,
                         _ => false,
                     };
-                    if (!fits || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
+                    if (!fits || Unless(definition, attacker) || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
                     {
                         continue;
                     }
@@ -249,6 +249,10 @@ public sealed partial class World
             }
         }
     }
+
+    // The one who set the reaction off has the flag that stops it (disengaged).
+    private bool Unless(ReactionDefinition definition, int source) =>
+        definition.Unless.Length > 0 && source >= 0 && source < Creatures.Count && Creatures[source].Sheet.HasFlag(Rules, definition.Unless);
 
     /// <summary>A flag a reaction can give a caster (through a condition) so the spell it is casting is lost: a counterspell.</summary>
     public const string SpellLostFlag = "spellLost";
@@ -271,7 +275,7 @@ public sealed partial class World
             }
             foreach (ReactionDefinition definition in Chapter.Rules.Reactions.Where(r => r.Trigger == ReactionTrigger.SpellCast))
             {
-                if (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id))
+                if (Unless(definition, caster) || !definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id))
                 {
                     continue;
                 }
@@ -302,7 +306,7 @@ public sealed partial class World
         }
         foreach (ReactionDefinition definition in Chapter.Rules.Reactions.Where(r => r.Trigger == ReactionTrigger.BeforeHit))
         {
-            if (!definition.General && !Creatures[target].Sheet.Granted.Contains(definition.Id))
+            if (Unless(definition, attacker) || !definition.General && !Creatures[target].Sheet.Granted.Contains(definition.Id))
             {
                 continue;
             }

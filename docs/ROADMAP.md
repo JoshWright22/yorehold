@@ -434,11 +434,14 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Engine pieces it needed, now general: formulas in dice (`2d8+{mod.caster}`), spell attacks,
     attacks against a creature with advantage from its conditions, role-named built-in actions,
     bonus-action spells.
-  - Doesn't fit yet (back to the steps): Sneak Attack and other once-a-turn riders (triggered
-    effects, R5); Disengage (a flag reactions respect); prone and paralysed caring about
-    distance; disadvantage on ability checks from conditions; reactions to being hit (Shield);
-    monster Multiattack; versatile and two-weapon fighting. Then the rest of the SRD: all classes
-    and levels, the spell list, the bestiary.
+  - Done 10/8: Sneak Attack as a trigger; Disengage and the rogue's bonus-action Disengage (a
+    reaction's `unless` flag); unseen attackers and targets in the dark; origin, general,
+    fighting-style and epic-boon feat kinds; supplies for the long rest.
+  - Doesn't fit yet (back to the steps): prone and paralysed caring about distance;
+    disadvantage on ability checks from conditions; Shield and Counterspell as spells cast as
+    reactions (the `beforeHit` and `spellCast` moments are there, a reaction spending a slot is
+    not); monster Multiattack; versatile and two-weapon fighting. Then the rest of the SRD: all
+    classes and levels, the spell list, the bestiary.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
     move, Strike/Stride/Raise a Shield/Demoralize/Hide/Stand, the multiple attack penalty with
@@ -469,9 +472,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Engine pieces it needed, now general: `margin` in dice formulas (how far a roll beat its
     DC), attacks that name the ability they use, scores of 0.
   - Done 10/8: active defence (`"opposed": true` on its attacks and checks).
-  - Doesn't fit yet: stress boxes and
-    consequences are one HP pool; aspects as things on the scene; compels; zones instead of
-    squares; ties' boosts; concessions.
+  - Done 10/8 (R2c): stress and mild, moderate and severe consequences as tracks, stress
+    clearing when the fight ends; Defend as its own defence, no AC; order by Quick with no
+    roll; high concept, trouble and aspects as fields; no class asked for, no levels.
+  - Doesn't fit yet: aspects as things on the scene and invoking a character's own aspects
+    by name; compels; zones instead of squares; ties' boosts; concessions; choosing which
+    consequence takes a hit (the game fills them mildest first).
 - [ ] **R11. Packages by kind, no add-ons.** Josh, 10/8: all content is in the format the game
   sets and lives on the site; no add-ons, just skins, systems, monsters and so on. A package
   has one `kind`: `system` (a ruleset folder, R1-R8), `adventure`, `skin` (R16), `art`, or a

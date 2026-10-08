@@ -1,0 +1,11 @@
+{
+  "id": "disengaged",
+  "name": "Disengaged",
+  "description": "Its movement provokes no opportunity attacks until its turn ends.",
+  "flags": [
+    "disengaged"
+  ],
+  "ends": [
+    "turnEnd"
+  ]
+}

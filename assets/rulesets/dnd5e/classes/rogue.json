@@ -39,10 +39,11 @@
         {
           "id": "cunning-action",
           "name": "Cunning Action",
-          "description": "Dash or Hide as a bonus action.",
+          "description": "Dash, Disengage or Hide as a bonus action.",
           "actions": [
             "cunning-dash",
-            "cunning-hide"
+            "cunning-hide",
+            "cunning-disengage"
           ]
         }
       ]

@@ -29,6 +29,8 @@ public class ReactionDefinition
     public bool General { get; init; } = true;
     public int Order { get; init; }
     public double PromptSeconds { get; init; } = 2;
+    /// <summary>A flag that keeps it from going off: the one who set it off has it (5e's Disengage).</summary>
+    public string Unless { get; init; } = "";
 
     /// <summary>A step from before to after squares away crosses the edge of reach the way the trigger needs.</summary>
     public bool Matches(float before, float after, int reach)
@@ -40,7 +42,7 @@ public class ReactionDefinition
     public static ReactionDefinition Read(ContentNode node)
     {
         node.RequireObject("a reaction is a JSON object");
-        node.Only("id", "name", "trigger", "action", "readied", "order", "promptSeconds", "general");
+        node.Only("id", "name", "trigger", "action", "readied", "order", "promptSeconds", "general", "unless");
         string id = node.At("id").AsName();
         ReactionTrigger trigger = node.Name("trigger", "") switch
         {
@@ -69,6 +71,7 @@ public class ReactionDefinition
             General = node.Bool("general", true),
             Order = node.Int("order", 0, -100000, 100000),
             PromptSeconds = node.Number("promptSeconds", 2, 0.1, 30),
+            Unless = node.Name("unless", ""),
         };
     }
 

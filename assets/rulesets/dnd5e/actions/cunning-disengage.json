@@ -1,0 +1,16 @@
+{
+  "id": "cunning-disengage",
+  "name": "Cunning Action: Disengage",
+  "description": "Disengage as a bonus action.",
+  "order": 23,
+  "cost": "bonus",
+  "general": false,
+  "log": "{name} slips away.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "disengaged",
+      "target": "self"
+    }
+  ]
+}
