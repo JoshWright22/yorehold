@@ -209,7 +209,9 @@ Josh, 10/8: "a player-facing Foundry VTT, free to download, for assets and makin
 the current structure is very close, it needs abstracting a bit." Yorehold stays a video game to
 play (the fight screen, hotbar, portraits, BG3 feel), but what a turn, a check, a save or dying
 means comes from the rules system the adventure names, and systems, adventures and art are
-packages players make and share, like Foundry's systems and modules.
+packages players make and share, like Foundry's systems and modules. There is no game master:
+the AI decides for enemies and NPCs, and the import turns a PDF (an adventure or a rulebook) into
+game content quickly.
 
 Where it stands (audit, 10/8): the numbers are data already (`rulesets/yorehold`: abilities,
 skills, ranks, conditions, actions, reactions, spells, rests). The procedures are C#: checks are
@@ -262,16 +264,25 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   packs over them, loaded in that order from what each manifest requires; `.yore` archives are
   ported. UI: a Library screen (systems, adventures, add-ons, art packs: installed, update,
   remove), and an adventure's page says what it needs and gets it.
-- [ ] **R12. The host runs the table.** The player who hosts can step in while playing: drop a
-  creature or object from the compendium, move or remove tokens, change HP and conditions, reveal
-  fog, start or end a fight, take over an NPC, and build a scene from the story graph mid-game.
-  It is Create's tools brought into play behind a key. Online, only the host has them.
-- [ ] **R13. Sharing.** Upload and download systems, adventures and art packs through the site
+- [ ] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
+  host tools; the AI makes the enemies' and NPCs' decisions. The fight AI reads the loaded
+  system's actions, costs and odds (R3, R4) instead of d20 maths and the `strike` action, so it
+  plays a PF2e turn (three actions, the attack penalty, Raise a Shield) as well as a 5e one, and
+  keeps its flee, surrender and stealth behaviour. What a GM would decide outside fights (an
+  NPC's answer, whether a guard believes a bluff) comes from the adventure's words and, where it
+  has a story model, the model, within what the system allows.
+- [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
+  it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
+  creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each
+  entry and listing what it couldn't place. The writer checks it in Create's compendium. Only
+  books the writer owns; a system made from someone else's book stays private unless its licence
+  allows sharing (SRD, ORC).
+- [ ] **R14. Sharing.** Upload and download systems, adventures and art packs through the site
   and in the game, with licence, author, links and the no-AI-uploads declaration; credits built
   from what an adventure uses. UI: the Library's Browse tab; the site's Submit form.
 
 Order: R1 and R2 first (small, and every later step needs them), then R3-R8 each tried on both
-systems, R9 and R10 alongside them as the checks, then R11-R13. The bestiary import (S12-S15)
+systems, R9 and R10 alongside them as the checks, then R11-R14. The bestiary import (S12-S15)
 waits until R6, so stat blocks land in a system's creature format.
 
 ## S. Story import
