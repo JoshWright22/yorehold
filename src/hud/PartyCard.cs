@@ -43,7 +43,7 @@ public partial class PartyCard : TipButton
         _hp.Value = Mathf.Max(0, sheet.Hp);
         // down, the card shows the system's own track (death saves, a dying value) in place of HP
         (string downed, string downedLine) = sheet.DownedText(world.Rules);
-        _hpText.Text = downed.Length > 0 ? downed : $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
+        _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
         _turn.Visible = marked;
         _ready.Visible = ready && !marked;
 

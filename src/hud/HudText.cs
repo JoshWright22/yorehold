@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Yorehold.Rules;
 
@@ -21,8 +23,19 @@ public static class HudText
         return found;
     }
 
+    /// <summary>A system's tracks as boxes, one group per track, filled for each point left: "■■□ ■ ■ □" (Fate's stress, then its consequences).</summary>
+    public static string TrackBoxes(CharacterSheet sheet) =>
+        string.Join(" ", sheet.Tracks.Where(t => t.Max > 0).Select(t => new string('■', Math.Max(0, t.Value)) + new string('□', Math.Max(0, t.Max - t.Value))));
+
     public static string Health(World world, CharacterSheet sheet)
     {
+        if (sheet.Tracks.Count > 0)
+        {
+            // a system with tracks says each by name: "Stress 2/3, Mild consequence 1/1"
+            string tracks = string.Join(", ", sheet.Tracks.Where(t => t.Max > 0).Select(t => $"{t.Name} {t.Value}/{t.Max}"));
+            string id = world.Rules.Checks.Kind(CheckRules.Attack).DefenceId;
+            return $"{tracks}    {world.Rules.DefenceName(id)} {sheet.Defence(world.Rules, id)}";
+        }
         Ruleset rules = world.Rules;
         string text = $"{rules.Sheet.NameOf("hp")} {System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}";
         if (sheet.TempHp > 0)
