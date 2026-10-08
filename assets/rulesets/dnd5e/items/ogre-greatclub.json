@@ -1,0 +1,11 @@
+{
+  "id": "ogre-greatclub",
+  "name": "Greatclub",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "2d8",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "bludgeoning",
+  "hands": 2
+}

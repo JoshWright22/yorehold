@@ -386,6 +386,21 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AWolfsBiteKnocksDown()
+    {
+        // the bestiary's on-hit riders: a failed Strength save leaves the bitten prone
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet, gik = w.Creatures[2].Sheet;
+        gik.Granted.Add("knock-down");
+        gik.Stats.SetBase("dex", 2000); // acts first, and hits
+        ana.Stats.SetBase("str", -2000); // the save fails
+        world.Fight();
+        Assert.True(world.TurnTo(2) && world.Use("attack", 0), w.Refusal);
+        Assert.True(ana.HasCondition("prone"), string.Join("\n", world.Log.TakeLast(6)));
+    }
+
+    [Fact]
     public void ACounterspellLosesTheSpell()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");

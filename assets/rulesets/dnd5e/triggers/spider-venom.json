@@ -1,0 +1,18 @@
+{
+  "id": "spider-venom",
+  "name": "Venom",
+  "description": "A bite carries venom: 2d6 poison, half on a Constitution save.",
+  "on": "hit",
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d6",
+      "type": "poison",
+      "onSave": "half"
+    }
+  ]
+}

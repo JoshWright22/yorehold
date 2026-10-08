@@ -1,0 +1,39 @@
+{
+  "id": "tough",
+  "name": "Tough",
+  "description": "Hits people for a living, twice each.",
+  "hp": 32,
+  "armorClass": 12,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 15,
+    "dex": 12,
+    "con": 14,
+    "int": 10,
+    "wis": 10,
+    "cha": 11
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "mace",
+    "leather"
+  ],
+  "actions": [
+    "multiattack"
+  ],
+  "loot": {
+    "coins": "2d10"
+  },
+  "token": {
+    "color": [
+      150,
+      110,
+      90
+    ],
+    "size": 0.42
+  },
+  "ai": "brute"
+}

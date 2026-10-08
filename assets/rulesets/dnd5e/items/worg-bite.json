@@ -1,0 +1,10 @@
+{
+  "id": "worg-bite",
+  "name": "Bite",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "2d6",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "piercing"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "ghoul-touch",
+  "name": "Paralyzing Claws",
+  "description": "A hit locks the target's limbs for a round on a failed Constitution save.",
+  "on": "hit",
+  "once": "turn",
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "paralyzed",
+      "duration": 1,
+      "onSave": "none"
+    }
+  ]
+}

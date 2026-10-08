@@ -1,0 +1,33 @@
+{
+  "id": "worg",
+  "name": "Worg",
+  "description": "Clever enough to hate, and to carry a goblin.",
+  "hp": 26,
+  "armorClass": 13,
+  "speed": 50,
+  "level": 1,
+  "abilities": {
+    "str": 16,
+    "dex": 13,
+    "con": 13,
+    "int": 7,
+    "wis": 11,
+    "cha": 8
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "worg-bite"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      80,
+      75,
+      80
+    ],
+    "size": 0.5
+  },
+  "ai": "cunning"
+}

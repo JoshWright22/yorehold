@@ -1,0 +1,36 @@
+{
+  "id": "cultist",
+  "name": "Cultist",
+  "description": "Took an oath to something that listens.",
+  "hp": 9,
+  "armorClass": 12,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 11,
+    "dex": 12,
+    "con": 10,
+    "int": 10,
+    "wis": 11,
+    "cha": 10
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "scimitar",
+    "leather"
+  ],
+  "loot": {
+    "coins": "1d10"
+  },
+  "token": {
+    "color": [
+      110,
+      60,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

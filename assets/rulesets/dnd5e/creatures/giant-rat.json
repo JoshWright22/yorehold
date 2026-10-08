@@ -1,0 +1,33 @@
+{
+  "id": "giant-rat",
+  "name": "Giant Rat",
+  "description": "The size of a dog and never alone.",
+  "hp": 7,
+  "armorClass": 13,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 7,
+    "dex": 16,
+    "con": 11,
+    "int": 2,
+    "wis": 10,
+    "cha": 4
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "rat-bite"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      120,
+      100,
+      90
+    ],
+    "size": 0.3
+  },
+  "ai": "animal"
+}

@@ -1,0 +1,37 @@
+{
+  "id": "giant-spider",
+  "name": "Giant Spider",
+  "description": "Waits above the path with venom to spare.",
+  "hp": 26,
+  "armorClass": 14,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 14,
+    "dex": 16,
+    "con": 12,
+    "int": 2,
+    "wis": 11,
+    "cha": 4
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "spider-bite"
+  ],
+  "darkvision": 60,
+  "dcAbility": "con",
+  "actions": [
+    "spider-venom"
+  ],
+  "token": {
+    "color": [
+      70,
+      60,
+      80
+    ],
+    "size": 0.5
+  },
+  "ai": "animal"
+}

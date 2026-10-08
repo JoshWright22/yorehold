@@ -28,5 +28,9 @@
     ],
     "size": 0.4
   },
-  "ai": "animal"
+  "ai": "animal",
+  "dcAbility": "str",
+  "actions": [
+    "knock-down"
+  ]
 }

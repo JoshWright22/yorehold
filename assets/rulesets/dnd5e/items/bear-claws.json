@@ -1,0 +1,10 @@
+{
+  "id": "bear-claws",
+  "name": "Claws",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "slashing"
+}

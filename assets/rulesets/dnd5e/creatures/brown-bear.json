@@ -1,0 +1,35 @@
+{
+  "id": "brown-bear",
+  "name": "Brown Bear",
+  "description": "Leaves you alone until it doesn't.",
+  "hp": 22,
+  "armorClass": 11,
+  "speed": 40,
+  "level": 1,
+  "abilities": {
+    "str": 17,
+    "dex": 12,
+    "con": 15,
+    "int": 2,
+    "wis": 13,
+    "cha": 7
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "bear-claws"
+  ],
+  "actions": [
+    "multiattack"
+  ],
+  "token": {
+    "color": [
+      120,
+      85,
+      60
+    ],
+    "size": 0.5
+  },
+  "ai": "animal"
+}

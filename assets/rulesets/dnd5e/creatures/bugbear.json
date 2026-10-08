@@ -1,0 +1,37 @@
+{
+  "id": "bugbear",
+  "name": "Bugbear",
+  "description": "Long arms, quiet feet and a liking for the first blow.",
+  "hp": 33,
+  "armorClass": 14,
+  "speed": 30,
+  "level": 2,
+  "abilities": {
+    "str": 15,
+    "dex": 14,
+    "con": 13,
+    "int": 8,
+    "wis": 11,
+    "cha": 9
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "morningstar",
+    "leather"
+  ],
+  "darkvision": 60,
+  "loot": {
+    "coins": "3d6"
+  },
+  "token": {
+    "color": [
+      140,
+      100,
+      70
+    ],
+    "size": 0.45
+  },
+  "ai": "cunning"
+}

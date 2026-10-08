@@ -1,0 +1,10 @@
+{
+  "id": "slam",
+  "name": "Slam",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "bludgeoning"
+}

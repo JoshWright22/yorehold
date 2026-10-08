@@ -1,0 +1,51 @@
+{
+  "id": "cult-fanatic",
+  "name": "Cult Fanatic",
+  "description": "Leads the rites and has been answered.",
+  "hp": 44,
+  "armorClass": 13,
+  "speed": 30,
+  "level": 2,
+  "abilities": {
+    "str": 11,
+    "dex": 14,
+    "con": 12,
+    "int": 10,
+    "wis": 13,
+    "cha": 14
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "dagger",
+    "leather"
+  ],
+  "dcAbility": "wis",
+  "spells": [
+    "sacred-flame",
+    "command",
+    "inflict-wounds",
+    "hold-person"
+  ],
+  "resources": {
+    "slots-1": {
+      "max": 4
+    },
+    "slots-2": {
+      "max": 3
+    }
+  },
+  "loot": {
+    "coins": "4d10"
+  },
+  "token": {
+    "color": [
+      140,
+      50,
+      130
+    ],
+    "size": 0.42
+  },
+  "ai": "tactical"
+}

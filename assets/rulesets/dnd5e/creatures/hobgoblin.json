@@ -1,0 +1,38 @@
+{
+  "id": "hobgoblin",
+  "name": "Hobgoblin",
+  "description": "A drilled soldier who holds the line.",
+  "hp": 11,
+  "armorClass": 18,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 13,
+    "dex": 12,
+    "con": 12,
+    "int": 10,
+    "wis": 10,
+    "cha": 9
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "longsword",
+    "chain-mail",
+    "shield"
+  ],
+  "darkvision": 60,
+  "loot": {
+    "coins": "2d6"
+  },
+  "token": {
+    "color": [
+      180,
+      100,
+      60
+    ],
+    "size": 0.4
+  },
+  "ai": "tactical"
+}

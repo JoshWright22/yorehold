@@ -475,6 +475,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: ten spells for the 2nd and 3rd level slots (Inflict Wounds, Command, Scorching
     Ray, Shatter, Hold Person, Lesser Restoration, Fireball, Lightning Bolt, Mass Healing Word,
     and Counterspell as a reaction to a casting), prepared counts by level, massive damage.
+  - Done 10/8: a first bestiary of 22: zombie, ghoul, ogre, hobgoblin, bugbear, giant spider,
+    giant rat, kobold, cultist, cult fanatic (a caster with slots), guard, tough, brown bear,
+    dire wolf, worg and owlbear beside the first six, with natural weapons and on-hit riders as
+    triggers with a save (a wolf's bite knocks down, a spider's venom, a ghoul's paralysis).
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
     move, Strike/Stride/Raise a Shield/Demoralize/Hide/Stand, the multiple attack penalty with

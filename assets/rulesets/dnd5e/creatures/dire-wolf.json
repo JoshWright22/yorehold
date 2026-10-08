@@ -1,0 +1,36 @@
+{
+  "id": "dire-wolf",
+  "name": "Dire Wolf",
+  "description": "A wolf the size of a pony that pulls riders from the saddle.",
+  "hp": 22,
+  "armorClass": 14,
+  "speed": 50,
+  "level": 1,
+  "abilities": {
+    "str": 17,
+    "dex": 15,
+    "con": 15,
+    "int": 3,
+    "wis": 12,
+    "cha": 7
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "great-bite"
+  ],
+  "dcAbility": "str",
+  "actions": [
+    "knock-down"
+  ],
+  "token": {
+    "color": [
+      100,
+      95,
+      95
+    ],
+    "size": 0.5
+  },
+  "ai": "animal"
+}

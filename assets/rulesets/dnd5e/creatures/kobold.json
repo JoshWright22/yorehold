@@ -1,0 +1,36 @@
+{
+  "id": "kobold",
+  "name": "Kobold Warrior",
+  "description": "Small, scaled and brave in numbers.",
+  "hp": 7,
+  "armorClass": 14,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 7,
+    "dex": 15,
+    "con": 9,
+    "int": 8,
+    "wis": 7,
+    "cha": 8
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "dagger"
+  ],
+  "darkvision": 60,
+  "loot": {
+    "coins": "1d6"
+  },
+  "token": {
+    "color": [
+      170,
+      90,
+      60
+    ],
+    "size": 0.32
+  },
+  "ai": "coward"
+}

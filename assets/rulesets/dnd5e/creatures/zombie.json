@@ -1,0 +1,36 @@
+{
+  "id": "zombie",
+  "name": "Zombie",
+  "description": "A corpse that walks until it is cut apart.",
+  "hp": 15,
+  "armorClass": 8,
+  "speed": 20,
+  "level": 1,
+  "abilities": {
+    "str": 13,
+    "dex": 6,
+    "con": 16,
+    "int": 3,
+    "wis": 6,
+    "cha": 5
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "slam"
+  ],
+  "darkvision": 60,
+  "stats": {
+    "immune.poison": 1
+  },
+  "token": {
+    "color": [
+      110,
+      130,
+      100
+    ],
+    "size": 0.4
+  },
+  "ai": "mindless"
+}

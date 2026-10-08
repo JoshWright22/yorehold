@@ -1,0 +1,36 @@
+{
+  "id": "owlbear",
+  "name": "Owlbear",
+  "description": "Beak, claws and no patience at all.",
+  "hp": 59,
+  "armorClass": 13,
+  "speed": 40,
+  "level": 3,
+  "abilities": {
+    "str": 20,
+    "dex": 12,
+    "con": 17,
+    "int": 3,
+    "wis": 12,
+    "cha": 7
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "rend"
+  ],
+  "darkvision": 60,
+  "actions": [
+    "multiattack"
+  ],
+  "token": {
+    "color": [
+      140,
+      110,
+      80
+    ],
+    "size": 0.6
+  },
+  "ai": "brute"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "knock-down",
+  "name": "Knock Down",
+  "description": "A hit drags the target down: prone on a failed Strength save.",
+  "on": "hit",
+  "save": {
+    "ability": "str",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "prone",
+      "onSave": "none"
+    }
+  ]
+}
