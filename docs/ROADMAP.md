@@ -724,6 +724,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     dice; rolls made on the sheet.
   - Josh, 10/9: the dice don't look like they roll across a table. See R19 for the plan.
 
+- [ ] **R21. What Foundry VTT's systems teach the rules language.** Josh, 10/9: Foundry's dnd5e
+  and pf2e systems are public; their JSON shapes are compared with ours in
+  `docs/FOUNDRY_NOTES.md`. In order: conditional modifiers (`on` which rolls, `if` a formula),
+  scale values on class rows, items with several actions, `max` and `min` modifier ops, roll
+  tags for `if` formulas.
+
 - [ ] **R20. The screens match the design.** Josh, 10/9: the game, editor and website look as the
   design of 10/9 shows, with the UI's own motion. The plan, the design's pictures and the state
   of each page are in `docs/design/PLAN.md`, kept up to date as each step lands. Tokens first,
