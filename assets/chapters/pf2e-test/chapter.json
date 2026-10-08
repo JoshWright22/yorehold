@@ -1,0 +1,26 @@
+{
+  "id": "pf2e-test",
+  "title": "Pathfinder Test",
+  "map": "map.json",
+  "ruleset": "rulesets/pf2e",
+  "intro": [
+    "A chapter for trying Pathfinder 2e: a fighter, a rogue and a wizard against goblins and a kobold."
+  ],
+  "victoryText": "Victory!",
+  "party": [
+    { "name": "Ana", "class": "fighter", "color": [220, 90, 80], "at": [3, 3] },
+    { "name": "Bo", "class": "rogue", "color": [150, 110, 220], "at": [3, 4] },
+    { "name": "Cy", "class": "wizard", "color": [90, 160, 230], "at": [2, 4] }
+  ],
+  "encounters": [
+    {
+      "id": "yard",
+      "text": "Goblins and a kobold come over the wall.",
+      "creatures": [
+        { "creature": "goblin", "name": "Gik", "at": [9, 3] },
+        { "creature": "goblin", "name": "Nok", "at": [9, 5] },
+        { "creature": "kobold", "name": "Ssk", "at": [10, 4] }
+      ]
+    }
+  ]
+}

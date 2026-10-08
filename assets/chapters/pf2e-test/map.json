@@ -1,0 +1,27 @@
+{
+  "name": "Pathfinder Test",
+  "lighting": {
+    "mode": "mood",
+    "ambient": "bright"
+  },
+  "tiles": {
+    "floor": { "art": "dirt" },
+    "wall": { "art": "wall", "walkable": false, "blocksSight": true }
+  },
+  "legend": { ".": "floor", "#": "wall" },
+  "layers": [
+    {
+      "name": "ground",
+      "rows": [
+        "############",
+        "#..........#",
+        "#..........#",
+        "#..........#",
+        "#..........#",
+        "#..........#",
+        "#..........#",
+        "############"
+      ]
+    }
+  ]
+}
