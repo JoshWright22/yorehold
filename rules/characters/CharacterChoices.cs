@@ -42,7 +42,7 @@ public sealed class CharacterChoices
     public const int HighestScore = 30;
     public const int MostLevels = 1000;
     /// <summary>How the scores were reached, so a creation screen can reopen the same method.</summary>
-    public static readonly string[] Methods = { "roll", "pointBuy", "array", "fixed" };
+    public static readonly string[] Methods = { "roll", "pointBuy", "array", "fixed", "boosts" };
 
     public string Name { get; set; } = "";
     /// <summary>A race id; empty where the ruleset has none.</summary>
@@ -142,6 +142,19 @@ public sealed class CharacterChoices
             if (cost > rules.ScoreMethods.PointBudget)
             {
                 return $"scores: cost {cost} points, the budget is {rules.ScoreMethods.PointBudget}";
+            }
+        }
+        if (ScoreMethod == "boosts")
+        {
+            // each score is the base or one boost above it, and no more boosts than there are
+            ScoreMethods m = rules.ScoreMethods;
+            if (Scores.Values.Any(v => v != m.BoostBase && v != m.BoostBase + m.BoostStep))
+            {
+                return $"scores: each starts at {m.BoostBase} and a boost raises it once by {m.BoostStep}";
+            }
+            if (Scores.Values.Count(v => v > m.BoostBase) > m.BoostCount)
+            {
+                return $"scores: {m.BoostCount} boosts at most";
             }
         }
         if (ScoreMethod == "array")
@@ -279,7 +292,7 @@ public sealed class CharacterChoices
         }
         if (!Methods.Contains(choices.ScoreMethod))
         {
-            throw node.Fail("scoreMethod", "is \"roll\", \"pointBuy\", \"array\" or \"fixed\"");
+            throw node.Fail("scoreMethod", "is \"roll\", \"pointBuy\", \"array\", \"boosts\" or \"fixed\"");
         }
         if (node.Get("scores") is not ContentNode scores || !scores.IsObject)
         {

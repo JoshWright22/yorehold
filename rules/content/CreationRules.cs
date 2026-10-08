@@ -12,7 +12,7 @@ public sealed record CreationStep(string Name, IReadOnlyList<string> Parts);
 public sealed class CreationRules
 {
     public static readonly string[] Parts = { "name", "fields", "race", "options", "background", "class", "scores", "skills", "feats" };
-    public static readonly string[] Methods = { "array", "pointBuy", "roll" };
+    public static readonly string[] Methods = { "array", "pointBuy", "roll", "boosts" };
 
     public List<CreationStep> Steps { get; init; } = new()
     {

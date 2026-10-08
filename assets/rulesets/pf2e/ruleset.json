@@ -346,7 +346,11 @@
     "names": {
       "race": "Ancestry",
       "scores": "Attributes"
-    }
+    },
+    "scoreMethods": [
+      "boosts",
+      "array"
+    ]
   },
   "passiveBase": 10,
   "baseDc": 10,

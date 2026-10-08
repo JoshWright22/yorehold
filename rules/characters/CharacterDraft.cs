@@ -212,10 +212,15 @@ public sealed class CharacterDraft
         int cheapest = costs.Count == 0 ? _rules.ScoreMin : costs.Keys.First();
         for (int i = 0; i < _rules.Abilities.Count; i++)
         {
-            _choices.Scores[_rules.Abilities[i].Id] = method == "pointBuy" ? cheapest : values[i];
+            _choices.Scores[_rules.Abilities[i].Id] = method == "pointBuy" ? cheapest
+                : method == "boosts" ? _rules.ScoreMethods.BoostBase
+                : values[i];
         }
         Rebuild();
     }
+
+    /// <summary>Boosts still to give, under the boosts method.</summary>
+    public int BoostsLeft() => _rules.ScoreMethods.BoostCount - _choices.Scores.Values.Count(v => v > _rules.ScoreMethods.BoostBase);
 
     public void Reroll(Rng random)
     {
@@ -242,6 +247,10 @@ public sealed class CharacterDraft
             int? next = costs.Keys.Where(k => k > score).Cast<int?>().FirstOrDefault();
             return costs.ContainsKey(score) && next != null && costs[next.Value] - costs[score] <= PointsLeft();
         }
+        if (_choices.ScoreMethod == "boosts")
+        {
+            return score == _rules.ScoreMethods.BoostBase && BoostsLeft() > 0;
+        }
         return _choices.ScoreMethod == "array" && _choices.Scores.Values.Any(v => v > score);
     }
 
@@ -256,6 +265,10 @@ public sealed class CharacterDraft
             SortedDictionary<int, int> costs = _rules.ScoreMethods.PointCosts;
             return costs.ContainsKey(score) && costs.Keys.First() < score;
         }
+        if (_choices.ScoreMethod == "boosts")
+        {
+            return score > _rules.ScoreMethods.BoostBase;
+        }
         return _choices.ScoreMethod == "array" && _choices.Scores.Values.Any(v => v < score);
     }
 
@@ -269,6 +282,10 @@ public sealed class CharacterDraft
         if (_choices.ScoreMethod == "pointBuy")
         {
             _choices.Scores[ability] = _rules.ScoreMethods.PointCosts.Keys.First(k => k > score);
+        }
+        else if (_choices.ScoreMethod == "boosts")
+        {
+            _choices.Scores[ability] = score + _rules.ScoreMethods.BoostStep;
         }
         else
         {
@@ -288,6 +305,10 @@ public sealed class CharacterDraft
         if (_choices.ScoreMethod == "pointBuy")
         {
             _choices.Scores[ability] = _rules.ScoreMethods.PointCosts.Keys.Last(k => k < score);
+        }
+        else if (_choices.ScoreMethod == "boosts")
+        {
+            _choices.Scores[ability] = _rules.ScoreMethods.BoostBase;
         }
         else
         {

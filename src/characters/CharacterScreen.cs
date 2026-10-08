@@ -667,13 +667,14 @@ public partial class CharacterScreen : CanvasLayer
         {
             "pointBuy" => $"{scores}: {d.PointsLeft()} of {_rules.ScoreMethods.PointBudget} points left",
             "roll" => $"{scores}: press Roll again to reroll",
+            "boosts" => $"{scores}: {d.BoostsLeft()} of {_rules.ScoreMethods.BoostCount} boosts left, + gives one",
             _ => $"{scores}: + and - swap two",
         });
         var methods = new HBoxContainer();
         methods.AddThemeConstantOverride("separation", 6);
         _body.AddChild(methods);
         // only the ways the rules system offers
-        foreach ((string id, string label) in new[] { ("array", "Standard array"), ("pointBuy", "Point buy"), ("roll", "Roll") }
+        foreach ((string id, string label) in new[] { ("boosts", "Boosts"), ("array", "Standard array"), ("pointBuy", "Point buy"), ("roll", "Roll") }
             .Where(m => _rules.Creation.ScoreMethods.Contains(m.Item1)))
         {
             Toggle(methods, label, method == id, () =>

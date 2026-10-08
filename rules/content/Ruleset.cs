@@ -82,6 +82,10 @@ public class ScoreMethods
     {
         [8] = 0, [9] = 1, [10] = 2, [11] = 3, [12] = 4, [13] = 5, [14] = 7, [15] = 9,
     };
+    /// <summary>Boosts (PF2e): every score starts at BoostBase, and BoostCount boosts each raise a different one by BoostStep.</summary>
+    public int BoostBase { get; init; } = 10;
+    public int BoostCount { get; init; } = 4;
+    public int BoostStep { get; init; } = 2;
 }
 
 /// <summary>
@@ -886,6 +890,9 @@ public class Ruleset
             StandardArray = array,
             PointBudget = node.Int("pointBudget", defaults.PointBudget, 0, 1000),
             PointCosts = costs,
+            BoostBase = node.Int("boostBase", defaults.BoostBase, 0, 30),
+            BoostCount = node.Int("boostCount", defaults.BoostCount, 0, 30),
+            BoostStep = node.Int("boostStep", defaults.BoostStep, 1, 30),
         };
     }
 }

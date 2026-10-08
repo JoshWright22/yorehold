@@ -86,6 +86,17 @@ public class SystemPackageTests
         hero.SetName("Ana");
         Assert.Equal("Pick an ancestry.", hero.StepProblem(0));
 
+        // PF2e's attributes start at 10 and four boosts raise four of them by 2
+        Assert.Equal("boosts", hero.Choices.ScoreMethod);
+        Assert.True(hero.Choices.Scores.Values.All(v => v == 10) && hero.BoostsLeft() == 4);
+        foreach (string ability in new[] { "str", "dex", "con", "wis" })
+        {
+            hero.Raise(ability);
+        }
+        Assert.True(hero.BoostsLeft() == 0 && !hero.CanRaise("int") && hero.Choices.Scores["str"] == 12 && hero.Choices.Check(pf2e) == "");
+        hero.Lower("str");
+        Assert.True(hero.BoostsLeft() == 1 && hero.Choices.Scores["str"] == 10);
+
         // a heritage: the system's own kind of pick, open by ancestry, granting what it says
         hero.SetRace("dwarf");
         Assert.Equal(new[] { "forge-dwarf", "strong-blooded-dwarf" }, hero.OptionIds("heritage"));

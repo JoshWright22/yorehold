@@ -902,7 +902,7 @@ The steps of making a character are `creation` in `ruleset.json`; every key is o
 
 - `steps`: 1 to 8, each a tab on the creation screen. Parts are `name`, `fields` (the ruleset's fields), `race`, `background`, `class`, `scores`, `skills` and `feats`; each is in at most one step, a part left out is not asked (Fate has no race, background or class), and `name` must be in one. A system that never asks for a class builds every character on its first class and the sheet doesn't name it; with `advancement` `none` it doesn't name a level either.
 - `names`: what the screen and its messages call a part ("Pick an ancestry.").
-- `scoreMethods`: the ways offered to set scores, the first picked to start with.
+- `scoreMethods`: the ways offered to set scores, the first picked to start with. Methods are `array`, `pointBuy`, `roll` and `boosts`: every score starts at the ruleset's `scoreMethods.boostBase` (10) and `boostCount` boosts (4) each raise a different one by `boostStep` (2), as PF2e sets attributes.
 - A level-up makes its picks in the step that has `skills` or `feats`.
 
 ## Proficiency ranks
