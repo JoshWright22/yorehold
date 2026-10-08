@@ -58,9 +58,17 @@ public static class SheetPage
                     break;
                 case "scores":
                     page.Rule();
-                    page.Table(rules.Abilities.Select(a => a.Id.ToUpperInvariant()).ToList(),
-                        rules.Abilities.Select(a => sheet.AbilityScore(a.Id).ToString())
-                            .Concat(rules.Abilities.Select(a => $"({SheetView.Signed(sheet.AbilityModifier(rules, a.Id))})")).ToList());
+                    if (rules.Abilities.Any(a => a.Id.Length > 4))
+                    {
+                        // long names (Fate's approaches) don't fit a table's columns: one line, by name
+                        page.Text(string.Join(", ", rules.Abilities.Select(a => $"{a.Name} {SheetView.Signed(sheet.AbilityModifier(rules, a.Id))}")));
+                    }
+                    else
+                    {
+                        page.Table(rules.Abilities.Select(a => a.Id.ToUpperInvariant()).ToList(),
+                            rules.Abilities.Select(a => sheet.AbilityScore(a.Id).ToString())
+                                .Concat(rules.Abilities.Select(a => $"({SheetView.Signed(sheet.AbilityModifier(rules, a.Id))})")).ToList());
+                    }
                     page.Rule();
                     ruled = true;
                     break;

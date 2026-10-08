@@ -276,7 +276,10 @@ public partial class CharacterScreen : CanvasLayer
         _face.Show(name, Palette.Leather, false, picture);
         _faceName.Text = name;
         string raceName = race.Length > 0 ? char.ToUpperInvariant(race[0]) + race[1..] + " " : "";
-        _faceLine.Text = classId.Length > 0 ? $"Level {level} {raceName}{ClassName(classId)}" : "picks once the adventure starts";
+        // a system without levels or a class to ask for (Fate) names neither
+        string levelWord = _rules.Advancement == "none" ? "" : $"Level {level} ";
+        string classWord = _rules.Creation.AsksClass ? ClassName(classId) : "";
+        _faceLine.Text = classId.Length > 0 ? $"{levelWord}{raceName}{classWord}".Trim() : "picks once the adventure starts";
     }
 
     private void ViewTabs()
@@ -758,6 +761,8 @@ public partial class CharacterScreen : CanvasLayer
     private void ShowDraftSide(CharacterDraft d)
     {
         _sheet.ShowSheet(_rules, _compendium, d.Sheet, d.Choices, d.Problem);
+        // the face card follows the name as it is typed
+        ShowFace();
         _problem.Text = d.StepProblem(d.Step);
         _problem.Visible = _problem.Text.Length > 0;
         foreach (Node child in _buttons.GetChildren())
