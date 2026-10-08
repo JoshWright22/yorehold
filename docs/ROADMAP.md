@@ -313,8 +313,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     Done 10/8: `tracks` (max formula, damage per point, heals, cleared by the fight's end or a
     rest), damage running through them in order and down when none takes the rest; HP is their
     total. Fate plays stress and consequences. Done 10/8: damage aimed at one track and the `shared`
-    ones (Fate Core's physical and mental stress). Left: "dead" as a formula; aimed at
-    one track. Done 10/8: party cards and the hotbar card draw tracks as marks ("●●○  ●  ●  ○"),
+    ones (Fate Core's physical and mental stress). Left: "dead" as a formula.
+    Done 10/8: party cards and the hotbar card draw tracks as marks ("●●○  ●  ●  ○"),
     the tip names each; logs name the defence ("Defend 1"); `chapters/fate-test` plays Fate.
   - Defences: named defences, each a formula (AC, a Fortitude DC) or a roll (Fate's Defend);
     each roll kind and action says which it is rolled against. AC stops being special.
