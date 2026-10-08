@@ -1,0 +1,54 @@
+{
+  "id": "fighter",
+  "name": "Fighter",
+  "description": "A master of weapons and armor.",
+  "hitDie": 10,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "str",
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "str",
+    "con",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "longsword",
+    "chain-mail",
+    "shield"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "second-wind",
+          "name": "Second Wind",
+          "description": "A bonus action that heals 1d10 + level, once a short rest.",
+          "resources": {
+            "second-wind": 1
+          },
+          "actions": [
+            "second-wind"
+          ]
+        },
+        {
+          "id": "fighting-style",
+          "name": "Fighting Style: Defense",
+          "description": "+1 AC while wearing armor.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {},
+    {},
+    {},
+    {}
+  ]
+}

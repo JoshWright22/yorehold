@@ -1,0 +1,16 @@
+{
+  "id": "stable",
+  "name": "Stable",
+  "description": "At 0 HP but no longer making death saves until hurt again.",
+  "flags": [
+    "stable",
+    "cantAct",
+    "cantMove"
+  ],
+  "ends": [
+    "healed"
+  ],
+  "removes": [
+    "dying"
+  ]
+}

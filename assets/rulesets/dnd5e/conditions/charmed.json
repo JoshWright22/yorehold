@@ -1,0 +1,8 @@
+{
+  "id": "charmed",
+  "name": "Charmed",
+  "description": "Won't attack whoever charmed it.",
+  "flags": [
+    "charmed"
+  ]
+}

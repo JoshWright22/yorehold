@@ -1,0 +1,16 @@
+{
+  "id": "hidden",
+  "name": "Hidden",
+  "description": "Unseen: advantage on its next attack; attacking, being hurt or moving in a fight gives it away.",
+  "flags": [
+    "hidden"
+  ],
+  "advantageOnAttacks": true,
+  "ends": [
+    "attack",
+    "damage",
+    "move",
+    "fightStart",
+    "fightEnd"
+  ]
+}

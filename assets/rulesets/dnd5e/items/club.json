@@ -1,0 +1,12 @@
+{
+  "id": "club",
+  "name": "Club",
+  "value": 10,
+  "slot": "mainHand",
+  "damage": "1d4",
+  "attackAbility": "str",
+  "weight": 2,
+  "traits": [
+    "light"
+  ]
+}

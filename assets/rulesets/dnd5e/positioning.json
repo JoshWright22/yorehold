@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "flankingCondition": "",
+  "flankingReach": 1,
+  "halfCoverArmorClass": 2,
+  "threeQuartersCoverArmorClass": 5,
+  "creaturesProvideCover": true,
+  "coverAgainstMelee": false
+}

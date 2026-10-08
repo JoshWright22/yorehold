@@ -1,0 +1,8 @@
+{
+  "id": "deafened",
+  "name": "Deafened",
+  "description": "Can't hear.",
+  "flags": [
+    "deafened"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "sacred-flame",
+  "name": "Sacred Flame",
+  "description": "Radiance falls on a creature you can see; a Dexterity save avoids it.",
+  "level": 0,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d8",
+      "type": "radiant",
+      "onSave": "none"
+    }
+  ]
+}

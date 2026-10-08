@@ -303,7 +303,7 @@ public sealed class Encounter
         _order[_current].Budget.Actions -= StrikeCost;
 
         CheckKind attack = _rules.Checks.Kind(CheckRules.Attack);
-        result.AttackRoll = attack.Roll(self.AttackModifier(_rules), self.AttackAdvantage(_rules), Random);
+        result.AttackRoll = attack.Roll(self.AttackModifier(_rules), self.AttackAdvantage(_rules, target), Random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still count for this roll
         int ac = target.ArmorClass(_rules);
         CheckOutcome outcome = attack.Resolve(result.AttackRoll, ac);

@@ -62,9 +62,9 @@ public class SpellDefinition
                 throw node.Fail(refused, "is not for a spell");
             }
         }
-        if (node.Get("cost") is ContentNode cost && !cost.IsWhole)
+        if (node.Get("cost") is ContentNode cost && !cost.IsWhole && !(cost.IsString && cost.AsText() == "bonus"))
         {
-            throw cost.Fail("is a number of actions; left out, a spell costs its hands");
+            throw cost.Fail("is a number of actions or \"bonus\"; left out, a spell costs its hands");
         }
 
         // The rest is an action: one action per hand unless it says otherwise, listed after the

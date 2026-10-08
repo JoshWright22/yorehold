@@ -1,0 +1,12 @@
+{
+  "id": "scimitar",
+  "name": "Scimitar",
+  "value": 2500,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "weight": 3,
+  "traits": [
+    "finesse",
+    "light"
+  ]
+}

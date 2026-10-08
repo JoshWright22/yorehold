@@ -1,0 +1,11 @@
+{
+  "id": "restrained",
+  "name": "Restrained",
+  "description": "Can't move; disadvantage on its attacks, advantage on attacks against it.",
+  "flags": [
+    "restrained",
+    "cantMove"
+  ],
+  "disadvantageOnAttacks": true,
+  "attackersAdvantage": true
+}

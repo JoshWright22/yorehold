@@ -1,0 +1,25 @@
+{
+  "id": "healing-word",
+  "name": "Healing Word",
+  "description": "A word from afar, as a bonus action: 2d4 + your spellcasting modifier.",
+  "level": 1,
+  "hands": 0,
+  "cost": "bonus",
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 12,
+    "downed": true
+  },
+  "effects": [
+    {
+      "do": "heal",
+      "dice": "2d4+{mod.caster}",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "2d4"
+      }
+    }
+  ]
+}

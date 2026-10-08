@@ -30,6 +30,19 @@ public class ContentTests
             string chapter = "chapters/" + Path.GetFileName(folder);
             Try(chapter, () => Chapter.Load(files, chapter));
         }
+        // Every rules system, with its own classes, items, creatures and options, whether a chapter plays it or not.
+        foreach (string folder in Directory.GetDirectories(Path.Combine(assets, "rulesets")))
+        {
+            string ruleset = "rulesets/" + Path.GetFileName(folder);
+            Try(ruleset, () =>
+            {
+                RulesFolder rules = RulesFolder.Load(files, ruleset);
+                var compendium = new Compendium();
+                compendium.Load(files, ruleset, "");
+                compendium.LoadOptions(files, ruleset);
+                rules.Check(compendium, "", files);
+            });
+        }
         // Conversations at the root that no chapter has to name.
         foreach (string folder in new[] { "dialogue", "dialogues" })
         {

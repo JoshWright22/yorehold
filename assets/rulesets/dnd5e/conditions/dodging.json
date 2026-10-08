@@ -1,0 +1,12 @@
+{
+  "id": "dodging",
+  "name": "Dodging",
+  "description": "Attacks against it have disadvantage until its next turn.",
+  "flags": [
+    "dodging"
+  ],
+  "attackersDisadvantage": true,
+  "ends": [
+    "turnStart"
+  ]
+}

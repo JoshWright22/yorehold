@@ -1,0 +1,19 @@
+{
+  "id": "chain-mail",
+  "name": "Chain mail",
+  "value": 7500,
+  "slot": "armor",
+  "weight": 55,
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "override",
+      "value": 16
+    },
+    {
+      "stat": "armorDexCap",
+      "op": "override",
+      "value": 1
+    }
+  ]
+}

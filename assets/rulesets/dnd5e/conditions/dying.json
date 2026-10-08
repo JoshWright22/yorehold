@@ -1,0 +1,13 @@
+{
+  "id": "dying",
+  "name": "Dying",
+  "description": "At 0 HP and making death saves.",
+  "flags": [
+    "dying",
+    "cantAct",
+    "cantMove"
+  ],
+  "ends": [
+    "healed"
+  ]
+}

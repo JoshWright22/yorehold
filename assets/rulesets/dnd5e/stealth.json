@@ -1,0 +1,8 @@
+{
+  "checkEvery": 5,
+  "sneakSpeed": 0.5,
+  "darkBonus": 5,
+  "dimBonus": 2,
+  "brightBonus": 0,
+  "critical": true
+}

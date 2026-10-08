@@ -159,7 +159,7 @@ public sealed partial class World
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
         // counted from the system's own dice and outcomes, so it is right for any of them
-        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules));
+        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
     }
 
     /// <summary>The same attack as HitChance, as the chance of each of the system's outcomes by id.</summary>
@@ -168,7 +168,7 @@ public sealed partial class World
         ActionDefinition? action = FindAction(actionId ?? StrikeAction);
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
-        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules));
+        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
     }
 
     // What the ruleset's attack penalty takes off the attacker's next attack this turn.

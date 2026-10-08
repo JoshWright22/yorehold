@@ -1,0 +1,12 @@
+{
+  "id": "battleaxe",
+  "name": "Battleaxe",
+  "value": 1000,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "attackAbility": "str",
+  "weight": 4,
+  "traits": [
+    "versatile"
+  ]
+}

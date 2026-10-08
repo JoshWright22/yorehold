@@ -1,0 +1,9 @@
+{
+  "id": "bite",
+  "name": "Bite",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "2d4",
+  "attackAbility": "dex",
+  "weight": 0
+}

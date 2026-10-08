@@ -1,0 +1,15 @@
+{
+  "id": "dodge",
+  "name": "Dodge",
+  "description": "Attacks against you have disadvantage until your next turn.",
+  "order": 30,
+  "cost": 1,
+  "log": "{name} dodges.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "dodging",
+      "target": "self"
+    }
+  ]
+}

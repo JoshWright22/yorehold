@@ -1,0 +1,24 @@
+{
+  "id": "cure-wounds",
+  "name": "Cure Wounds",
+  "description": "A touch that heals 2d8 + your spellcasting modifier.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1,
+    "downed": true
+  },
+  "effects": [
+    {
+      "do": "heal",
+      "dice": "2d8+{mod.caster}",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "2d8"
+      }
+    }
+  ]
+}

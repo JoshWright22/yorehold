@@ -1,0 +1,63 @@
+{
+  "id": "wizard",
+  "name": "Wizard",
+  "description": "A scholar of arcane formulas.",
+  "hitDie": 6,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "int",
+  "proficiencies": [
+    "weapons",
+    "int",
+    "wis",
+    "arcana",
+    "investigation"
+  ],
+  "items": [
+    "quarterstaff",
+    "dagger"
+  ],
+  "levels": [
+    {
+      "slots": {
+        "1": 2
+      },
+      "spells": 3
+    },
+    {
+      "slots": {
+        "1": 3
+      }
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 2
+      }
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 3
+      }
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 3,
+        "3": 2
+      }
+    }
+  ],
+  "casting": "prepared",
+  "spells": {
+    "0": [
+      "fire-bolt"
+    ],
+    "1": [
+      "magic-missile",
+      "burning-hands",
+      "thunderwave"
+    ]
+  }
+}

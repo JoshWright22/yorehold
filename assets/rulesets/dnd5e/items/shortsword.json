@@ -1,0 +1,12 @@
+{
+  "id": "shortsword",
+  "name": "Shortsword",
+  "value": 1000,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "weight": 2,
+  "traits": [
+    "finesse",
+    "light"
+  ]
+}

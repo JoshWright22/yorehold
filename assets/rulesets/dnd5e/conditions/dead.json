@@ -1,0 +1,16 @@
+{
+  "id": "dead",
+  "name": "Dead",
+  "description": "Gone, short of being raised.",
+  "flags": [
+    "dead",
+    "cantAct",
+    "cantMove"
+  ],
+  "removes": [
+    "dying",
+    "unconscious",
+    "stable",
+    "hidden"
+  ]
+}

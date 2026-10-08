@@ -217,6 +217,38 @@ public sealed partial class CharacterSheet
             ("armor", Stats.Integer("ac")), ("ability", ability), ("proficiency", proficiency));
     }
 
+    /// <summary>
+    /// A number on the sheet by the names formulas use: level, mod.&lt;ability&gt;,
+    /// score.&lt;ability&gt;, stat.&lt;name&gt;, prof.&lt;target&gt;, trait.&lt;weapon trait&gt;. Null for any other name.
+    /// </summary>
+    public double? Named(Ruleset rules, string name)
+    {
+        if (name == "level")
+        {
+            return Level;
+        }
+        int dot = name.IndexOf('.');
+        if (dot < 0)
+        {
+            return null;
+        }
+        string of = name[(dot + 1)..];
+        if (of == "caster")
+        {
+            // the ability its spells and DC use
+            of = DcAbility;
+        }
+        return name[..dot] switch
+        {
+            "mod" => AbilityModifier(rules, of),
+            "score" => AbilityScore(of),
+            "stat" => Stats.Integer(of),
+            "prof" => ProficiencyModifier(rules, of),
+            "trait" => Weapon?.Has(of) == true ? 1 : 0,
+            _ => null,
+        };
+    }
+
     // A number the system has its own formula for, or the game's own count of it. The formula is
     // handed the names it is documented with and can read the rest of the sheet (SheetFormulas).
     private int Counted(Ruleset rules, string formula, int own, params (string Name, int Value)[] given)
@@ -336,6 +368,12 @@ public sealed partial class CharacterSheet
         return Weapon is { AttackAbility.Length: > 0 } weapon ? weapon.AttackAbility : rules.Roles.AttackAbility;
     }
 
+    /// <summary>A spell attack: the DC's ability and proficiency, as the DC is counted less its base.</summary>
+    public int SpellAttackModifier(Ruleset rules)
+    {
+        return DifficultyClass(rules) - rules.BaseDc - Stats.Integer("dc") + Stats.Integer("attack");
+    }
+
     public int AttackModifier(Ruleset rules)
     {
         int ability = AbilityModifier(rules, AttackAbility(rules));
@@ -358,7 +396,7 @@ public sealed partial class CharacterSheet
     }
 
     /// <summary>Conditions can force advantage or disadvantage on attacks; both together cancel out.</summary>
-    public Advantage AttackAdvantage(Ruleset rules)
+    public Advantage AttackAdvantage(Ruleset rules, CharacterSheet? target = null)
     {
         bool advantage = false;
         bool disadvantage = false;
@@ -369,6 +407,16 @@ public sealed partial class CharacterSheet
             {
                 advantage |= definition.AdvantageOnAttacks;
                 disadvantage |= definition.DisadvantageOnAttacks;
+            }
+        }
+        // and what the target's own conditions do to attacks against it
+        foreach (ActiveCondition active in target?.Conditions ?? Enumerable.Empty<ActiveCondition>())
+        {
+            ConditionDefinition? definition = rules.Condition(active.Id);
+            if (definition != null)
+            {
+                advantage |= definition.AttackersAdvantage;
+                disadvantage |= definition.AttackersDisadvantage;
             }
         }
         if (advantage == disadvantage)

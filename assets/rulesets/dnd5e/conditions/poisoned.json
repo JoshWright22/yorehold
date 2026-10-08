@@ -1,0 +1,9 @@
+{
+  "id": "poisoned",
+  "name": "Poisoned",
+  "description": "Disadvantage on attacks.",
+  "flags": [
+    "poisoned"
+  ],
+  "disadvantageOnAttacks": true
+}

@@ -1,0 +1,39 @@
+{
+  "id": "thunderwave",
+  "name": "Thunderwave",
+  "description": "A burst of thunder beside you: 2d8 and a push of 10 feet, half and no push on a Constitution save.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 1
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d8",
+      "type": "thunder",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d8"
+      }
+    },
+    {
+      "do": "move",
+      "how": "push",
+      "distance": 2,
+      "when": "saveFailed"
+    }
+  ]
+}

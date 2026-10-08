@@ -1,0 +1,12 @@
+{
+  "id": "grappled",
+  "name": "Grappled",
+  "description": "Speed 0 and can't move until it escapes.",
+  "flags": [
+    "grappled",
+    "cantMove"
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "hide",
+  "name": "Hide",
+  "description": "Stealth against each enemy's passive Perception; hidden if every check passes.",
+  "order": 50,
+  "cost": 1,
+  "log": "{name} tries to hide.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "hidden",
+      "target": "self"
+    },
+    {
+      "do": "roll",
+      "kind": "check",
+      "ability": "stealth",
+      "against": "perception",
+      "target": "enemies",
+      "steps": [
+        {
+          "do": "condition",
+          "id": "hidden",
+          "target": "self",
+          "remove": true,
+          "when": "failure"
+        }
+      ]
+    }
+  ]
+}

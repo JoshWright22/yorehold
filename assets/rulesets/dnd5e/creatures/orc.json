@@ -1,0 +1,36 @@
+{
+  "id": "orc",
+  "name": "Orc",
+  "description": "A raider with a greataxe and a short temper.",
+  "hp": 15,
+  "armorClass": 13,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 16,
+    "dex": 12,
+    "con": 16,
+    "int": 7,
+    "wis": 11,
+    "cha": 10
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "greataxe"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      90,
+      120,
+      80
+    ],
+    "size": 0.42
+  },
+  "ai": "brute",
+  "loot": {
+    "coins": "3d6"
+  }
+}

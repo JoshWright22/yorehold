@@ -1,0 +1,349 @@
+{
+  "version": 1,
+  "id": "dnd5e",
+  "name": "D&D 5e (SRD 5.2)",
+  "abilities": [
+    {
+      "id": "str",
+      "name": "Strength"
+    },
+    {
+      "id": "dex",
+      "name": "Dexterity"
+    },
+    {
+      "id": "con",
+      "name": "Constitution"
+    },
+    {
+      "id": "int",
+      "name": "Intelligence"
+    },
+    {
+      "id": "wis",
+      "name": "Wisdom"
+    },
+    {
+      "id": "cha",
+      "name": "Charisma"
+    }
+  ],
+  "skills": [
+    {
+      "id": "acrobatics",
+      "name": "Acrobatics",
+      "ability": "dex"
+    },
+    {
+      "id": "animal-handling",
+      "name": "Animal Handling",
+      "ability": "wis"
+    },
+    {
+      "id": "arcana",
+      "name": "Arcana",
+      "ability": "int"
+    },
+    {
+      "id": "athletics",
+      "name": "Athletics",
+      "ability": "str"
+    },
+    {
+      "id": "deception",
+      "name": "Deception",
+      "ability": "cha"
+    },
+    {
+      "id": "history",
+      "name": "History",
+      "ability": "int"
+    },
+    {
+      "id": "insight",
+      "name": "Insight",
+      "ability": "wis"
+    },
+    {
+      "id": "intimidation",
+      "name": "Intimidation",
+      "ability": "cha"
+    },
+    {
+      "id": "investigation",
+      "name": "Investigation",
+      "ability": "int"
+    },
+    {
+      "id": "medicine",
+      "name": "Medicine",
+      "ability": "wis"
+    },
+    {
+      "id": "nature",
+      "name": "Nature",
+      "ability": "int"
+    },
+    {
+      "id": "perception",
+      "name": "Perception",
+      "ability": "wis"
+    },
+    {
+      "id": "performance",
+      "name": "Performance",
+      "ability": "cha"
+    },
+    {
+      "id": "persuasion",
+      "name": "Persuasion",
+      "ability": "cha"
+    },
+    {
+      "id": "religion",
+      "name": "Religion",
+      "ability": "int"
+    },
+    {
+      "id": "sleight-of-hand",
+      "name": "Sleight of Hand",
+      "ability": "dex"
+    },
+    {
+      "id": "stealth",
+      "name": "Stealth",
+      "ability": "dex"
+    },
+    {
+      "id": "survival",
+      "name": "Survival",
+      "ability": "wis"
+    }
+  ],
+  "modifierTable": "d20",
+  "scoreMin": 1,
+  "scoreMax": 30,
+  "scoreMethods": {
+    "roll": "4d6kh3",
+    "standardArray": [
+      15,
+      14,
+      13,
+      12,
+      10,
+      8
+    ],
+    "pointBudget": 27,
+    "pointCosts": {
+      "8": 0,
+      "9": 1,
+      "10": 2,
+      "11": 3,
+      "12": 4,
+      "13": 5,
+      "14": 7,
+      "15": 9
+    }
+  },
+  "baseArmorClass": 10,
+  "armorClassAbility": "dex",
+  "roles": {
+    "hpAbility": "con",
+    "attackAbility": "str",
+    "initiative": "dex",
+    "perception": "perception",
+    "stealth": "stealth",
+    "thievery": "sleight-of-hand",
+    "hidden": "hidden",
+    "downed": "unconscious",
+    "dead": "dead",
+    "strike": "attack",
+    "stride": "dash",
+    "endTurn": "end-turn",
+    "interact": "interact",
+    "slotPrefix": "slots-",
+    "focus": ""
+  },
+  "checks": {
+    "criticalDamage": "doubleDice",
+    "attack": {
+      "dice": "1d20",
+      "advantage": "2d20kh1",
+      "disadvantage": "2d20kl1",
+      "outcomes": [
+        {
+          "id": "miss",
+          "name": "Miss"
+        },
+        {
+          "id": "hit",
+          "name": "Hit",
+          "passes": true
+        },
+        {
+          "id": "crit",
+          "name": "Critical hit",
+          "passes": true,
+          "critical": true
+        }
+      ],
+      "degree": "die == 1 ? 0 : die == 20 ? 2 : total >= dc ? 1 : 0"
+    },
+    "check": {
+      "dice": "1d20",
+      "advantage": "2d20kh1",
+      "disadvantage": "2d20kl1",
+      "outcomes": [
+        {
+          "id": "failure",
+          "name": "Failure"
+        },
+        {
+          "id": "success",
+          "name": "Success",
+          "passes": true
+        }
+      ],
+      "degree": "total >= dc"
+    },
+    "save": {
+      "dice": "1d20",
+      "advantage": "2d20kh1",
+      "disadvantage": "2d20kl1",
+      "outcomes": [
+        {
+          "id": "saveFailed",
+          "name": "Failed"
+        },
+        {
+          "id": "saveSucceeded",
+          "name": "Saved",
+          "passes": true,
+          "damage": 0.5
+        }
+      ],
+      "degree": "total >= dc"
+    }
+  },
+  "formulas": {
+    "check": "ability + proficiency + stat.checks",
+    "save": "ability + proficiency + stat.saves",
+    "damageTaken": "immune ? 0 : floor(amount / (resist > 0 ? 2 : 1)) * (weak > 0 ? 2 : 1)",
+    "armorClass": "armor + (stat.armorDexCap > 0 ? min(ability, stat.armorDexCap - 1) : ability)"
+  },
+  "passiveBase": 10,
+  "proficiencyByLevel": [
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6
+  ],
+  "baseDc": 8,
+  "death": {
+    "enabled": true,
+    "saveDc": 10,
+    "successes": 3,
+    "failures": 3,
+    "naturalOneFailures": 2,
+    "naturalTwentyHp": 1,
+    "damageFailures": 1,
+    "criticalDamageFailures": 2,
+    "downedCondition": "unconscious",
+    "dyingCondition": "dying",
+    "stableCondition": "stable",
+    "deadCondition": "dead"
+  },
+  "xpForLevel": [
+    300,
+    900,
+    2700,
+    6500,
+    14000,
+    23000,
+    34000,
+    48000,
+    64000,
+    85000,
+    100000,
+    120000,
+    140000,
+    165000,
+    195000,
+    225000,
+    265000,
+    305000,
+    355000
+  ],
+  "actionsPerTurn": 1,
+  "bonusActions": true,
+  "freeMove": true,
+  "strikeCostsHands": false,
+  "sharedTurns": false,
+  "feetPerSquare": 5,
+  "carryPerStrength": 15,
+  "magicItemLimit": 3,
+  "rests": [
+    {
+      "id": "short",
+      "name": "Short rest",
+      "perAdventure": 0,
+      "recovery": {
+        "kind": "hitDice",
+        "amount": 1
+      },
+      "restores": [
+        "second-wind"
+      ]
+    },
+    {
+      "id": "long",
+      "name": "Long rest",
+      "perAdventure": 0,
+      "recovery": {
+        "kind": "full",
+        "reviveDowned": true
+      },
+      "restores": [
+        "slots-*",
+        "second-wind"
+      ],
+      "supplyCost": 40,
+      "campOnly": true
+    }
+  ],
+  "afterVictory": {
+    "kind": "none"
+  },
+  "reviveAfterVictory": 0,
+  "revivePrice": 30000,
+  "reviveHp": 1,
+  "companions": {
+    "limit": 2,
+    "partyLimit": 6,
+    "approvalMin": -100,
+    "approvalMax": 100
+  },
+  "defaultHitDie": 8,
+  "hitDieByClass": {
+    "Fighter": 10,
+    "Rogue": 8,
+    "Cleric": 8,
+    "Wizard": 6
+  }
+}

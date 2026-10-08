@@ -1,0 +1,36 @@
+{
+  "id": "bandit",
+  "name": "Bandit",
+  "description": "A highway robber with a blade and no scruples.",
+  "hp": 11,
+  "armorClass": 12,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 11,
+    "dex": 12,
+    "con": 12,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "scimitar",
+    "leather"
+  ],
+  "token": {
+    "color": [
+      150,
+      90,
+      70
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning",
+  "loot": {
+    "coins": "4d6"
+  }
+}

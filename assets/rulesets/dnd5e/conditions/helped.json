@@ -1,0 +1,13 @@
+{
+  "id": "helped",
+  "name": "Helped",
+  "description": "Advantage on its next attack.",
+  "flags": [
+    "helped"
+  ],
+  "advantageOnAttacks": true,
+  "ends": [
+    "attack",
+    "turnEnd"
+  ]
+}

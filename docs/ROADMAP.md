@@ -334,6 +334,21 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   choices. UI: the creation screen lists the system's steps.
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
+  - Done 10/8, first slice: `rulesets/dnd5e` (written by `.dev\make-dnd5e.py`): the six
+    abilities and 18 skills, d20 checks, proficiency by level, DC 8 + mod + proficiency, death
+    saves, the SRD conditions plus dodging/helped/hidden, Attack, Dash, Dodge, Help, Hide, Stand
+    up, Opportunity Attack, Second Wind and Cunning Action as granted bonus actions, armour with
+    a Dexterity cap by formula, resistance halving and vulnerability doubling, fighter, rogue,
+    cleric and wizard to level 5, eight spells, fifteen items, five creatures. A fight under it
+    plays to the end (SystemPackageTests). The SRD's CC BY credit is in the credits.
+  - Engine pieces it needed, now general: formulas in dice (`2d8+{mod.caster}`), spell attacks,
+    attacks against a creature with advantage from its conditions, role-named built-in actions,
+    bonus-action spells.
+  - Doesn't fit yet (back to the steps): Sneak Attack and other once-a-turn riders (triggered
+    effects, R5); Disengage (a flag reactions respect); prone and paralysed caring about
+    distance; disadvantage on ability checks from conditions; reactions to being hit (Shield);
+    monster Multiattack; versatile and two-weapon fighting. Then the rest of the SRD: all classes
+    and levels, the spell list, the bestiary.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more
   abstract free system. No classes, no HP, no d20: 4dF plus an approach (Careful, Clever,

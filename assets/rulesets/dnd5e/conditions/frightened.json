@@ -1,0 +1,9 @@
+{
+  "id": "frightened",
+  "name": "Frightened",
+  "description": "Disadvantage on attacks while the source of its fear is in sight.",
+  "flags": [
+    "frightened"
+  ],
+  "disadvantageOnAttacks": true
+}

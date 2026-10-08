@@ -1,0 +1,14 @@
+{
+  "id": "leather",
+  "name": "Leather armor",
+  "value": 1000,
+  "slot": "armor",
+  "weight": 10,
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "override",
+      "value": 11
+    }
+  ]
+}

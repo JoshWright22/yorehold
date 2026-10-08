@@ -1,0 +1,27 @@
+{
+  "id": "fire-bolt",
+  "name": "Fire Bolt",
+  "description": "A mote of fire at a creature in range; the damage grows at levels 5, 11 and 17.",
+  "level": 0,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d10",
+          "type": "fire",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

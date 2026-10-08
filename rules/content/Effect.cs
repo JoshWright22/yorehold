@@ -303,10 +303,12 @@ public class Effect
             how = OneOf(node, "kind", null, "attack", "check", "save");
             if (how == "attack")
             {
-                if (node.Has("ability") || node.Has("dc") || node.Has("against"))
+                // with the weapon, or with "ability": "caster" as a spell attack
+                if (node.Has("dc") || node.Has("against") || (node.Has("ability") && node.Text("ability", "", 64) != "caster"))
                 {
-                    throw node.Fail("an attack is rolled with the weapon against armour class and takes no ability, dc or against");
+                    throw node.Fail("an attack is rolled against armour class with the weapon, or with \"ability\": \"caster\" as a spell attack; it takes no dc or against");
                 }
+                ability = node.Text("ability", "", 64);
             }
             else
             {

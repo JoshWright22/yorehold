@@ -1,0 +1,55 @@
+namespace Yorehold.Rules.Tests;
+
+/// <summary>The rules systems that ship as packages load, build heroes and play a fight.</summary>
+public class SystemPackageTests
+{
+    // A fighter and a wizard against two goblins, under the named system.
+    private static WorldFixture Yard(string ruleset, string fighter, string caster) => WorldFixture.LoadJson("chapters/sys-yard", new Dictionary<string, string>
+    {
+        ["chapters/sys-yard/chapter.json"] = $$"""
+            {"id":"sys-yard","title":"Yard","map":"map.json","ruleset":"{{ruleset}}",
+             "party":[{"name":"Ana","class":"{{fighter}}","at":[2,3]},{"name":"Bo","class":"{{caster}}","at":[2,4]}],
+             "encounters":[{"id":"yard","creatures":[{"creature":"goblin","name":"Gik","at":[3,3]},{"creature":"goblin","name":"Rak","at":[5,5]}]}]}
+            """,
+        ["chapters/sys-yard/map.json"] = """
+            {"name":"Yard","tiles":{"floor":{"art":"grass"},"wall":{"art":"wall","walkable":false,"blocksSight":true}},
+             "legend":{".":"floor","#":"wall"},"layers":[{"name":"ground","rows":["########","#......#","#......#","#......#",
+             "#......#","#......#","#......#","########"]}]}
+            """,
+    }, 7);
+
+    [Fact]
+    public void Dnd5ePlaysAFight()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        Assert.Equal("dnd5e", w.Rules.Id);
+        Assert.Contains(w.ActionsOf(0), a => a.Id == "second-wind");
+        Assert.Contains(w.ActionsOf(1), a => a.Id == "fire-bolt");
+        Assert.DoesNotContain(w.ActionsOf(0), a => a.Id == "strike");
+        PlayOut(world);
+        Assert.True(world.Said("Fire Bolt") || world.Said("attacks"), "Heroes attack under the system's own actions");
+    }
+
+    // Heroes attack the nearest goblin in reach or fire at any, else end the turn; enemies play themselves.
+    private static void PlayOut(WorldFixture world)
+    {
+        World w = world.World;
+        world.Fight();
+        for (int turn = 0; turn < 200 && w.Fighting; turn++)
+        {
+            if (w.CurrentCreature is int me && me < w.HeroCount)
+            {
+                List<int> foes = Enumerable.Range(w.HeroCount, w.Creatures.Count - w.HeroCount).Where(f => !w.Creatures[f].Sheet.Down).ToList();
+                string? used = w.ActionsOf(me).Select(a => a.Id).FirstOrDefault(id => w.CanUse(me, id) && foes.Any(f => w.ValidTargets(id).Contains(f)));
+                if (used == null || !world.Use(used, foes.First(f => w.ValidTargets(used).Contains(f))))
+                {
+                    world.Use(w.EndTurnAction);
+                }
+                continue;
+            }
+            world.StepUntil(() => !w.Fighting || w.CurrentCreature is int c && c < w.HeroCount, 30);
+        }
+        Assert.False(w.Fighting, "The fight ends: " + string.Join(" | ", world.Log.TakeLast(8)));
+    }
+}

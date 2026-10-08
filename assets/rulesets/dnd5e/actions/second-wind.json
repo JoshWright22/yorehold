@@ -1,0 +1,28 @@
+{
+  "id": "second-wind",
+  "name": "Second Wind",
+  "description": "Once a short rest, as a bonus action: regain 1d10 + your fighter level HP.",
+  "order": 60,
+  "cost": "bonus",
+  "general": false,
+  "requires": {
+    "resources": {
+      "second-wind": 1
+    }
+  },
+  "log": "{name} catches a second wind.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "second-wind",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "heal",
+      "dice": "1d10+{level}",
+      "target": "self"
+    }
+  ]
+}

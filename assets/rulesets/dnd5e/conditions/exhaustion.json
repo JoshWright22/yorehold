@@ -1,0 +1,36 @@
+{
+  "id": "exhaustion",
+  "name": "Exhaustion",
+  "description": "Each level takes 2 off its d20 tests and 5 feet off its speed. Six levels kill.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": -2
+    },
+    {
+      "stat": "checks",
+      "op": "add",
+      "value": -2
+    },
+    {
+      "stat": "saves",
+      "op": "add",
+      "value": -2
+    },
+    {
+      "stat": "speed",
+      "op": "add",
+      "value": -5
+    }
+  ],
+  "flags": [
+    "exhaustion"
+  ],
+  "stacking": "value",
+  "maxValue": 6,
+  "perValue": true,
+  "ends": [
+    "rest"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "dagger",
+  "name": "Dagger",
+  "value": 200,
+  "slot": "mainHand",
+  "damage": "1d4",
+  "weight": 1,
+  "traits": [
+    "finesse",
+    "light",
+    "thrown"
+  ]
+}

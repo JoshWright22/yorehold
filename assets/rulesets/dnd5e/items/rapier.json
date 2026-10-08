@@ -1,0 +1,11 @@
+{
+  "id": "rapier",
+  "name": "Rapier",
+  "value": 2500,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "weight": 2,
+  "traits": [
+    "finesse"
+  ]
+}

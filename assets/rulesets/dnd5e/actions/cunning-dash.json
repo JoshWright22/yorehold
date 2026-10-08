@@ -1,0 +1,18 @@
+{
+  "id": "cunning-dash",
+  "name": "Cunning Action: Dash",
+  "description": "Dash as a bonus action.",
+  "order": 21,
+  "cost": "bonus",
+  "general": false,
+  "log": "{name} darts ahead.",
+  "effects": [
+    {
+      "do": "resource",
+      "target": "self",
+      "id": "movement",
+      "op": "restore",
+      "amount": "speed"
+    }
+  ]
+}

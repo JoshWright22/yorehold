@@ -1,0 +1,8 @@
+{
+  "id": "potion-of-healing",
+  "name": "Potion of healing",
+  "value": 5000,
+  "weight": 0.5,
+  "quantity": 1,
+  "magic": false
+}

@@ -1,0 +1,12 @@
+{
+  "id": "quarterstaff",
+  "name": "Quarterstaff",
+  "value": 20,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "str",
+  "weight": 4,
+  "traits": [
+    "versatile"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": "guiding-bolt",
+  "name": "Guiding Bolt",
+  "description": "4d6 radiant on a hit, and the next attack against the target has advantage.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "4d6",
+          "type": "radiant",
+          "when": "hit",
+          "scale": {
+            "by": "slot",
+            "from": 1,
+            "dice": "1d6"
+          }
+        },
+        {
+          "do": "condition",
+          "id": "guided",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "stunned",
+  "name": "Stunned",
+  "description": "Can't move or act; attacks against it have advantage.",
+  "flags": [
+    "stunned",
+    "cantAct",
+    "cantMove"
+  ],
+  "attackersAdvantage": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "dash",
+  "name": "Dash",
+  "description": "Move your speed again this turn.",
+  "order": 20,
+  "cost": 1,
+  "log": "{name} dashes.",
+  "effects": [
+    {
+      "do": "resource",
+      "target": "self",
+      "id": "movement",
+      "op": "restore",
+      "amount": "speed"
+    }
+  ]
+}

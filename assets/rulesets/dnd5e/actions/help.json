@@ -1,0 +1,19 @@
+{
+  "id": "help",
+  "name": "Help",
+  "description": "An adjacent ally has advantage on their next attack.",
+  "order": 40,
+  "cost": 1,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1
+  },
+  "log": "{name} helps.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "helped"
+    }
+  ]
+}

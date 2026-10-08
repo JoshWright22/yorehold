@@ -1,0 +1,13 @@
+{
+  "id": "prone",
+  "name": "Prone",
+  "description": "On the ground: disadvantage on its attacks, advantage on attacks against it.",
+  "flags": [
+    "prone"
+  ],
+  "disadvantageOnAttacks": true,
+  "attackersAdvantage": true,
+  "ends": [
+    "fightEnd"
+  ]
+}

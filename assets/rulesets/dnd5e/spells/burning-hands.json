@@ -1,0 +1,33 @@
+{
+  "id": "burning-hands",
+  "name": "Burning Hands",
+  "description": "A 15-foot cone of flame: 3d6 fire, half on a Dexterity save.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 3
+  },
+  "area": {
+    "shape": "cone",
+    "size": 3
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "3d6",
+      "type": "fire",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d6"
+      }
+    }
+  ]
+}

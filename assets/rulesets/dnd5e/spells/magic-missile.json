@@ -1,0 +1,24 @@
+{
+  "id": "magic-missile",
+  "name": "Magic Missile",
+  "description": "Three darts of force that never miss, 1d4+1 each; one more dart per slot above 1st.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "3d4+3",
+      "type": "force",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d4+1"
+      }
+    }
+  ]
+}

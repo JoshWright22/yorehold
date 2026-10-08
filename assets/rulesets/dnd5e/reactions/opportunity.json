@@ -1,0 +1,8 @@
+{
+  "id": "opportunity",
+  "name": "Opportunity Attack",
+  "trigger": "leavesReach",
+  "action": "attack",
+  "order": 10,
+  "promptSeconds": 2
+}

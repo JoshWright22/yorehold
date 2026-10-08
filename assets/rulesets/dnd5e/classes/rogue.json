@@ -1,0 +1,43 @@
+{
+  "id": "rogue",
+  "name": "Rogue",
+  "description": "A skulker who strikes where it hurts.",
+  "hitDie": 8,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "dex",
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "dex",
+    "int",
+    "stealth",
+    "acrobatics",
+    "perception",
+    "sleight-of-hand"
+  ],
+  "items": [
+    "rapier",
+    "leather",
+    "dagger"
+  ],
+  "levels": [
+    {},
+    {
+      "features": [
+        {
+          "id": "cunning-action",
+          "name": "Cunning Action",
+          "description": "Dash or Hide as a bonus action.",
+          "actions": [
+            "cunning-dash",
+            "cunning-hide"
+          ]
+        }
+      ]
+    },
+    {},
+    {},
+    {}
+  ]
+}

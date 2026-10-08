@@ -1,0 +1,32 @@
+{
+  "id": "wolf",
+  "name": "Wolf",
+  "description": "Hunts in packs and drags prey down.",
+  "hp": 11,
+  "armorClass": 12,
+  "speed": 40,
+  "level": 1,
+  "abilities": {
+    "str": 14,
+    "dex": 15,
+    "con": 12,
+    "int": 3,
+    "wis": 12,
+    "cha": 6
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "bite"
+  ],
+  "token": {
+    "color": [
+      130,
+      120,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "animal"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "invisible",
+  "name": "Invisible",
+  "description": "Can't be seen: advantage on its attacks, disadvantage on attacks against it.",
+  "flags": [
+    "invisible"
+  ],
+  "advantageOnAttacks": true,
+  "attackersDisadvantage": true
+}

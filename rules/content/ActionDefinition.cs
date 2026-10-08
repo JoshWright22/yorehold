@@ -252,16 +252,20 @@ public class ActionDefinition
     public static List<ActionDefinition> Basic(Ruleset rules)
     {
         string strikeCost = rules.StrikeCostsHands ? "\"hands\"" : "1";
+        // by the names the system gives them, so its own action files replace these
+        RoleNames roles = rules.Roles;
         string[] sources =
         {
-            "{\"id\":\"strike\",\"name\":\"Strike\",\"order\":10,\"cost\":" + strikeCost
+            "{\"id\":\"" + roles.Strike + "\",\"name\":\"Strike\",\"order\":10,\"cost\":" + strikeCost
                 + ",\"target\":{\"kind\":\"creature\",\"side\":\"enemy\",\"range\":1},"
                 + "\"effects\":[{\"do\":\"roll\",\"kind\":\"attack\",\"steps\":[{\"do\":\"damage\",\"dice\":\"weapon\",\"when\":\"hit\",\"minimum\":1}]}]}",
-            "{\"id\":\"stride\",\"name\":\"Dash\",\"order\":20,\"cost\":1,\"log\":\"{name} dashes\","
+            "{\"id\":\"" + roles.Stride + "\",\"name\":\"Dash\",\"order\":20,\"cost\":1,\"log\":\"{name} dashes\","
                 + "\"effects\":[{\"do\":\"resource\",\"id\":\"movement\",\"op\":\"restore\",\"amount\":\"speed\",\"target\":\"self\"}]}",
-            "{\"id\":\"end-turn\",\"name\":\"End turn\",\"order\":1000,\"cost\":0,\"endsTurn\":true}",
+            "{\"id\":\"" + roles.EndTurn + "\",\"name\":\"End turn\",\"order\":1000,\"cost\":0,\"endsTurn\":true}",
         };
-        return sources.Select(source => Read(ContentNode.Parse("built-in action", source))).ToList();
+        // a role a system leaves empty has no built-in action
+        return sources.Where(source => !source.StartsWith("{\"id\":\"\"", StringComparison.Ordinal))
+            .Select(source => Read(ContentNode.Parse("built-in action", source))).ToList();
     }
 
     /// <summary>

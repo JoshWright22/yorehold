@@ -188,7 +188,8 @@ internal sealed class EffectRun
         {
             "weapon" => self?.DamageDice(_rules) ?? "0",
             "speed" => (self?.SpeedSquares(_rules) ?? 0).ToString(),
-            _ => step.Amount,
+            // formulas in braces read the doer's sheet: "2d8+{mod.wis}"
+            _ => DiceText.Fill(step.Amount, name => self?.Named(_rules, name)),
         };
         DiceExpression dice = DiceExpression.Parse(text) ?? new DiceExpression();
         if (doubled)
@@ -516,7 +517,8 @@ internal sealed class EffectRun
         int attacksSoFar = _context.AttacksMade + _result.Events.Count(e => e.Kind == EffectEventKind.Attack);
         int penalty = _rules.AttackPenalty?.Whole(name => name == "attacks" ? attacksSoFar
             : name.StartsWith("trait.", StringComparison.Ordinal) ? (self.Weapon?.Has(name[6..]) == true ? 1 : 0) : null) ?? 0;
-        RollResult attack = kind.Roll(self.AttackModifier(_rules) + penalty, self.AttackAdvantage(_rules), _random);
+        int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules) : self.AttackModifier(_rules);
+        RollResult attack = kind.Roll(bonus + penalty, self.AttackAdvantage(_rules, subject), _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
         int ac = _host.ArmorClass(actor, _context);
         outcome.Attack = kind.Resolve(attack, ac);

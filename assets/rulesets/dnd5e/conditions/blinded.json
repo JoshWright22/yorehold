@@ -1,0 +1,10 @@
+{
+  "id": "blinded",
+  "name": "Blinded",
+  "description": "Can't see: attacks it makes have disadvantage, attacks against it have advantage.",
+  "flags": [
+    "blinded"
+  ],
+  "disadvantageOnAttacks": true,
+  "attackersAdvantage": true
+}

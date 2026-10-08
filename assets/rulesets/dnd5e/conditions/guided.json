@@ -1,0 +1,13 @@
+{
+  "id": "guided",
+  "name": "Guided",
+  "description": "The next attack against it has advantage.",
+  "flags": [
+    "guided"
+  ],
+  "attackersAdvantage": true,
+  "duration": 1,
+  "ends": [
+    "damage"
+  ]
+}

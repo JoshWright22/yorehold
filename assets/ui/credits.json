@@ -13,6 +13,13 @@
       "by": "AdamCYounis",
       "licence": "",
       "text": "The 46 colours every screen and map is drawn in. From lospec.com/palette-list/apollo."
+    },
+    {
+      "name": "System Reference Document 5.2",
+      "kind": "Rules",
+      "by": "Wizards of the Coast LLC",
+      "licence": "CC BY 4.0",
+      "text": "The D&D 5e rules system includes material from the System Reference Document 5.2 (\"SRD 5.2\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode."
     }
   ]
 }

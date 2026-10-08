@@ -22,6 +22,9 @@ public class ConditionDefinition
     public List<Modifier> Modifiers { get; init; } = new();
     public bool AdvantageOnAttacks { get; init; }
     public bool DisadvantageOnAttacks { get; init; }
+    /// <summary>Attacks against whoever has it are made with advantage or disadvantage (prone, dodging, restrained).</summary>
+    public bool AttackersAdvantage { get; init; }
+    public bool AttackersDisadvantage { get; init; }
     public List<string> Flags { get; init; } = new();
     /// <summary>Rounds it lasts when applied without one; -1 until something ends it.</summary>
     public int Duration { get; init; } = -1;
@@ -78,6 +81,8 @@ public class ConditionDefinition
             Modifiers = ContentParts.ModifiersFrom(node, strict: false),
             AdvantageOnAttacks = node.Bool("advantageOnAttacks", false),
             DisadvantageOnAttacks = node.Bool("disadvantageOnAttacks", false),
+            AttackersAdvantage = node.Bool("attackersAdvantage", false),
+            AttackersDisadvantage = node.Bool("attackersDisadvantage", false),
             Flags = DifferentNames(node, "flags"),
             Duration = duration,
             Stacking = stacking,

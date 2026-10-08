@@ -1,0 +1,18 @@
+{
+  "id": "petrified",
+  "name": "Petrified",
+  "description": "Turned to stone: can't move or act, resists all damage, attacks against it have advantage.",
+  "flags": [
+    "petrified",
+    "cantAct",
+    "cantMove"
+  ],
+  "attackersAdvantage": true,
+  "modifiers": [
+    {
+      "stat": "resist.all",
+      "op": "add",
+      "value": 1
+    }
+  ]
+}

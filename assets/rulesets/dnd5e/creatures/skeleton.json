@@ -1,0 +1,37 @@
+{
+  "id": "skeleton",
+  "name": "Skeleton",
+  "description": "Old bones that remember how to fight. Shatters under blunt blows.",
+  "hp": 13,
+  "armorClass": 13,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 10,
+    "dex": 16,
+    "con": 15,
+    "int": 6,
+    "wis": 8,
+    "cha": 5
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "shortsword"
+  ],
+  "darkvision": 60,
+  "stats": {
+    "weak.bludgeoning": 1,
+    "immune.poison": 1
+  },
+  "token": {
+    "color": [
+      220,
+      215,
+      200
+    ],
+    "size": 0.4
+  },
+  "ai": "mindless"
+}

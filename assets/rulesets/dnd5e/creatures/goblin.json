@@ -1,0 +1,39 @@
+{
+  "id": "goblin",
+  "name": "Goblin",
+  "description": "Small and vicious; strikes and slips away.",
+  "hp": 10,
+  "armorClass": 15,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 8,
+    "dex": 15,
+    "con": 10,
+    "int": 10,
+    "wis": 8,
+    "cha": 8
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "scimitar"
+  ],
+  "darkvision": 60,
+  "actions": [
+    "cunning-hide"
+  ],
+  "token": {
+    "color": [
+      120,
+      150,
+      60
+    ],
+    "size": 0.36
+  },
+  "ai": "cunning",
+  "loot": {
+    "coins": "2d6"
+  }
+}

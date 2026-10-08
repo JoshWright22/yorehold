@@ -1,0 +1,11 @@
+{
+  "id": "paralyzed",
+  "name": "Paralyzed",
+  "description": "Can't move or act; attacks against it have advantage.",
+  "flags": [
+    "paralyzed",
+    "cantAct",
+    "cantMove"
+  ],
+  "attackersAdvantage": true
+}

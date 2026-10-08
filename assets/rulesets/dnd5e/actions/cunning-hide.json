@@ -1,0 +1,32 @@
+{
+  "id": "cunning-hide",
+  "name": "Cunning Action: Hide",
+  "description": "Hide as a bonus action.",
+  "order": 51,
+  "cost": "bonus",
+  "general": false,
+  "log": "{name} slips out of sight.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "hidden",
+      "target": "self"
+    },
+    {
+      "do": "roll",
+      "kind": "check",
+      "ability": "stealth",
+      "against": "perception",
+      "target": "enemies",
+      "steps": [
+        {
+          "do": "condition",
+          "id": "hidden",
+          "target": "self",
+          "remove": true,
+          "when": "failure"
+        }
+      ]
+    }
+  ]
+}

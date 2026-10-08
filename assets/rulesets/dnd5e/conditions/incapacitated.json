@@ -1,0 +1,9 @@
+{
+  "id": "incapacitated",
+  "name": "Incapacitated",
+  "description": "Can't take actions or reactions.",
+  "flags": [
+    "incapacitated",
+    "cantAct"
+  ]
+}

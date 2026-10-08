@@ -1,0 +1,19 @@
+{
+  "id": "chain-shirt",
+  "name": "Chain shirt",
+  "value": 5000,
+  "slot": "armor",
+  "weight": 20,
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "override",
+      "value": 13
+    },
+    {
+      "stat": "armorDexCap",
+      "op": "override",
+      "value": 3
+    }
+  ]
+}
