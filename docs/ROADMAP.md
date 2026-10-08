@@ -335,6 +335,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
+- [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more
+  abstract free system. No classes, no HP, no d20: 4dF plus an approach (Careful, Clever,
+  Flashy, Forceful, Quick, Sneaky) against the ladder, four outcomes (fail, tie, succeed,
+  succeed with style), shifts as damage into stress boxes and consequences, aspects and fate
+  points. If it plays from JSON, the language holds for anything d20-shaped and beyond; what
+  doesn't fit (aspects you invoke, compels) goes back as steps.
 - [ ] **R11. Packages by kind, no add-ons.** Josh, 10/8: all content is in the format the game
   sets and lives on the site; no add-ons, just skins, systems, monsters and so on. A package
   has one `kind`: `system` (a ruleset folder, R1-R8), `adventure`, `skin` (R16), `art`, or a
