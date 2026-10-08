@@ -414,10 +414,10 @@ Rules for all of it:
   - Done 10/7: a room's passage is narration (no speaker, no faces), not a line spoken by the
 	room's name.
   - Done 10/7: rooms take the floor, walls and doors the book's map draws (`BookMap`); shape 35
-    to 42 of 42. A room's foes that see the party from the doorway wait for its passage to be read.
+	to 42 of 42. A room's foes that see the party from the doorway wait for its passage to be read.
   - Done 10/7 (Josh: "hill climb the pipeline with variations; need a way of judging it"):
-    comparison runs, `check.ps1 -Bench`, with a `judged` score that also costs what was made up.
-    Caves of Shadow: layout 32, cast 95, full 96.
+	comparison runs, `check.ps1 -Bench`, with a `judged` score that also costs what was made up.
+	Caves of Shadow: layout 32, cast 95, full 96.
   - Left: Create > Import says before reading that no story model is set, with Read anyway; a
 	quest from the opening passage; more books with keys in the comparison folder.
 
@@ -435,9 +435,9 @@ reopened (`playtest.ps1 -Problems`).
   (name and key), a heading face bigger than the data screens', a picture slot that takes art
   pack or content pictures and falls back to a palette fill. Sizes and spacing in `ui/` data.
   - Default: `BannerView` (pictures in `ui/banners/` from content and art packs, covering the
-    window, one every `bannerSeconds`), `GameScreen.BigButton` (flat, 1 px line, name left and
-    key or fact right), `GameScreen.Logo` (`ui/logo.png`), sizes in `ui/screens.json`. The band
-    and the heading are laid out in the menu scene.
+	window, one every `bannerSeconds`), `GameScreen.BigButton` (flat, 1 px line, name left and
+	key or fact right), `GameScreen.Logo` (`ui/logo.png`), sizes in `ui/screens.json`. The band
+	and the heading are laid out in the menu scene.
   - Default: banner pictures are shown as they are, not snapped to the palette like the map:
 	they are the players' paintings. Say if they should be snapped too.
 - [x] **U2. Title** (playtest `title`). A large logo top left, the menu as a column of big
@@ -447,15 +447,15 @@ reopened (`playtest.ps1 -Problems`).
   - Josh, 10/7: temporary logos are fine for now; real logo work is needed (the name set in
 	type and `icon.svg`, the placeholder app icon, are both stand-ins until then).
   - Default: the picked button's page stays, as a card at the bottom right over the banner (the
-    save it would continue, the adventure it would start). Adventure covers join the banner
-    when adventures have covers (U8). Test banners: five CC0 paintings from OpenGameArt in the
-    art pack `banners-cc0` (`.dev\title.png`).
+	save it would continue, the adventure it would start). Adventure covers join the banner
+	when adventures have covers (U8). Test banners: five CC0 paintings from OpenGameArt in the
+	art pack `banners-cc0` (`.dev\title.png`).
 - [x] **U3. Settings** (`settings`). Groups down the left (Display, Sound, Controls, Gameplay,
   Account), the group's options on the right with a one-line help under each, a search box.
   No file paths shown. Keys (`keys`) becomes the Controls group.
   - Default: groups are Display, Gameplay, Camera, Controls and Account; Sound comes with the
 	first sound setting (the game has none yet). Each row's choices are chips on the row itself,
-    pan speed a - and + stepper, keys Change and Shipped. The search looks through every group.
+	pan speed a - and + stepper, keys Change and Shipped. The search looks through every group.
 	Account's Sign-in row has Sign in again and Sync now (`.dev\p11-settings.png`, `p11-keys.png`).
 - [x] **U4. Pause** (`pause`). The world stays drawn and dimmed, "Paused" large, a short column of
   big buttons (Resume, Save, Load, Settings, Leave). No list of small buttons.
@@ -467,15 +467,15 @@ reopened (`playtest.ps1 -Problems`).
   sources stay in each pack's own folder.
   - Default: Credits is a small link at the foot of the title's band. The libraries inside the
 	engine are no longer rows; their notices are one block on the engine's page, since their
-    licences ask for them to ship with the game.
+	licences ask for them to ship with the game.
 - [x] **U6. Lobby first** (`seats`). New adventure opens a lobby: the adventure's picture, its
   seats as player slots, each player picking an existing character or "make one when we start".
   Start goes into the adventure and character creation opens there for every seat that asked to
   make one. A player joining later lands in the lobby's pick. Local seats now; the same lobby
   takes online players when play goes online.
   - Default: every seat of a new adventure starts on "Make one when we start" (Josh, 10/7: by
-    default characters are made after the lobby). Start runs creation for those seats one after
-    another over the loaded chapter, then starts it with them; Escape in creation goes back to
+	default characters are made after the lobby). Start runs creation for those seats one after
+	another over the loaded chapter, then starts it with them; Escape in creation goes back to
 	the lobby. A seat can also take the ready-made hero or one of the player's characters.
   - Not done: the adventure's picture (adventures have no cover yet; U8), and the lobby still
 	has the character screen's look rather than the band (`.dev\p7-seats.png`). Every seat says
@@ -488,7 +488,7 @@ reopened (`playtest.ps1 -Problems`).
 	else `<class>.png`, else `<race>.png`, from content or art packs; else the disc and initial.
 	What each pick gives is the sheet on the right, rebuilt after every click (`.dev\p7-scores.png`).
   - Not done: picking a picture of the player's own for a character; that needs a picture field
-    on character files (format change) and a way to choose one.
+	on character files (format change) and a way to choose one.
 - [x] **U8. Library** (`library`). A row of adventure covers in sections (new, for new players,
   by world) above a list left and the chosen adventure's page right: cover, blurb, chapters,
   length, made by.
@@ -497,11 +497,11 @@ reopened (`playtest.ps1 -Problems`).
 	each, the picked one's page on the right and its `cover` (new in `adventure.json`) filling the
 	window behind, as osu does. Start opens that adventure's lobby with its package over the
 	game's content. An import's cover is the first of the book's pictures it uses
-    (`.dev\p11-adventures.png`).
+	(`.dev\p11-adventures.png`).
   - Default: covers fill the background rather than a row of small tiles; sections are the tabs
 	(the game's, made here, imported), since there are no worlds or "new" marks yet.
   - Saves remember their package (`package` in the save's data); Continue and Load play from it
-    again, and a save whose package was deleted says so on the load screen.
+	again, and a save whose package was deleted says so on the load screen.
   - Not done: the playtest's `library` answer was about the character library, which is the
 	data panel it was.
 - [x] **U9. Hotbar and fight bar** (`first-look`). Josh, 10/7: the BG3 look is fine now. Two
@@ -512,10 +512,10 @@ reopened (`playtest.ps1 -Problems`).
   that acts at once. Escape or a right click puts it back.
   - Default: the first bar is the actions every hero has (general, needing nothing), the second
 	the hero's spells and class actions; each spills into the other when full. Only actions
-    placed from now on follow this: a hotbar the player already arranged (in a save or a
-    character file) keeps its slots (`.dev\playtest-spell-fight.png`).
+	placed from now on follow this: a hotbar the player already arranged (in a save or a
+	character file) keeps its slots (`.dev\playtest-spell-fight.png`).
   - Default: an action on oneself, picked, waits like any other; a click on the hero or its
-    key again uses it, a click anywhere else puts it away.
+	key again uses it, a click anywhere else puts it away.
 - [x] **U10. Art pack coverage.** Mostly done 10/7 while checking for generated art: objects
   now show `objects/<name>.png` (CONTENT.md), the code-drawn icon shapes and object drawings are
   gone (plain blocks and letters remain as fallbacks), the old client's 13 UI skin pictures are
@@ -547,7 +547,7 @@ reopened (`playtest.ps1 -Problems`).
 	F1 (`help` in `ui/keys.json`), with the keys bound now; Esc or Got it puts it away. Screenshot
 	and playtest runs don't open it by themselves (`.dev\help-card.png`).
   - Done 10/7: the play menu is two columns of small buttons right of the hotbar, as in BG3
-    (panels, Characters, Save, and Menu for the pause list); Load is F9 and on the pause list. The
+	(panels, Characters, Save, and Menu for the pause list); Load is F9 and on the pause list. The
 	top right is the map's again (`.dev\playtest-fight.png`, `playtest-keep.png`).
   - Done 10/7: "Alice's turn" is in the turn order strip, after the cards. The log is as tall as
 	its lines, up to its old height (`.dev\playtest-first-look.png`).
@@ -562,3 +562,24 @@ reopened (`playtest.ps1 -Problems`).
   - Done 10/7: the character library opened from the title has no Lobby tab.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.
+- [ ] **U14. Pictures found by tags (Josh, 10/7: "match everything in the game with tags so
+  player-made content is easy to reuse").** A writer never picks a picture to get something
+  playable: creatures, heroes, tiles, objects, icons, banners and map pieces get one from the
+  installed art packs by what they are.
+  - Art packs gain an optional `tags.json`: picture path to tags (`"portraits/old-knight.png":
+	["humanoid", "human", "knight", "old", "armoured"]`). A pack without one is tagged from its
+	paths and file names (`portraits/goblin-archer.png` is `portrait`, `goblin`, `archer`).
+  - Content already says what a thing is (a creature's kind, race, class, a tile's ground, an
+	object's kit, a spell's school and damage type, its `tags`); `rules/` turns that into the
+	tags to look for. Lookup order: the exact path as now, then the picture with the most shared
+	tags of the right kind (portrait, tile, icon, ...), then the plain fill, disc or letter.
+  - Same thing, same picture: the choice is stable (ties broken by path), so a goblin looks the
+	same every session and on every player's machine with the same packs. Content can pin one
+	with `image` and the tag match never overrides it.
+  - Create shows the matched picture with "picked by tags: goblin, archer" and a Change list of
+	the next best matches; picking one writes `image`. A tag vocabulary file in `ui/` (or content)
+	lists the shared words so packs and content use the same ones.
+  - Checks: `rules/` tests for the match order and stability; a run over the test packs that
+	reports content left on a fallback.
+  - Default: tags are lower case single words or hyphenated; matching is plain counting with
+	the kind required, no weights, until a playtest says otherwise.
