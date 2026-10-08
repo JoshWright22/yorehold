@@ -200,7 +200,7 @@ public partial class SheetPanel : PanelContainer
             (rules.Skill(rolledWith)?.Name ?? rules.Ability(rolledWith)?.Name ?? rolledWith).ToLowerInvariant());
         Vital("Speed", $"{sheet.SpeedFeet}", "feet");
         // a system without levels (Fate) has no proficiency by level or hit die to show
-        bool levels = rules.Advancement != "none";
+        bool levels = rules.Advancement != "none" && rules.Sheet.Shows("level");
         Vital("Proficiency", levels ? SheetView.Signed(rules.ProficiencyBonus(sheet.Level)) : "", levels ? "bonus" : "");
         Vital("Hit die", levels ? sheet.HitDie : "", levels ? $"level {sheet.Level}" : "");
 

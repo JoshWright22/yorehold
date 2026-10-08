@@ -121,7 +121,7 @@ public static class SheetPage
     public static string Who(Compendium compendium, CharacterSheet sheet, CharacterChoices? choices, Ruleset? rules = null)
     {
         // a system without levels or classes doesn't name them (Fate)
-        string who = rules?.Advancement == "none" ? "" : $"Level {sheet.Level}";
+        string who = rules != null && (rules.Advancement == "none" || !rules.Sheet.Shows("level")) ? "" : $"Level {sheet.Level}";
         if (sheet.Ancestry.Length > 0)
         {
             who += " " + sheet.Ancestry;

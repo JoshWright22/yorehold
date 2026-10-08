@@ -310,7 +310,11 @@ public class SystemPackageTests
 
         Assert.Equal("xp", w.Rules.Advancement);
         using WorldFixture fate = Yard("rulesets/fate-accelerated", "character", "character");
-        Assert.Equal("none", fate.World.Rules.Advancement);
+        Assert.Equal("milestone", fate.World.Rules.Advancement);
+        // a Fate milestone raises one approach by 1, picked like any level's boosts
+        CharacterSheet ana = fate.World.Creatures[0].Sheet;
+        fate.World.Milestone();
+        Assert.Equal(2, ana.Level);
         ContentException error = TestContent.Refused(() => RulesTesting.Rules("""{"id": "x", "name": "X", "abilities": [{"id": "str", "name": "S"}], "advancement": "luck"}"""));
         Assert.Equal("advancement", error.Field);
     }

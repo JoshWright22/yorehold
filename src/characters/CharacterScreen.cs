@@ -277,7 +277,7 @@ public partial class CharacterScreen : CanvasLayer
         _faceName.Text = name;
         string raceName = race.Length > 0 ? char.ToUpperInvariant(race[0]) + race[1..] + " " : "";
         // a system without levels or a class to ask for (Fate) names neither
-        string levelWord = _rules.Advancement == "none" ? "" : $"Level {level} ";
+        string levelWord = _rules.Advancement == "none" || !_rules.Sheet.Shows("level") ? "" : $"Level {level} ";
         string classWord = _rules.Creation.AsksClass ? ClassName(classId) : "";
         _faceLine.Text = classId.Length > 0 ? $"{levelWord}{raceName}{classWord}".Trim() : "picks once the adventure starts";
     }

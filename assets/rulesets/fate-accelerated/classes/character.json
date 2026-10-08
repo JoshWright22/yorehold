@@ -20,6 +20,38 @@
           }
         }
       ]
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
+    },
+    {
+      "boosts": 1,
+      "boostStep": 1
     }
   ]
 }
