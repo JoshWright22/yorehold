@@ -782,7 +782,7 @@ public sealed partial class World
                     _enemyStep = EnemyStep.Think;
                     return;
                 }
-                _enemyStep = _enemyTarget is int aimed && Adjacent(me, aimed) && CanUse(me, StrikeAction) ? EnemyStep.Strike : EnemyStep.Wait;
+                _enemyStep = _enemyTarget is int aimed && Adjacent(me, aimed) && (CanUse(me, StrikeAction) || BestAttack(me, aimed) != null) ? EnemyStep.Strike : EnemyStep.Wait;
                 return;
             case EnemyStep.Strike:
             {
@@ -793,10 +793,11 @@ public sealed partial class World
                 _enemyTimer = 0;
                 _enemyStep = EnemyStep.Wait;
                 int target = _enemyTarget!.Value;
-                Use(StrikeAction, target);
+                // the best attack it has on them: the system's strike, or a Multiattack worth more
+                Use(BestAttack(me, target)?.Id ?? StrikeAction, target);
                 // Actions to spare and the target still up: hit it again, unless the system's own
                 // penalty for a further attack makes a guard or a spell worth more now.
-                if (Fighting && CurrentCreature == me && CanUse(me, StrikeAction) && !Creatures[target].Sheet.Down && OrderIndex(target) != null)
+                if (Fighting && CurrentCreature == me && BestAttack(me, target) != null && !Creatures[target].Sheet.Down && OrderIndex(target) != null)
                 {
                     bool better = !Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight"
                         && PickAbility(me) is AbilityChoice other && other.Value >= StrikeWorth(me);

@@ -94,6 +94,76 @@ public sealed partial class World
         return saved / Math.Max(1, ActionCost(me, action));
     }
 
+    /// <summary>
+    /// The attack it should make on target from where it stands: of every non-spell action it can
+    /// use that rolls attacks at a creature (the system's strike, a monster's Multiattack, a
+    /// granted strike), the one with the most expected damage per action. Null when none reaches.
+    /// </summary>
+    public ActionDefinition? BestAttack(int me, int target)
+    {
+        ActionDefinition? best = null;
+        float bestWorth = 0;
+        foreach (ActionDefinition action in ActionsOf(me))
+        {
+            if (action.Target != ActionTarget.Creature || SpellOf(action) != null || !CanUse(me, action, out _) || !ValidTarget(me, action, target))
+            {
+                continue;
+            }
+            float worth = AttackWorth(me, action, target) / Math.Max(1, ActionCost(me, action));
+            // the system's own strike wins a tie, so nothing changes where it is the only attack
+            if (worth > bestWorth + 0.01f || (action.Id == StrikeAction && worth >= bestWorth - 0.01f && worth > 0))
+            {
+                best = action;
+                bestWorth = worth;
+            }
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// What an action's attack rolls at target are worth on average: each attack's expected
+    /// damage by the system's odds and critical rule, repeats counted, extra damage dice under a
+    /// hit added at the hit chance. 0 for an action that rolls no attack.
+    /// </summary>
+    public float AttackWorth(int me, ActionDefinition action, int target)
+    {
+        CharacterSheet sheet = Creatures[me].Sheet;
+        CheckKind attack = Rules.Checks.Kind(CheckRules.Attack);
+        Dictionary<string, double> odds = AttackOdds(me, target, action.Id);
+        double hit = attack.Outcomes.Where(o => o.Passes).Sum(o => odds.GetValueOrDefault(o.Id));
+        float worth = 0;
+        void Walk(List<EffectStep> steps, int times, bool underAttack)
+        {
+            foreach (EffectStep step in steps)
+            {
+                if (step.Kind == EffectKind.Repeat)
+                {
+                    Walk(step.Steps, times * Math.Max(1, (int)Average(step.Amount)), underAttack);
+                    continue;
+                }
+                if (step.Kind == EffectKind.Roll && step.How == "attack")
+                {
+                    Walk(step.Steps, times, true);
+                    continue;
+                }
+                if (step.Kind == EffectKind.Damage && underAttack)
+                {
+                    DiceExpression? dice = DiceExpression.Parse(step.Amount == "weapon" ? sheet.DamageDice(Rules) : step.Amount);
+                    if (dice != null)
+                    {
+                        // the weapon's damage gets the system's critical; extra dice count at the hit chance
+                        worth += times * (step.Amount == "weapon"
+                            ? (float)attack.ExpectedDamage(odds, dice, Rules.Checks.CriticalDamage)
+                            : (float)(hit * Math.Max(0, dice.Average())));
+                    }
+                }
+                Walk(step.Steps, times, underAttack);
+            }
+        }
+        Walk(action.Effect.Steps, 1, false);
+        return worth;
+    }
+
     /// <summary>What a strike is worth this turn, per action: the chance to hit times the weapon's average, if someone is in reach or close.</summary>
     public float StrikeWorth(int me)
     {
@@ -108,7 +178,13 @@ public sealed partial class World
         foreach (int foe in Foes(me))
         {
             float reach = Adjacent(me, foe) ? 1 : Grid.Distance(CellOf(me), CellOf(foe)) <= MovementLeft + 1.01f ? 0.9f : 0;
-            best = Math.Max(best, reach * HitChance(me, foe) * Math.Max(1, damage));
+            float swing = HitChance(me, foe) * Math.Max(1, damage);
+            if (reach == 1 && BestAttack(me, foe) is ActionDefinition attack)
+            {
+                // in reach: what its best attack is worth by the system's odds, per action
+                swing = Math.Max(swing, AttackWorth(me, attack, foe) / Math.Max(1, ActionCost(me, attack)));
+            }
+            best = Math.Max(best, reach * swing);
         }
         return best;
     }

@@ -444,7 +444,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Doesn't fit yet (back to the steps): prone and paralysed caring about distance;
     Shield and Counterspell as spells cast as
     reactions (the `beforeHit` and `spellCast` moments are there, a reaction spending a slot is
-    not); monster Multiattack; versatile and two-weapon fighting. Then the rest of the SRD: all
+    not); versatile and two-weapon fighting. Then the rest of the SRD: all
     classes and levels, the spell list, the bestiary.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
@@ -504,9 +504,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     guard (Raise a Shield, Dodge: any action that puts a condition on its doer) is weighed by
     the damage it saves under the system's odds, and the AI thinks again between strikes, so a
     third Strike at -10 gives way to a shield.
-  - Left: the AI still opens with the `strike` role action and its own walk; choosing among a
-    system's other attacks (a monster's several strikes), Stride as an action it must pay for
-    when planning, Demoralize-like debuffs.
+  - Done 10/8: the AI attacks with its best attack action (`BestAttack`: every non-spell action
+    that rolls attacks at a creature, by expected damage per action with repeats and the
+    system's critical counted); 5e's Bandit Captain uses Multiattack.
+  - Left: the AI's own walk (Stride as an action it must pay for when planning); debuffs like
+    Demoralize weighed beyond a flat worth.
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each

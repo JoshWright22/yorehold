@@ -420,6 +420,35 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TheAiTakesItsBestAttack()
+    {
+        // the captain's Multiattack is two swings for one action: worth about twice the Attack
+        using WorldFixture world = WorldFixture.LoadJson("chapters/cap-yard", new Dictionary<string, string>
+        {
+            ["chapters/cap-yard/chapter.json"] = """
+                {"id":"cap-yard","title":"Yard","map":"map.json","ruleset":"rulesets/dnd5e",
+                 "party":[{"name":"Ana","class":"fighter","at":[2,3]}],
+                 "encounters":[{"id":"yard","creatures":[{"creature":"bandit-captain","name":"Vex","at":[3,3]}]}]}
+                """,
+            ["chapters/cap-yard/map.json"] = """
+                {"name":"Yard","tiles":{"floor":{"art":"grass"},"wall":{"art":"wall","walkable":false,"blocksSight":true}},
+                 "legend":{".":"floor","#":"wall"},"layers":[{"name":"ground","rows":["######","#....#","#....#","#....#","#....#","######"]}]}
+                """,
+        }, 7);
+        World w = world.World;
+        world.Fight();
+        ActionDefinition multi = w.FindAction("multiattack")!;
+        ActionDefinition attack = w.FindAction(w.StrikeAction)!;
+        float twice = w.AttackWorth(1, multi, 0);
+        float once = w.AttackWorth(1, attack, 0);
+        Assert.True(once > 0 && Math.Abs(twice - 2 * once) < 0.01f, $"{twice} vs {once}");
+        Assert.True(world.TurnTo(1));
+        Assert.Equal("multiattack", w.BestAttack(1, 0)?.Id);
+        w.Options.AutoPlay = true;
+        Assert.True(world.StepUntil(() => world.Said("Vex attacks Ana") || !w.Fighting, 120));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

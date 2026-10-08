@@ -1,0 +1,39 @@
+{
+  "id": "bandit-captain",
+  "name": "Bandit Captain",
+  "description": "Leads a band of robbers from the front, two cuts to every one of theirs.",
+  "hp": 52,
+  "armorClass": 15,
+  "speed": 30,
+  "level": 3,
+  "abilities": {
+    "str": 15,
+    "dex": 16,
+    "con": 14,
+    "int": 14,
+    "wis": 11,
+    "cha": 14
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "scimitar",
+    "leather"
+  ],
+  "actions": [
+    "multiattack"
+  ],
+  "token": {
+    "color": [
+      170,
+      80,
+      60
+    ],
+    "size": 0.42
+  },
+  "ai": "cunning",
+  "loot": {
+    "coins": "6d10"
+  }
+}
