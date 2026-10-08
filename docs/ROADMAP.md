@@ -537,16 +537,15 @@ reopened (`playtest.ps1 -Problems`).
     and playtest runs don't open it by themselves (`.dev\help-card.png`).
   - The play side menu (8 buttons down the right) moves to small buttons beside the hotbar, as
     BG3 does; Save and Load stay on F5, F9 and the pause menu.
-  - Fight: "Alice's turn" sits over the tokens under the turn order; it belongs in the order
-    strip. The log is a large empty box outside fights; it opens as one line and grows.
+  - Done 10/7: "Alice's turn" is in the turn order strip, after the cards. Left: the log is a
+    large empty box outside fights; it should open as one line and grow.
   - Gear, chest, shop and loot are one panel with Pack and the other side as tabs; a chest or
     body would read better as two lists side by side (yours, theirs) with Take and Give between.
-  - Journal: a companion's page is numbers (Approval +10, Leaves at -50); say it in words
-	("likes you; leaves if it drops to -50").
+  - Done 10/7: a companion's journal page says how they feel and when they would join or leave
+    in words, the numbers in small print under it.
   - Create: Dialogue and Encounters show file and engine words (dialogue/tobb.json, "Node",
 	"-> freed", "Flags set on a win", "Coins, as dice", "Use 50 from levels"). Each field gets
 	a plain label and a one-line help, the way Settings rows do.
-  - The character library opened from the title shows a Lobby tab that only means something
-	in an adventure.
+  - Done 10/7: the character library opened from the title has no Lobby tab.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.

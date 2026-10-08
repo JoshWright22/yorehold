@@ -122,14 +122,33 @@ public sealed class JournalPanel
         bool member = world.Companions.Member(id);
         int approval = world.Companions.Approval(id);
         var page = new BookPage().Title(CompanionName(world, id)).Sub(member ? "with the party" : "met on the way").Rule();
-        page.Stats(("Approval", approval.ToString("+0;-0;0")), ("Joins at", d.JoinAt.ToString("+0;-0;0")));
-        page.Stat("Leaves at", d.LeaveAt is int leave ? leave.ToString("+0;-0;0") : "only if sent away");
-        page.Stat("Range", $"{world.Rules.Companions.ApprovalMin} to {world.Rules.Companions.ApprovalMax}");
-        if (!member && approval < d.JoinAt)
+        string name = CompanionName(world, id);
+        page.Text($"{name} {Feeling(approval, world.Rules.Companions.ApprovalMax)}.");
+        if (!member)
         {
-            page.Gap().Note("Not ready to join yet.");
+            page.Text(approval >= d.JoinAt ? $"{name} would join if asked." : $"{name} won't join yet; what the party says and does can change that.");
         }
+        else
+        {
+            page.Text(d.LeaveAt is int leave ? $"{name} leaves if it falls to {leave:+0;-0;0}." : $"{name} only leaves if sent away.");
+        }
+        // the numbers stay for those who want them, under the words
+        page.Gap().Note($"Approval {approval:+0;-0;0} of {world.Rules.Companions.ApprovalMin} to {world.Rules.Companions.ApprovalMax}; joins at {d.JoinAt:+0;-0;0}.");
         return page.ToString();
+    }
+
+    // approval as a person would put it, by its share of the top of the range
+    private static string Feeling(int approval, int max)
+    {
+        double share = max > 0 ? (double)approval / max : 0;
+        return share switch
+        {
+            >= 0.6 => "trusts the party",
+            >= 0.25 => "likes the party",
+            > -0.25 => "has no strong feeling about the party yet",
+            > -0.6 => "doesn't like how the party does things",
+            _ => "is close to walking away",
+        };
     }
 
     private static string CompanionName(World world, string id)

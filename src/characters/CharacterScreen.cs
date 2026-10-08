@@ -96,9 +96,13 @@ public partial class CharacterScreen : CanvasLayer
         Visible = false;
     }
 
+    // opened from the title's Characters: there is no adventure, so no lobby to switch to
+    private bool _libraryOnly;
+
     /// <summary>Opens on the library or the seats, reading the library folder afresh.</summary>
-    public void Open(World world, string folder, View view)
+    public void Open(World world, string folder, View view, bool libraryOnly = false)
     {
+        _libraryOnly = libraryOnly;
         _world = world;
         _rules = world.Rules;
         _compendium = world.Chapter.Compendium;
@@ -294,7 +298,7 @@ public partial class CharacterScreen : CanvasLayer
     private void FillLibrary()
     {
         _library.SetHead("Characters", _noticeText);
-        _library.SetSources(new[] { ("library", "Characters"), ("party", "Lobby") }, "library");
+        _library.SetSources(_libraryOnly ? Array.Empty<(string, string)>() : new[] { ("library", "Characters"), ("party", "Lobby") }, "library");
         _library.SetTabs(new[] { "All", "Ready", "Away", "Graveyard" });
         _library.SetChips(new[] { "Can level up" });
         _library.SetColumns(new DataColumn[] { new("Name", 150), new("Class", 120), new("Level", 50, true), new("XP", 60, true), new("State", 80) });

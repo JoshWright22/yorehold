@@ -65,12 +65,10 @@ text = "Round 1"
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="Turn" type="Label" parent="Top"]
+[node name="Turn" type="Label" parent="Top/Initiative/Row"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
-theme_override_colors/font_outline_color = Color(0.0824, 0.1137, 0.1569, 1)
-theme_override_constants/outline_size = 6
-horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Bottom" type="HBoxContainer" parent="."]
 layout_mode = 1

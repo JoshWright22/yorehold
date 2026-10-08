@@ -166,7 +166,7 @@ public partial class PlayScreen : Node2D
             case StartKind.Party:
             case StartKind.Library:
                 _fromTitle = true;
-                _characters.Open(_world, Places.CharactersFolder(), Start == StartKind.Party ? CharacterScreen.View.Party : CharacterScreen.View.Characters);
+                _characters.Open(_world, Places.CharactersFolder(), Start == StartKind.Party ? CharacterScreen.View.Party : CharacterScreen.View.Characters, Start == StartKind.Library);
                 break;
         }
     }

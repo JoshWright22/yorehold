@@ -126,7 +126,7 @@ public partial class PlayHud : Control
         _top = GetNode<Control>("Top");
         _round = GetNode<Label>("Top/Initiative/Row/Round");
         _cards = GetNode<HBoxContainer>("Top/Initiative/Row/Cards");
-        _turn = GetNode<Label>("Top/Turn");
+        _turn = GetNode<Label>("Top/Initiative/Row/Turn");
         _bottom = GetNode<Control>("Bottom");
         _portrait = GetNode<PortraitView>("Bottom/Selected/Rows/Portrait");
         _hp = GetNode<ProgressBar>("Bottom/Selected/Rows/Hp");
