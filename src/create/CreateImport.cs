@@ -174,7 +174,7 @@ public partial class CreateScreen
             page.Title(outline.Title.Length > 0 ? outline.Title : "The outline").Sub("ready to review").Rule()
                 .Stats(("Entries", outline.Entries.Count.ToString()), ("Places", outline.OfKind(OutlineKind.Place).Count().ToString()),
                     ("Fights", outline.OfKind(OutlineKind.Encounter).Count().ToString()), ("Dropped", import.Dropped.Count.ToString()))
-                .Text("Pick an entry to see it and where its words came from. Drop what shouldn't be in the game; Build writes the rest as an adventure and opens it.");
+                .Text("Pick an entry to see it and where its words came from. Drop what shouldn't be in the game; Build writes the rest as an adventure for the rules system named on the Rules button, and opens it.");
             DescribeScore(page, import);
         }
         else
@@ -182,6 +182,10 @@ public partial class CreateScreen
             Describe(page, picked, import.Dropped.Contains(picked.Id));
             actions.Add(import.Dropped.Contains(picked.Id) ? new DataAction("import-keep", "Keep") : new DataAction("import-drop", "Drop"));
         }
+        // the rules system the adventure is built for; pressing it goes to the next one the game has
+        List<(string Folder, string Name)> systems = _package.Systems();
+        string system = systems.Where(s => s.Folder == import.RulesSystem).Select(s => s.Name).FirstOrDefault() ?? import.RulesSystem;
+        actions.Add(new DataAction("import-system", "Rules: " + system, systems.Count > 1, "The game has one rules system."));
         actions.Add(new DataAction("import-build", "Build"));
         actions.Add(new DataAction("import-close", "Close"));
         _start.SetEntry(page.ToString(), actions, import.Problems.Count > 0 ? "Couldn't build: " + string.Join("; ", import.Problems) : "");
@@ -301,6 +305,16 @@ public partial class CreateScreen
             case "import-keep":
                 _import.SetDropped(_start.Picked, id == "import-drop");
                 break;
+            case "import-system":
+            {
+                List<(string Folder, string Name)> systems = _package.Systems();
+                int at = systems.FindIndex(s => s.Folder == _import.RulesSystem);
+                if (systems.Count > 0)
+                {
+                    _import.RulesSystem = systems[(at + 1) % systems.Count].Folder;
+                }
+                break;
+            }
             case "import-build":
                 BuildImport();
                 break;
