@@ -1,0 +1,26 @@
+{
+  "id": "rage",
+  "name": "Rage",
+  "description": "1 action: temporary HP equal to your level plus your Constitution modifier, +2 damage and -1 AC until the fight ends.",
+  "order": 61,
+  "cost": 1,
+  "general": false,
+  "requires": {
+    "without": [
+      "raging"
+    ]
+  },
+  "log": "{name} rages.",
+  "effects": [
+    {
+      "do": "tempHp",
+      "dice": "{max(1, level + mod.con)}",
+      "target": "self"
+    },
+    {
+      "do": "condition",
+      "id": "raging",
+      "target": "self"
+    }
+  ]
+}

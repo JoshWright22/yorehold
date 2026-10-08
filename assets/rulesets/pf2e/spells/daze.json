@@ -1,0 +1,31 @@
+{
+  "id": "daze",
+  "name": "Daze",
+  "description": "Two actions: cloud a mind, 1d6 mental with a basic Will save; stunned 1 on a critical failure.",
+  "level": 0,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "will",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{ceil(level / 2)}d6",
+      "type": "mental",
+      "onSave": "half"
+    },
+    {
+      "do": "condition",
+      "id": "stunned",
+      "duration": 1,
+      "when": "criticalFailure"
+    }
+  ]
+}

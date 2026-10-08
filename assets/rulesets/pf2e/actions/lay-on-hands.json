@@ -1,0 +1,33 @@
+{
+  "id": "lay-on-hands",
+  "name": "Lay on Hands",
+  "description": "1 focus point, 1 action: a touch that heals 6 HP, 6 more at level 3 and 5.",
+  "order": 63,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1,
+    "downed": true
+  },
+  "requires": {
+    "resources": {
+      "focus": 1
+    }
+  },
+  "log": "{name} lays on hands.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "focus",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "heal",
+      "dice": "{6 * ceil(level / 2)}"
+    }
+  ]
+}

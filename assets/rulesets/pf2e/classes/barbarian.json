@@ -1,0 +1,80 @@
+{
+  "id": "barbarian",
+  "name": "Barbarian",
+  "description": "Rage carries them through a fight.",
+  "hitDie": 12,
+  "bonusHp": 9,
+  "speed": 25,
+  "dcAbility": "str",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "armor": "trained",
+    "dc": "trained",
+    "perception": "trained",
+    "fortitude": "expert",
+    "reflex": "trained",
+    "will": "expert",
+    "athletics": "trained",
+    "intimidation": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "athletics"
+  ],
+  "items": [
+    "longsword",
+    "studded-leather"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "rage",
+          "name": "Rage",
+          "description": "Rage for temporary HP and +2 damage, at -1 AC.",
+          "actions": [
+            "rage"
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "features": [
+        {
+          "id": "furious-footfalls",
+          "name": "Furious Footfalls",
+          "description": "+5 feet of speed.",
+          "modifiers": [
+            {
+              "stat": "speed",
+              "value": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "boosts": 4,
+      "boostStep": 2,
+      "ranks": {
+        "weapons": "expert"
+      },
+      "features": [
+        {
+          "id": "brutality",
+          "name": "Brutality",
+          "description": "Expert with your weapons."
+        }
+      ]
+    }
+  ]
+}

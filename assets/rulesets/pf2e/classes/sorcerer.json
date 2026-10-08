@@ -1,0 +1,84 @@
+{
+  "id": "sorcerer",
+  "name": "Sorcerer",
+  "description": "Magic in the blood: an arcane bloodline.",
+  "hitDie": 6,
+  "bonusHp": 6,
+  "speed": 25,
+  "dcAbility": "cha",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "expert",
+    "perception": "trained",
+    "arcana": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "arcana"
+  ],
+  "items": [
+    "staff"
+  ],
+  "casting": "known",
+  "spells": {
+    "0": [
+      "electric-arc"
+    ],
+    "1": [
+      "force-barrage",
+      "breathe-fire",
+      "thunderstrike"
+    ],
+    "2": [
+      "acid-grip",
+      "blazing-bolt"
+    ],
+    "3": [
+      "fireball",
+      "slow"
+    ]
+  },
+  "levels": [
+    {
+      "slots": {
+        "1": 2
+      }
+    },
+    {
+      "slots": {
+        "1": 3
+      },
+      "skills": 1
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 2
+      },
+      "skills": 1
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 3
+      },
+      "skills": 1
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 3,
+        "3": 2
+      },
+      "skills": 1,
+      "boosts": 4,
+      "boostStep": 2,
+      "ranks": {
+        "reflex": "expert"
+      }
+    }
+  ]
+}

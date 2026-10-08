@@ -1,0 +1,20 @@
+{
+  "id": "courage",
+  "name": "Courage",
+  "description": "+1 status bonus to attack rolls and damage.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 1,
+      "type": "status"
+    },
+    {
+      "stat": "damage",
+      "op": "add",
+      "value": 1,
+      "type": "status"
+    }
+  ],
+  "duration": 1
+}

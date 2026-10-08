@@ -1,0 +1,17 @@
+{
+  "id": "courageous-anthem",
+  "name": "Courageous Anthem",
+  "description": "1 action: a song that gives every ally +1 status bonus to attack rolls and damage for a round.",
+  "order": 64,
+  "cost": 1,
+  "general": false,
+  "log": "{name} strikes up an anthem.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "courage",
+      "duration": 1,
+      "target": "allies"
+    }
+  ]
+}

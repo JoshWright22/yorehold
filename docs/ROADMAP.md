@@ -512,6 +512,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: a bestiary of 16: zombie shambler, ghoul, ogre warrior, hobgoblin soldier,
     hunting spider, giant rat, cultist, cult leader (a caster), guard, grizzly bear, warg and
     owlbear beside the first four; knockdown, venom and paralysis as triggers with a save.
+  - Done 10/8: seven more classes to level 5: barbarian (Rage), champion (Retributive Strike as
+    an allyHit reaction, Lay on Hands on focus), ranger (Hunt Prey, Hunter's Edge, a longbow),
+    monk (Flurry of Blows once a turn), bard (Courageous Anthem, Daze), druid and sorcerer; bows.
+    Doesn't fit yet: rage's wait before raging again, compositions lasting while sustained,
+    instincts, causes and bloodlines beyond one each.
   - Done 10/8: deadly and backstabber as general triggers (anyone wielding the trait), the
     hidden as a DC 11 flat check (`attackersFlatCheck`), heritages, boosts, a free action named.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more

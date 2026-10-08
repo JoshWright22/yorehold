@@ -1,0 +1,11 @@
+{
+  "id": "flurried",
+  "name": "Flurried",
+  "description": "Used Flurry of Blows this turn.",
+  "flags": [
+    "flurried"
+  ],
+  "ends": [
+    "turnEnd"
+  ]
+}

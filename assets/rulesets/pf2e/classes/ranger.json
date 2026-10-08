@@ -1,0 +1,75 @@
+{
+  "id": "ranger",
+  "name": "Ranger",
+  "description": "A hunter who marks prey and does not let go.",
+  "hitDie": 10,
+  "bonusHp": 10,
+  "speed": 25,
+  "dcAbility": "dex",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "armor": "trained",
+    "dc": "trained",
+    "perception": "expert",
+    "fortitude": "expert",
+    "reflex": "expert",
+    "will": "trained",
+    "survival": "trained",
+    "nature": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "survival"
+  ],
+  "items": [
+    "longbow",
+    "studded-leather"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "hunt-prey",
+          "name": "Hunt Prey",
+          "description": "Mark a foe as your prey.",
+          "actions": [
+            "hunt-prey"
+          ]
+        },
+        {
+          "id": "hunters-edge",
+          "name": "Hunter's Edge: Precision",
+          "description": "Your first hit on your prey each turn deals 1d8 more.",
+          "actions": [
+            "hunters-edge"
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "boosts": 4,
+      "boostStep": 2,
+      "ranks": {
+        "weapons": "expert"
+      },
+      "features": [
+        {
+          "id": "ranger-weapon-expertise",
+          "name": "Ranger Weapon Expertise",
+          "description": "Expert with your weapons."
+        }
+      ]
+    }
+  ]
+}

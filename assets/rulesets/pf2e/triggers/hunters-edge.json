@@ -1,0 +1,15 @@
+{
+  "id": "hunters-edge",
+  "name": "Hunter's Edge: Precision",
+  "description": "Your first hit on your prey each turn deals 1d8 more precision damage.",
+  "on": "hit",
+  "if": "targetFlag.prey",
+  "once": "turn",
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d8",
+      "type": "precision"
+    }
+  ]
+}

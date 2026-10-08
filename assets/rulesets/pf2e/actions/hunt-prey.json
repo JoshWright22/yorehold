@@ -1,0 +1,21 @@
+{
+  "id": "hunt-prey",
+  "name": "Hunt Prey",
+  "description": "1 action: name a foe your prey; your Strikes against it deal 1d8 more precision damage.",
+  "order": 62,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 20
+  },
+  "log": "{name} marks their prey.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "prey",
+      "duration": 10
+    }
+  ]
+}

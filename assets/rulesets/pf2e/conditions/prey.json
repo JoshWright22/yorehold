@@ -1,0 +1,9 @@
+{
+  "id": "prey",
+  "name": "Hunted Prey",
+  "description": "A ranger's prey: their Strikes deal 1d8 more precision damage to it.",
+  "flags": [
+    "prey"
+  ],
+  "duration": 10
+}

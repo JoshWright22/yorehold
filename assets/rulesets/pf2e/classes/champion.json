@@ -1,0 +1,92 @@
+{
+  "id": "champion",
+  "name": "Champion",
+  "description": "A sworn defender of their allies.",
+  "hitDie": 10,
+  "bonusHp": 10,
+  "speed": 25,
+  "dcAbility": "cha",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "armor": "trained",
+    "dc": "trained",
+    "perception": "trained",
+    "fortitude": "expert",
+    "reflex": "trained",
+    "will": "expert",
+    "religion": "trained",
+    "diplomacy": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "religion"
+  ],
+  "items": [
+    "longsword",
+    "chain-mail",
+    "wooden-shield"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "champions-reaction",
+          "name": "Retributive Strike",
+          "description": "Strike a foe that hits an ally beside you.",
+          "actions": [
+            "retributive-strike"
+          ]
+        },
+        {
+          "id": "devotion-spells",
+          "name": "Lay on Hands",
+          "description": "A focus spell that heals with a touch.",
+          "resources": {
+            "focus": 1
+          },
+          "actions": [
+            "lay-on-hands"
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "features": [
+        {
+          "id": "divine-ally",
+          "name": "Divine Ally: Shield",
+          "description": "Your shield is blessed: +1 AC.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "boosts": 4,
+      "boostStep": 2,
+      "ranks": {
+        "weapons": "expert"
+      },
+      "features": [
+        {
+          "id": "weapon-expertise",
+          "name": "Weapon Expertise",
+          "description": "Expert with your weapons."
+        }
+      ]
+    }
+  ]
+}

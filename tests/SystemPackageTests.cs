@@ -65,6 +65,35 @@ public class SystemPackageTests
         Assert.Equal(new Cell(6, 6), w.CellOf(bow));
     }
 
+    [Theory]
+    [InlineData("barbarian", "bard")]
+    [InlineData("champion", "druid")]
+    [InlineData("ranger", "sorcerer")]
+    [InlineData("monk", "bard")]
+    public void EveryPf2eClassPlaysAFight(string fighter, string caster)
+    {
+        // the game's own AI plays both sides, as it would for an absent player
+        using WorldFixture world = Yard("rulesets/pf2e", fighter, caster);
+        World w = world.World;
+        w.Options.AutoPlay = true;
+        world.Fight();
+        Assert.True(world.StepUntil(() => !w.Fighting, 600), "The fight ends: " + string.Join(" | ", world.Log.TakeLast(8)));
+    }
+
+    [Fact]
+    public void APf2eRageIsTemporaryHpAndDamage()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "barbarian", "bard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        ana.Stats.SetBase("perception", 2000);
+        world.Fight();
+        int ac = ana.AttackDefence(w.Rules);
+        Assert.True(world.TurnTo(0) && world.Use("rage"), w.Refusal);
+        Assert.True(ana.TempHp >= 1 && ana.AttackDefence(w.Rules) == ac - 1, $"temp {ana.TempHp}, AC {ac} to {ana.AttackDefence(w.Rules)}: " + string.Join(" | ", world.Log.TakeLast(4)));
+        Assert.False(w.CanUse(0, "rage"), "Once raging, not again");
+    }
+
     [Fact]
     public void RageAndInspirationDoTheirSums()
     {

@@ -1,0 +1,14 @@
+{
+  "id": "handwraps",
+  "name": "Fist",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "str",
+  "weight": 0,
+  "traits": [
+    "agile",
+    "finesse"
+  ],
+  "damageType": "bludgeoning"
+}

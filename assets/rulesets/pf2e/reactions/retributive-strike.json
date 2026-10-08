@@ -1,0 +1,8 @@
+{
+  "id": "retributive-strike",
+  "name": "Retributive Strike",
+  "trigger": "allyHit",
+  "action": "retributive-strike",
+  "order": 20,
+  "general": false
+}

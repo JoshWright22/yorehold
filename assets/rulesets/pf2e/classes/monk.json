@@ -1,0 +1,88 @@
+{
+  "id": "monk",
+  "name": "Monk",
+  "description": "Their body is the weapon.",
+  "hitDie": 10,
+  "bonusHp": 10,
+  "speed": 25,
+  "dcAbility": "str",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "expert",
+    "reflex": "expert",
+    "will": "expert",
+    "perception": "trained",
+    "athletics": "trained",
+    "acrobatics": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "athletics"
+  ],
+  "items": [
+    "handwraps"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "flurry-of-blows",
+          "name": "Flurry of Blows",
+          "description": "Two Strikes for one action, once a turn.",
+          "actions": [
+            "flurry-of-blows"
+          ]
+        },
+        {
+          "id": "unarmored-defense",
+          "name": "Unarmored Defense",
+          "description": "+2 AC without armour.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "features": [
+        {
+          "id": "incredible-movement",
+          "name": "Incredible Movement",
+          "description": "+10 feet of speed.",
+          "modifiers": [
+            {
+              "stat": "speed",
+              "value": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "boosts": 4,
+      "boostStep": 2,
+      "ranks": {
+        "weapons": "expert"
+      },
+      "features": [
+        {
+          "id": "expert-strikes",
+          "name": "Expert Strikes",
+          "description": "Expert with your unarmed attacks."
+        }
+      ]
+    }
+  ]
+}

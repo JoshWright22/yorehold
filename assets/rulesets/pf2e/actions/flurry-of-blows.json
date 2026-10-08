@@ -1,0 +1,43 @@
+{
+  "id": "flurry-of-blows",
+  "name": "Flurry of Blows",
+  "description": "1 action, once a turn: two Strikes.",
+  "order": 12,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": "weapon"
+  },
+  "requires": {
+    "without": [
+      "flurried"
+    ]
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "flurried",
+      "target": "self"
+    },
+    {
+      "do": "repeat",
+      "times": "2",
+      "steps": [
+        {
+          "do": "roll",
+          "kind": "attack",
+          "steps": [
+            {
+              "do": "damage",
+              "dice": "weapon",
+              "when": "hit",
+              "minimum": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

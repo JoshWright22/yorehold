@@ -1,0 +1,96 @@
+{
+  "id": "bard",
+  "name": "Bard",
+  "description": "A performer whose music is magic.",
+  "hitDie": 8,
+  "bonusHp": 8,
+  "speed": 25,
+  "dcAbility": "cha",
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "armor": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "expert",
+    "perception": "expert",
+    "performance": "trained",
+    "occultism": "trained"
+  },
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "performance"
+  ],
+  "items": [
+    "rapier",
+    "studded-leather"
+  ],
+  "casting": "known",
+  "spells": {
+    "0": [
+      "daze"
+    ],
+    "1": [
+      "fear",
+      "force-barrage"
+    ],
+    "2": [
+      "spiritual-armament"
+    ],
+    "3": [
+      "slow",
+      "heroism"
+    ]
+  },
+  "levels": [
+    {
+      "slots": {
+        "1": 2
+      },
+      "features": [
+        {
+          "id": "composition",
+          "name": "Courageous Anthem",
+          "description": "A composition cantrip: every ally +1 to attack and damage for a round.",
+          "actions": [
+            "courageous-anthem"
+          ]
+        }
+      ]
+    },
+    {
+      "slots": {
+        "1": 3
+      },
+      "skills": 1
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 2
+      },
+      "skills": 1
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 3
+      },
+      "skills": 1
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 3,
+        "3": 2
+      },
+      "skills": 1,
+      "boosts": 4,
+      "boostStep": 2,
+      "ranks": {
+        "reflex": "expert"
+      }
+    }
+  ]
+}

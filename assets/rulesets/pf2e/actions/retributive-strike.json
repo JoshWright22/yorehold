@@ -1,0 +1,27 @@
+{
+  "id": "retributive-strike",
+  "name": "Retributive Strike",
+  "description": "Strike the foe that hurt an ally beside you.",
+  "order": 14,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": "weapon"
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

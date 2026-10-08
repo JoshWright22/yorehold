@@ -1,0 +1,23 @@
+{
+  "id": "raging",
+  "name": "Raging",
+  "description": "+2 damage and -1 AC until the fight ends.",
+  "flags": [
+    "raging"
+  ],
+  "modifiers": [
+    {
+      "stat": "damage",
+      "op": "add",
+      "value": 2
+    },
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": -1
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}
