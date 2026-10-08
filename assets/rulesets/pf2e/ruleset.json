@@ -305,6 +305,12 @@
   ],
   "proficientRank": "trained",
   "untrainedRank": "untrained",
+  "featKinds": [
+    { "id": "ancestry", "name": "Ancestry feat" },
+    { "id": "class", "name": "Class feat" },
+    { "id": "skill", "name": "Skill feat" },
+    { "id": "general", "name": "General feat" }
+  ],
   "creation": {
     "steps": [
       {

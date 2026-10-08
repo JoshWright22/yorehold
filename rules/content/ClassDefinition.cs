@@ -79,11 +79,8 @@ public class ClassLevel
                     });
                 }
             }
+            // the ruleset's feat kinds, checked by the rules folder
             List<string> feats = row.Ids("feats");
-            if (feats.Any(kind => !FeatDefinition.Kinds.Contains(kind)))
-            {
-                throw row.Fail("feats", "lists feat kinds: \"class\", \"skill\", \"general\" or \"race\"");
-            }
             var slots = new SortedDictionary<int, int>();
             if (row.Get("slots") is ContentNode slotList)
             {

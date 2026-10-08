@@ -17,7 +17,7 @@ public class FeatRequirements
 /// <summary>One feat file: rulesets/yorehold/feats/tough.json. Unknown fields are refused.</summary>
 public class FeatDefinition
 {
-    /// <summary>Which level slots may offer a feat.</summary>
+    /// <summary>The game's own feat kinds; a ruleset's featKinds may name others.</summary>
     public static readonly string[] Kinds = { "class", "skill", "general", "race" };
 
     public string Id { get; init; } = "";
@@ -33,11 +33,8 @@ public class FeatDefinition
         node.RequireObject("a feat is a JSON object");
         node.Only("id", "name", "description", "kind", "repeatable", "requires", "modifiers", "proficiencies", "ranks", "resources", "actions");
         string id = node.At("id").AsId();
-        string kind = node.Text("kind", "general", 64);
-        if (!Kinds.Contains(kind))
-        {
-            throw node.Fail("kind", "is \"class\", \"skill\", \"general\" or \"race\"");
-        }
+        // one of the ruleset's featKinds; the rules folder checks which once it has the ruleset
+        string kind = node.Has("kind") ? node.At("kind").AsId() : "general";
         var needs = new FeatRequirements();
         if (node.Get("requires") is ContentNode r)
         {

@@ -101,6 +101,30 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void FeatKindsAreTheSystems()
+    {
+        using var scratch = new Scratch();
+        scratch.Write("rulesets/pf2e/feats/toughness.json", """{"id": "toughness", "name": "Toughness", "kind": "general"}""");
+        scratch.Write("rulesets/pf2e/feats/natural-ambition.json", """{"id": "natural-ambition", "name": "Natural Ambition", "kind": "ancestry"}""");
+        ContentFiles files = TestContent.ShippedWith(scratch);
+        void Check()
+        {
+            RulesFolder rules = RulesFolder.Load(files, "rulesets/pf2e");
+            var compendium = new Compendium();
+            compendium.Load(files, "rulesets/pf2e", "");
+            compendium.LoadOptions(files, "rulesets/pf2e");
+            rules.Check(compendium, "", files);
+        }
+        Check();
+        Assert.Equal("Ancestry feat", RulesFolder.Load(files, "rulesets/pf2e").Rules.FeatKindName("ancestry"));
+
+        // the game's own "race" kind is not one of Pathfinder's
+        scratch.Write("rulesets/pf2e/feats/old.json", """{"id": "old", "name": "Old", "kind": "race"}""");
+        ContentException error = TestContent.Refused(Check);
+        Assert.Contains("unknown feat kind \"race\"; the ruleset's are ancestry, class, skill, general", error.Message);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

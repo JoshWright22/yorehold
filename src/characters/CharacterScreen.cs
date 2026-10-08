@@ -674,7 +674,7 @@ public partial class CharacterScreen : CanvasLayer
         }
         foreach (string kind in d.FeatKinds())
         {
-            Heading(_body, char.ToUpperInvariant(kind[0]) + kind[1..] + " feat");
+            Heading(_body, _rules.FeatKindName(kind));
             List<string> picked = d.Picked("feats");
             List<string> options = d.FeatOptions(kind);
             if (options.Count == 0)

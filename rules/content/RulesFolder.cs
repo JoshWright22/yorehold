@@ -101,6 +101,20 @@ public class RulesFolder
                 throw new ContentException(file, "actions", $"no action, reaction or trigger \"{id}\" in the ruleset");
             }
         }
+        // feats and the class levels that offer them name the ruleset's feat kinds
+        string kinds = string.Join(", ", Rules.FeatKinds.Select(k => k.Id));
+        bool KnownKind(string kind) => Rules.FeatKinds.Any(k => k.Id == kind);
+        foreach (ClassDefinition definition in compendium.Classes.Values)
+        {
+            if (definition.Levels.SelectMany(level => level.Feats).FirstOrDefault(kind => !KnownKind(kind)) is string unknown)
+            {
+                throw new ContentException(FileOf("classes", definition.Id), "levels", $"unknown feat kind \"{unknown}\"; the ruleset's are {kinds}");
+            }
+        }
+        foreach (FeatDefinition feat in compendium.Feats.Values.Where(feat => !KnownKind(feat.Kind)))
+        {
+            throw new ContentException($"{Folder}/feats/{feat.Id}.json", "kind", $"unknown feat kind \"{feat.Kind}\"; the ruleset's are {kinds}");
+        }
         foreach (ClassDefinition definition in compendium.Classes.Values)
         {
             ClassDefinition.CheckRanks(Rules, definition.ProficiencyRanks, definition.DcAbility, FileOf("classes", definition.Id));

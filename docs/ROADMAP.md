@@ -323,7 +323,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     granted like actions; Sneak Attack in 5e and PF2e.
   - Done 10/8: triggers on being hit (`hitBy`, landing on the attacker), on a kill and on turn
     start.
-  - Left: feat kinds from the system; the Features tab and Create's "grants" fields.
+  - Done 10/8: feat kinds from the system (`featKinds`: PF2e's ancestry, class, skill and
+    general; 5e's origin, general, fighting style and epic boon).
+  - Left: the Features tab and Create's "grants" fields.
 - [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's

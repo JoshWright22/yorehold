@@ -845,6 +845,8 @@ Player options live only in the ruleset folder: `races/`, `backgrounds/` and `fe
 
 The game ships human, elf, dwarf and halfling; acolyte, criminal, farmhand, sage, soldier and noble; and a first feat set of each kind: race feats each race gives, skill feats the backgrounds give (expert in one of their skills), and general and class feats for the level slots the class level tables open. A character's `race` and `background` in a save name these ids. The content check builds every race and background with every class and takes every feat once.
 
+A feat's `kind` and a class level's `feats` name one of the ruleset's `featKinds`: `[{"id": "ancestry", "name": "Ancestry feat"}, ...]`, 1 to 16 of them, each name what the creation screen calls a slot of that kind. Without the list a ruleset has the game's own: `class`, `skill`, `general` and `race`. A kind the ruleset doesn't list stops the ruleset loading and names the file.
+
 ## Class level tables
 
 `classes/<id>.json` may have `levels`, one row per class level, in the framework's format (FRAMEWORK.md, "Class level tables"): features, rank rises, the feat kinds and skill picks offered, and spell slots. Fighter, rogue, cleric and wizard ship with rows for levels 1 to 20; the top of each file is still the first-level character. Every table offers a class feat at levels 2, 6, 10, 14 and 18, a skill feat at 4, 12 and 20, a general feat at 8 and 16, and a skill to train at odd levels from 3 (the rogue also picks two at level 1). Cleric and wizard rows carry the full caster's slots, levels 1 to 9. A class without `levels` (the barbarian, older packages) still plays: its levels add HP only.

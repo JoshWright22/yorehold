@@ -78,7 +78,7 @@ public class DefinitionLoaderTests
     [InlineData("{\"id\": \"x\", \"spells\": {\"1\": [\"Big Bang\"]}}", "spells.1[0]")]
     [InlineData("{\"id\": \"x\", \"resources\": {\"potions\": {\"max\": 1, \"current\": 2}}}", "resources.potions.current")]
     [InlineData("{\"id\": \"x\", \"levels\": [{}, {\"slots\": {\"0\": 2}}]}", "levels[1].slots.0")]
-    [InlineData("{\"id\": \"x\", \"levels\": [{\"feats\": [\"lucky\"]}]}", "levels[0].feats")]
+    [InlineData("{\"id\": \"x\", \"levels\": [{\"feats\": [\"Lucky One\"]}]}", "levels[0].feats[0]")]
     [InlineData("{\"id\": \"x\", \"levels\": [{\"bonus\": 1}]}", "levels[0].bonus")]
     [InlineData("{\"id\": \"x\", \"levels\": [{\"features\": [{\"name\": \"No id\"}]}]}", "levels[0].features[0].id")]
     [InlineData("{\"id\": \"x\", \"levels\": [{\"features\": [{\"id\": \"f\", \"modifiers\": [{\"stat\": \"ac\", \"value\": 1, \"when\": \"raging\"}]}]}]}", "levels[0].features[0].modifiers[0].when")]
@@ -145,7 +145,7 @@ public class DefinitionLoaderTests
         Assert.Equal(("expert", 1), (tough.Gives.Ranks["con"], tough.Gives.Resources["grit"]));
         FeatDefinition bare = FeatDefinition.Read(TestContent.Json("{\"id\": \"plain\"}"));
         Assert.Equal(("general", 1, false), (bare.Kind, bare.Needs.Level, bare.Repeatable));
-        Assert.Equal("kind", TestContent.Refused(() => FeatDefinition.Read(TestContent.Json("{\"id\": \"x\", \"kind\": \"epic\"}"))).Field);
+        Assert.Equal("kind", TestContent.Refused(() => FeatDefinition.Read(TestContent.Json("{\"id\": \"x\", \"kind\": \"Epic One\"}"))).Field);
         Assert.Equal("requires.level", TestContent.Refused(() => FeatDefinition.Read(TestContent.Json("{\"id\": \"x\", \"requires\": {\"level\": 0}}"))).Field);
         Assert.Equal("requires.alignment", TestContent.Refused(() => FeatDefinition.Read(TestContent.Json("{\"id\": \"x\", \"requires\": {\"alignment\": \"good\"}}"))).Field);
     }

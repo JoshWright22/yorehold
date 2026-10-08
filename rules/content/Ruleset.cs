@@ -9,6 +9,9 @@ public record SaveDefinition(string Id, string Name, string Ability);
 
 public record ProficiencyRank(string Id, string Name, int Bonus, bool AddsLevel);
 
+/// <summary>A kind of feat a level can offer ("class", PF2e's "ancestry"), and what it is called.</summary>
+public record FeatKind(string Id, string Name);
+
 public enum RecoveryKind
 {
     None,
@@ -131,6 +134,14 @@ public class Ruleset
     public List<SkillDefinition> Skills { get; init; } = new();
     /// <summary>Saves of their own; empty = every ability is a save.</summary>
     public List<SaveDefinition> Saves { get; init; } = new();
+    /// <summary>The kinds of feat its feats and class levels name.</summary>
+    public List<FeatKind> FeatKinds { get; init; } = DefaultFeatKinds();
+    public string FeatKindName(string id) => FeatKinds.Find(k => k.Id == id)?.Name ?? id;
+
+    /// <summary>The game's own kinds, when a system names none: class, skill, general and race feats.</summary>
+    public static List<FeatKind> DefaultFeatKinds() =>
+        FeatDefinition.Kinds.Select(k => new FeatKind(k, char.ToUpperInvariant(k[0]) + k[1..] + " feat")).ToList();
+
     /// <summary>Filled from the file's own list and then from the folder's conditions/ files.</summary>
     public List<ConditionDefinition> Conditions { get; } = new();
     public List<SurfaceDefinition> Surfaces { get; } = new();
@@ -326,6 +337,27 @@ public class Ruleset
             saves.Add(save);
         }
 
+        List<FeatKind> featKinds = DefaultFeatKinds();
+        if (node.Get("featKinds") is ContentNode kindList)
+        {
+            if (!kindList.IsArray || kindList.Count < 1 || kindList.Count > 16)
+            {
+                throw kindList.Fail("is a list of 1 to 16 feat kinds, each an id and a name");
+            }
+            featKinds = new List<FeatKind>();
+            foreach (ContentNode entry in kindList.Items())
+            {
+                entry.RequireObject("is a feat kind with an id and a name");
+                entry.Only("id", "name");
+                var kind = new FeatKind(entry.At("id").AsId(), entry.At("name").AsText(64));
+                if (featKinds.Any(k => k.Id == kind.Id))
+                {
+                    throw entry.Fail("id", "feat kinds have different ids");
+                }
+                featKinds.Add(kind);
+            }
+        }
+
         var ranks = new List<ProficiencyRank>();
         if (node.Get("proficiencyRanks") is ContentNode rankList)
         {
@@ -415,6 +447,7 @@ public class Ruleset
             Abilities = abilities,
             Skills = skills,
             Saves = saves,
+            FeatKinds = featKinds,
             ModifierTable = table,
             ScoreMin = scoreMin,
             ScoreMax = scoreMax,
