@@ -59,6 +59,13 @@ public class CheckRulesTests
         Assert.Equal((0.05, 0.40, 0.50, 0.05), (Math.Round(odds["criticalFailure"], 3), Math.Round(odds["failure"], 3),
             Math.Round(odds["success"], 3), Math.Round(odds["criticalSuccess"], 3)));
         Assert.Equal(0.5, Math.Round(rules.Checks.Kind("pool").ChanceToPass(0, 11), 3));
+
+        // Dice pools: successes counted, Fate dice, and an exploding die that always ends.
+        Assert.Equal(("6d6s5", "4dF", "1d6!"), (DiceExpression.Parse("6d6s5")!.ToString(), DiceExpression.Parse("4dF")!.ToString(), DiceExpression.Parse("1d6!")!.ToString()));
+        var pool = new CheckKind { Dice = DiceExpression.Parse("2d6s5")!, Outcomes = { new("no", "No", false, false, 1), new("yes", "Yes", true, false, 1) } };
+        Assert.Equal(Math.Round(1 - 4.0 / 9, 3), Math.Round(pool.ChanceToPass(0, 1), 3));
+        var random = new Rng(3);
+        Assert.All(Enumerable.Range(0, 200).Select(_ => Dice.Roll("4dF", random).Total), total => Assert.InRange(total, -4, 4));
         Assert.Equal("(dice + flat) * 2", rules.Checks.CriticalDamage!.Text);
 
         // The game's own rules, when a system says nothing.

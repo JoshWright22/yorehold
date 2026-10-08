@@ -18,7 +18,15 @@ public static class Dice
             int first = result.Dice.Count;
             for (int i = 0; i < term.Count; i++)
             {
-                result.Dice.Add(new DieRoll(term.Sides, random.Range(1, term.Sides)));
+                int face = random.Range(1, term.Sides);
+                int value = term.Fudge ? face - 2 : face;
+                // an exploding die adds each roll again on its top face, up to a limit
+                for (int again = 0; term.Explode && face == term.Sides && again < DiceTerm.MostExplosions; again++)
+                {
+                    face = random.Range(1, term.Sides);
+                    value += face;
+                }
+                result.Dice.Add(new DieRoll(term.Sides, value));
             }
 
             if (term.KeepHighest != 0 || term.KeepLowest != 0)
@@ -38,7 +46,9 @@ public static class Dice
             {
                 if (result.Dice[i].Kept)
                 {
-                    result.Total += term.Sign * result.Dice[i].Value;
+                    // a success-counting term adds one for each die that reaches its number
+                    int counts = term.SuccessAt == 0 ? result.Dice[i].Value : result.Dice[i].Value >= term.SuccessAt ? 1 : 0;
+                    result.Total += term.Sign * counts;
                 }
             }
         }

@@ -2,14 +2,27 @@ using System.Text;
 
 namespace Yorehold.Rules;
 
-/// <summary>One part of dice text: "3d6", "4d6kh3", "2d20kl1" or a flat number (Sides 0, Count is the number).</summary>
-public readonly record struct DiceTerm(int Count = 1, int Sides = 0, int KeepHighest = 0, int KeepLowest = 0, int Sign = 1)
+/// <summary>
+/// One part of dice text: "3d6", "4d6kh3", "2d20kl1" or a flat number (Sides 0, Count is the
+/// number). Explode: a die showing its highest face rolls again and adds ("1d6!"). SuccessAt: the
+/// term counts the dice showing that much or more instead of adding them ("6d6s5"). Fudge: the
+/// dice show -1, 0 or +1 ("4dF").
+/// </summary>
+public readonly record struct DiceTerm(int Count = 1, int Sides = 0, int KeepHighest = 0, int KeepLowest = 0, int Sign = 1,
+    bool Explode = false, int SuccessAt = 0, bool Fudge = false)
 {
+    /// <summary>Rolls again on an exploding die stop here, so a roll always ends.</summary>
+    public const int MostExplosions = 20;
+
     /// <summary>How many of its dice count toward the total.</summary>
     public int Kept => KeepHighest != 0 ? KeepHighest : KeepLowest != 0 ? KeepLowest : Count;
+
+    /// <summary>The lowest and highest face of one die.</summary>
+    public int LowFace => Fudge ? -1 : 1;
+    public int HighFace => Fudge ? 1 : Sides;
 }
 
-/// <summary>Parsed dice text like "2d6+3", "1d20-1", "4d6kh3" or "d%". Case and spaces don't matter.</summary>
+/// <summary>Parsed dice text like "2d6+3", "1d20-1", "4d6kh3", "d%", "1d6!", "6d6s5" or "4dF". Case and spaces don't matter.</summary>
 public sealed class DiceExpression
 {
     public List<DiceTerm> Terms { get; } = new();
@@ -47,9 +60,16 @@ public sealed class DiceExpression
                 pos++;
                 int count = number < 0 ? 1 : number;
                 int sides;
+                bool fudge = false;
                 if (pos < text.Length && text[pos] == '%')
                 {
                     sides = 100;
+                    pos++;
+                }
+                else if (pos < text.Length && text[pos] == 'f')
+                {
+                    sides = 3;
+                    fudge = true;
                     pos++;
                 }
                 else
@@ -74,7 +94,27 @@ public sealed class DiceExpression
                     keepHighest = highest ? keep : 0;
                     keepLowest = highest ? 0 : keep;
                 }
-                term = new DiceTerm(count, sides, keepHighest, keepLowest, sign);
+                bool explode = false;
+                if (pos < text.Length && text[pos] == '!')
+                {
+                    if (sides < 2 || fudge)
+                    {
+                        return null;
+                    }
+                    explode = true;
+                    pos++;
+                }
+                int successAt = 0;
+                if (pos < text.Length && text[pos] == 's')
+                {
+                    pos++;
+                    successAt = ReadNumber(text, ref pos);
+                    if (successAt < 1 || fudge)
+                    {
+                        return null;
+                    }
+                }
+                term = new DiceTerm(count, sides, keepHighest, keepLowest, sign, explode, successAt, fudge);
             }
             else
             {
@@ -85,7 +125,7 @@ public sealed class DiceExpression
                 term = new DiceTerm(number, 0, 0, 0, sign);
             }
 
-            magnitude += term.Sides == 0 ? term.Count : (long)term.Kept * term.Sides;
+            magnitude += term.Sides == 0 ? term.Count : (long)term.Kept * term.Sides * (term.Explode ? DiceTerm.MostExplosions + 1 : 1);
             totalDice += term.Sides == 0 ? 0 : term.Count;
             // Room for critical doubling and modifiers, and a stop on absurd expressions.
             if (magnitude > int.MaxValue / 4 || totalDice > 10000 || expression.Terms.Count >= 128)
@@ -116,7 +156,15 @@ public sealed class DiceExpression
             {
                 continue;
             }
-            text.Append('d').Append(term.Sides);
+            text.Append('d');
+            if (term.Fudge)
+            {
+                text.Append('F');
+            }
+            else
+            {
+                text.Append(term.Sides);
+            }
             if (term.KeepHighest != 0)
             {
                 text.Append("kh").Append(term.KeepHighest);
@@ -124,6 +172,14 @@ public sealed class DiceExpression
             if (term.KeepLowest != 0)
             {
                 text.Append("kl").Append(term.KeepLowest);
+            }
+            if (term.Explode)
+            {
+                text.Append('!');
+            }
+            if (term.SuccessAt != 0)
+            {
+                text.Append('s').Append(term.SuccessAt);
             }
         }
         return text.ToString();
@@ -149,8 +205,9 @@ public sealed class DiceExpression
         return total;
     }
 
-    private static int Low(DiceTerm term) => term.Sides == 0 ? term.Count : term.Kept;
-    private static int High(DiceTerm term) => term.Sides == 0 ? term.Count : term.Kept * term.Sides;
+    private static int Low(DiceTerm term) => term.Sides == 0 ? term.Count : term.SuccessAt != 0 ? 0 : term.Kept * term.LowFace;
+    private static int High(DiceTerm term) => term.Sides == 0 ? term.Count : term.SuccessAt != 0 ? term.Kept
+        : term.Kept * term.HighFace * (term.Explode ? DiceTerm.MostExplosions + 1 : 1);
 
     // Reads digits at pos; -1 if there are none or the number is too big to be dice.
     private static int ReadNumber(string text, ref int pos)

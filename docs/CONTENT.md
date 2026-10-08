@@ -776,7 +776,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 
 `checks` is an object of roll kinds. The game rolls `attack`, `check`, `save` and `initiative`; a kind the system leaves out resolves like `check`. Each kind has:
 
-- `dice`, `advantage`, `disadvantage`: the dice rolled (`"1d20"`, `"3d6"`, `"2d20kh1"`). Giving only `dice` uses it for all three.
+- `dice`, `advantage`, `disadvantage`: the dice rolled (`"1d20"`, `"3d6"`, `"2d20kh1"`). Giving only `dice` uses it for all three. Dice anywhere in the game may also explode (`"1d6!"`: a die on its top face rolls again and adds, at most 20 times), count successes (`"6d6s5"`: the number of dice showing 5 or more) or be Fate dice (`"4dF"`: each -1, 0 or +1).
 - `outcomes`: 2 to 12 ways it can come out, worst first. Each has an `id`, a `name` for the log, `passes` (what "hit", "success" and a held save mean to the rest of the game), `critical` (critical damage goes with it) and `damage`, the share of an effect's damage a save with this outcome lets through under `"onSave": "half"` (0.5 by default for a save that passes, else 1; a critical failure can be 2 and a critical success 0).
 - `degree`: a formula giving the outcome's place in the list (0 = the first), from `total`, `die` (the dice without the modifier), `modifier` and `dc`.
 

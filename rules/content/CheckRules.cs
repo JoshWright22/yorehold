@@ -113,7 +113,7 @@ public sealed class CheckKind
         }
         var spread = new Dictionary<int, double>();
         double combinations = Math.Pow(term.Sides, term.Count);
-        if (combinations > MostCombinations)
+        if (combinations > MostCombinations || term.Explode)
         {
             // too many to count: rolled instead, always the same rolls so the answer never changes
             var random = new Rng();
@@ -131,10 +131,11 @@ public sealed class CheckKind
         Array.Fill(faces, 1);
         while (true)
         {
-            IEnumerable<int> kept = term.KeepHighest != 0 ? faces.OrderByDescending(f => f).Take(term.KeepHighest)
-                : term.KeepLowest != 0 ? faces.OrderBy(f => f).Take(term.KeepLowest)
-                : faces;
-            int total = term.Sign * kept.Sum();
+            IEnumerable<int> shown = faces.Select(f => term.Fudge ? f - 2 : f);
+            IEnumerable<int> kept = term.KeepHighest != 0 ? shown.OrderByDescending(f => f).Take(term.KeepHighest)
+                : term.KeepLowest != 0 ? shown.OrderBy(f => f).Take(term.KeepLowest)
+                : shown;
+            int total = term.Sign * (term.SuccessAt == 0 ? kept.Sum() : kept.Count(f => f >= term.SuccessAt));
             spread[total] = spread.GetValueOrDefault(total) + 1 / combinations;
             int at = 0;
             while (at < faces.Length && faces[at] == term.Sides)
