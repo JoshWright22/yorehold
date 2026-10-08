@@ -538,8 +538,8 @@ reopened (`playtest.ps1 -Problems`).
   - Done 10/7: the play menu is two columns of small buttons right of the hotbar, as in BG3
     (panels, Characters, Save, and Menu for the pause list); Load is F9 and on the pause list. The
     top right is the map's again (`.dev\playtest-fight.png`, `playtest-keep.png`).
-  - Done 10/7: "Alice's turn" is in the turn order strip, after the cards. Left: the log is a
-    large empty box outside fights; it should open as one line and grow.
+  - Done 10/7: "Alice's turn" is in the turn order strip, after the cards. The log is as tall as
+    its lines, up to its old height (`.dev\playtest-first-look.png`).
   - Gear, chest, shop and loot are one panel with Pack and the other side as tabs; a chest or
     body would read better as two lists side by side (yours, theirs) with Take and Give between.
   - Done 10/7: a companion's journal page says how they feel and when they would join or leave

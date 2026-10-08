@@ -19,7 +19,7 @@ text = "Log"
 alignment = 0
 
 [node name="Body" type="PanelContainer" parent="Rows"]
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 size_flags_vertical = 3
 theme_type_variation = &"LogBody"

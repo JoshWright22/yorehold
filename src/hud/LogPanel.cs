@@ -40,9 +40,14 @@ public partial class LogPanel : PanelContainer
         _folded = folded;
         _body.Visible = !folded;
         _header.Text = folded ? "Log  (show)" : "Log  (hide)";
-        // it hangs from its bottom edge, so folding pulls the top down to the header
-        OffsetTop = OffsetBottom - (folded ? FoldedHeight : OpenHeight);
+        // it hangs from its bottom edge, so folding pulls the top down to the header; open, it is
+        // as tall as its lines up to OpenHeight, so two lines aren't a large empty box
+        float open = Mathf.Min(OpenHeight, FoldedHeight + 8 + _text.GetContentHeight());
+        OffsetTop = OffsetBottom - (folded ? FoldedHeight : Mathf.Max(FoldedHeight, open));
     }
+
+    // the text lays its new line out on the next frame; the height follows it then
+    private void Fit() => Callable.From(() => Fold(_folded)).CallDeferred();
 
     /// <summary>How far its bottom edge sits above the screen's: over the hotbar in a fight, in the corner otherwise.</summary>
     public void Rest(float above)
@@ -58,11 +63,13 @@ public partial class LogPanel : PanelContainer
     {
         _lines.Clear();
         _text.Clear();
+        Fit();
     }
 
     public void Add(string line)
     {
         _lines.Add(line);
+        Fit();
         if (_lines.Count > KeptLines)
         {
             _lines.RemoveRange(0, KeptLines / 4);
