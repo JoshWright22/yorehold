@@ -794,10 +794,18 @@ public sealed partial class World
                 _enemyStep = EnemyStep.Wait;
                 int target = _enemyTarget!.Value;
                 Use(StrikeAction, target);
-                // Actions to spare and the target still up: hit it again.
+                // Actions to spare and the target still up: hit it again, unless the system's own
+                // penalty for a further attack makes a guard or a spell worth more now.
                 if (Fighting && CurrentCreature == me && CanUse(me, StrikeAction) && !Creatures[target].Sheet.Down && OrderIndex(target) != null)
                 {
-                    _enemyStep = EnemyStep.Strike;
+                    bool better = !Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight"
+                        && PickAbility(me) is AbilityChoice other && other.Value >= StrikeWorth(me);
+                    _enemyStep = better ? EnemyStep.Think : EnemyStep.Strike;
+                }
+                else if (Fighting && CurrentCreature == me && !CanUse(me, StrikeAction) && PickAbility(me) != null)
+                {
+                    // no strike left but an action to spare for a guard
+                    _enemyStep = EnemyStep.Think;
                 }
                 return;
             }

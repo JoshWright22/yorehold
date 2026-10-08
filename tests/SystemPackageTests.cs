@@ -385,6 +385,27 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TheAiWeighsAGuardByTheSystemsOdds()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        w.Creatures[0].Sheet.Stats.SetBase("perception", 2000); // Ana acts first, Gik beside her
+        world.Fight();
+        Assert.True(world.TurnTo(0));
+        ActionDefinition shield = w.FindAction("raise-a-shield")!;
+        float worth = w.GuardWorth(0, shield);
+        Assert.True(worth > 0, "A shield's +2 AC saves some of what Gik would deal");
+        Assert.Equal(0, w.GuardWorth(0, w.FindAction("stride")!));
+        // a third Strike at -10 is worth less than the first; the guard is worth the same
+        w.Creatures[2].Sheet.Hp = 1000; // Gik outlasts two Strikes
+        float first = w.StrikeWorth(0);
+        Assert.True(world.Use("strike", 2) && world.Use("strike", 2));
+        Assert.True(w.StrikeWorth(0) < first, "The attack penalty lowers a third Strike's worth");
+        Assert.True(world.Use("raise-a-shield"), w.Refusal);
+        Assert.Equal(0, w.GuardWorth(0, shield)); // raised already
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

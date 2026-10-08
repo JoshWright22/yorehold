@@ -496,6 +496,13 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   keeps its flee, surrender and stealth behaviour. What a GM would decide outside fights (an
   NPC's answer, whether a guard believes a bluff) comes from the adventure's words and the
   system's checks; no story model runs during play (Josh, 10/8: models are for creating, S5c).
+  - Done 10/8: targets and danger weighed by the system's odds and expected damage (R2b); a
+    guard (Raise a Shield, Dodge: any action that puts a condition on its doer) is weighed by
+    the damage it saves under the system's odds, and the AI thinks again between strikes, so a
+    third Strike at -10 gives way to a shield.
+  - Left: the AI still opens with the `strike` role action and its own walk; choosing among a
+    system's other attacks (a monster's several strikes), Stride as an action it must pay for
+    when planning, Demoralize-like debuffs.
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each
