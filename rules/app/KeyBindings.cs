@@ -66,7 +66,25 @@ public sealed class KeyBindings
     public string KeysText(string id)
     {
         IReadOnlyList<string> keys = Keys(id);
-        return keys.Count == 0 ? "none" : string.Join(", ", keys);
+        return keys.Count == 0 ? "none" : string.Join(", ", keys.Select(Shown));
+    }
+
+    /// <summary>A key as a player reads it: "Kp Add" as "Numpad +", "Equal" as "=". Files keep the engine's names.</summary>
+    public static string Shown(string key)
+    {
+        string[] signs = { "Equal", "=", "Minus", "-", "Plus", "+", "Add", "+", "Subtract", "-", "Multiply", "*", "Divide", "/",
+            "Period", ".", "Comma", ",", "Slash", "/", "Backslash", "\\", "Semicolon", ";", "Apostrophe", "'",
+            "Bracketleft", "[", "Bracketright", "]", "Quoteleft", "`", "Pageup", "Page Up", "Pagedown", "Page Down" };
+        string shown = key.StartsWith("Kp ", StringComparison.Ordinal) ? key[3..] : key;
+        for (int i = 0; i < signs.Length; i += 2)
+        {
+            if (shown == signs[i])
+            {
+                shown = signs[i + 1];
+                break;
+            }
+        }
+        return key.StartsWith("Kp ", StringComparison.Ordinal) ? "Numpad " + shown : shown;
     }
 
     /// <summary>The player has moved this action off its shipped keys.</summary>

@@ -156,7 +156,7 @@ public static class App
     public static string KeyHint(string action)
     {
         IReadOnlyList<string> keys = Keys.Keys(action);
-        return keys.Count > 0 ? keys[0] : "";
+        return keys.Count > 0 ? Rules.KeyBindings.Shown(keys[0]) : "";
     }
 
     /// <summary>"Sheet (C)", or just "Sheet" for an action with no key.</summary>

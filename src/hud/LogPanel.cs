@@ -91,12 +91,24 @@ public partial class LogPanel : PanelContainer
         if (color is Color tint)
         {
             _text.PushColor(tint);
-            _text.AddText(line);
+        }
+        // the dice working ("1d20+1: [19] + 1 = ") in faint ink, so "Alice initiative 20" reads first
+        int at = 0;
+        foreach (System.Text.RegularExpressions.Match working in DiceWorking().Matches(line))
+        {
+            _text.AddText(line[at..working.Index]);
+            _text.PushColor(MissColor);
+            _text.AddText(working.Value);
+            _text.Pop();
+            at = working.Index + working.Length;
+        }
+        _text.AddText(line[at..]);
+        if (color != null)
+        {
             _text.Pop();
         }
-        else
-        {
-            _text.AddText(line);
-        }
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d*d\d+[^:\[]*:\s*\[[^\]]*\][^=]*=\s*")]
+    private static partial System.Text.RegularExpressions.Regex DiceWorking();
 }

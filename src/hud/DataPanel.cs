@@ -226,7 +226,8 @@ public partial class DataPanel : PanelContainer
         _dirty = true;
     }
 
-    public void SetColumns(IReadOnlyList<DataColumn> columns)
+    /// <summary>The columns, sorted at first by sortColumn (newest first for a date, with down).</summary>
+    public void SetColumns(IReadOnlyList<DataColumn> columns, int sortColumn = 0, bool sortDown = false)
     {
         if (_columnList.SequenceEqual(columns))
         {
@@ -234,8 +235,8 @@ public partial class DataPanel : PanelContainer
         }
         _columnList.Clear();
         _columnList.AddRange(columns);
-        _sortColumn = 0;
-        _sortDown = false;
+        _sortColumn = sortColumn;
+        _sortDown = sortDown;
         _rowsShown = "";
         _dirty = true;
         ShowColumns();
@@ -256,8 +257,13 @@ public partial class DataPanel : PanelContainer
         _rowsShown = signature.ToString();
         _rows.Clear();
         _rows.AddRange(rows);
+        // a search box and filters over a short list are only more to read; they come with a longer one
+        GetNode<Control>("Rows/Filter").Visible = _rows.Count >= FilterFrom || _search.Text.Length > 0 || _chipsOn.Count > 0;
         ShowRows();
     }
+
+    /// <summary>The fewest rows that get the search box and filter chips.</summary>
+    public const int FilterFrom = 8;
 
     /// <summary>The picked row's page (bbcode), its buttons and a warning line. Only redrawn when one of them changes.</summary>
     public void SetEntry(string page, IReadOnlyList<DataAction> actions, string warning)
@@ -270,12 +276,24 @@ public partial class DataPanel : PanelContainer
         _entryShown = signature;
         _page.Text = page;
         Clear(_actions);
+        // the first action is what the panel is for (Load, Start, Take all): it stands out, and a
+        // double click on the picked row or Enter does it too
+        _mainAction = actions.FirstOrDefault(a => a.Enabled && !IsClose(a));
         foreach (DataAction action in actions)
         {
+            if (action.Label == "Close (Esc)" && GetNode<Control>("Rows/Head/Close").Visible)
+            {
+                continue; // the head already has Close; a second one only makes the row longer
+            }
             var button = new TipButton { Text = action.Label, FocusMode = FocusModeEnum.None };
             if (!action.Enabled)
             {
                 button.ThemeTypeVariation = "GreyButton";
+                button.TooltipText = action.Why;
+            }
+            else if (action == _mainAction)
+            {
+                button.ThemeTypeVariation = "MainButton";
             }
             button.Clicked += _ =>
             {
@@ -290,7 +308,26 @@ public partial class DataPanel : PanelContainer
             };
             _actions.AddChild(button);
         }
+        // a greyed first button says why without being clicked or hovered: "Buy" with no coins
+        if (warning.Length == 0 && actions.FirstOrDefault(a => !IsClose(a)) is { Enabled: false, Why.Length: > 0 } greyed)
+        {
+            warning = greyed.Why;
+        }
         ShowWarning(warning);
+    }
+
+    private DataAction? _mainAction;
+
+    // an action that only shuts the panel, however its owner spells it ("Close", "Close (Esc)")
+    private static bool IsClose(DataAction action) => action.Label.StartsWith("Close", StringComparison.Ordinal) || action.Label == "Cancel";
+
+    /// <summary>Does the panel's main action, as its button would: a double click on a row, or Enter.</summary>
+    public void DoMainAction()
+    {
+        if (_mainAction != null && Visible)
+        {
+            ActionPressed?.Invoke(_mainAction.Id);
+        }
     }
 
     /// <summary>
@@ -417,7 +454,8 @@ public partial class DataPanel : PanelContainer
         {
             Picked = shown.Count > 0 ? shown[0].Key : "";
         }
-        _count.Text = shown.Count == _rows.Count ? $"{_rows.Count} {(_rows.Count == 1 ? "entry" : "entries")}" : $"{shown.Count} of {_rows.Count}";
+        // a count only says something when a filter hides part of the list
+        _count.Text = shown.Count == _rows.Count ? "" : $"{shown.Count} of {_rows.Count}";
         if (Grid)
         {
             ShowTiles(shown);
@@ -440,6 +478,15 @@ public partial class DataPanel : PanelContainer
             cells.AddThemeConstantOverride("separation", 6);
             button.AddChild(cells);
             button.Pressed += () => Pick(button.GetMeta("key").AsString());
+            button.GuiInput += input =>
+            {
+                if (input is InputEventMouseButton { ButtonIndex: MouseButton.Left, DoubleClick: true })
+                {
+                    Pick(button.GetMeta("key").AsString());
+                    // owners fill the entry for the picked row each frame; act once that has happened
+                    GetTree().CreateTimer(0.1).Timeout += DoMainAction;
+                }
+            };
             _items.AddChild(button);
             _rowButtons.Add(button);
         }

@@ -354,6 +354,8 @@ public partial class CreateScreen : Control
         {
             _problemsShown = shown;
             _problems.Text = shown;
+            // a column saying "Nothing wrong" takes room from the map; it is there when there is something to fix
+            GetNode<Control>("Editor/Body/Problems").Visible = problems.Count > 0;
         }
     }
 
@@ -445,7 +447,7 @@ public partial class CreateScreen : Control
         if (_imports.Contains(_start.Picked))
         {
             page.Title(Path.GetFileName(_start.Picked.TrimEnd('/'))).Sub("a book being imported").Rule()
-                .Text("Read but not built yet. Review what was read, drop what shouldn't go in, and build it.").Gap().Note(_start.Picked);
+                .Text("Read but not built yet. Review what was read, drop what shouldn't go in, and build it.");
             actions.Add(new DataAction("review", "Review"));
         }
         else if (picked.Path == null)
@@ -461,16 +463,15 @@ public partial class CreateScreen : Control
         {
             ContentPackage package = picked.Package;
             page.Title(package.Name.Length > 0 ? package.Name : package.Id).Sub(picked.Game ? "the game's own content" : (package.Kind.Length > 0 ? package.Kind : "package")).Rule();
-            page.Stats(("Id", package.Id.Length > 0 ? package.Id : "none"), ("Revision", package.Revision.ToString()), ("Chapters", package.Chapters.Count.ToString()));
+            page.Stats(("Chapters", package.Chapters.Count.ToString()));
             if (package.Chapters.Count > 0)
             {
                 page.Heading("Chapters");
                 foreach (string chapter in package.Chapters)
                 {
-                    page.Entry(CreatePackage.Leaf(chapter), chapter == package.DefaultChapter ? "where play starts" : chapter);
+                    page.Entry(CreatePackage.Leaf(chapter), chapter == package.DefaultChapter ? "where play starts" : "");
                 }
             }
-            page.Gap().Note(picked.Path);
             if (picked.Game)
             {
                 page.Gap().Warn("Saving writes into the game's own files.");
@@ -481,7 +482,7 @@ public partial class CreateScreen : Control
         actions.Add(new DataAction("import", "Import a book"));
         actions.Add(new DataAction("back", "Back to title"));
         _start.SetEntry(page.ToString(), actions, _startNote);
-        _start.SetFoot(Places.CreateFolder());
+        _start.SetFoot("");
     }
 
     private void StartAction(string id)

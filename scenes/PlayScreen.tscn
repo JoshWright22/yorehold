@@ -133,14 +133,17 @@ theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 24
 
 [node name="Banner" type="Label" parent="Hud"]
-offset_left = 110.0
-offset_top = 48.0
-offset_right = 710.0
-offset_bottom = 74.0
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 110.0
+offset_bottom = 150.0
+grow_horizontal = 2
+mouse_filter = 2
+horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.451, 0.7451, 0.8275, 1)
 theme_override_colors/font_outline_color = Color(0.0824, 0.1137, 0.1569, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 18
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 30
 
 [node name="Panels" parent="Hud" instance=ExtResource("15")]
 

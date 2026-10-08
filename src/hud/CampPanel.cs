@@ -28,7 +28,7 @@ public sealed class CampPanel
     private static readonly string[] Chips = { "Usable" };
     private static readonly DataColumn[] Columns =
     {
-        new("Name", 170), new("Kind", 70), new("Left", 44, true), new("Supplies", 64, true), new("Note", 120),
+        new("Name", 110), new("Left", 40, true), new("Supplies", 64, true), new("What it does", 300),
     };
 
     private readonly DataPanel _view;
@@ -59,8 +59,10 @@ public sealed class CampPanel
         rows.Add(new DataRow
         {
             Key = "camp",
-            Cells = new[] { "The camp", "camp", "", "", world.AtCamp ? "here now" : world.CampFolder.Length == 0 ? "none here" : "off the map" },
-            Sort = new IComparable?[] { "", "camp", -1, -1, "" },
+            Cells = world.AtCamp
+                ? new[] { "The camp", "", "", "back to the road, as you left it" }
+                : new[] { "The camp", "", "",world.CampFolder.Length == 0 ? "this adventure has no camp" : "a safe place to rest and use the stash" },
+            Sort = new IComparable?[] { "", -1, -1, "" },
             Tags = new HashSet<string>(campUsable ? new[] { "Usable" } : Array.Empty<string>()),
             Dim = !campUsable,
         });
@@ -71,8 +73,8 @@ public sealed class CampPanel
             rows.Add(new DataRow
             {
                 Key = "rest:" + rest.Id,
-                Cells = new[] { Name(rest), "rest", left < 0 ? "any" : left.ToString(), rest.SupplyCost.ToString(), rest.CampOnly ? "at camp" : "anywhere" },
-                Sort = new IComparable?[] { Name(rest), "rest", left < 0 ? 999 : left, rest.SupplyCost, rest.CampOnly ? 1 : 0 },
+                Cells = new[] { Name(rest), left < 0 ? "any" : left.ToString(), rest.SupplyCost.ToString(), $"heals {RecoveryText(rest.Recovery)}" + (rest.CampOnly ? ", at camp only" : "") },
+                Sort = new IComparable?[] { Name(rest), left < 0 ? 999 : left, rest.SupplyCost, rest.CampOnly ? 1 : 0 },
                 Tags = new HashSet<string>(can ? new[] { "Rests", "Usable" } : new[] { "Rests" }),
                 Dim = !can,
             });
@@ -99,8 +101,8 @@ public sealed class CampPanel
                 rows.Add(new DataRow
                 {
                     Key = $"dead:{i}",
-                    Cells = new[] { world.Creatures[i].Sheet.Name, "dead", "", "", Coins.Text(world.Rules.RevivePrice) },
-                    Sort = new IComparable?[] { world.Creatures[i].Sheet.Name, "dead", 0, 0, world.Rules.RevivePrice },
+                    Cells = new[] { world.Creatures[i].Sheet.Name, "", "", $"dead; brought back for {Coins.Text(world.Rules.RevivePrice)}" },
+                    Sort = new IComparable?[] { world.Creatures[i].Sheet.Name, 0, 0, world.Rules.RevivePrice },
                     Tags = new HashSet<string>(can ? new[] { "Revive", "Usable" } : new[] { "Revive" }),
                     Dim = !can,
                 });
@@ -123,8 +125,8 @@ public sealed class CampPanel
         return new DataRow
         {
             Key = key,
-            Cells = new[] { item.Quantity > 1 ? $"{item.Name} x{item.Quantity}" : item.Name, kind, "", item.Supplies > 0 ? (item.Supplies * item.Quantity).ToString() : "", "" },
-            Sort = new IComparable?[] { item.Name, kind, 0, item.Supplies * item.Quantity, "" },
+            Cells = new[] { item.Quantity > 1 ? $"{item.Name} x{item.Quantity}" : item.Name, "", item.Supplies > 0 ? (item.Supplies * item.Quantity).ToString() : "", kind == "stash" ? "in the stash" : kind == "worn" ? "worn" : "in the pack" },
+            Sort = new IComparable?[] { item.Name, 0, item.Supplies * item.Quantity, kind },
             Tags = new HashSet<string>(usable ? new[] { tab, "Usable" } : new[] { tab }),
             Search = item.Definition.Description,
         };

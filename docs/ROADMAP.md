@@ -401,7 +401,7 @@ Rules for all of it:
   - Create > Import says before reading that no story model is set and what that leaves out, with
     Read anyway; today it is only said in small text while it reads.
   - The layout draft gives heroes from captioned pictures (a short heading under a picture
-    followed by a race and class line, "Human Fighter"), so their pictures come in with no model.
+	followed by a race and class line, "Human Fighter"), so their pictures come in with no model.
   - Room text: a place's passages are read as one line spoken by the room's name; show them as a
     narrator's caption instead, and keep conversations for people. Quoted lines of a person
     (Jeffries' answers) become their conversation's replies, in the book's words.
@@ -515,5 +515,38 @@ reopened (`playtest.ps1 -Problems`).
     `.dev\make-art-pack.py`; `PaletteTests.TheGameShipsNoPicturesOfItsOwn` fails on any picture
     under `assets/`. Left plain: the lever (the Dungeon Crawl set has none) and Gathered
     Mending's icon.
+- [x] **U12. Friendlier everywhere (Josh, 10/7: "go through the entire UI and make it more user
+  friendly").** All 50 playtest screens shot (`check.ps1 -Playtest all`) and gone through. Fixed
+  across every list screen (load, gear, chests, shop, spells, journal, camp, characters, Create):
+  - the panel's main button is filled (Load, Start, Take all, New character), a double click on
+    a row does it, and a greyed main button says why under it (Buy with no coins) and on hover;
+  - search and filter chips only on lists of 8 or more; the "N entries" count only when a filter
+    hides rows; no second Close button.
+  - No file paths, ids or revision numbers on Load or Create's list; "Flags set" gone from saves;
+    the newest save first; Load's tabs and chips only when there are backups or broken files.
+  - Keys read as a player says them ("=", "Numpad +", not "Equal", "Kp Add"); "Shipped" is
+	"Default".
+  - Play: the chapter name and news ("Combat", a quest) are one large line centred at the top,
+    not a second title over the party; the side menu steps back during a conversation like the
+	party and log do; dice working in the log is faint so "Alice initiative 20" reads first.
+  - Camp: rows say what each choice does ("heals all HP, at camp only") in place of a kind column.
+  - Create: the problems column only shows when there is a problem.
+- [ ] **U13. What the walk-through found that needs more than a fix:**
+  - First steps: nothing says how to play (click to walk, click a door or chest, Space or right
+    click to cancel) unless a chapter's intro says it. A short help card the first time play
+    opens, and on F1, in the controls' own words and keys.
+  - The play side menu (8 buttons down the right) moves to small buttons beside the hotbar, as
+    BG3 does; Save and Load stay on F5, F9 and the pause menu.
+  - Fight: "Alice's turn" sits over the tokens under the turn order; it belongs in the order
+    strip. The log is a large empty box outside fights; it opens as one line and grows.
+  - Gear, chest, shop and loot are one panel with Pack and the other side as tabs; a chest or
+    body would read better as two lists side by side (yours, theirs) with Take and Give between.
+  - Journal: a companion's page is numbers (Approval +10, Leaves at -50); say it in words
+	("likes you; leaves if it drops to -50").
+  - Create: Dialogue and Encounters show file and engine words (dialogue/tobb.json, "Node",
+	"-> freed", "Flags set on a win", "Coins, as dice", "Use 50 from levels"). Each field gets
+	a plain label and a one-line help, the way Settings rows do.
+  - The character library opened from the title shows a Lobby tab that only means something
+	in an adventure.
 - [ ] **U11. The other 40 playtests.** Josh answers the rest of the queue once U1-U9 are in;
   their answers become steps here.

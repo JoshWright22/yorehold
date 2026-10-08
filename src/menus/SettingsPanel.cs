@@ -178,7 +178,7 @@ public sealed class SettingsPanel
         var defaults = new GameSettings();
         KeyBindings keys = App.Keys;
         int changed = Settings.Count(s => s.Value(now) != s.Value(defaults)) + keys.Overrides().Count;
-        _summary.Text = changed == 0 ? "Everything as shipped." : $"{changed} changed. Changes are kept as they are made.";
+        _summary.Text = changed == 0 ? "Everything is at its default." : $"{changed} changed. Changes are kept as they are made.";
         bool searching = _search.Text.Trim().Length > 0;
         for (int i = 0; i < Groups.Length; i++)
         {
@@ -244,10 +244,10 @@ public sealed class SettingsPanel
                 _said.Text = "";
                 _capturing = waiting ? "" : action.Id;
             });
-            Choice(row, "Shipped", false, () =>
+            Choice(row, "Default", false, () =>
             {
                 App.Keys.Reset(action.Id);
-                _said.Text = App.Keys.Changed(action.Id) ? "Some of its shipped keys belong to another action now." : "";
+                _said.Text = App.Keys.Changed(action.Id) ? "Some of its default keys belong to another action now." : "";
                 App.Save();
             }, keys.Changed(action.Id));
         }
@@ -329,7 +329,7 @@ public sealed class SettingsPanel
         _capturing = "";
         if (Array.IndexOf(Fixed, key) >= 0)
         {
-            _said.Text = $"{OS.GetKeycodeString(key)} is fixed and can't be given to anything.";
+            _said.Text = $"{Rules.KeyBindings.Shown(OS.GetKeycodeString(key))} is fixed and can't be given to anything.";
             return;
         }
         string name = OS.GetKeycodeString(key);
@@ -339,7 +339,7 @@ public sealed class SettingsPanel
             return;
         }
         _said.Text = taken != null && App.Keys.Action(taken) is KeyAction loser
-            ? $"{name} was the key for {loser.Name}, which has {App.Keys.KeysText(taken)} now."
+            ? $"{Rules.KeyBindings.Shown(name)} was the key for {loser.Name}, which has {App.Keys.KeysText(taken)} now."
             : "";
         App.Save();
     }

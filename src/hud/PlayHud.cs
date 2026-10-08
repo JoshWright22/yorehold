@@ -381,6 +381,7 @@ public partial class PlayHud : Control
         // like a visual novel, the conversation has the screen: the party and the log step back
         _party.Visible = node == null;
         _log.Visible = node == null;
+        GetNode<Control>("Menu").Visible = node == null;
         if (talk == null || node == null)
         {
             _talkShown = "";

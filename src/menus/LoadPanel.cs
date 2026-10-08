@@ -35,12 +35,14 @@ public sealed class LoadPanel
     {
         _saves = saves;
         _refusal = refusal;
-        int good = saves.Count(s => s.Problem.Length == 0);
-        View.SetHead("Load", $"{saves.Count} {(saves.Count == 1 ? "file" : "files")}, {good} that can be loaded");
+        int unreadable = saves.Count(s => s.Problem.Length > 0);
+        View.SetHead("Load", $"{saves.Count} {(saves.Count == 1 ? "save" : "saves")}" + (unreadable > 0 ? $", {unreadable} that can't be read" : ""));
         View.SetSources(Array.Empty<(string, string)>(), "");
-        View.SetTabs(new[] { "All", "Saves", "Backups" });
-        View.SetChips(new[] { "Loadable", "Broken" });
-        View.SetColumns(Columns);
+        View.SetTabs(saves.Any(s => s.Backup) ? new[] { "All", "Saves", "Backups" } : Array.Empty<string>());
+        // the chips only help once something is broken
+        View.SetChips(unreadable > 0 ? new[] { "Loadable", "Broken" } : Array.Empty<string>());
+        // the newest save first: the one a player most likely wants
+        View.SetColumns(Columns, 3, true);
 
         var rows = new List<DataRow>();
         foreach (SaveSummary save in saves)
@@ -62,7 +64,7 @@ public sealed class LoadPanel
         if (picked == null)
         {
             View.SetEntry(new BookPage().Note("No saves yet. The game saves itself as the adventure goes.").ToString(), Array.Empty<DataAction>(), "");
-            View.SetFoot(Places.SavesFolder());
+            View.SetFoot("");
             return;
         }
         if (_deleteAsked != picked.Path)
@@ -78,7 +80,7 @@ public sealed class LoadPanel
             new("delete", _deleteAsked.Length > 0 ? "Delete for good" : "Delete"),
         };
         View.SetEntry(page.ToString(), actions, _deleteAsked.Length > 0 ? $"Press again to remove {picked.FileName}. It can't be brought back." : "");
-        View.SetFoot(Places.SavesFolder());
+        View.SetFoot("Double-click a save to load it.");
     }
 
     /// <summary>A save's page under its title: where, when, who. Shared with the title's Continue.</summary>
@@ -92,7 +94,7 @@ public sealed class LoadPanel
         }
         page.Sub(save.CampReturn.Length > 0 ? $"{save.ChapterTitle}, at camp" : save.ChapterTitle).Rule();
         page.Stat("Saved", save.Written.ToString("d MMM yyyy HH:mm"));
-        page.Stats(("Fights", save.Fights.ToString()), ("Flags set", save.Flags.ToString()));
+        page.Stats(("Fights",save.Fights.ToString()));
         page.Gap().Heading("Party");
         var cells = new List<string>();
         foreach (SaveHero hero in save.Heroes)
