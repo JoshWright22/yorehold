@@ -302,8 +302,24 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - UI: the Library's Browse tab shows price, publisher and owned; the site gets a store page
 	per package, a publisher dashboard, and Redeem a code.
 
+- [ ] **R16. Skins redo the whole look.** Josh, 10/8. A skin is a package a player picks in
+  Settings (or an adventure suggests) that can change everything drawn, not the rules or the
+  layout's jobs: the screens' colours (today `ui/colors.json`, read at start instead of the fixed
+  table in `src/hud/Palette.cs`), the map's palette, fonts and sizes, panel edges, corners and
+  shadows, buttons, the hotbar and portrait frames, token frames (already a skin), condition and
+  action icons, the cursor, sounds, and the title's banners and logo. The game's own look stays
+  the default and keeps its rules (Apollo, flat, 1 px edges); a skin may break them on purpose.
+  - The Godot theme is built from the skin's data at start, not from the hand-made
+	`scenes/hud/hud-theme.tres`, so a skin is files and no code. A skin that leaves something out
+	gets the default for it.
+  - Checks: every screen's screenshot taken with a test skin as well as the default, so no
+	colour or font is left hard-coded (the palette test becomes "only colours the skin names").
+  - Skins share and sell like any package (R14, R15); a publisher's system can ship its own look.
+  - UI: Settings > Display > Skin with a preview; Create gains a skin editor (colours, fonts,
+	edges, with the screens shown live beside it).
+
 Order: R1 and R2 first (small, and every later step needs them), then R3-R8 each tried on both
-systems, R9 and R10 alongside them as the checks, then R11-R15. The bestiary import (S12-S15)
+systems, R9 and R10 alongside them as the checks, then R11-R16. The bestiary import (S12-S15)
 waits until R6, so stat blocks land in a system's creature format.
 
 ## S. Story import
