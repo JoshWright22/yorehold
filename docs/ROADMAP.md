@@ -821,6 +821,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     and floating numbers until the dice land; meanwhile the world, the AI, input, the panels,
     the HP bars and the tokens (who has fallen) keep still. Left for step 2: one beat per attack
     of a Multiattack, and the attack animation between landing and the numbers.
+  - Done 10/9 (step 3): dice thrown across a felt table: `DiceTumble` (rules) simulates a roll's
+    dice together, bouncing off the felt, the rails and each other until they lie flat; the face
+    left on top gets the rolled number (its label swapped in); `DiceTray` is a tilted 3D table
+    over the fight that plays the throw back. Fast plays it at twice the speed.
   - Order of work: (1) beats and shown values, with the current dice strip, so results wait for
     the dice; (2) attack animations from the shipped sets; (3) the table tumble; (4) sound
     hooks per step (a skin's files), (5) Create can preview an action's animation.

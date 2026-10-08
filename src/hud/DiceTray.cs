@@ -7,15 +7,19 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The dice of a roll thrown in a strip over the screen (R17), each turned as it settles so the
-/// face the game's seeded roll gave lands toward the player. The result never comes from the
-/// throw. Flat faces in the screens' colours, numbers in the light grey; a die that wasn't kept
-/// (the low one of advantage) is dimmed. Fast or full is how long they tumble.
+/// The dice of a roll thrown across a felt table over the fight (R17, R19): each die flies in
+/// from the left, bounces off the felt and the rails and rolls to a stop, as DiceTumble worked
+/// out, and the number the game's seeded roll gave is put on the face that ends up on top. The
+/// result never comes from the throw. A die that wasn't kept (the low one of advantage) is
+/// dimmed; fast plays the throw at twice the speed.
 /// </summary>
 public partial class DiceTray : SubViewportContainer
 {
-    private const float Spacing = 0.95f;
-    private const float Radius = 0.42f;
+    // the table, in the tray's own units: felt at y = 0, rails at the edges
+    private static readonly DiceTumble.Table Felt = new(4f, 1.6f);
+    private const float Size = 0.5f;
+    private const double Hold = 0.9;
+    private const double Fade = 0.35;
 
     /// <summary>The dice's look from ui/dice.json (a skin's when one is laid on top), read at start.</summary>
     public static UiDice Look { get; private set; } = new();
@@ -36,102 +40,106 @@ public partial class DiceTray : SubViewportContainer
         }
     }
 
-    private sealed class Thrown
-    {
-        public Node3D Die = null!;
-        public Quaternion To;
-        public Vector3 Axis;
-        public float Turns;
-        public float X;
-    }
+    private sealed record Thrown(Node3D Die, DiceTumble.Path Path);
 
     private SubViewport _view = null!;
-    private Node3D _table = null!;
+    private Node3D _dice = null!;
     private readonly List<Thrown> _thrown = new();
     private readonly Dictionary<string, ArrayMesh> _meshes = new();
     private readonly RandomNumberGenerator _spin = new();
     private double _age;
-    private double _tumble = 1.1;
-    private const double Hold = 0.9;
-    private const double Fade = 0.3;
+    private double _speed = 1;
+    private double _length;
+
+    /// <summary>The last throw has come to rest on its faces (or there is none showing).</summary>
+    public bool Landed => !Visible || _age * _speed * 60 >= _length;
 
     public override void _Ready()
     {
         Stretch = true;
         MouseFilter = MouseFilterEnum.Ignore;
         Visible = false;
-        _view = new SubViewport { TransparentBg = true, OwnWorld3D = true, Size = new Vector2I(760, 160), RenderTargetUpdateMode = SubViewport.UpdateMode.WhenVisible };
+        _view = new SubViewport { TransparentBg = true, OwnWorld3D = true, Size = new Vector2I(920, 360), RenderTargetUpdateMode = SubViewport.UpdateMode.WhenVisible, Msaa3D = Viewport.Msaa.Msaa4X };
         AddChild(_view);
-        _view.AddChild(new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = 1.25f, Position = new Vector3(0, 0, 6) });
-        _view.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-50, -30, 0), LightEnergy = 1.1f });
+        // looking down the table at a slant, as a player leaning over it would
+        var camera = new Camera3D { Fov = 34 };
+        _view.AddChild(camera);
+        camera.LookAtFromPosition(new Vector3(0, 6.4f, 5.4f), new Vector3(0, 0, 0.35f), Vector3.Up);
+        _view.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-60, -25, 0), LightEnergy = 1.1f, ShadowEnabled = true });
         var environment = new Godot.Environment
         {
             AmbientLightSource = Godot.Environment.AmbientSource.Color,
             AmbientLightColor = Palette.Ash,
-            AmbientLightEnergy = 0.55f,
+            AmbientLightEnergy = 0.5f,
             BackgroundMode = Godot.Environment.BGMode.ClearColor,
         };
         _view.AddChild(new WorldEnvironment { Environment = environment });
-        _table = new Node3D();
-        _view.AddChild(_table);
+        _view.AddChild(BuildTable());
+        _dice = new Node3D();
+        _view.AddChild(_dice);
     }
 
-    /// <summary>The last throw has come to rest on its faces (or there is none showing).</summary>
-    public bool Landed => !Visible || _age >= _tumble;
+    // The felt and its four rails, in the screens' greys.
+    private static Node3D BuildTable()
+    {
+        var table = new Node3D();
+        Material Flat(Color color) => new StandardMaterial3D { AlbedoColor = color, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
+        table.AddChild(new MeshInstance3D
+        {
+            Mesh = new BoxMesh { Size = new Vector3(Felt.HalfWidth * 2, 0.1f, Felt.HalfDepth * 2) },
+            Position = new Vector3(0, -0.05f, 0),
+            MaterialOverride = Flat(Palette.Dusk),
+        });
+        const float rail = 0.18f, high = 0.32f;
+        foreach ((Vector3 at, Vector3 size) in new[]
+        {
+            (new Vector3(0, high / 2, -Felt.HalfDepth - rail / 2), new Vector3(Felt.HalfWidth * 2 + rail * 2, high, rail)),
+            (new Vector3(0, high / 2, Felt.HalfDepth + rail / 2), new Vector3(Felt.HalfWidth * 2 + rail * 2, high, rail)),
+            (new Vector3(-Felt.HalfWidth - rail / 2, high / 2, 0), new Vector3(rail, high, Felt.HalfDepth * 2)),
+            (new Vector3(Felt.HalfWidth + rail / 2, high / 2, 0), new Vector3(rail, high, Felt.HalfDepth * 2)),
+        })
+        {
+            table.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = size }, Position = at, MaterialOverride = Flat(Palette.Iron) });
+        }
+        return table;
+    }
 
-    /// <summary>Throws a roll's dice; fast tumbles for half as long. A new throw replaces the last.</summary>
+    /// <summary>Throws a roll's dice across the table; fast plays the throw twice as quick. A new throw replaces the last.</summary>
     public void Throw(List<DiceFaces.Shown> dice, bool fast)
     {
-        foreach (Node child in _table.GetChildren())
+        foreach (Node child in _dice.GetChildren())
         {
             child.QueueFree();
         }
         _thrown.Clear();
-        _tumble = fast ? 0.55 : 1.1;
+        _speed = fast ? 2 : 1;
         _age = 0;
         List<DiceFaces.Shown> shown = dice.Take(Look.Most).ToList();
-        float size = (float)Look.Size;
-        // more than the strip shows: the rest as a count after the last die
         int more = dice.Count - shown.Count;
-        float start = -(shown.Count - (more > 0 ? 0 : 1)) * Spacing * size / 2;
+        float size = Size * (float)Look.Size;
+        // thrown together, each from its own lane across the table; they knock off each other
+        List<float> lanes = Enumerable.Range(0, shown.Count)
+            .Select(i => shown.Count == 1 ? 0 : -Felt.HalfDepth + size * 1.5f + i * (Felt.HalfDepth * 2 - size * 3) / (shown.Count - 1)).ToList();
+        List<string> shapes = shown.Select(d => d.Shape == "dF" ? "d6" : d.Shape == "d10t" ? "d10" : d.Shape).ToList();
+        List<DiceTumble.Path> paths = DiceTumble.ThrowAll(shapes, size, Felt, lanes, (int)_spin.Randi());
         for (int i = 0; i < shown.Count; i++)
         {
-            DiceFaces.Shown die = shown[i];
-            DiceSolids.Solid solid = DiceSolids.Of(die.Shape);
-            List<string> labels = DiceFaces.Labels(die.Shape);
-            // the faces that show the rolled label; a Fate die has two of each, either will do
-            List<int> faces = Enumerable.Range(0, labels.Count).Where(f => labels[f] == die.Face).ToList();
-            int face = faces.Count == 0 ? 0 : faces[_spin.RandiRange(0, faces.Count - 1)];
-            Node3D node = Build(die.Shape, solid, labels, die.Kept);
-            _table.AddChild(node);
-            // turned so that face looks at the camera, spun a random amount about the view
-            Vector3 normal = ToGodot(solid.Normals[face]);
-            // straight away from the camera has no single arc to turn by: half a turn about up
-            Quaternion facing = normal.Dot(Vector3.Back) < -0.999f ? new Quaternion(Vector3.Up, Mathf.Pi) : new Quaternion(normal, Vector3.Back).Normalized();
-            // the number stands upright, give or take a little, however its face was turned up
-            Vector3 top = facing * LabelBasis(normal).Y;
-            float lean = Mathf.Atan2(top.X, top.Y);
-            Quaternion roll = new Quaternion(Vector3.Back, lean + _spin.RandfRange(-0.3f, 0.3f));
-            _thrown.Add(new Thrown
-            {
-                Die = node,
-                To = (roll * facing).Normalized(),
-                Axis = new Vector3(_spin.RandfRange(-1, 1), _spin.RandfRange(-1, 1), _spin.RandfRange(-0.3f, 0.3f)).Normalized(),
-                Turns = _spin.RandfRange(2.5f, 4f),
-                X = start + i * Spacing * size,
-            });
+            Node3D node = Build(shown[i], DiceSolids.Of(shown[i].Shape), paths[i].Face, size);
+            _dice.AddChild(node);
+            _thrown.Add(new Thrown(node, paths[i]));
         }
+        _length = _thrown.Select(t => t.Path.Frames.Count).DefaultIfEmpty(0).Max();
         if (more > 0)
         {
-            _table.AddChild(new Label3D
+            _dice.AddChild(new Label3D
             {
-                Text = $"+{more}", FontSize = 64, PixelSize = 0.006f * size, Modulate = Palette.Named(Look.Body), OutlineSize = 0,
-                Position = new Vector3(start + shown.Count * Spacing * size, 0, 0),
+                Text = $"+{more}", FontSize = 96, PixelSize = 0.006f, Modulate = Palette.Named(Look.Body), OutlineSize = 0,
+                Position = new Vector3(Felt.HalfWidth - 0.4f, 0.05f, Felt.HalfDepth - 0.3f), RotationDegrees = new Vector3(-90, 0, 0),
             });
         }
         Visible = shown.Count > 0;
         Modulate = Colors.White;
-        Place(0);
+        Place();
     }
 
     public override void _Process(double delta)
@@ -141,10 +149,11 @@ public partial class DiceTray : SubViewportContainer
             return;
         }
         _age += delta;
-        Place(_age);
-        if (_age > _tumble + Hold)
+        Place();
+        double after = _age - _length / (60 * _speed);
+        if (after > Hold)
         {
-            float left = 1 - (float)((_age - _tumble - Hold) / Fade);
+            float left = 1 - (float)((after - Hold) / Fade);
             Modulate = new Color(1, 1, 1, Mathf.Clamp(left, 0, 1));
             if (left <= 0)
             {
@@ -153,24 +162,30 @@ public partial class DiceTray : SubViewportContainer
         }
     }
 
-    // Where each die is at a time: rolling in from the left and slowing to its face.
-    private void Place(double age)
+    // Each die where its throw has it now.
+    private void Place()
     {
-        float t = Mathf.Clamp((float)(age / _tumble), 0, 1);
-        float settle = 1 - (1 - t) * (1 - t) * (1 - t);
+        int frame = (int)(_age * _speed * 60);
         foreach (Thrown die in _thrown)
         {
-            var spin = new Quaternion(die.Axis, die.Turns * Mathf.Tau * (1 - settle));
-            die.Die.Quaternion = (spin * die.To).Normalized();
-            float bounce = Mathf.Abs(Mathf.Sin(settle * Mathf.Pi * 2.5f)) * 0.18f * (1 - settle);
-            die.Die.Position = new Vector3(die.X - (1 - settle) * 1.4f, bounce, 0);
+            DiceTumble.Frame at = die.Path.Frames[Math.Min(frame, die.Path.Frames.Count - 1)];
+            die.Die.Position = new Vector3(at.Position.X, at.Position.Y, at.Position.Z);
+            die.Die.Quaternion = new Quaternion(at.Rotation.X, at.Rotation.Y, at.Rotation.Z, at.Rotation.W).Normalized();
         }
     }
 
-    private Node3D Build(string shape, DiceSolids.Solid solid, List<string> labels, bool kept)
+    // A die whose face `up` (the one its throw leaves on top) carries the number rolled: that
+    // number's own face and the up face swap labels, so the die still has each label once.
+    private Node3D Build(DiceFaces.Shown die, DiceSolids.Solid solid, int up, float size)
     {
-        var root = new Node3D { Scale = Vector3.One * Radius * (float)Look.Size };
-        root.AddChild(new MeshInstance3D { Mesh = Mesh(shape, solid), MaterialOverride = Body(kept) });
+        List<string> labels = DiceFaces.Labels(die.Shape).ToList();
+        int own = labels.IndexOf(die.Face);
+        if (own >= 0 && own != up)
+        {
+            (labels[own], labels[up]) = (labels[up], labels[own]);
+        }
+        var root = new Node3D { Scale = Vector3.One * size };
+        root.AddChild(new MeshInstance3D { Mesh = Mesh(die.Shape, solid), MaterialOverride = Body(die.Kept) });
         for (int f = 0; f < solid.Faces.Count; f++)
         {
             if (labels[f].Length == 0)
@@ -179,17 +194,16 @@ public partial class DiceTray : SubViewportContainer
             }
             Vector3 normal = ToGodot(solid.Normals[f]);
             Vector3 centre = solid.Faces[f].Select(i => ToGodot(solid.Vertices[i])).Aggregate(Vector3.Zero, (a, b) => a + b) / solid.Faces[f].Length;
-            var label = new Label3D
+            root.AddChild(new Label3D
             {
                 Text = labels[f],
                 FontSize = 64,
-                PixelSize = solid.Faces.Count >= 12 ? 0.0042f : 0.006f,
-                Modulate = Palette.Named(kept ? Look.Numbers : Look.UnkeptNumbers),
+                PixelSize = solid.Faces.Count >= 20 ? 0.0066f : solid.Faces.Count >= 12 ? 0.0074f : 0.009f,
+                Modulate = Palette.Named(die.Kept ? Look.Numbers : Look.UnkeptNumbers),
                 OutlineSize = 0,
                 DoubleSided = false,
                 Transform = new Transform3D(LabelBasis(normal), centre + normal * 0.012f),
-            };
-            root.AddChild(label);
+            });
         }
         return root;
     }
@@ -201,7 +215,7 @@ public partial class DiceTray : SubViewportContainer
         return Basis.LookingAt(-normal, up);
     }
 
-    private Material Body(bool kept) => new StandardMaterial3D
+    private static Material Body(bool kept) => new StandardMaterial3D
     {
         AlbedoColor = Palette.Named(kept ? Look.Body : Look.Unkept),
         Roughness = 0.9f,

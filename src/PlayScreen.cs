@@ -95,10 +95,10 @@ public partial class PlayScreen : Node2D
         _dice = new DiceTray { Name = "Dice" };
         _hud.AddChild(_dice);
         _dice.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
-        _dice.OffsetLeft = -380;
-        _dice.OffsetRight = 380;
-        _dice.OffsetTop = 110;
-        _dice.OffsetBottom = 270;
+        _dice.OffsetLeft = -460;
+        _dice.OffsetRight = 460;
+        _dice.OffsetTop = 130;
+        _dice.OffsetBottom = 460;
         _fight = GetNode<FightControl>("Fight");
         _fightGround = GetNode<FightGroundView>("Overlay/FightGround");
         _tokenBars = GetNode<TokenBarsView>("Overlay/TokenBars");

@@ -46,6 +46,52 @@ public class DiceFacesTests
         Assert.Equal(solid.Normals.Count, solid.Normals.Select(n => (MathF.Round(n.X, 3), MathF.Round(n.Y, 3), MathF.Round(n.Z, 3))).Distinct().Count());
     }
 
+    [Theory]
+    [InlineData("d4")]
+    [InlineData("d6")]
+    [InlineData("d8")]
+    [InlineData("d10")]
+    [InlineData("d12")]
+    [InlineData("d20")]
+    public void ADieThrownAcrossTheTableComesToRestFlat(string shape)
+    {
+        var table = new DiceTumble.Table(4, 1.2f);
+        DiceSolids.Solid solid = DiceSolids.Of(shape);
+        for (int seed = 1; seed <= 8; seed++)
+        {
+            DiceTumble.Path path = DiceTumble.Throw(shape, 0.3f, table, 0, seed);
+            Assert.Equal(path.Face, DiceTumble.Throw(shape, 0.3f, table, 0, seed).Face);
+            Assert.Equal(path.Frames.Select(f => f.Position), DiceTumble.Throw(shape, 0.3f, table, 0, seed).Frames.Select(f => f.Position));
+            DiceTumble.Frame first = path.Frames[0], last = path.Frames[^1];
+            Assert.True(last.Position.X > first.Position.X + 2, $"{shape} {seed}: it travels across the table");
+            Assert.True(Math.Abs(last.Position.X) <= table.HalfWidth && Math.Abs(last.Position.Z) <= table.HalfDepth, $"{shape} {seed}: it stays on the table");
+            // flat: the face it is read by points straight up (a d4's straight down)
+            float y = System.Numerics.Vector3.Transform(solid.Normals[path.Face], last.Rotation).Y;
+            Assert.True(shape == "d4" ? y < -0.99f : y > 0.99f, $"{shape} {seed}: rests flat ({y})");
+            Assert.True(path.Frames.Count < 60 * 5, $"{shape} {seed}: settles in time");
+        }
+    }
+
+    [Fact]
+    public void DiceThrownTogetherDontEndInsideEachOther()
+    {
+        var table = new DiceTumble.Table(4, 1.6f);
+        string[] shapes = { "d20", "d6", "d8", "d20", "d12", "d4" };
+        float[] lanes = { -1.2f, -0.7f, -0.2f, 0.3f, 0.8f, 1.3f };
+        for (int seed = 1; seed <= 5; seed++)
+        {
+            List<DiceTumble.Path> paths = DiceTumble.ThrowAll(shapes, 0.42f, table, lanes, seed);
+            for (int a = 0; a < paths.Count; a++)
+            {
+                for (int b = a + 1; b < paths.Count; b++)
+                {
+                    float apart = System.Numerics.Vector3.Distance(paths[a].Frames[^1].Position, paths[b].Frames[^1].Position);
+                    Assert.True(apart > 0.42f * 1.5f, $"seed {seed}: dice {a} and {b} end {apart} apart");
+                }
+            }
+        }
+    }
+
     [Fact]
     public void AnAttackThrowsItsDiceToTheScreen()
     {
