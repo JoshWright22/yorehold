@@ -3,6 +3,37 @@ namespace Yorehold.Rules.Tests;
 public class CheckRulesTests
 {
     [Fact]
+    public void ASystemCountsACreaturesNumbersItsOwnWay()
+    {
+        // Proficiency is the rank's bonus plus the level, AC starts at 10 with it, checks add half the level.
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "own", "name": "Own", "abilities": [{"id": "str", "name": "Strength"}, {"id": "dex", "name": "Dexterity"}],
+             "skills": [{"id": "athletics", "name": "Athletics", "ability": "str"}],
+             "proficiencyRanks": [{"id": "untrained", "bonus": 0}, {"id": "trained", "bonus": 2}],
+             "proficientRank": "trained", "untrainedRank": "untrained",
+             "formulas": {
+               "abilityModifier": "score - 10",
+               "proficiency": "proficient ? rankBonus + level : 0",
+               "armorClass": "10 + stat.ac + min(mod.dex, 2) + proficiency",
+               "check": "ability + proficiency + floor(level / 2)",
+               "attack": "ability + proficiency + bonus"
+             }}
+            """);
+        var sheet = new CharacterSheet { Name = "Ash", Level = 4 };
+        sheet.Stats.SetBase("str", 13);
+        sheet.Stats.SetBase("dex", 15);
+        sheet.Stats.SetBase("ac", 3);
+        sheet.ProficiencyRanks["armor"] = "trained";
+        sheet.ProficiencyRanks["weapons"] = "trained";
+        Assert.Equal((3, 6, 21, 5, 9), (sheet.AbilityModifier(rules, "str"), sheet.ProficiencyModifier(rules, "armor"),
+            sheet.ArmorClass(rules), sheet.CheckModifier(rules, "athletics"), sheet.AttackModifier(rules)));
+
+        ContentException error = TestContent.Refused(() => RulesTesting.Rules(
+            """{"id": "x", "name": "X", "abilities": [{"id": "str", "name": "S"}], "formulas": {"attack": "ability + luck"}}"""));
+        Assert.Contains("unknown name \"luck\"", error.Message);
+    }
+
+    [Fact]
     public void ASystemSaysHowItsRollsResolve()
     {
         // Four degrees: ten over or under moves a step, and so do a natural 20 and a natural 1.

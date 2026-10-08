@@ -267,10 +267,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     outcome the system names, and the hit chance is counted from the same data
     (`CheckKind.Odds`, the first piece of the evaluator). The yorehold set's own rules are
     written out in its ruleset.json and every earlier test passes unchanged.
-  - Left: dice beyond keep-highest/lowest (exploding, success counts, custom faces); the
-    formulas for a creature's own numbers (attack bonus, AC, save and skill modifiers are still
-    C#, R6); death saves (R7); a trap's "fumbled by 5" and dialogue checks still read a bare
-    total; expected damage and simulated fights in the evaluator; the fight AI's own odds
+  - Done 10/8: `formulas` in ruleset.json for a creature's own numbers (ability modifier,
+    proficiency, attack, damage, AC, checks, saves, DC, passive scores).
+  - Left: dice beyond keep-highest/lowest (exploding, success counts, custom faces); typed
+    bonuses and saves as their own list (R6); death saves (R7); a trap's "fumbled by 5" and
+    dialogue checks still read a bare total; expected damage and simulated fights in the evaluator; the fight AI's own odds
     (`Tactics`, R12).
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The

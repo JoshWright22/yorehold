@@ -119,6 +119,8 @@ public class Ruleset
     public RoleNames Roles { get; init; } = new();
     /// <summary>How attacks, checks and saves are rolled and read.</summary>
     public CheckRules Checks { get; init; } = new();
+    /// <summary>How a creature's own numbers are counted, where the system says.</summary>
+    public SheetFormulas Formulas { get; init; } = new();
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -157,6 +159,10 @@ public class Ruleset
     /// <summary>What an ability score adds to a roll.</summary>
     public int AbilityModifier(int score)
     {
+        if (Formulas.Of("abilityModifier") is Formula own)
+        {
+            return own.Whole(name => name == "score" ? score : null);
+        }
         if (ModifierTable == ModifierTable.Classic)
         {
             return score switch
@@ -363,6 +369,7 @@ public class Ruleset
             ArmorClassAbility = AbilityOrNone("armorClassAbility", "dex"),
             Roles = RolesFrom(node, abilities, skills, AbilityOrNone("initiativeAbility", "dex"), AbilityOrNone("hitDieAbility", "con")),
             Checks = CheckRules.Read(node.Get("checks")),
+            Formulas = SheetFormulas.Read(node.Get("formulas")),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,

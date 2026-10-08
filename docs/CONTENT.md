@@ -794,6 +794,27 @@ A formula is arithmetic: numbers, the names listed for its place, `+ - * / %`, c
 }
 ```
 
+`formulas` says how a creature's own numbers are counted, for a system that counts them differently; one left out is counted as the game always has (shown in brackets). Each is handed the names listed and may also read `level`, `mod.<ability>`, `score.<ability>`, `stat.<name>` (any number on the sheet, with its modifiers) and `prof.<target>` (the proficiency bonus for a skill, a save, `weapons`, `armor` or `dc`).
+
+| Formula | Names | The game's own |
+|---|---|---|
+| `abilityModifier` | `score` | `floor((score - 10) / 2)`, or the `classic` table |
+| `proficiency` | `rankBonus`, `addsLevel`, `proficient`, `tableBonus` | with ranks `rankBonus + (addsLevel ? level : 0)`, else `proficient ? tableBonus : 0` |
+| `attack` | `ability`, `proficiency`, `bonus` | `ability + proficiency + bonus` |
+| `damage` | `ability`, `bonus` | `ability + bonus` |
+| `armorClass` | `armor`, `ability`, `proficiency` | `armor + ability + proficiency` |
+| `check` | `ability`, `proficiency` | `ability + proficiency` |
+| `save` | `ability`, `proficiency` | `ability + proficiency` |
+| `dc` | `base`, `ability`, `proficiency`, `bonus` | `base + ability + proficiency + bonus` |
+| `passive` | `base`, `modifier` | `base + modifier` |
+
+```json
+"formulas": {
+  "proficiency": "proficient ? rankBonus + level : 0",
+  "armorClass": "10 + stat.ac + min(mod.dex, 2) + proficiency"
+}
+```
+
 The game works the chance of each outcome out from the same data by counting every way the dice can fall, which is where the hit chance on screen comes from.
 
 A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.

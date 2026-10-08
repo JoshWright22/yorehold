@@ -203,7 +203,48 @@ public sealed partial class CharacterSheet
     {
         // "ac" holds armour: its base is the unarmoured AC, armour overrides it, shields add.
         int ability = rules.ArmorClassAbility.Length == 0 ? 0 : AbilityModifier(rules, rules.ArmorClassAbility);
-        return Stats.Integer("ac") + ability + (rules.ProficiencyRanks.Count == 0 ? 0 : ProficiencyModifier(rules, "armor"));
+        int proficiency = rules.ProficiencyRanks.Count == 0 ? 0 : ProficiencyModifier(rules, "armor");
+        return Counted(rules, "armorClass", Stats.Integer("ac") + ability + proficiency,
+            ("armor", Stats.Integer("ac")), ("ability", ability), ("proficiency", proficiency));
+    }
+
+    // A number the system has its own formula for, or the game's own count of it. The formula is
+    // handed the names it is documented with and can read the rest of the sheet (SheetFormulas).
+    private int Counted(Ruleset rules, string formula, int own, params (string Name, int Value)[] given)
+    {
+        if (rules.Formulas.Of(formula) is not Formula counted)
+        {
+            return own;
+        }
+        return counted.Whole(name =>
+        {
+            foreach ((string key, int value) in given)
+            {
+                if (key == name)
+                {
+                    return value;
+                }
+            }
+            if (name == "level")
+            {
+                return Level;
+            }
+            int dot = name.IndexOf('.');
+            if (dot < 0)
+            {
+                return null;
+            }
+            string of = name[(dot + 1)..];
+            return name[..dot] switch
+            {
+                "mod" => AbilityModifier(rules, of),
+                "score" => AbilityScore(of),
+                "stat" => Stats.Integer(of),
+                // "proficiency" itself can't ask for another proficiency: it would never end
+                "prof" => formula == "proficiency" ? null : ProficiencyModifier(rules, of),
+                _ => null,
+            };
+        });
     }
 
     public string ProficiencyRank(Ruleset rules, string target)
@@ -220,9 +261,14 @@ public sealed partial class CharacterSheet
         // A ruleset without ranks uses its per-level table and ignores any ranks on the sheet.
         if (rules.ProficiencyRanks.Count == 0)
         {
-            return Proficiencies.Contains(target) ? rules.ProficiencyBonus(Level) : 0;
+            bool proficient = Proficiencies.Contains(target);
+            return Counted(rules, "proficiency", proficient ? rules.ProficiencyBonus(Level) : 0,
+                ("rankBonus", 0), ("addsLevel", 0), ("proficient", proficient ? 1 : 0), ("tableBonus", rules.ProficiencyBonus(Level)));
         }
-        return rules.ProficiencyBonus(Level, ProficiencyRank(rules, target));
+        ProficiencyRank? rank = rules.Rank(ProficiencyRank(rules, target));
+        return Counted(rules, "proficiency", rules.ProficiencyBonus(Level, rank?.Id ?? ""),
+            ("rankBonus", rank?.Bonus ?? 0), ("addsLevel", rank is { AddsLevel: true } ? 1 : 0),
+            ("proficient", rank != null && rank.Id != rules.UntrainedRank ? 1 : 0), ("tableBonus", rules.ProficiencyBonus(Level)));
     }
 
     /// <summary>What its saves and checks are rolled against, with its own DC ability unless one is named.</summary>
@@ -230,29 +276,32 @@ public sealed partial class CharacterSheet
     {
         string used = ability.Length == 0 ? DcAbility : ability;
         int modifier = rules.Ability(used) != null ? AbilityModifier(rules, used) : 0;
-        return rules.BaseDc + modifier + ProficiencyModifier(rules, "dc") + Stats.Integer("dc");
+        int proficiency = ProficiencyModifier(rules, "dc");
+        return Counted(rules, "dc", rules.BaseDc + modifier + proficiency + Stats.Integer("dc"),
+            ("base", rules.BaseDc), ("ability", modifier), ("proficiency", proficiency), ("bonus", Stats.Integer("dc")));
     }
 
     /// <summary>For an ability or a skill; a skill adds its proficiency.</summary>
     public int CheckModifier(Ruleset rules, string abilityOrSkill)
     {
         SkillDefinition? skill = rules.Skill(abilityOrSkill);
-        if (skill != null)
-        {
-            return AbilityModifier(rules, skill.Ability) + ProficiencyModifier(rules, skill.Id);
-        }
-        return AbilityModifier(rules, abilityOrSkill);
+        int ability = AbilityModifier(rules, skill?.Ability ?? abilityOrSkill);
+        int proficiency = skill != null ? ProficiencyModifier(rules, skill.Id) : 0;
+        return Counted(rules, "check", ability + proficiency, ("ability", ability), ("proficiency", proficiency));
     }
 
     public int SaveModifier(Ruleset rules, string ability)
     {
-        return AbilityModifier(rules, ability) + ProficiencyModifier(rules, ability);
+        int modifier = AbilityModifier(rules, ability);
+        int proficiency = ProficiencyModifier(rules, ability);
+        return Counted(rules, "save", modifier + proficiency, ("ability", modifier), ("proficiency", proficiency));
     }
 
     /// <summary>What a check against this sheet is rolled to beat.</summary>
     public int PassiveScore(Ruleset rules, string abilityOrSkill)
     {
-        return rules.PassiveBase + CheckModifier(rules, abilityOrSkill);
+        int modifier = CheckModifier(rules, abilityOrSkill);
+        return Counted(rules, "passive", rules.PassiveBase + modifier, ("base", rules.PassiveBase), ("modifier", modifier));
     }
 
     public int InitiativeModifier(Ruleset rules)
@@ -278,13 +327,17 @@ public sealed partial class CharacterSheet
 
     public int AttackModifier(Ruleset rules)
     {
-        return AbilityModifier(rules, AttackAbility(rules)) + ProficiencyModifier(rules, "weapons") + Stats.Integer("attack");
+        int ability = AbilityModifier(rules, AttackAbility(rules));
+        int proficiency = ProficiencyModifier(rules, "weapons");
+        return Counted(rules, "attack", ability + proficiency + Stats.Integer("attack"),
+            ("ability", ability), ("proficiency", proficiency), ("bonus", Stats.Integer("attack")));
     }
 
     /// <summary>The weapon's dice with the ability and "damage" bonus on the end: "1d8+3".</summary>
     public string DamageDice(Ruleset rules)
     {
-        int bonus = AbilityModifier(rules, AttackAbility(rules)) + Stats.Integer("damage");
+        int ability = AbilityModifier(rules, AttackAbility(rules));
+        int bonus = Counted(rules, "damage", ability + Stats.Integer("damage"), ("ability", ability), ("bonus", Stats.Integer("damage")));
         string dice = Weapon != null && Weapon.Damage.Length > 0 ? Weapon.Damage : "1";
         if (bonus != 0)
         {
