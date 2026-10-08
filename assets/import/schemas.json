@@ -66,7 +66,10 @@
             "image": {"type": "string"}
           }
         },
-        "ai": {"type": "string", "description": "a behaviour profile: cunning, brute, coward, lookout"}
+        "ai": {"type": "string", "description": "a behaviour profile: cunning, brute, coward, lookout"},
+        "stats": {"type": "object", "additionalProperties": {"type": "integer"}, "description": "numbers like resist.fire, immune.poison, weak.cold"},
+        "multiattack": {"type": "integer", "minimum": 2, "description": "attacks it makes with one action"},
+        "text": {"type": "string", "description": "the stat block as printed, for what has no field yet"}
       }
     },
     "item": {

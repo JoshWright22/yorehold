@@ -262,6 +262,9 @@ public sealed class OutlineBuilder
         return target;
     }
 
+    // the chosen system has an action by that id
+    private bool FindSystemAction(string id) => _game.Exists($"{_system}/actions/{id}.json");
+
     private void WriteDefinitions()
     {
         foreach (OutlineEntry e in _outline.OfKind(OutlineKind.Creature))
@@ -280,6 +283,21 @@ public sealed class OutlineBuilder
                 var token = data["token"] as JsonObject ?? new JsonObject();
                 token["image"] = picture;
                 data["token"] = token;
+            }
+            // the items it fights with, as the package names them (the game's own where it has one)
+            if (data["items"] is JsonArray carried)
+            {
+                data["items"] = new JsonArray(carried.Select(i => (JsonNode?)IdOf(i?.ToString() ?? "")).ToArray());
+            }
+            // a stat block's Multiattack is the system's own, where it has one
+            if (data["multiattack"] is JsonNode && FindSystemAction("multiattack"))
+            {
+                var actions = data["actions"] as JsonArray ?? new JsonArray();
+                if (!actions.Any(a => a?.ToString() == "multiattack"))
+                {
+                    actions.Add("multiattack");
+                }
+                data["actions"] = actions;
             }
             WriteJson($"creatures/{e.Id}.json", data);
         }

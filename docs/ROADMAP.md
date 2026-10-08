@@ -925,6 +925,13 @@ Josh's Downloads; nothing from it goes into a repo.
   is kept as text on the creature and counted in the import report, so the gap is visible.
   - Needs a decision later: the creature format has no CR, saves, resistances, reactions or
 	legendary actions yet; they are game rules, not import work.
+  - Done 10/8: `StatBlockText` reads both layouts (name, size and type, AC, HP, speed,
+    darkvision, the six abilities, resistances/immunities/vulnerabilities as `resist.`/`immune.`/
+    `weak.` stats, CR as level, weapon attacks as natural-weapon items, Multiattack), tolerant of
+    l/I/O slips; the rest stays in the creature's `text`. Reading without a model, every stat
+    block on a page becomes a creature; built for a system with a `multiattack` action, it gets
+    it. Left: saves, skills, senses beyond darkvision, traits, reactions and legendary actions as
+    the system's own; running it over the whole excerpt.
 - [ ] **S14. Which painting is whose.** A caption naming the creature wins; else the painting goes
   to the stat block or heading on its page it sits nearest; one painting over a family's page
   (Black Dragon Wyrmling, Young, Adult) goes to the one it names and is offered to the rest.

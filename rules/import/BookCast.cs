@@ -79,7 +79,52 @@ public static partial class BookCast
             AddFinds(draft, place, parts, foes, used);
             AddWays(draft, place, parts, ways, used);
         }
+        AddStatBlocks(book, draft, used);
     }
+
+    // Every stat block printed in the book becomes a creature, with its weapon attacks as items,
+    // unless the outline already has a creature by that name.
+    private static void AddStatBlocks(SourceBook book, Outline draft, HashSet<string> used)
+    {
+        var named = new HashSet<string>(draft.OfKind(OutlineKind.Creature).Select(c => c.Text("name", c.Id)), StringComparer.OrdinalIgnoreCase);
+        foreach (SourceBook.Page page in book.Pages)
+        {
+            string text = string.Join("\n", page.Blocks.Select(b => b.Text));
+            foreach (string block in StatBlockText.Find(text))
+            {
+                if (StatBlockText.Read(block) is not StatBlockText.Creature read || !named.Add(read.Name))
+                {
+                    continue;
+                }
+                string id = Unique(Slug(read.Name), used);
+                var items = new JsonArray();
+                foreach (StatBlockText.Attack attack in read.Attacks)
+                {
+                    string itemId = Unique(id + "-" + Slug(attack.Name), used);
+                    var item = new JsonObject
+                    {
+                        ["name"] = attack.Name,
+                        ["slot"] = "mainHand",
+                        ["damage"] = attack.Dice,
+                        ["attackAbility"] = attack.Ranged ? "dex" : "str",
+                        ["hands"] = 0,
+                        ["weight"] = 0,
+                    };
+                    if (attack.Type.Length > 0)
+                    {
+                        item["damageType"] = attack.Type;
+                    }
+                    draft.Entries.Add(new OutlineEntry { Id = itemId, Kind = OutlineKind.Item, Data = item, From = new OutlineSource(page.Number, Quote(attack.Name)) });
+                    items.Add(itemId);
+                }
+                read.Data["items"] = items;
+                draft.Entries.Add(new OutlineEntry { Id = id, Kind = OutlineKind.Creature, Data = read.Data, From = new OutlineSource(page.Number, Quote(read.Name)) });
+            }
+        }
+    }
+
+    // "Marsh Lurker" is "marsh-lurker"
+    private static string Slug(string name) => OutlineBuilder.Slug(name);
 
     // the passages to read out before the first numbered place open the chapter
     private static void AddIntro(SourceBook book, Outline draft)
