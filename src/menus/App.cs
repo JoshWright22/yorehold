@@ -26,6 +26,11 @@ public static class App
         {
             files.Add(pack);
         }
+        // the skin last, so its look (ui/colors.json, ui/fonts.json, frames) wins over art packs'
+        if (Places.SkinFolder(Settings.Skin) is { Length: > 0 } skin)
+        {
+            files.Add(skin);
+        }
         return files;
     }
 

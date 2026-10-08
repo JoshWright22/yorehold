@@ -79,6 +79,26 @@ public static class Places
         return packs;
     }
 
+    /// <summary>The skins the player installed (user://skins/&lt;name&gt;), by name, in name order.</summary>
+    public static List<string> SkinNames()
+    {
+        string root = ProjectSettings.GlobalizePath("user://skins");
+        if (!System.IO.Directory.Exists(root))
+        {
+            return new List<string>();
+        }
+        List<string> skins = System.IO.Directory.GetDirectories(root).Select(System.IO.Path.GetFileName).OfType<string>().ToList();
+        skins.Sort(StringComparer.Ordinal);
+        return skins;
+    }
+
+    /// <summary>A skin's folder, or "" when there is no skin by that name.</summary>
+    public static string SkinFolder(string name)
+    {
+        string folder = ProjectSettings.GlobalizePath("user://skins/" + name);
+        return name.Length > 0 && !name.Contains('/') && !name.Contains('\\') && !name.Contains("..") && System.IO.Directory.Exists(folder) ? folder : "";
+    }
+
     /// <summary>The content sets the player installed (user://sets/&lt;name&gt;), in name order.</summary>
     public static List<string> SetFolders()
     {

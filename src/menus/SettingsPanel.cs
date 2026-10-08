@@ -35,6 +35,9 @@ public sealed class SettingsPanel
             s => OnOff(s.Fullscreen), new[] { "On", "Off" }, (s, i) => s.Fullscreen = i == 0),
         new("lighting", "Lighting", "Display", "Off: every map fully lit. Mood: darkness for the look. Rules: darkness hides things too.",
             s => LightingWords[Math.Clamp(s.Lighting, 0, 3)], LightingWords, (s, i) => s.Lighting = i),
+        new("skin", "Skin", "Display", "A look from the skins folder: its colours, faces and frames. Takes hold when the game starts again.",
+            s => s.Skin.Length == 0 ? "Game's own" : s.Skin, new[] { "Game's own", "Next skin" },
+            (s, i) => s.Skin = i == 0 ? "" : NextSkin(s.Skin)),
         new("timeOfDay", "Time of day", "Display", "Outdoor maps by day, at dusk or at night. Underground maps stay as they are.",
             s => TimeWords[Math.Clamp(s.TimeOfDay, 0, 3)], TimeWords, (s, i) => s.TimeOfDay = i),
         new("sharedFog", "Shared party view", "Gameplay", "The map shows what anyone in the party sees, or only the selected hero.",
@@ -58,6 +61,18 @@ public sealed class SettingsPanel
     };
 
     private const string LocalServer = "http://127.0.0.1:7350";
+
+    // the installed skin after this one, round again to the first; none installed keeps the game's own
+    private static string NextSkin(string now)
+    {
+        List<string> skins = Places.SkinNames();
+        if (skins.Count == 0)
+        {
+            return "";
+        }
+        int at = skins.IndexOf(now);
+        return skins[(at + 1) % skins.Count];
+    }
 
     /// <summary>One word for how the account stands, for the title's settings page.</summary>
     public static string AccountWord()

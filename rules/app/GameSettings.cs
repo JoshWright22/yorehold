@@ -45,6 +45,8 @@ public sealed class GameSettings
     /// <summary>Story import's model: a chat address (an Ollama on this computer, say) and the model's name. "" = none set.</summary>
     public string StoryModel { get; set; } = "";
     public string StoryModelName { get; set; } = "";
+    /// <summary>The skin folder's name under the user folder's skins/, laid over the game's look; "" = the game's own.</summary>
+    public string Skin { get; set; } = "";
     /// <summary>Key bindings that differ from the shipped ones: action id to key names.</summary>
     public Dictionary<string, List<string>> Keys { get; } = new();
 
@@ -90,6 +92,7 @@ public sealed class GameSettings
         settings.DeviceId = Clip(Text(j, "deviceId", ""), 128);
         settings.StoryModel = Clip(Text(j, "storyModel", ""), 253);
         settings.StoryModelName = Clip(Text(j, "storyModelName", ""), 128);
+        settings.Skin = Clip(Text(j, "skin", ""), 128);
         if (j["keys"] is JsonObject keys)
         {
             foreach (KeyValuePair<string, JsonNode?> binding in keys)
@@ -151,6 +154,7 @@ public sealed class GameSettings
             ["deviceId"] = DeviceId,
             ["storyModel"] = StoryModel,
             ["storyModelName"] = StoryModelName,
+            ["skin"] = Skin,
         };
         var keys = new JsonObject();
         foreach (KeyValuePair<string, List<string>> binding in Keys.OrderBy(k => k.Key, StringComparer.Ordinal))
@@ -187,7 +191,7 @@ public sealed class GameSettings
     private static readonly string[] Known =
     {
         "zoomToCursor", "edgeScroll", "cameraFollows", "panSpeed", "fullscreen", "lighting", "timeOfDay", "sharedFog",
-        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName",
+        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName", "skin",
     };
 
     private static string Clip(string text, int longest) => text.Length > longest ? text[..longest] : text;
