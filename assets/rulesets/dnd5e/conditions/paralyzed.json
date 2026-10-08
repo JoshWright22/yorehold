@@ -1,11 +1,12 @@
 {
   "id": "paralyzed",
   "name": "Paralyzed",
-  "description": "Can't move or act; attacks against it have advantage.",
+  "description": "Can't move or act; attacks against it have advantage, and a hit from within 5 feet is a critical hit.",
   "flags": [
     "paralyzed",
     "cantAct",
     "cantMove"
   ],
-  "attackersAdvantage": true
+  "attackersAdvantage": true,
+  "hitsAreCritical": true
 }

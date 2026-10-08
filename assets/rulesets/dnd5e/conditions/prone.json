@@ -1,12 +1,14 @@
 {
   "id": "prone",
   "name": "Prone",
-  "description": "On the ground: disadvantage on its attacks, advantage on attacks against it.",
+  "description": "On the ground: disadvantage on its attacks; attacks against it have advantage within 5 feet and disadvantage from further off.",
   "flags": [
     "prone"
   ],
   "disadvantageOnAttacks": true,
   "attackersAdvantage": true,
+  "attackersWithin": 1,
+  "attackersBeyond": "disadvantage",
   "ends": [
     "fightEnd"
   ]

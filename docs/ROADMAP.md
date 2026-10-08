@@ -441,7 +441,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     reaction's `unless` flag); unseen attackers and targets in the dark; origin, general,
     fighting-style and epic-boon feat kinds; supplies for the long rest; poisoned and frightened
     hindering checks (`disadvantageOnChecks`).
-  - Doesn't fit yet (back to the steps): prone and paralysed caring about distance;
+  - Done 10/8: prone caring how far the attacker is, hits on the paralysed and unconscious from
+    beside them as critical hits.
+  - Doesn't fit yet (back to the steps):
     Shield and Counterspell as spells cast as
     reactions (the `beforeHit` and `spellCast` moments are there, a reaction spending a slot is
     not); versatile and two-weapon fighting. Then the rest of the SRD: all

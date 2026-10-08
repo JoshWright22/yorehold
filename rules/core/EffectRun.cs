@@ -647,7 +647,7 @@ internal sealed class EffectRun
         int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules)
             : step.Ability.Length > 0 ? self.AttackModifier(_rules, step.Ability)
             : self.AttackModifier(_rules);
-        Advantage advantage = self.AttackAdvantage(_rules, subject, _host.PlaceConditions(_context.Self, actor));
+        Advantage advantage = self.AttackAdvantage(_rules, subject, _host.PlaceConditions(_context.Self, actor), _host.Distance(_context.Self, actor));
         outcome.Advantage = advantage == Advantage.Advantage;
         RollResult attack = kind.Roll(bonus + penalty, advantage, _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
@@ -664,6 +664,17 @@ internal sealed class EffectRun
             // its reaction may have raised its defence: the same roll, read against the new one
             ac += _host.ArmorClass(actor, _context, step.Against) - armor;
             outcome.Attack = kind.Resolve(attack, ac);
+        }
+        if (outcome.Attack.Passes && !outcome.Attack.Critical && kind.Outcomes.FirstOrDefault(o => o.Passes && o.Critical) is CheckOutcome critical)
+        {
+            // a hit from close by on one that can't defend itself (paralysed) is a critical hit
+            double distance = _host.Distance(_context.Self, actor);
+            bool helpless = subject.Conditions.Select(c => _rules.Condition(c.Id)).OfType<ConditionDefinition>()
+                .Any(d => d.HitsAreCritical && distance <= Math.Max(1, d.AttackersWithin) + 0.01);
+            if (helpless)
+            {
+                outcome.Attack = critical;
+            }
         }
         outcome.Margin = attack.Total - ac;
         _result.Events.Add(new EffectEvent

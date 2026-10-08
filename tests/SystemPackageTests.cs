@@ -449,6 +449,27 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ProneAndParalysedCareHowFarTheAttackerIs()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        gik.AddCondition(w.Rules, "prone");
+        Assert.Equal(Advantage.Advantage, ana.AttackAdvantage(w.Rules, gik, null, 1));
+        Assert.Equal(Advantage.Disadvantage, ana.AttackAdvantage(w.Rules, gik, null, 4));
+
+        // a hit from beside a paralysed creature is a critical hit
+        gik.RemoveCondition("prone");
+        gik.AddCondition(w.Rules, "paralyzed");
+        gik.Stats.SetBase("ac", -1000);
+        ana.Stats.SetBase("dex", 2000);
+        world.Fight();
+        Assert.True(world.TurnTo(0) && w.Adjacent(0, 2));
+        Assert.True(world.Use("attack", 2) && world.Said("CRITICAL"), string.Join("\n", world.Log.TakeLast(4)));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

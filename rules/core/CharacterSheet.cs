@@ -444,7 +444,7 @@ public sealed partial class CharacterSheet
     }
 
     /// <summary>Conditions can force advantage or disadvantage on attacks; both together cancel out.</summary>
-    public Advantage AttackAdvantage(Ruleset rules, CharacterSheet? target = null, IEnumerable<string>? place = null)
+    public Advantage AttackAdvantage(Ruleset rules, CharacterSheet? target = null, IEnumerable<string>? place = null, double distance = 1)
     {
         bool advantage = false;
         bool disadvantage = false;
@@ -462,11 +462,19 @@ public sealed partial class CharacterSheet
         foreach (ActiveCondition active in target?.Conditions ?? Enumerable.Empty<ActiveCondition>())
         {
             ConditionDefinition? definition = rules.Condition(active.Id);
-            if (definition != null)
+            if (definition == null)
             {
-                advantage |= definition.AttackersAdvantage;
-                disadvantage |= definition.AttackersDisadvantage;
+                continue;
             }
+            if (definition.AttackersWithin > 0 && distance > definition.AttackersWithin + 0.01)
+            {
+                // too far for what it does up close (prone): what it does further off instead
+                advantage |= definition.AttackersBeyond == "advantage";
+                disadvantage |= definition.AttackersBeyond == "disadvantage";
+                continue;
+            }
+            advantage |= definition.AttackersAdvantage;
+            disadvantage |= definition.AttackersDisadvantage;
         }
         if (advantage == disadvantage)
         {

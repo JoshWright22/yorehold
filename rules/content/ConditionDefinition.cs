@@ -25,6 +25,15 @@ public class ConditionDefinition
     /// <summary>Attacks against whoever has it are made with advantage or disadvantage (prone, dodging, restrained).</summary>
     public bool AttackersAdvantage { get; init; }
     public bool AttackersDisadvantage { get; init; }
+    /// <summary>
+    /// Squares the attackers' advantage or disadvantage reaches; 0 = any distance. Further off,
+    /// AttackersBeyond applies instead ("advantage", "disadvantage" or nothing): 5e's prone gives
+    /// attackers within 5 feet advantage and those further disadvantage.
+    /// </summary>
+    public double AttackersWithin { get; init; }
+    public string AttackersBeyond { get; init; } = "";
+    /// <summary>A hit on it from within AttackersWithin (or next to it) is a critical hit (5e's paralysed, unconscious).</summary>
+    public bool HitsAreCritical { get; init; }
     /// <summary>Its checks (skills and abilities, not attacks or saves) are rolled with advantage or disadvantage (5e's poisoned, frightened).</summary>
     public bool AdvantageOnChecks { get; init; }
     public bool DisadvantageOnChecks { get; init; }
@@ -86,6 +95,10 @@ public class ConditionDefinition
             DisadvantageOnAttacks = node.Bool("disadvantageOnAttacks", false),
             AttackersAdvantage = node.Bool("attackersAdvantage", false),
             AttackersDisadvantage = node.Bool("attackersDisadvantage", false),
+            AttackersWithin = node.Number("attackersWithin", 0, 0, 1000),
+            AttackersBeyond = node.Text("attackersBeyond", "", 16) is var beyond && beyond is "" or "advantage" or "disadvantage" ? beyond
+                : throw node.Fail("attackersBeyond", "is advantage or disadvantage"),
+            HitsAreCritical = node.Bool("hitsAreCritical", false),
             AdvantageOnChecks = node.Bool("advantageOnChecks", false),
             DisadvantageOnChecks = node.Bool("disadvantageOnChecks", false),
             Flags = DifferentNames(node, "flags"),
