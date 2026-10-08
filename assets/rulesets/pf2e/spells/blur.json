@@ -1,0 +1,20 @@
+{
+  "id": "blur",
+  "name": "Blur",
+  "description": "Two actions: an ally's form blurs; attacks on it must pass a DC 5 flat check for a minute.",
+  "level": 2,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "blurred",
+      "duration": 10
+    }
+  ]
+}

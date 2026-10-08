@@ -33,13 +33,17 @@
     "1": [
       "heal",
       "breathe-fire",
-      "thunderstrike"
+      "thunderstrike",
+      "grease",
+      "runic-weapon",
+      "mystic-armor"
     ],
     "2": [
       "acid-grip"
     ],
     "3": [
-      "slow"
+      "slow",
+      "lightning-bolt"
     ]
   },
   "levels": [

@@ -1,0 +1,13 @@
+{
+  "id": "blessed",
+  "name": "Blessed",
+  "description": "+1 status bonus to attack rolls.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 1,
+      "type": "status"
+    }
+  ]
+}

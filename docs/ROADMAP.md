@@ -532,6 +532,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     backgrounds; feats of all four kinds (ancestry lores, First World Magic, Power Attack, Nimble
     Dodge, Counterspell, Hunted Shot, Crane Stance, Battle Medicine, Toughness, Fleet,
     Incredible Initiative), offered at levels 1 to 5 as the book does.
+  - Done 10/8: eleven more spells by tradition: Bless, Runic Weapon, Mystic Armor, Sleep,
+    Grease, Soothe, Command, Invisibility, Blur (a DC 5 flat check), Haste, Lightning Bolt.
   - Done 10/8: deadly and backstabber as general triggers (anyone wielding the trait), the
     hidden as a DC 11 flat check (`attackersFlatCheck`), heritages, boosts, a free action named.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more

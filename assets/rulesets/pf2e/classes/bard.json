@@ -33,14 +33,21 @@
     ],
     "1": [
       "fear",
-      "force-barrage"
+      "force-barrage",
+      "soothe",
+      "command",
+      "sleep",
+      "bless"
     ],
     "2": [
-      "spiritual-armament"
+      "spiritual-armament",
+      "invisibility",
+      "blur"
     ],
     "3": [
       "slow",
-      "heroism"
+      "heroism",
+      "haste"
     ]
   },
   "levels": [

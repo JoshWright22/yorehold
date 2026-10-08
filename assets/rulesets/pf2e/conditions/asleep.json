@@ -1,0 +1,14 @@
+{
+  "id": "asleep",
+  "name": "Asleep",
+  "description": "Magically asleep: can't act and is off-guard until it wakes or is hurt.",
+  "flags": [
+    "asleep",
+    "offGuard",
+    "cantAct",
+    "cantMove"
+  ],
+  "ends": [
+    "damage"
+  ]
+}

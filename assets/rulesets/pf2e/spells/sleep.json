@@ -1,0 +1,35 @@
+{
+  "id": "sleep",
+  "name": "Sleep",
+  "description": "Two actions: a 5-foot burst; those failing a Will save fall unconscious for a round (two on a critical failure).",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 6
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "will",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "asleep",
+      "duration": 1,
+      "when": "failure"
+    },
+    {
+      "do": "condition",
+      "id": "asleep",
+      "duration": 2,
+      "when": "criticalFailure"
+    }
+  ]
+}

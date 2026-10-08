@@ -1,0 +1,18 @@
+{
+  "id": "mystic-armor",
+  "name": "Mystic Armor",
+  "description": "Two actions: +1 item bonus to AC until the fight ends.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "mystic-armor",
+      "target": "self"
+    }
+  ]
+}

@@ -98,15 +98,24 @@
       "force-barrage",
       "fear",
       "breathe-fire",
-      "thunderstrike"
+      "thunderstrike",
+      "runic-weapon",
+      "mystic-armor",
+      "sleep",
+      "grease",
+      "command"
     ],
     "2": [
       "acid-grip",
-      "blazing-bolt"
+      "blazing-bolt",
+      "invisibility",
+      "blur"
     ],
     "3": [
       "fireball",
-      "slow"
+      "slow",
+      "haste",
+      "lightning-bolt"
     ]
   }
 }

@@ -1,0 +1,16 @@
+{
+  "id": "mystic-armor",
+  "name": "Mystic Armor",
+  "description": "+1 item bonus to AC.",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 1,
+      "type": "item"
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

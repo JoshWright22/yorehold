@@ -1,0 +1,11 @@
+{
+  "id": "commanded",
+  "name": "Commanded",
+  "description": "Obeying a command: it loses its next turn.",
+  "flags": [
+    "cantAct"
+  ],
+  "ends": [
+    "turnEnd"
+  ]
+}

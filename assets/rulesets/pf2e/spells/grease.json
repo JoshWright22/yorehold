@@ -1,0 +1,33 @@
+{
+  "id": "grease",
+  "name": "Grease",
+  "description": "Two actions: slick ground in a 10-foot square; those failing a Reflex save fall prone.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 6
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "reflex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "prone",
+      "when": "failure"
+    },
+    {
+      "do": "condition",
+      "id": "prone",
+      "when": "criticalFailure"
+    }
+  ]
+}

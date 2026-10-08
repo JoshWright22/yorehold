@@ -1,0 +1,19 @@
+{
+  "id": "runic",
+  "name": "Runic Weapon",
+  "description": "+1 item bonus to weapon attack and damage rolls.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 1,
+      "type": "item"
+    },
+    {
+      "stat": "damage",
+      "op": "add",
+      "value": 1,
+      "type": "item"
+    }
+  ]
+}

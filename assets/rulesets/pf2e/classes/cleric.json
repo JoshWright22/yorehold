@@ -110,7 +110,10 @@
     "1": [
       "heal",
       "fear",
-      "harm"
+      "harm",
+      "bless",
+      "command",
+      "mystic-armor"
     ],
     "2": [
       "spiritual-armament"

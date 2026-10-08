@@ -1,0 +1,9 @@
+{
+  "id": "blurred",
+  "name": "Blurred",
+  "description": "Concealed: attacks on it must pass a DC 5 flat check.",
+  "flags": [
+    "blurred"
+  ],
+  "attackersFlatCheck": 5
+}

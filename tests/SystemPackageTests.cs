@@ -542,6 +542,25 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void Pf2eBlessAndSleep()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet;
+        bo.Spells.Add("bless");
+        bo.Spells.Add("sleep");
+        bo.Resources["slots-1"] = new Resource(3, 3);
+        bo.Stats.SetBase("perception", 2000); // Bo first
+        bo.Stats.SetBase("actions", 3); // room for two two-action spells in one turn
+        w.Creatures[2].Sheet.Stats.SetBase("wis", -2000); // Gik's Will save fails
+        world.Fight();
+        Assert.True(world.TurnTo(1) && world.Use("bless"), w.Refusal);
+        Assert.True(w.Creatures[0].Sheet.HasCondition("blessed") && bo.HasCondition("blessed"), "Every ally is blessed");
+        Assert.True(world.Use("sleep", null, w.CellOf(2)), w.Refusal);
+        Assert.True(w.Creatures[2].Sheet.HasCondition("asleep"), string.Join("\n", world.Log.TakeLast(5)));
+    }
+
+    [Fact]
     public void ACounterspellLosesTheSpell()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");

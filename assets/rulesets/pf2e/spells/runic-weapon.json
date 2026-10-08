@@ -1,0 +1,19 @@
+{
+  "id": "runic-weapon",
+  "name": "Runic Weapon",
+  "description": "Two actions: your weapon gains +1 item bonus to attack and damage for a minute.",
+  "level": 1,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "runic",
+      "duration": 10,
+      "target": "self"
+    }
+  ]
+}

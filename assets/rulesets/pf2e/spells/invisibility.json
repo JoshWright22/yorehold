@@ -1,0 +1,19 @@
+{
+  "id": "invisibility",
+  "name": "Invisibility",
+  "description": "Two actions: an ally is invisible, so attacks on it must pass a DC 11 flat check, until it attacks.",
+  "level": 2,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "hidden"
+    }
+  ]
+}

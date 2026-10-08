@@ -1,0 +1,20 @@
+{
+  "id": "haste",
+  "name": "Haste",
+  "description": "Two actions: an ally is quickened for a minute.",
+  "level": 3,
+  "hands": 0,
+  "cost": 2,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 6
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "quickened",
+      "duration": 10
+    }
+  ]
+}
