@@ -529,8 +529,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: the AI attacks with its best attack action (`BestAttack`: every non-spell action
     that rolls attacks at a creature, by expected damage per action with repeats and the
     system's critical counted); 5e's Bandit Captain uses Multiattack.
-  - Left: the AI's own walk (Stride as an action it must pay for when planning); debuffs like
-    Demoralize weighed beyond a flat worth.
+  - Done 10/8: a condition an action puts on someone is weighed by what it changes under the
+    system's odds (`ConditionWorth`: damage dealt and taken for a round, a lost turn), not a
+    flat guess, so Demoralize and a stun are worth what they do.
+  - Left: the AI's own walk (Stride as an action it must pay for when planning).
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each

@@ -650,6 +650,21 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TheAiWeighsAConditionByTheOdds()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        world.Fight();
+        // frightened on Gik: worse at hitting Ana, easier for her to hit
+        float scared = w.ConditionWorth(0, 2, "frightened");
+        Assert.True(scared > 0, $"{scared}");
+        // the same on Ana herself is bad for her side
+        Assert.True(w.ConditionWorth(0, 0, "frightened") < 0);
+        // stunned stops Gik's turn: worth at least what he would deal her
+        Assert.True(w.ConditionWorth(0, 2, "stunned") >= scared);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

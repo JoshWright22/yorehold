@@ -164,6 +164,41 @@ public sealed partial class World
         return worth;
     }
 
+    /// <summary>
+    /// About the HP a condition on who is worth to me's side for a round, by the system's own
+    /// odds: on a foe, the damage it then deals me less, the damage I then deal it more, and its
+    /// whole turn when the condition stops it acting; on a friend, the same the other way round
+    /// against its nearest foe. 0 when none of that changes (a condition only flags something).
+    /// </summary>
+    public float ConditionWorth(int me, int who, string condition)
+    {
+        if (Rules.Condition(condition) is not ConditionDefinition definition || me < 0 || who < 0)
+        {
+            return 0;
+        }
+        bool friend = Creatures[who].Team == Creatures[me].Team;
+        int? other = friend ? Foes(me).OrderBy(f => Grid.Distance(CellOf(who), CellOf(f))).Cast<int?>().FirstOrDefault() : me;
+        if (other is not int them)
+        {
+            return 0;
+        }
+        CharacterSheet before = Creatures[who].Sheet;
+        CharacterSheet after = before.Copy();
+        after.AddCondition(Rules, condition);
+        CharacterSheet theirs = Creatures[them].Sheet;
+        CheckKind attack = Rules.Checks.Kind(CheckRules.Attack);
+        double Dealt(CharacterSheet by, CharacterSheet at) =>
+            DiceExpression.Parse(by.DamageDice(Rules)) is DiceExpression dice
+                ? attack.ExpectedDamage(attack.Odds(by.AttackModifier(Rules), at.AttackDefence(Rules), by.AttackAdvantage(Rules, at)), dice, Rules.Checks.CriticalDamage)
+                : 0;
+        // who deals them, and they deal who, before and after
+        double outNow = Dealt(before, theirs), outThen = definition.HasFlag("cantAct") ? 0 : Dealt(after, theirs);
+        double inNow = Dealt(theirs, before), inThen = Dealt(theirs, after);
+        // for a friend: more out and less in is good; for a foe: less out (at us) and more in (from us)
+        double worth = friend ? (outThen - outNow) + (inNow - inThen) : (outNow - outThen) + (inThen - inNow);
+        return (float)worth;
+    }
+
     /// <summary>What a strike is worth this turn, per action: the chance to hit times the weapon's average, if someone is in reach or close.</summary>
     public float StrikeWorth(int me)
     {
@@ -321,11 +356,15 @@ public sealed partial class World
                         worth += friend ? Average(step.Amount) * 0.5f : 0;
                         break;
                     case EffectKind.Condition:
-                    case EffectKind.Modifier:
-                        if (step.Kind == EffectKind.Condition && (step.Remove || sheet.HasCondition(step.Id)))
+                        if (step.Remove || sheet.HasCondition(step.Id))
                         {
                             break;
                         }
+                        // what it does under the system's odds, where that can be counted; else a plain guess
+                        float counted = ConditionWorth(me, who, step.Id);
+                        worth += (counted != 0 ? counted : friend == buffs ? 3 : -3) * odds;
+                        break;
+                    case EffectKind.Modifier:
                         worth += (friend == buffs ? 3 : -3) * odds;
                         break;
                     case EffectKind.Move:
