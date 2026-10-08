@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 
 namespace Yorehold;
@@ -144,35 +145,71 @@ public static class Palette
             GD.PushWarning($"The screens' fonts can't be read, so they are the game's own: {error.Message}");
             return;
         }
+        // a role may start with a font file the skin brings; the system names after it are its fallbacks
+        var brought = new System.Collections.Generic.Dictionary<string, FontFile>();
+        foreach ((string role, System.Collections.Generic.List<string> names) in fonts.Faces)
+        {
+            string? path = names.FirstOrDefault(Rules.UiFonts.IsFile);
+            if (path == null)
+            {
+                continue;
+            }
+            if (!files.Exists(path))
+            {
+                GD.PushWarning($"{Rules.UiFonts.File}: {role} names {path}, which isn't there; the system fonts listed stand in");
+                continue;
+            }
+            brought[role] = new FontFile { Data = files.ReadBytes(path) };
+        }
         Theme theme = GD.Load<Theme>("res://scenes/hud/hud-theme.tres");
-        var seen = new System.Collections.Generic.HashSet<Font>();
+        var swapped = new System.Collections.Generic.Dictionary<SystemFont, Font>();
+        // The font a role's system font becomes: the same font with the role's names, or the file
+        // the skin brought (made bold the way the system font was).
+        Font? Swap(SystemFont font)
+        {
+            if (swapped.TryGetValue(font, out Font? done))
+            {
+                return done;
+            }
+            if (font.FontNames.Length == 0)
+            {
+                return null;
+            }
+            foreach ((string role, string first) in FontRoles)
+            {
+                if (font.FontNames[0] != first || !fonts.Faces.TryGetValue(role, out System.Collections.Generic.List<string>? names))
+                {
+                    continue;
+                }
+                font.FontNames = names.Where(n => !Rules.UiFonts.IsFile(n)).DefaultIfEmpty(first).ToArray();
+                Font result = font;
+                if (brought.TryGetValue(role, out FontFile? file))
+                {
+                    result = new FontVariation
+                    {
+                        BaseFont = file,
+                        VariationEmbolden = font.FontWeight >= 600 ? 0.6f : 0,
+                        Fallbacks = new Godot.Collections.Array<Font> { font },
+                    };
+                }
+                swapped[font] = result;
+                return result;
+            }
+            return null;
+        }
         foreach (string type in theme.GetTypeList())
         {
             foreach (string name in theme.GetFontList(type))
             {
-                if (theme.GetFont(name, type) is not SystemFont font || !seen.Add(font) || font.FontNames.Length == 0)
+                if (theme.GetFont(name, type) is SystemFont font && Swap(font) is Font now && now != font)
                 {
-                    continue;
-                }
-                foreach ((string role, string first) in FontRoles)
-                {
-                    if (font.FontNames[0] == first && fonts.Faces.TryGetValue(role, out System.Collections.Generic.List<string>? names))
-                    {
-                        font.FontNames = names.ToArray();
-                        break;
-                    }
+                    theme.SetFont(name, type, now);
                 }
             }
         }
-        if (theme.DefaultFont is SystemFont fallback && fallback.FontNames.Length > 0)
+        if (theme.DefaultFont is SystemFont fallback && Swap(fallback) is Font newDefault)
         {
-            foreach ((string role, string first) in FontRoles)
-            {
-                if (fallback.FontNames[0] == first && fonts.Faces.TryGetValue(role, out System.Collections.Generic.List<string>? names))
-                {
-                    fallback.FontNames = names.ToArray();
-                }
-            }
+            theme.DefaultFont = newDefault;
         }
     }
 

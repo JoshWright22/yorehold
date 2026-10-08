@@ -26,5 +26,9 @@ public class UiColorsTests
         UiFonts skin = UiFonts.Read(TestContent.Json("""{"format": "yorehold.fonts", "version": 1, "book": ["Georgia", "serif"]}"""));
         Assert.Equal(new[] { "book" }, skin.Faces.Keys);
         Assert.Equal("book", TestContent.Refused(() => UiFonts.Read(TestContent.Json("""{"format": "yorehold.fonts", "version": 1, "book": []}"""))).Field);
+        // a skin's own font file, the system names after it standing in
+        UiFonts brought = UiFonts.Read(TestContent.Json("""{"format": "yorehold.fonts", "version": 1, "book": ["ui/fonts/Body.TTF", "Georgia"]}"""));
+        Assert.True(UiFonts.IsFile(brought.Faces["book"][0]) && !UiFonts.IsFile("Georgia"));
+        Assert.Equal("book", TestContent.Refused(() => UiFonts.Read(TestContent.Json("""{"format": "yorehold.fonts", "version": 1, "book": ["../body.ttf"]}"""))).Field);
     }
 }

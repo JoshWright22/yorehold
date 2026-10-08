@@ -90,7 +90,9 @@ What the port reads so far, and where it differs:
 - `ui/colors.json` and `ui/fonts.json` are the screens' look, read at start: colours by role
   (`greys.panel`, `red.main`...) and faces by role (`sans`, `book`, `mono`, each a list of system
   fonts tried in order). A file of the same name laid on top (an art pack now, a skin later)
-  replaces the roles it names, in what the code draws and in the shared theme alike.
+  replaces the roles it names, in what the code draws and in the shared theme alike. A role's
+  list may start with a font file the skin brings (`"book": ["ui/fonts/body.ttf", "Georgia"]`,
+  .ttf, .otf, .woff or .woff2, one per role); the system names after it fill in missing letters.
 - `ui/credits.json` is new: the game's own credits. `{"entries": [{"name", "kind", "by", "licence",
   "text"}]}`; `kind` is the tab it shows under. The engine and the libraries inside it are not in the
   file: the credits screen asks the engine for them and their licence texts.

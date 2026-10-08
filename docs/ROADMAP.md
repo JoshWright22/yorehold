@@ -656,8 +656,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: skins: a folder in user://skins picked in Settings > Display > Skin is laid over
     the game's content last, so its ui/colors.json, ui/fonts.json and token frames win (from the
     next start).
-  - Left: font files a skin brings, edges, corners and icons; skins as
-    packages picked in Settings; the stylesheet and layout files.
+  - Done 10/8: font files a skin brings: a role in ui/fonts.json may start with a .ttf, .otf or
+    .woff file inside the skin, the system names after it as fallbacks.
+  - Left: edges, corners and icons; skins as packages picked in Settings; the stylesheet and
+    layout files.
 - [ ] **R17. 3D dice.** Josh, 10/8: dice render in 3D when rolled, like Foundry's Dice So Nice. The
   result comes first from the game's seeded dice (R2b), so rolls stay fair and replayable; the
   physics throw is then played with the die turned so the rolled face lands up. Dice shapes come
