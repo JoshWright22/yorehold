@@ -45,6 +45,10 @@ public partial class EncountersModePanel : HBoxContainer
     // the same, taking foes out until the fight is no longer too hard
     private Task<(int LeaveOut, FightForecast Forecast)>? _fit;
     private string _fitOf = "";
+    // every fight of the chapter fitted in turn, by fight id, and how far it has got
+    private Task<List<(string Id, int LeaveOut, FightForecast Forecast)>>? _fitAll;
+    private int _fitAllDone;
+    private int _fitAllOf;
     /// <summary>How many times each try of a fit plays the fight; fewer than a forecast, as it tries several.</summary>
     private const int FitFights = 8;
 
@@ -189,6 +193,10 @@ public partial class EncountersModePanel : HBoxContainer
             editor.RemoveGroup(_group);
             _creature = null;
         }, () => editor.Groups.Count > 0, row);
+        // an imported adventure's fights, all at once: each played with fewer foes until it fits
+        _tools.Act("Fit every fight", () => StartFitAll(editor), () => editor.Groups.Count > 0 && (_fitAll == null || _fitAll.IsCompleted));
+        _tools.Live(FitAllLine);
+        _tools.Act(() => $"Take out {FitAllCuts()?.Sum(c => c.LeaveOut) ?? 0}", () => ApplyFitAll(editor), () => FitAllCuts()?.Any(c => c.LeaveOut > 0) == true);
         _tools.Gap();
         _tools.Toggle("Grid", () => _view.Grid, () => _view.Grid = !_view.Grid, null, "ChipButton");
         _tools.Act("Fit map", _view.Fit);
@@ -400,6 +408,70 @@ public partial class EncountersModePanel : HBoxContainer
         string chapter = Chapter;
         _fitOf = id;
         _fit = Task.Run(() => FightSimulation.Fit(seed => World.Load(files, chapter, seed), group, FitFights));
+    }
+
+    private void StartFitAll(EncountersEditor editor)
+    {
+        if (!Saved)
+        {
+            _hint = "Save first: the fit plays the saved chapter.";
+            return;
+        }
+        if (_files() is not ContentFiles files || Chapter.Length == 0)
+        {
+            return;
+        }
+        _hint = "";
+        string chapter = Chapter;
+        List<string> ids = editor.Groups.Select(g => g.Id).ToList();
+        _fitAllDone = 0;
+        _fitAllOf = ids.Count;
+        _fitAll = Task.Run(() =>
+        {
+            var cuts = new List<(string, int, FightForecast)>();
+            for (int g = 0; g < ids.Count; g++)
+            {
+                (int leaveOut, FightForecast forecast) = FightSimulation.Fit(seed => World.Load(files, chapter, seed), g, FitFights);
+                cuts.Add((ids[g], leaveOut, forecast));
+                System.Threading.Interlocked.Increment(ref _fitAllDone);
+            }
+            return cuts;
+        });
+    }
+
+    private List<(string Id, int LeaveOut, FightForecast Forecast)>? FitAllCuts() => _fitAll is { IsCompletedSuccessfully: true } ? _fitAll.Result : null;
+
+    private string FitAllLine()
+    {
+        if (_fitAll == null)
+        {
+            return "";
+        }
+        if (!_fitAll.IsCompleted)
+        {
+            return $"Fitting {Math.Min(_fitAllDone + 1, _fitAllOf)} of {_fitAllOf}...";
+        }
+        if (_fitAll.IsFaulted)
+        {
+            return "Could not fit them: " + (_fitAll.Exception?.InnerException?.Message ?? "unknown");
+        }
+        List<(string Id, int LeaveOut, FightForecast Forecast)> cuts = _fitAll.Result;
+        int over = cuts.Count(c => c.LeaveOut > 0);
+        return over == 0 ? "Every fight fits the party." : $"{over} of {cuts.Count} too hard: " + string.Join(", ", cuts.Where(c => c.LeaveOut > 0).Select(c => $"{c.Id} -{c.LeaveOut}"));
+    }
+
+    // The last foes of each fight the fit left out, taken out, as one change per fight.
+    private void ApplyFitAll(EncountersEditor editor)
+    {
+        foreach ((string id, int leaveOut, _) in FitAllCuts() ?? new())
+        {
+            int group = editor.Groups.ToList().FindIndex(g => g.Id == id);
+            for (int i = 0; group >= 0 && i < leaveOut && editor.Groups[group].Creatures.Count > 1; i++)
+            {
+                editor.RemoveCreature(group, editor.Groups[group].Creatures.Count - 1);
+            }
+        }
+        _fitAll = null;
     }
 
     // How many foes the finished fit for this group leaves out; null while none is ready.

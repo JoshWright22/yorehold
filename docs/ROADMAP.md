@@ -628,8 +628,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     format (a Fate target needs its approaches); DCs set by the system's odds.
   - Done 10/8: encounters fitted by the forecast: Create > Encounters > Fit to the party plays
     the fight in the background with the last foes standing aside, one more each try, until it
-    is no longer too hard, and offers to take them out (`FightSimulation.Fit`). Left: running
-    it for every fight of a freshly imported adventure, adding foes to one that is too easy.
+    is no longer too hard, and offers to take them out (`FightSimulation.Fit`); Fit every fight
+    does the chapter's fights in turn (an imported adventure's, after Build). Left: adding foes
+    to one that is too easy.
 - [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
   with licence, author, links and the no-AI-uploads declaration; credits built from what an
   adventure uses. The site runs the game's checks on each upload and refuses one that wouldn't
