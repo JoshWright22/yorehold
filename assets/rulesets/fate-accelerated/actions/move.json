@@ -1,0 +1,17 @@
+{
+  "id": "move",
+  "name": "Sprint",
+  "description": "Use your action to move again.",
+  "order": 20,
+  "cost": 1,
+  "log": "{name} sprints.",
+  "effects": [
+    {
+      "do": "resource",
+      "target": "self",
+      "id": "movement",
+      "op": "restore",
+      "amount": "speed"
+    }
+  ]
+}

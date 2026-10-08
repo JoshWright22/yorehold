@@ -1,0 +1,21 @@
+{
+  "id": "hidden",
+  "name": "Hidden",
+  "description": "Out of sight: +2 on its next attack.",
+  "flags": [
+    "hidden"
+  ],
+  "ends": [
+    "attack",
+    "damage",
+    "move",
+    "fightEnd"
+  ],
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 2
+    }
+  ]
+}

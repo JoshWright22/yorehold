@@ -1,0 +1,32 @@
+{
+  "id": "create-advantage",
+  "name": "Create an Advantage",
+  "description": "Clever against Fair (+2): a free invoke on success, two with style.",
+  "order": 30,
+  "cost": 1,
+  "log": "{name} looks for an edge.",
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "check",
+      "ability": "clever",
+      "dc": 2,
+      "steps": [
+        {
+          "do": "condition",
+          "id": "boost",
+          "target": "self",
+          "value": 1,
+          "when": "succeed"
+        },
+        {
+          "do": "condition",
+          "id": "boost",
+          "target": "self",
+          "value": 2,
+          "when": "style"
+        }
+      ]
+    }
+  ]
+}

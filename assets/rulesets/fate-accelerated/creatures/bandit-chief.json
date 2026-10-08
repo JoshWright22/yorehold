@@ -1,0 +1,27 @@
+{
+  "id": "bandit-chief",
+  "name": "Bandit chief",
+  "description": "A named foe with stress and consequences to burn.",
+  "hp": 8,
+  "armorClass": 2,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 1,
+    "clever": 1,
+    "flashy": 2,
+    "forceful": 3,
+    "quick": 2,
+    "sneaky": 0
+  },
+  "items": [],
+  "token": {
+    "color": [
+      150,
+      90,
+      70
+    ],
+    "size": 0.42
+  },
+  "ai": "tactical"
+}

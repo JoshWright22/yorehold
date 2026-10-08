@@ -1,0 +1,27 @@
+{
+  "id": "invoke",
+  "name": "Invoke an Aspect",
+  "description": "Spend a fate point: +2 on your next attack.",
+  "order": 40,
+  "cost": 0,
+  "requires": {
+    "resources": {
+      "fate": 1
+    }
+  },
+  "log": "{name} invokes an aspect.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "fate",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "condition",
+      "id": "invoked",
+      "target": "self"
+    }
+  ]
+}

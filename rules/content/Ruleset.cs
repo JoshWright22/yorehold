@@ -737,7 +737,7 @@ public class Ruleset
         {
             throw node.Fail("roll", "is dice like \"4d6kh3\"");
         }
-        List<int> array = node.Has("standardArray") ? WholeList(node, "standardArray", 1, 30) : defaults.StandardArray;
+        List<int> array = node.Has("standardArray") ? WholeList(node, "standardArray", 0, 30) : defaults.StandardArray;
         if (array.Count > 100)
         {
             throw node.Fail("standardArray", "has at most 100 values");

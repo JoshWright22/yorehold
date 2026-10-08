@@ -1,0 +1,4 @@
+This work is based on Fate Accelerated Edition (found at https://www.faterpg.com/), products of Evil Hat
+Productions, LLC, developed, authored, and edited by Clark Valentine, Leonard Balsera, Fred Hicks, Mike
+Olson, and Amanda Valentine, and licensed for our use under the Creative Commons Attribution 3.0 Unported
+license (https://creativecommons.org/licenses/by/3.0/).

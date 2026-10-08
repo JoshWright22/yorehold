@@ -37,7 +37,8 @@ public sealed class LevelChoice
 public sealed class CharacterChoices
 {
     public const int Version = 1;
-    public const int LowestScore = 1;
+    // 0 is a real rating in some systems (Fate's Mediocre +0)
+    public const int LowestScore = 0;
     public const int HighestScore = 30;
     public const int MostLevels = 1000;
     /// <summary>How the scores were reached, so a creation screen can reopen the same method.</summary>

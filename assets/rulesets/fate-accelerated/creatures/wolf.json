@@ -1,0 +1,27 @@
+{
+  "id": "wolf",
+  "name": "Wolf",
+  "description": "Fast and hungry.",
+  "hp": 3,
+  "armorClass": 3,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 1,
+    "clever": 0,
+    "flashy": 0,
+    "forceful": 2,
+    "quick": 3,
+    "sneaky": 0
+  },
+  "items": [],
+  "token": {
+    "color": [
+      130,
+      120,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "animal"
+}

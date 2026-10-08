@@ -1,0 +1,27 @@
+{
+  "id": "attack-sneaky",
+  "name": "Attack Sneakily",
+  "description": "Sneaky against the foe's Quick; each shift is stress.",
+  "order": 12,
+  "cost": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "sneaky",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{max(margin, 1)}",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "boost",
+  "name": "Free invoke",
+  "description": "An aspect it created: +2 on its next attack for each free invoke.",
+  "flags": [
+    "boost"
+  ],
+  "stacking": "value",
+  "maxValue": 2,
+  "perValue": true,
+  "ends": [
+    "attack",
+    "fightEnd"
+  ],
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 2
+    }
+  ]
+}

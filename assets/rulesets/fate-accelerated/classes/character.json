@@ -1,0 +1,25 @@
+{
+  "id": "character",
+  "name": "Character",
+  "description": "Fate has no classes: a character is its approaches, aspects and stunts.",
+  "hitDie": 1,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "clever",
+  "proficiencies": [],
+  "items": [],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "refresh",
+          "name": "Refresh 3",
+          "description": "Three fate points at the start of each scene.",
+          "resources": {
+            "fate": 3
+          }
+        }
+      ]
+    }
+  ]
+}

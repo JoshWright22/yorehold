@@ -1,0 +1,19 @@
+{
+  "id": "invoked",
+  "name": "Invoked",
+  "description": "A fate point spent on an aspect: +2 on its next attack.",
+  "flags": [
+    "invoked"
+  ],
+  "ends": [
+    "attack",
+    "turnEnd"
+  ],
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 2
+    }
+  ]
+}

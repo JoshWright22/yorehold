@@ -1,0 +1,17 @@
+{
+  "id": "taken-out",
+  "name": "Taken out",
+  "description": "Out of the conflict; the side that took it out says what happens to it.",
+  "flags": [
+    "takenOut",
+    "downed",
+    "cantAct",
+    "cantMove"
+  ],
+  "ends": [
+    "healed"
+  ],
+  "removes": [
+    "hidden"
+  ]
+}

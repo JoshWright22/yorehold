@@ -13,6 +13,9 @@ internal sealed class EffectRun
         public CheckOutcome? Check;
         public CheckOutcome? Save;
 
+        /// <summary>How far the last roll about this creature beat its DC (below 0: missed by).</summary>
+        public int? Margin;
+
         public bool Critical => Attack is { Critical: true };
         public bool? Saved => Save?.Passes;
     }
@@ -87,6 +90,7 @@ internal sealed class EffectRun
         int dc = _effect.Save.CasterDc ? _context.Dc : _effect.Save.Dc;
         RollResult roll = sheet.RollSave(_rules, _effect.Save.Ability, Advantage.None, _random);
         outcome.Save = _rules.Checks.Kind(CheckRules.Save).Resolve(roll, dc);
+        outcome.Margin = roll.Total - dc;
         _result.Events.Add(new EffectEvent
         {
             Kind = EffectEventKind.Save, Who = who, By = _context.Self, Roll = roll, Dc = dc,
@@ -181,15 +185,17 @@ internal sealed class EffectRun
     }
 
     // The step's amount, rolled: its dice (twice over for a critical hit) plus whatever scaling adds.
-    private RollResult RollAmount(EffectStep step, bool doubled)
+    // "margin" in a step's dice: how far the roll about whoever it lands on beat its DC (Fate's shifts).
+    private RollResult RollAmount(EffectStep step, bool doubled, int who = -1)
     {
+        int? margin = who >= 0 && _outcomes.TryGetValue(who, out Outcome? rolledFor) ? rolledFor.Margin : null;
         CharacterSheet? self = _host.Sheet(_context.Self);
         string text = step.Amount switch
         {
             "weapon" => self?.DamageDice(_rules) ?? "0",
             "speed" => (self?.SpeedSquares(_rules) ?? 0).ToString(),
             // formulas in braces read the doer's sheet: "2d8+{mod.wis}"
-            _ => DiceText.Fill(step.Amount, name => self?.Named(_rules, name)),
+            _ => DiceText.Fill(step.Amount, name => name == "margin" ? margin ?? 0 : self?.Named(_rules, name)),
         };
         DiceExpression dice = DiceExpression.Parse(text) ?? new DiceExpression();
         if (doubled)
@@ -410,7 +416,11 @@ internal sealed class EffectRun
             bool doubled = step.CritDoubles && outcome.Critical;
             // A critical hit rolls its dice twice, or the system's formula says what it comes to.
             Formula? critical = _rules.Checks.CriticalDamage;
-            RollResult rolled = doubled ? RollAmount(step, critical == null) : shared ??= RollAmount(step, false);
+            // dice that read the margin are rolled for each creature, since each roll's margin differs
+            bool own = step.Amount.Contains("margin", StringComparison.Ordinal);
+            RollResult rolled = doubled ? RollAmount(step, critical == null, actor)
+                : own ? RollAmount(step, false, actor)
+                : shared ??= RollAmount(step, false, actor);
             int total = rolled.Total;
             if (doubled && critical != null)
             {
@@ -489,6 +499,7 @@ internal sealed class EffectRun
             int dc = step.CasterDc ? _context.Dc : step.Dc;
             RollResult roll = subject.RollSave(_rules, step.Ability, Advantage.None, _random);
             outcome.Save = _rules.Checks.Kind(CheckRules.Save).Resolve(roll, dc);
+            outcome.Margin = roll.Total - dc;
             _result.Events.Add(new EffectEvent
             {
                 Kind = EffectEventKind.Save, Who = actor, By = _context.Self, Roll = roll, Dc = dc,
@@ -505,6 +516,7 @@ internal sealed class EffectRun
             int dc = step.Against.Length > 0 ? subject.PassiveScore(_rules, step.Against) : step.CasterDc ? _context.Dc : step.Dc;
             RollResult roll = self.RollCheck(_rules, step.Ability, Advantage.None, _random);
             outcome.Check = _rules.Checks.Kind(CheckRules.Check).Resolve(roll, dc);
+            outcome.Margin = roll.Total - dc;
             _result.Events.Add(new EffectEvent
             {
                 Kind = EffectEventKind.Check, Who = actor, By = _context.Self, Roll = roll, Dc = dc,
@@ -519,11 +531,14 @@ internal sealed class EffectRun
         int attacksSoFar = _context.AttacksMade + _result.Events.Count(e => e.Kind == EffectEventKind.Attack);
         int penalty = _rules.AttackPenalty?.Whole(name => name == "attacks" ? attacksSoFar
             : name.StartsWith("trait.", StringComparison.Ordinal) ? (self.Weapon?.Has(name[6..]) == true ? 1 : 0) : null) ?? 0;
-        int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules) : self.AttackModifier(_rules);
+        int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules)
+            : step.Ability.Length > 0 ? self.AttackModifier(_rules, step.Ability)
+            : self.AttackModifier(_rules);
         RollResult attack = kind.Roll(bonus + penalty, self.AttackAdvantage(_rules, subject), _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
         int ac = _host.ArmorClass(actor, _context);
         outcome.Attack = kind.Resolve(attack, ac);
+        outcome.Margin = attack.Total - ac;
         _result.Events.Add(new EffectEvent
         {
             Kind = EffectEventKind.Attack, Who = actor, By = _context.Self, Roll = attack, Dc = ac,

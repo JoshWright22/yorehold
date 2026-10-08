@@ -1,0 +1,27 @@
+{
+  "id": "goblin",
+  "name": "Goblin thug",
+  "description": "A nameless mook: one good hit takes it out.",
+  "hp": 2,
+  "armorClass": 1,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 0,
+    "clever": 0,
+    "flashy": 0,
+    "forceful": 1,
+    "quick": 1,
+    "sneaky": 2
+  },
+  "items": [],
+  "token": {
+    "color": [
+      120,
+      150,
+      60
+    ],
+    "size": 0.36
+  },
+  "ai": "cunning"
+}

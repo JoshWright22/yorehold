@@ -1,0 +1,27 @@
+{
+  "id": "attack",
+  "name": "Attack Forcefully",
+  "description": "Forceful against the foe's Quick; each shift is stress.",
+  "order": 10,
+  "cost": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "forceful",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{max(margin, 1)}",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

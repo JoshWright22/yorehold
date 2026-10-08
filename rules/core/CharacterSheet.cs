@@ -379,9 +379,10 @@ public sealed partial class CharacterSheet
         return DifficultyClass(rules) - rules.BaseDc - Stats.Integer("dc") + Stats.Integer("attack");
     }
 
-    public int AttackModifier(Ruleset rules)
+    /// <summary>An attack with the weapon's ability, or with the ability named (a Fate approach).</summary>
+    public int AttackModifier(Ruleset rules, string with = "")
     {
-        int ability = AbilityModifier(rules, AttackAbility(rules));
+        int ability = AbilityModifier(rules, with.Length > 0 ? with : AttackAbility(rules));
         int proficiency = ProficiencyModifier(rules, "weapons");
         return Counted(rules, "attack", ability + proficiency + Stats.Integer("attack"),
             ("ability", ability), ("proficiency", proficiency), ("bonus", Stats.Integer("attack")));

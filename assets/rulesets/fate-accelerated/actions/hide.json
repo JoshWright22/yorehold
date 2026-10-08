@@ -1,0 +1,31 @@
+{
+  "id": "hide",
+  "name": "Hide",
+  "description": "Sneaky against each foe's Careful; hidden if every roll beats it.",
+  "order": 50,
+  "cost": 1,
+  "log": "{name} slips out of sight.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "hidden",
+      "target": "self"
+    },
+    {
+      "do": "roll",
+      "kind": "check",
+      "ability": "sneaky",
+      "against": "careful",
+      "target": "enemies",
+      "steps": [
+        {
+          "do": "condition",
+          "id": "hidden",
+          "target": "self",
+          "remove": true,
+          "when": "failure"
+        }
+      ]
+    }
+  ]
+}

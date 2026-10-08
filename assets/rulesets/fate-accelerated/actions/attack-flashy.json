@@ -1,0 +1,27 @@
+{
+  "id": "attack-flashy",
+  "name": "Attack Flashily",
+  "description": "Flashy against the foe's Quick; each shift is stress.",
+  "order": 11,
+  "cost": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "flashy",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "{max(margin, 1)}",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

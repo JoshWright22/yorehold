@@ -303,12 +303,12 @@ public class Effect
             how = OneOf(node, "kind", null, "attack", "check", "save");
             if (how == "attack")
             {
-                // with the weapon, or with "ability": "caster" as a spell attack
-                if (node.Has("dc") || node.Has("against") || (node.Has("ability") && node.Text("ability", "", 64) != "caster"))
+                // with the weapon, with "ability": "caster" as a spell attack, or with a named ability
+                if (node.Has("dc") || node.Has("against"))
                 {
-                    throw node.Fail("an attack is rolled against armour class with the weapon, or with \"ability\": \"caster\" as a spell attack; it takes no dc or against");
+                    throw node.Fail("an attack is rolled against armour class; it takes no dc or against");
                 }
-                ability = node.Text("ability", "", 64);
+                ability = node.Name("ability", "");
             }
             else
             {
@@ -448,6 +448,10 @@ public class Effect
             if (step.Kind == EffectKind.Roll && step.How == "save" && !rules.IsSave(step.Ability))
             {
                 throw new ContentException(file, at + ".ability", $"unknown ability \"{step.Ability}\"");
+            }
+            if (step.Kind == EffectKind.Roll && step.How == "attack" && step.Ability.Length > 0 && step.Ability != "caster" && rules.Ability(step.Ability) == null)
+            {
+                throw new ContentException(file, at + ".ability", $"an attack names \"caster\" or an ability; unknown \"{step.Ability}\"");
             }
             if (step.Kind == EffectKind.Roll && step.How == "check" && !Measurable(step.Ability))
             {

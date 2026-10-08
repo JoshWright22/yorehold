@@ -371,6 +371,16 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   succeed with style), shifts as damage into stress boxes and consequences, aspects and fate
   points. If it plays from JSON, the language holds for anything d20-shaped and beyond; what
   doesn't fit (aspects you invoke, compels) goes back as steps.
+  - Done 10/8, first slice: `rulesets/fate-accelerated` (`.dev\make-fate.py`): six approaches as
+    the abilities (rating = modifier by formula), 4dF with fail/tie/succeed/style, attacks by
+    approach against the defender's Quick, shifts as stress (damage `{max(margin, 1)}`), Create
+    an Advantage for free invokes, fate points spent to Invoke (+2), one "Character" class with
+    refresh 3, three foes. A fight plays to the end.
+  - Engine pieces it needed, now general: `margin` in dice formulas (how far a roll beat its
+    DC), attacks that name the ability they use, scores of 0.
+  - Doesn't fit yet: active defence (the defender rolls too: opposed rolls); stress boxes and
+    consequences are one HP pool; aspects as things on the scene; compels; zones instead of
+    squares; ties' boosts; concessions.
 - [ ] **R11. Packages by kind, no add-ons.** Josh, 10/8: all content is in the format the game
   sets and lives on the site; no add-ons, just skins, systems, monsters and so on. A package
   has one `kind`: `system` (a ruleset folder, R1-R8), `adventure`, `skin` (R16), `art`, or a

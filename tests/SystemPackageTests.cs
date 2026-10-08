@@ -42,6 +42,18 @@ public class SystemPackageTests
         PlayOut(world);
     }
 
+    [Fact]
+    public void FateAcceleratedPlaysAFight()
+    {
+        // no classes, no d20: approaches, 4dF against the ladder and shifts as stress
+        using WorldFixture world = Yard("rulesets/fate-accelerated", "character", "character");
+        World w = world.World;
+        Assert.True(w.Rules.Id == "fate-accelerated" && w.Creatures[0].Sheet.MaxHp == 15);
+        Assert.Contains(w.ActionsOf(0), a => a.Id == "create-advantage");
+        PlayOut(world);
+        Assert.True(world.Said("4dF"), "Rolls are Fate dice");
+    }
+
     // Heroes attack the nearest goblin in reach or fire at any, else end the turn; enemies play themselves.
     private static void PlayOut(WorldFixture world)
     {

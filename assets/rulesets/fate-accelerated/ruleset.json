@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "id": "fate-accelerated",
+  "name": "Fate Accelerated",
+  "abilities": [
+    {
+      "id": "careful",
+      "name": "Careful"
+    },
+    {
+      "id": "clever",
+      "name": "Clever"
+    },
+    {
+      "id": "flashy",
+      "name": "Flashy"
+    },
+    {
+      "id": "forceful",
+      "name": "Forceful"
+    },
+    {
+      "id": "quick",
+      "name": "Quick"
+    },
+    {
+      "id": "sneaky",
+      "name": "Sneaky"
+    }
+  ],
+  "skills": [],
+  "modifierTable": "d20",
+  "scoreMin": 0,
+  "scoreMax": 5,
+  "scoreMethods": {
+    "roll": "1d4-1",
+    "standardArray": [
+      3,
+      2,
+      2,
+      1,
+      1,
+      0
+    ],
+    "pointBudget": 9,
+    "pointCosts": {
+      "1": 1,
+      "2": 2,
+      "3": 3
+    }
+  },
+  "baseArmorClass": 0,
+  "armorClassAbility": "quick",
+  "roles": {
+    "hpAbility": "",
+    "attackAbility": "forceful",
+    "initiative": "quick",
+    "perception": "careful",
+    "stealth": "sneaky",
+    "thievery": "clever",
+    "hidden": "hidden",
+    "downed": "taken-out",
+    "dead": "taken-out",
+    "strike": "attack",
+    "stride": "move",
+    "endTurn": "end-turn",
+    "interact": "",
+    "slotPrefix": "slots-",
+    "focus": ""
+  },
+  "checks": {
+    "criticalDamage": "doubleDice",
+    "attack": {
+      "dice": "4dF",
+      "advantage": "4dF",
+      "disadvantage": "4dF",
+      "outcomes": [
+        {
+          "id": "fail",
+          "name": "Fail"
+        },
+        {
+          "id": "tie",
+          "name": "Tie"
+        },
+        {
+          "id": "succeed",
+          "name": "Succeed",
+          "passes": true
+        },
+        {
+          "id": "style",
+          "name": "Succeed with style",
+          "passes": true
+        }
+      ],
+      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2"
+    },
+    "check": {
+      "dice": "4dF",
+      "advantage": "4dF",
+      "disadvantage": "4dF",
+      "outcomes": [
+        {
+          "id": "fail",
+          "name": "Fail"
+        },
+        {
+          "id": "tie",
+          "name": "Tie"
+        },
+        {
+          "id": "succeed",
+          "name": "Succeed",
+          "passes": true
+        },
+        {
+          "id": "style",
+          "name": "Succeed with style",
+          "passes": true
+        }
+      ],
+      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2"
+    },
+    "save": {
+      "dice": "4dF",
+      "advantage": "4dF",
+      "disadvantage": "4dF",
+      "outcomes": [
+        {
+          "id": "fail",
+          "name": "Fail",
+          "damage": 1
+        },
+        {
+          "id": "tie",
+          "name": "Tie",
+          "damage": 1
+        },
+        {
+          "id": "succeed",
+          "name": "Succeed",
+          "passes": true,
+          "damage": 1
+        },
+        {
+          "id": "style",
+          "name": "Succeed with style",
+          "passes": true,
+          "damage": 1
+        }
+      ],
+      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2"
+    }
+  },
+  "formulas": {
+    "abilityModifier": "score",
+    "hpFirstLevel": "15",
+    "hpPerLevel": "0"
+  },
+  "passiveBase": 0,
+  "baseDc": 0,
+  "death": {
+    "enabled": false
+  },
+  "xpForLevel": [],
+  "actionsPerTurn": 1,
+  "bonusActions": false,
+  "freeMove": true,
+  "strikeCostsHands": false,
+  "sharedTurns": false,
+  "feetPerSquare": 5,
+  "carryPerStrength": 0,
+  "magicItemLimit": 0,
+  "rests": [
+    {
+      "id": "scene",
+      "name": "Between scenes",
+      "perAdventure": 0,
+      "recovery": {
+        "kind": "full",
+        "reviveDowned": true
+      },
+      "restores": [
+        "fate"
+      ]
+    }
+  ],
+  "afterVictory": {
+    "kind": "full",
+    "reviveDowned": true
+  },
+  "reviveAfterVictory": 1,
+  "revivePrice": 0,
+  "reviveHp": 0,
+  "companions": {
+    "limit": 2,
+    "partyLimit": 6,
+    "approvalMin": -100,
+    "approvalMax": 100
+  },
+  "defaultHitDie": 1
+}
