@@ -213,6 +213,7 @@
     "enabled": false
   },
   "xpForLevel": [],
+  "advancement": "none",
   "actionsPerTurn": 1,
   "bonusActions": false,
   "freeMove": true,

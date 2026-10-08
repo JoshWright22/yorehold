@@ -186,6 +186,11 @@ public class Ruleset
     public int BaseDc { get; init; } = 10;
     public DeathRules Death { get; init; } = new();
     public List<int> XpForLevel { get; init; } = new();
+    /// <summary>How characters advance: "xp" from fights, a "milestone" level for each chapter gone on from, or "none".</summary>
+    public string Advancement { get; init; } = "xp";
+    public static readonly string[] AdvancementModes = { "xp", "milestone", "none" };
+    /// <summary>The most levels the XP table allows.</summary>
+    public int MaxLevel => XpForLevel.Count + 1;
     public int ActionsPerTurn { get; init; } = 1;
     public bool BonusActions { get; init; } = true;
     /// <summary>A turn starts with its speed to move for free; false: moving takes an action (Stride).</summary>
@@ -489,6 +494,8 @@ public class Ruleset
             BaseDc = node.Int("baseDc", 10, 0, 1000),
             Death = DeathFrom(node.Get("death")),
             XpForLevel = xp,
+            Advancement = AdvancementModes.Contains(node.Text("advancement", "xp", 32)) ? node.Text("advancement", "xp", 32)
+                : throw node.Fail("advancement", $"is {string.Join(", ", AdvancementModes)}"),
             ActionsPerTurn = node.Int("actionsPerTurn", 1, 1, 10),
             BonusActions = node.Bool("bonusActions", true),
             FreeMove = node.Bool("freeMove", true),

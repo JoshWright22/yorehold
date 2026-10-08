@@ -262,6 +262,23 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AMilestoneRaisesEveryHeroALevel()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        int hp = w.Creatures[0].Sheet.MaxHp;
+        w.Milestone();
+        Assert.True(w.Creatures[0].Sheet.Level == 2 && w.Creatures[1].Sheet.Level == 2 && w.Creatures[0].Sheet.MaxHp > hp, "Both heroes reach level 2");
+        Assert.True(world.Said("Ana reaches level 2"));
+
+        Assert.Equal("xp", w.Rules.Advancement);
+        using WorldFixture fate = Yard("rulesets/fate-accelerated", "character", "character");
+        Assert.Equal("none", fate.World.Rules.Advancement);
+        ContentException error = TestContent.Refused(() => RulesTesting.Rules("""{"id": "x", "name": "X", "abilities": [{"id": "str", "name": "S"}], "advancement": "luck"}"""));
+        Assert.Equal("advancement", error.Field);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

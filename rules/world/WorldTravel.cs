@@ -68,6 +68,23 @@ public sealed partial class World
         }
     }
 
+    /// <summary>A milestone: every living hero goes up a level, as far as the system's table goes.</summary>
+    public void Milestone()
+    {
+        for (int h = 0; h < HeroCount; h++)
+        {
+            CharacterSheet sheet = Creatures[h].Sheet;
+            if (sheet.Death.Dead || sheet.Level >= Rules.MaxLevel)
+            {
+                continue;
+            }
+            // the experience the next level asks for, so the level follows it as it always has
+            sheet.AddXp(Rules, Math.Max(0, Rules.XpForLevel[sheet.Level - 1] - sheet.Xp));
+            Say($"{sheet.Name} reaches level {sheet.Level}.");
+            GainLevels(h);
+        }
+    }
+
     private void Travel(string toChapter, string entryMarker)
     {
         Chapter next;
@@ -79,6 +96,10 @@ public sealed partial class World
         {
             Say("The way on can't be opened: " + error.Message);
             return;
+        }
+        if (Rules.Advancement == "milestone")
+        {
+            Milestone();
         }
         Carried carried = Carry();
         foreach (string local in Chapter.LocalFlags)

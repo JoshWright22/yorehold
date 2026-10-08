@@ -326,6 +326,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     Creation's parts come from these.
   - Advancement: levels and XP are one mode beside milestones, Fate's milestones (swap a skill,
     +1 to an approach) and none.
+    Done 10/8: `advancement`: xp, milestone (a level for each chapter gone on from) or none;
+    level-ups keep tracks and fields. Left: Fate's milestones as choices (swap, +1), a chapter or
+    effect step that grants a milestone.
   - Turn order: an initiative roll by formula, side by side, or Fate's order where whoever acted
     picks who goes next; the AI picks for its side.
     Done 10/8: `turnOrder`: one initiative order or side by side, which side first, rolled or

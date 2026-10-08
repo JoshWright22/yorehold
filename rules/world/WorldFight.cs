@@ -500,6 +500,11 @@ public sealed partial class World
         {
             xp = worth;
         }
+        if (Rules.Advancement != "xp")
+        {
+            // milestones and no advancement: fights are worth no experience
+            xp = 0;
+        }
         FightGroup = null;
 
         // Healing after a win, as the ruleset says: the downed get up, then any recovery.

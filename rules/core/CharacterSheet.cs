@@ -1268,7 +1268,29 @@ public sealed partial class CharacterSheet
             int current = Resources.TryGetValue(resource.Key, out Resource? live) ? Math.Clamp(live.Current, 0, resource.Value.Max) : resource.Value.Current;
             Resources[resource.Key] = new Resource(current, resource.Value.Max);
         }
+        Fields.Clear();
+        foreach (KeyValuePair<string, List<string>> field in built.Fields)
+        {
+            Fields[field.Key] = field.Value.ToList();
+        }
         Hp = Math.Min(Hp, MaxHp);
+        if (built.Tracks.Count > 0)
+        {
+            // the new level's tracks, keeping what harm has used of the old ones
+            TracksFollowHp();
+            var had = Tracks.ToDictionary(t => t.Id, t => t.Max - t.Value);
+            Tracks.Clear();
+            foreach (TrackSlot track in built.Tracks)
+            {
+                Tracks.Add(new TrackSlot
+                {
+                    Id = track.Id, Name = track.Name, Max = track.Max, Absorbs = track.Absorbs, Heals = track.Heals, Clears = track.Clears,
+                    Value = Math.Clamp(track.Max - had.GetValueOrDefault(track.Id), 0, track.Max),
+                });
+            }
+            Hp = Hp <= 0 ? 0 : Math.Max(1, TrackRoom);
+            _trackHp = Hp;
+        }
     }
 
     private static string ItemSource(Item item, int index) => $"item:{item.Id}#{index}";
