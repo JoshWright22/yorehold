@@ -71,6 +71,11 @@ public sealed class CharacterDraft
             {
                 return "Give the character a name.";
             }
+            if (StepHas(which, "fields") && _rules.Fields.FirstOrDefault(f => f.Required
+                && !(_choices.Fields.TryGetValue(f.Id, out List<string>? lines) && lines.Any(l => l.Trim().Length > 0))) is FieldDefinition missing)
+            {
+                return $"Write the {missing.Name.ToLowerInvariant()}.";
+            }
             if (StepHas(which, "race") && _compendium.Races.Count > 0 && !_compendium.Races.ContainsKey(_choices.Race))
             {
                 return $"Pick {Article(creation.NameOf("race"))}.";
@@ -136,6 +141,36 @@ public sealed class CharacterDraft
     public void SetName(string name)
     {
         _choices.Name = name;
+        Rebuild();
+    }
+
+    /// <summary>One line of one of the ruleset's fields; lines past the field's count are refused.</summary>
+    public void SetField(string id, int line, string text)
+    {
+        FieldDefinition? field = _rules.Fields.Find(f => f.Id == id);
+        if (field == null || line < 0 || line >= field.Count)
+        {
+            return;
+        }
+        List<string> lines = _choices.Fields.TryGetValue(id, out List<string>? had) ? had : new List<string>();
+        while (lines.Count <= line)
+        {
+            lines.Add("");
+        }
+        lines[line] = text.Length > FieldDefinition.MostLetters ? text[..FieldDefinition.MostLetters] : text;
+        // trailing empty lines aren't kept
+        while (lines.Count > 0 && lines[^1].Trim().Length == 0)
+        {
+            lines.RemoveAt(lines.Count - 1);
+        }
+        if (lines.Count == 0)
+        {
+            _choices.Fields.Remove(id);
+        }
+        else
+        {
+            _choices.Fields[id] = lines;
+        }
         Rebuild();
     }
 

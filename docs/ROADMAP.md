@@ -317,6 +317,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - The character's data: a system declares its numbers in groups (abilities, skills,
     approaches), text fields (Fate's aspects and high concept) and lists. The sheet is drawn from
     those groups, not a fixed menu of sections.
+    Done 10/8: `fields`: words a character is made of (Fate's high concept, trouble, aspects),
+    asked for in creation, kept on the character and the sheet, read by formulas as
+    `field.<id>`. Left: number groups beyond abilities and skills; lists of things (gear-like
+    entries a system invents); invoking an aspect as an action.
   - Options in place of classes: a system declares its option kinds (class, ancestry,
     heritage, background, archetype; Fate: none) and what each grants as the character advances.
     Creation's parts come from these.

@@ -563,6 +563,9 @@ public partial class CharacterScreen : CanvasLayer
                 case "name":
                     NamePart(d);
                     break;
+                case "fields" when _rules.Fields.Count > 0:
+                    FieldsPart(d);
+                    break;
                 case "race" when _compendium.Races.Count > 0:
                     Heading(_body, _rules.Creation.NameOf("race"));
                     Grid(d.RaceIds(), id => _compendium.Races[id].Name, id => id == d.Choices.Race, 4, d.SetRace);
@@ -615,6 +618,31 @@ public partial class CharacterScreen : CanvasLayer
             ShowDraftSide(d);
         };
         _body.AddChild(name);
+    }
+
+    // The ruleset's fields (Fate's high concept, trouble, aspects): a line to type in for each.
+    private void FieldsPart(CharacterDraft d)
+    {
+        foreach (FieldDefinition field in _rules.Fields)
+        {
+            Heading(_body, field.Required ? field.Name : field.Name + " (optional)");
+            List<string> lines = d.Choices.Fields.TryGetValue(field.Id, out List<string>? had) ? had : new List<string>();
+            for (int i = 0; i < field.Count; i++)
+            {
+                int line = i;
+                var edit = new LineEdit
+                {
+                    Text = line < lines.Count ? lines[line] : "", MaxLength = FieldDefinition.MostLetters,
+                    PlaceholderText = field.Hint.Length > 0 ? field.Hint : "Type a phrase", CustomMinimumSize = new Vector2(0, 32),
+                };
+                edit.TextChanged += text =>
+                {
+                    d.SetField(field.Id, line, text);
+                    ShowDraftSide(d);
+                };
+                _body.AddChild(edit);
+            }
+        }
     }
 
     private void ScoresPart(CharacterDraft d)

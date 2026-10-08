@@ -161,6 +161,11 @@
     "hpFirstLevel": "15",
     "hpPerLevel": "0"
   },
+  "fields": [
+    { "id": "high-concept", "name": "High concept", "hint": "Who they are in a phrase: Wizard detective of the north" },
+    { "id": "trouble", "name": "Trouble", "hint": "What keeps going wrong for them: Can't resist a wager" },
+    { "id": "aspects", "name": "Aspects", "count": 3, "hint": "Something true about them that matters" }
+  ],
   "turnOrder": {
     "roll": false
   },
@@ -174,7 +179,7 @@
     { "id": "severe", "name": "Severe consequence", "max": "stat.mook > 0 ? 0 : 1", "absorbs": 6, "heals": false }
   ],
   "sheet": {
-    "sections": ["vitals", "tracks", "scores", "skills", "weapon", "feats", "uses", "conditions", "carrying"],
+    "sections": ["vitals", "tracks", "fields", "scores", "skills", "weapon", "feats", "uses", "conditions", "carrying"],
     "names": {
       "hp": "Shifts left",
       "tracks": "Stress and consequences",
@@ -187,6 +192,7 @@
         "name": "Character",
         "parts": [
           "name",
+          "fields",
           "class",
           "scores"
         ]

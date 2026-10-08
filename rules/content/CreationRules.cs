@@ -11,7 +11,7 @@ public sealed record CreationStep(string Name, IReadOnlyList<string> Parts);
 /// </summary>
 public sealed class CreationRules
 {
-    public static readonly string[] Parts = { "name", "race", "background", "class", "scores", "skills", "feats" };
+    public static readonly string[] Parts = { "name", "fields", "race", "background", "class", "scores", "skills", "feats" };
     public static readonly string[] Methods = { "array", "pointBuy", "roll" };
 
     public List<CreationStep> Steps { get; init; } = new()
@@ -23,7 +23,7 @@ public sealed class CreationRules
     public Dictionary<string, string> Names { get; init; } = new(StringComparer.Ordinal)
     {
         ["name"] = "Name", ["race"] = "Race", ["background"] = "Background", ["class"] = "Class",
-        ["scores"] = "Ability scores", ["skills"] = "Skills", ["feats"] = "Feat",
+        ["scores"] = "Ability scores", ["skills"] = "Skills", ["feats"] = "Feat", ["fields"] = "Who they are",
     };
     public List<string> ScoreMethods { get; init; } = new(Methods);
 

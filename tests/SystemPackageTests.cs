@@ -67,6 +67,18 @@ public class SystemPackageTests
         draft.SetName("Zed");
         Assert.True(draft.Finished(), "A Fate character is a name and approaches: " + draft.StepProblem(0) + draft.Problem);
 
+        // Fate's words: high concept, trouble and three aspects, kept on the character and the sheet
+        draft.SetField("high-concept", 0, "Wizard detective of the north");
+        draft.SetField("aspects", 1, "Owes the queen a favour");
+        draft.SetField("aspects", 7, "past the three it has");
+        Assert.Equal(new[] { "", "Owes the queen a favour" }, draft.Choices.Fields["aspects"]);
+        CharacterSheet zed = CharacterBuild.Build(fate, fateCompendium, draft.Choices)!;
+        Assert.Equal((1.0, 1.0, 0.0), (zed.Named(fate, "field.high-concept"), zed.Named(fate, "field.aspects"), zed.Named(fate, "field.trouble")));
+        CharacterChoices again = CharacterChoices.Read(TestContent.Json(draft.Choices.ToJson().ToJsonString()));
+        Assert.Equal(draft.Choices.Fields["high-concept"], again.Fields["high-concept"]);
+        again.Fields["luck"] = new List<string> { "x" };
+        Assert.Contains("not a field", again.Check(fate));
+
         (Ruleset pf2e, Compendium pf2eCompendium) = Load("rulesets/pf2e");
         var hero = new CharacterDraft(pf2e, pf2eCompendium);
         hero.SetName("Ana");

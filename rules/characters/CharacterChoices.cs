@@ -57,6 +57,8 @@ public sealed class CharacterChoices
     /// <summary>The ruleset id it was made under.</summary>
     public string Ruleset { get; set; } = "";
     public string Notes { get; set; } = "";
+    /// <summary>The ruleset's fields as written for this character, by field id.</summary>
+    public SortedDictionary<string, List<string>> Fields { get; } = new(StringComparer.Ordinal);
 
     public int Level => Levels.Count;
 
@@ -71,6 +73,10 @@ public sealed class CharacterChoices
             copy.Scores[score.Key] = score.Value;
         }
         copy.Levels.AddRange(Levels.Select(l => l.Copy()));
+        foreach (KeyValuePair<string, List<string>> field in Fields)
+        {
+            copy.Fields[field.Key] = field.Value.ToList();
+        }
         return copy;
     }
 
@@ -81,6 +87,18 @@ public sealed class CharacterChoices
     /// </summary>
     public string Check(Ruleset rules)
     {
+        foreach (KeyValuePair<string, List<string>> field in Fields)
+        {
+            FieldDefinition? definition = rules.Fields.Find(f => f.Id == field.Key);
+            if (definition == null)
+            {
+                return $"fields.{field.Key}: not a field of this ruleset";
+            }
+            if (field.Value.Count > definition.Count)
+            {
+                return $"fields.{field.Key}: at most {definition.Count}";
+            }
+        }
         if (Levels.Count == 0)
         {
             return "levels: at least one is needed";
@@ -202,13 +220,22 @@ public sealed class CharacterChoices
         {
             j["notes"] = Notes;
         }
+        if (Fields.Count > 0)
+        {
+            var fields = new JsonObject();
+            foreach (KeyValuePair<string, List<string>> field in Fields)
+            {
+                fields[field.Key] = new JsonArray(field.Value.Select(line => (JsonNode)JsonValue.Create(line)!).ToArray());
+            }
+            j["fields"] = fields;
+        }
         return j;
     }
 
     public static CharacterChoices Read(ContentNode node)
     {
         node.RequireObject("a character is a JSON object");
-        node.Only("version", "name", "race", "background", "scoreMethod", "scores", "levels", "xp", "ruleset", "notes");
+        node.Only("version", "name", "race", "background", "scoreMethod", "scores", "levels", "xp", "ruleset", "notes", "fields");
         int version = node.Int("version", Version, 1);
         if (version > Version)
         {
@@ -224,6 +251,14 @@ public sealed class CharacterChoices
             Xp = node.Int("xp", 0, 0, 1000000000),
             ScoreMethod = node.Text("scoreMethod", "fixed", 64),
         };
+        foreach (KeyValuePair<string, ContentNode> field in node.Get("fields")?.Members() ?? Enumerable.Empty<KeyValuePair<string, ContentNode>>())
+        {
+            if (!ContentIds.IsId(field.Key) || !field.Value.IsArray || field.Value.Count > 20)
+            {
+                throw field.Value.Fail("is a list of up to 20 lines");
+            }
+            choices.Fields[field.Key] = field.Value.Items().Select(line => line.AsText(FieldDefinition.MostLetters)).ToList();
+        }
         if (!Methods.Contains(choices.ScoreMethod))
         {
             throw node.Fail("scoreMethod", "is \"roll\", \"pointBuy\", \"array\" or \"fixed\"");

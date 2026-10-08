@@ -50,6 +50,10 @@ public static class CharacterBuild
             HitDie = "1d" + first.HitDie,
             DcAbility = first.DcAbility,
         };
+        foreach (KeyValuePair<string, List<string>> field in choices.Fields)
+        {
+            c.Fields[field.Key] = field.Value.ToList();
+        }
         c.ClassName = string.Join(" / ", classes.Select(k => k.Id).Distinct().Select(id => classes.First(k => k.Id == id).Name));
         foreach (KeyValuePair<string, int> score in choices.Scores)
         {

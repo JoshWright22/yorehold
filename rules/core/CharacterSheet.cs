@@ -65,6 +65,8 @@ public sealed partial class CharacterSheet
     /// <summary>The first class's hit die, "1d10".</summary>
     public string HitDie { get; set; } = "";
     public string Notes { get; set; } = "";
+    /// <summary>The ruleset's fields (Fate's aspects) as written for it, by field id.</summary>
+    public SortedDictionary<string, List<string>> Fields { get; } = new(StringComparer.Ordinal);
     public int Level { get; set; } = 1;
     /// <summary>Abilities by id, plus "maxHp", "ac", "speed" (feet), "attack", "damage" and "dc".</summary>
     public StatBlock Stats { get; } = new();
@@ -126,6 +128,15 @@ public sealed partial class CharacterSheet
             Level = Level, Hp = Hp, TempHp = TempHp, DcAbility = DcAbility, _weapon = _weapon, Xp = Xp,
             PrepareLimit = PrepareLimit, Coins = Coins,
         };
+        copy._trackHp = _trackHp;
+        copy.Tracks.AddRange(Tracks.Select(t => new TrackSlot
+        {
+            Id = t.Id, Name = t.Name, Max = t.Max, Absorbs = t.Absorbs, Heals = t.Heals, Clears = t.Clears, Value = t.Value,
+        }));
+        foreach (KeyValuePair<string, List<string>> field in Fields)
+        {
+            copy.Fields[field.Key] = field.Value.ToList();
+        }
         copy.Spells.AddRange(Spells);
         copy.Preparable.AddRange(Preparable);
         copy.Prepared.AddRange(Prepared);
@@ -260,6 +271,8 @@ public sealed partial class CharacterSheet
             "stat" => Stats.Integer(of),
             "prof" => ProficiencyModifier(rules, of),
             "trait" => Weapon?.Has(of) == true ? 1 : 0,
+            // how many of a field's lines are written: aspects to invoke
+            "field" => Fields.TryGetValue(of, out List<string>? lines) ? lines.Count(l => l.Trim().Length > 0) : 0,
             _ => null,
         };
     }

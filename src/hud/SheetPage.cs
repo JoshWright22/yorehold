@@ -44,6 +44,13 @@ public static class SheetPage
                     // "Stress 2/3, Mild consequence 1/1"
                     page.Stat(layout.NameOf("tracks"), string.Join(", ", sheet.Tracks.Where(t => t.Max > 0).Select(t => $"{t.Name} {t.Value}/{t.Max}")));
                     break;
+                case "fields":
+                    // each field under its own name: "High concept  Wizard of the north"
+                    foreach (FieldDefinition field in rules.Fields)
+                    {
+                        page.Stat(field.Name, string.Join("; ", sheet.Fields.GetValueOrDefault(field.Id, new List<string>()).Where(l => l.Trim().Length > 0)));
+                    }
+                    break;
                 case "level":
                     int xp = choices != null ? System.Math.Max(choices.Xp, sheet.Xp) : sheet.Xp;
                     string next = sheet.Level - 1 < rules.XpForLevel.Count ? $" of {rules.XpForLevel[sheet.Level - 1]}" : "";

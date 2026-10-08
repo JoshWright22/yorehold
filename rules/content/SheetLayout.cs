@@ -10,7 +10,7 @@ public sealed class SheetLayout
     /// <summary>The parts a sheet can have: vitals (AC, HP, speed), level (hit die, XP), the scores, then the lists.</summary>
     public static readonly string[] Sections =
     {
-        "vitals", "tracks", "level", "scores", "saves", "skills", "defences", "weapon", "feats", "uses", "conditions", "carrying",
+        "vitals", "tracks", "fields", "level", "scores", "saves", "skills", "defences", "weapon", "feats", "uses", "conditions", "carrying",
     };
 
     // the labels inside those parts a system may rename

@@ -73,6 +73,7 @@ public sealed partial class CharacterSheet
                 ["id"] = t.Id, ["name"] = t.Name, ["max"] = t.Max, ["absorbs"] = t.Absorbs, ["heals"] = t.Heals,
                 ["clears"] = Strings(t.Clears), ["value"] = t.Value,
             }).ToArray()),
+            ["fields"] = new JsonObject(Fields.Select(f => KeyValuePair.Create(f.Key, (JsonNode?)Strings(f.Value)))),
             ["spells"] = Strings(Spells),
             ["granted"] = Strings(Granted),
             ["preparable"] = Strings(Preparable),
@@ -155,6 +156,10 @@ public sealed partial class CharacterSheet
             });
         }
         sheet._trackHp = sheet.Hp;
+        foreach (KeyValuePair<string, ContentNode> field in node.Get("fields")?.Members() ?? Array.Empty<KeyValuePair<string, ContentNode>>())
+        {
+            sheet.Fields[field.Key] = field.Value.Items().Select(line => line.AsText(FieldDefinition.MostLetters)).ToList();
+        }
         sheet.Spells.AddRange(node.Texts("spells"));
         sheet.Granted.UnionWith(node.Texts("granted"));
         sheet.Preparable.AddRange(node.Texts("preparable"));
