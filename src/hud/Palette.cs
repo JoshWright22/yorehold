@@ -330,4 +330,16 @@ public static class Palette
 
     /// <summary>The hex for bbcode, "#a53030".</summary>
     public static string Hex(Color color) => "#" + color.ToHtml(false);
+
+    /// <summary>A colour by its role in ui/colors.json ("greys.paper", "red.main") or as "#rrggbb"; white when it is neither.</summary>
+    public static Color Named(string role) => role switch
+    {
+        "greys.bg-deep" => Night, "greys.bg" => Ink, "greys.panel" => Dusk, "greys.line" => Iron, "greys.soft" => Slate,
+        "greys.faint" => Smoke, "greys.muted" => Ash, "greys.paper-2" => Sand, "greys.paper" => Bone,
+        "gold.main" => Straw, "gold.mid" => Amber, "gold.dark" => Leather,
+        "red.main" => Red, "red.light" => Rose, "red.dark" => Rust, "red.deep" => Mauve,
+        "blue.main" => Sky, "blue.light" => Mint, "blue.mid" => Blue, "blue.dark" => Indigo, "blue.deep" => Moss,
+        _ when role.StartsWith('#') && Color.HtmlIsValid(role) => Color.FromHtml(role),
+        _ => Colors.White,
+    };
 }

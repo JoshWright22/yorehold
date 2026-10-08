@@ -79,6 +79,7 @@ public static class App
         Palette.Load(Content());
         Palette.LoadFonts(Content());
         Palette.LoadShapes(Content());
+        DiceTray.Load(Content());
         try
         {
             Keys = KeyBindings.Read(ContentNode.Read(Content(), "ui/keys.json"));

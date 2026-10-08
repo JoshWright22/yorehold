@@ -96,6 +96,9 @@ What the port reads so far, and where it differs:
   `ui/shapes.json` cuts the boxes: `corners` (the radius of every corner that is rounded at
   all; square ones stay square), `edges` (the width of the thin 1 px lines; thick accent bars
   keep theirs) and `shadow` (a hard offset in px, 0 for none), each optional.
+  `ui/dice.json` is the thrown dice's look: `body` and `numbers` for a die that counts, `unkept`
+  and `unkeptNumbers` for one that doesn't (each a role of ui/colors.json or "#rrggbb"), `most`
+  shown at once (the rest as "+N") and `size` (1 is the game's own).
 - `ui/credits.json` is new: the game's own credits. `{"entries": [{"name", "kind", "by", "licence",
   "text"}]}`; `kind` is the tab it shows under. The engine and the libraries inside it are not in the
   file: the credits screen asks the engine for them and their licence texts.

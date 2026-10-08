@@ -18,6 +18,16 @@ public class UiColorsTests
     }
 
     [Fact]
+    public void TheDiceLookIsData()
+    {
+        UiDice shipped = UiDice.Read(ContentNode.Read(TestContent.Shipped(), UiDice.File));
+        Assert.Equal(("greys.paper-2", 6), (shipped.Body, shipped.Most));
+        UiDice skin = UiDice.Read(TestContent.Json("""{"format": "yorehold.dice", "version": 1, "body": "#aa3322", "most": 10}"""));
+        Assert.Equal(("#aa3322", "greys.bg-deep", 10), (skin.Body, skin.Numbers, skin.Most));
+        Assert.Equal("body", TestContent.Refused(() => UiDice.Read(TestContent.Json("""{"format": "yorehold.dice", "version": 1, "body": "red"}"""))).Field);
+    }
+
+    [Fact]
     public void TheScreensShapesAreData()
     {
         UiShapes shipped = UiShapes.Read(ContentNode.Read(TestContent.Shipped(), UiShapes.File));

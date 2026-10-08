@@ -1,0 +1,11 @@
+{
+  "format": "yorehold.dice",
+  "version": 1,
+  "about": "How thrown dice look. Colours are roles of ui/colors.json or #rrggbb: body and numbers for a die that counts, unkept and unkeptNumbers for one that does not (the low die of advantage). most: how many are shown at once; size: 1 is the game's own.",
+  "body": "greys.paper-2",
+  "numbers": "greys.bg-deep",
+  "unkept": "greys.soft",
+  "unkeptNumbers": "greys.muted",
+  "most": 6,
+  "size": 1
+}

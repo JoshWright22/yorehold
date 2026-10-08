@@ -14,9 +14,27 @@ namespace Yorehold;
 /// </summary>
 public partial class DiceTray : SubViewportContainer
 {
-    private const int MostDice = 6;
     private const float Spacing = 0.95f;
     private const float Radius = 0.42f;
+
+    /// <summary>The dice's look from ui/dice.json (a skin's when one is laid on top), read at start.</summary>
+    public static UiDice Look { get; private set; } = new();
+
+    public static void Load(ContentFiles files)
+    {
+        if (!files.Exists(UiDice.File))
+        {
+            return;
+        }
+        try
+        {
+            Look = UiDice.Read(ContentNode.Read(files, UiDice.File));
+        }
+        catch (ContentException error)
+        {
+            GD.PushWarning($"The dice's look can't be read, so it is the game's own: {error.Message}");
+        }
+    }
 
     private sealed class Thrown
     {
@@ -68,8 +86,11 @@ public partial class DiceTray : SubViewportContainer
         _thrown.Clear();
         _tumble = fast ? 0.55 : 1.1;
         _age = 0;
-        List<DiceFaces.Shown> shown = dice.Take(MostDice).ToList();
-        float start = -(shown.Count - 1) * Spacing / 2;
+        List<DiceFaces.Shown> shown = dice.Take(Look.Most).ToList();
+        float size = (float)Look.Size;
+        // more than the strip shows: the rest as a count after the last die
+        int more = dice.Count - shown.Count;
+        float start = -(shown.Count - (more > 0 ? 0 : 1)) * Spacing * size / 2;
         for (int i = 0; i < shown.Count; i++)
         {
             DiceFaces.Shown die = shown[i];
@@ -94,7 +115,15 @@ public partial class DiceTray : SubViewportContainer
                 To = (roll * facing).Normalized(),
                 Axis = new Vector3(_spin.RandfRange(-1, 1), _spin.RandfRange(-1, 1), _spin.RandfRange(-0.3f, 0.3f)).Normalized(),
                 Turns = _spin.RandfRange(2.5f, 4f),
-                X = start + i * Spacing,
+                X = start + i * Spacing * size,
+            });
+        }
+        if (more > 0)
+        {
+            _table.AddChild(new Label3D
+            {
+                Text = $"+{more}", FontSize = 64, PixelSize = 0.006f * size, Modulate = Palette.Named(Look.Body), OutlineSize = 0,
+                Position = new Vector3(start + shown.Count * Spacing * size, 0, 0),
             });
         }
         Visible = shown.Count > 0;
@@ -137,7 +166,7 @@ public partial class DiceTray : SubViewportContainer
 
     private Node3D Build(string shape, DiceSolids.Solid solid, List<string> labels, bool kept)
     {
-        var root = new Node3D { Scale = Vector3.One * Radius };
+        var root = new Node3D { Scale = Vector3.One * Radius * (float)Look.Size };
         root.AddChild(new MeshInstance3D { Mesh = Mesh(shape, solid), MaterialOverride = Body(kept) });
         for (int f = 0; f < solid.Faces.Count; f++)
         {
@@ -152,7 +181,7 @@ public partial class DiceTray : SubViewportContainer
                 Text = labels[f],
                 FontSize = 64,
                 PixelSize = solid.Faces.Count >= 12 ? 0.0042f : 0.006f,
-                Modulate = kept ? Palette.Night : Palette.Ash,
+                Modulate = Palette.Named(kept ? Look.Numbers : Look.UnkeptNumbers),
                 OutlineSize = 0,
                 DoubleSided = false,
                 Transform = new Transform3D(LabelBasis(normal), centre + normal * 0.012f),
@@ -171,7 +200,7 @@ public partial class DiceTray : SubViewportContainer
 
     private Material Body(bool kept) => new StandardMaterial3D
     {
-        AlbedoColor = kept ? Palette.Sand : Palette.Slate,
+        AlbedoColor = Palette.Named(kept ? Look.Body : Look.Unkept),
         Roughness = 0.9f,
         SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled,
     };

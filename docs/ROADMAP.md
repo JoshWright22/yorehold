@@ -708,8 +708,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     advantage dimmed, numbers upright. Settings > Dice: off, fast, full.
   - Done 10/8: hidden rolls stay off the strip: an action's `secret` and anyone not in the party
     whom the party can't see.
-  - Left: the look and sound from the skin and a player's own dice set; symbol faces from a
-    system's custom dice; rolls made on the sheet; more than six dice shown as a count.
+  - Done 10/8: the look from the skin (`ui/dice.json`: colours by role or hex, how many at once,
+    size), the rest of a big roll as "+N".
+  - Left: sound; a player's own dice set beside the skin's; symbol faces from a system's custom
+    dice; rolls made on the sheet.
 
 - [ ] **R18. A large free asset library for the map maker and portraits.** Josh, 10/8: anything
   the game may ship without asking, with the authors in the credits. Allowed: CC0, public domain,
