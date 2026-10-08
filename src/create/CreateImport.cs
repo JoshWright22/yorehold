@@ -29,6 +29,8 @@ public partial class CreateScreen
     private bool _buildWhenRead;
     private FileDialog? _bookDialog;
     private readonly List<string> _imports = new();
+    // the rules system the last import was built for: the next one is read for it too
+    private string _importSystem = RulesFolder.Default;
 
     /// <summary>The story model the settings name, or the environment's; null when there is none.</summary>
     private static IStoryModel? StoryModel()
@@ -58,7 +60,7 @@ public partial class CreateScreen
             return;
         }
         string folder = StoryImport.FolderFor(Places.CreateFolder(), book);
-        _import = new StoryImport(folder, App.Content()) { ScoresFolder = Places.ImportScores() };
+        _import = new StoryImport(folder, App.Content()) { ScoresFolder = Places.ImportScores(), RulesSystem = _importSystem };
         _buildWhenRead = build;
         _startNote = "";
         _start.Reset();
@@ -311,7 +313,7 @@ public partial class CreateScreen
                 int at = systems.FindIndex(s => s.Folder == _import.RulesSystem);
                 if (systems.Count > 0)
                 {
-                    _import.RulesSystem = systems[(at + 1) % systems.Count].Folder;
+                    _import.RulesSystem = _importSystem = systems[(at + 1) % systems.Count].Folder;
                 }
                 break;
             }

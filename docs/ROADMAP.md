@@ -558,10 +558,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     the system's of the same name or are left out, NPCs with no creature stand as a bystander
     written into the package, and the report says each. The sample adventure builds and plays
     under 5e, PF2e and Fate.
-  - Done 10/8: the import review's Rules button picks the system the adventure is built for.
+  - Done 10/8: the import review's Rules button picks the system the adventure is built for, and
+    the next book is read for the same one: the story model is offered that system's creatures,
+    items and classes.
   - Left: the reading stage (`BookCast`) still
     writes the game's own ids for the builder to fit; stat blocks in the system's own creature
-    format (a Fate target needs its approaches); the story model given the system's lists; DCs
+    format (a Fate target needs its approaches); DCs
     and encounters set by the forecast.
 - [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
   with licence, author, links and the no-AI-uploads declaration; credits built from what an

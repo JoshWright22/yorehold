@@ -34,11 +34,12 @@ public sealed partial class StoryReader
     private readonly string _chunkPrompt;
     private readonly string _fixPrompt;
 
-    public StoryReader(IStoryModel model, ContentFiles game)
+    /// <summary>system is the ruleset folder the adventure is built for: its creatures, items and classes are the ones the model is offered.</summary>
+    public StoryReader(IStoryModel model, ContentFiles game, string system = RulesFolder.Default)
     {
         _model = model;
         var compendium = new Compendium();
-        compendium.Load(game, RulesFolder.Default, "");
+        compendium.Load(game, system, "");
         OutlineSchemas schemas = OutlineSchemas.Load(game);
         var schemaText = new StringBuilder();
         foreach (OutlineKind kind in Enum.GetValues<OutlineKind>())

@@ -77,7 +77,7 @@ public sealed class StoryImport
         if (model != null)
         {
             Stage = "The story model is reading it";
-            StoryReader.Result read = await new StoryReader(model, _game).Read(source, draft, cancel);
+            StoryReader.Result read = await new StoryReader(model, _game, RulesSystem).Read(source, draft, cancel);
             Outline = read.Outline;
             string named = model is ChatModel chat ? $"model {chat.Model}, " : "";
             File.WriteAllLines(Path.Combine(Folder, ModelLogFile),
