@@ -320,7 +320,7 @@
   "creation": {
     "steps": [
       {
-        "name": "Ancestry and background",
+        "name": "Ancestry",
         "parts": [
           "name",
           "race",
@@ -329,7 +329,7 @@
         ]
       },
       {
-        "name": "Class and attributes",
+        "name": "Class",
         "parts": [
           "class",
           "scores"
