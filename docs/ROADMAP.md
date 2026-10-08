@@ -274,9 +274,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: opposed rolls (`"opposed": true` on a roll kind).
   - Done 10/8: traps, locks and dialogue checks pass by the system's check outcomes; the
     fumble is the `trapFumble` formula.
-  - Left:
-    triggered effects; expected damage and simulated fights in the evaluator; the schema and
-    reference for the story model.
+  - Done 10/8: expected damage: any dice's exact average (keep, exploding, success counts) and
+    an attack's worth by outcome with the system's critical rule; the fight AI weighs targets
+    and danger by it (`Tactics.ExpectedDamage`, `World.ExpectedDamage`).
+  - Left: simulated fights in the evaluator; the schema and reference for the story model.
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The
     import (R13) writes systems in it, and the game checks the draft by loading and running it.

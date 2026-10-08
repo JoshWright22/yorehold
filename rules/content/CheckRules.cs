@@ -102,8 +102,29 @@ public sealed class CheckKind
         return Outcomes.Where(o => o.Passes).Sum(o => odds[o.Id]);
     }
 
-    // What the dice alone can come to, and how likely each total is.
-    private static Dictionary<int, double> Spread(DiceExpression dice)
+    /// <summary>
+    /// The damage a roll of this kind deals on average, given each outcome's chance: nothing on
+    /// one that doesn't pass, the damage's average on one that does, and on a critical the dice
+    /// twice or what the system's critical formula makes of the average dice.
+    /// </summary>
+    public double ExpectedDamage(Dictionary<string, double> odds, DiceExpression damage, Formula? critical)
+    {
+        double dice = damage.DiceAverage();
+        double flat = damage.Flat();
+        double max = damage.Terms.Where(t => t.Sides != 0).Sum(t => t.Sign * t.Kept * t.HighFace);
+        double hit = Math.Max(0, dice + flat);
+        double crit = critical == null ? 2 * dice + flat : critical.Evaluate(name => name switch
+        {
+            "dice" => dice,
+            "flat" => flat,
+            "max" => max,
+            _ => null,
+        });
+        return Outcomes.Where(o => o.Passes).Sum(o => odds.GetValueOrDefault(o.Id) * (o.Critical ? Math.Max(0, crit) : hit));
+    }
+
+    /// <summary>What dice can come to, and how likely each total is.</summary>
+    public static Dictionary<int, double> Spread(DiceExpression dice)
     {
         var spread = new Dictionary<int, double> { [0] = 1 };
         foreach (DiceTerm term in dice.Terms)

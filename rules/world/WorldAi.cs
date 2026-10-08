@@ -217,7 +217,8 @@ public sealed partial class World
                 MaxHp = c.Sheet.MaxHp,
                 ArmorClass = c.Sheet.ArmorClass(Rules),
                 AttackBonus = c.Sheet.AttackModifier(Rules),
-                AverageDamage = damage != null ? Math.Max(1.0f, (damage.Minimum() + damage.Maximum()) / 2.0f) : 1.0f,
+                AverageDamage = damage != null ? Math.Max(1.0f, (float)damage.Average()) : 1.0f,
+                Damage = damage,
                 Speed = c.Sheet.SpeedSquares(Rules),
                 Leader = AiFor(i).Leader,
             });
@@ -226,6 +227,7 @@ public sealed partial class World
         int team = Creatures[me].Team;
         view.Actions = Encounter!.Current.Budget.Actions;
         view.Attack = Rules.Checks.Kind(CheckRules.Attack);
+        view.CriticalDamage = Rules.Checks.CriticalDamage;
         ActionDefinition? strike = FindAction(StrikeAction);
         view.StrikeCost = strike != null ? ActionCost(me, strike) : Encounter.StrikeCost;
         if (view.Actions >= 1)

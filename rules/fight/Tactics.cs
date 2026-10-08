@@ -10,6 +10,8 @@ public sealed record TacticalUnit
     public int ArmorClass { get; init; } = 10;
     public int AttackBonus { get; init; }
     public float AverageDamage { get; init; } = 1;
+    /// <summary>Its damage dice, so a critical can be counted; null = AverageDamage on any hit.</summary>
+    public DiceExpression? Damage { get; init; }
     /// <summary>Squares per turn.</summary>
     public int Speed { get; init; } = 6;
     public bool Leader { get; init; }
@@ -41,6 +43,8 @@ public sealed class TacticalView
     public Dictionary<Cell, float> AllyDistance { get; set; } = new();
     /// <summary>The rules system's attack roll, so the odds are its own; null = a d20 against AC.</summary>
     public CheckKind? Attack { get; set; }
+    /// <summary>The system's critical damage formula; null = the dice twice.</summary>
+    public Formula? CriticalDamage { get; set; }
 }
 
 public enum ChoiceKind
@@ -85,6 +89,17 @@ public static class Tactics
             return (float)attack.ChanceToPass(attacker.AttackBonus, target.ArmorClass);
         }
         return Math.Clamp((21 + attacker.AttackBonus - target.ArmorClass) / 20.0f, 0.05f, 0.95f);
+    }
+
+    /// <summary>What one attack is worth on average, criticals counted the way the system counts them.</summary>
+    public static float ExpectedDamage(TacticalUnit attacker, TacticalUnit target, TacticalView view)
+    {
+        if (view.Attack == null || attacker.Damage == null)
+        {
+            return HitChance(attacker, target, view.Attack) * attacker.AverageDamage;
+        }
+        Dictionary<string, double> odds = view.Attack.Odds(attacker.AttackBonus, target.ArmorClass);
+        return (float)view.Attack.ExpectedDamage(odds, attacker.Damage, view.CriticalDamage);
     }
 
     /// <summary>Its morale has broken (see the profile's flee numbers).</summary>
@@ -160,7 +175,7 @@ public static class Tactics
                 }
                 float distance = grid.Distance(cell, foe.At);
                 float share = distance <= 1.01f ? 1.0f : distance <= foe.Speed + 1.01f ? 0.5f : 0.0f;
-                total += share * HitChance(foe, me, view.Attack) * foe.AverageDamage;
+                total += share * ExpectedDamage(foe, me, view);
             }
             return total;
         }
@@ -251,7 +266,7 @@ public static class Tactics
                 {
                     continue;
                 }
-                float expected = HitChance(me, target, view.Attack) * me.AverageDamage;
+                float expected = ExpectedDamage(me, target, view);
                 int friends = 0;
                 int mine = 0;
                 for (int other = 0; other < view.Units.Count; other++)

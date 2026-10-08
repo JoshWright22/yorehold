@@ -171,6 +171,17 @@ public sealed partial class World
         return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
     }
 
+    /// <summary>The damage the same attack deals on average with its weapon, misses and criticals counted.</summary>
+    public double ExpectedDamage(int attacker, int target, string? actionId = null)
+    {
+        if (attacker < 0 || attacker >= Creatures.Count || target < 0 || target >= Creatures.Count
+            || DiceExpression.Parse(Creatures[attacker].Sheet.DamageDice(Rules)) is not DiceExpression damage)
+        {
+            return 0;
+        }
+        return Rules.Checks.Kind(CheckRules.Attack).ExpectedDamage(AttackOdds(attacker, target, actionId), damage, Rules.Checks.CriticalDamage);
+    }
+
     // What the ruleset's attack penalty takes off the attacker's next attack this turn.
     private int AttackPenaltyNow(int attacker)
     {

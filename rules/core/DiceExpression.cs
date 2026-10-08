@@ -185,6 +185,37 @@ public sealed class DiceExpression
         return text.ToString();
     }
 
+    /// <summary>What it comes to on average.</summary>
+    public double Average() => DiceAverage() + Flat();
+
+    /// <summary>The flat numbers alone.</summary>
+    public int Flat() => Terms.Where(t => t.Sides == 0).Sum(t => t.Sign * t.Count);
+
+    /// <summary>What the dice alone come to on average, the flat numbers left out.</summary>
+    public double DiceAverage()
+    {
+        double total = 0;
+        foreach (DiceTerm term in Terms.Where(t => t.Sides != 0))
+        {
+            if (term.KeepHighest != 0 || term.KeepLowest != 0 || term.SuccessAt != 0)
+            {
+                // which dice count depends on the others: every way they fall, counted
+                var one = new DiceExpression();
+                one.Terms.Add(term);
+                total += CheckKind.Spread(one).Sum(p => p.Key * p.Value);
+                continue;
+            }
+            double face = term.Fudge ? 0 : (term.Sides + 1) / 2.0;
+            if (term.Explode)
+            {
+                // each top face rolls again: s/(s-1) times the plain average, less the rolls past the limit
+                face *= (1 - Math.Pow(1.0 / term.Sides, DiceTerm.MostExplosions + 1)) / (1 - 1.0 / term.Sides);
+            }
+            total += term.Sign * term.Count * face;
+        }
+        return total;
+    }
+
     public int Minimum()
     {
         int total = 0;

@@ -163,4 +163,20 @@ public class CheckRulesTests
         error = TestContent.Refused(() => RulesTesting.Effect("""[{"do": "heal", "dice": "1d6", "when": "later"}]""").Check(rules, "x.json"));
         Assert.Equal("effects[0].when", error.Field);
     }
+
+    [Fact]
+    public void AnAttackIsWorthItsAverageDamageByOutcome()
+    {
+        Assert.Equal((7.5, 12.24, 4.2, 0.667, 0.0), (DiceExpression.Parse("1d8+3")!.Average(), Math.Round(DiceExpression.Parse("4d6kh3")!.Average(), 2),
+            Math.Round(DiceExpression.Parse("1d6!")!.Average(), 2), Math.Round(DiceExpression.Parse("2d6s5")!.Average(), 3), DiceExpression.Parse("4dF")!.Average()));
+
+        // +5 against AC 15: half the rolls hit for 7.5, one in twenty is a critical
+        var checks = new CheckRules();
+        CheckKind attack = checks.Kind(CheckRules.Attack);
+        DiceExpression sword = DiceExpression.Parse("1d8+3")!;
+        Dictionary<string, double> odds = attack.Odds(5, 15);
+        Assert.Equal(4.35, Math.Round(attack.ExpectedDamage(odds, sword, null), 3));
+        // a system whose critical doubles the whole damage
+        Assert.Equal(4.5, Math.Round(attack.ExpectedDamage(odds, sword, Formula.Parse("(dice + flat) * 2", out _)), 3));
+    }
 }
