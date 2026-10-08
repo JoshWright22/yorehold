@@ -14,36 +14,66 @@ public static class SheetPage
     public static string Build(Ruleset rules, Compendium compendium, CharacterSheet sheet, CharacterChoices? choices, bool carrying = true)
     {
         var page = new BookPage().Title(sheet.Name.Trim().Length == 0 ? "New character" : sheet.Name).Sub(Who(compendium, sheet, choices)).Rule();
-        string hp = $"{System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}" + (sheet.TempHp > 0 ? $" (+{sheet.TempHp})" : "");
-        page.Stats(("AC", sheet.ArmorClass(rules).ToString()), ("HP", hp), ("Speed", $"{sheet.SpeedFeet} ft"));
-        int xp = choices != null ? System.Math.Max(choices.Xp, sheet.Xp) : sheet.Xp;
-        string next = sheet.Level - 1 < rules.XpForLevel.Count ? $" of {rules.XpForLevel[sheet.Level - 1]}" : "";
-        page.Stats(("Hit die", sheet.HitDie), ("XP", $"{xp}{next}"));
-        page.Rule();
-        page.Table(rules.Abilities.Select(a => a.Id.ToUpperInvariant()).ToList(),
-            rules.Abilities.Select(a => sheet.AbilityScore(a.Id).ToString())
-                .Concat(rules.Abilities.Select(a => $"({SheetView.Signed(sheet.AbilityModifier(rules, a.Id))})")).ToList());
-        page.Rule();
-
-        List<string> saves = rules.Abilities.Where(a => Trained(rules, sheet, a.Id))
-            .Select(a => $"{a.Id.ToUpperInvariant()} {SheetView.Signed(sheet.CheckModifier(rules, a.Id) + sheet.ProficiencyModifier(rules, a.Id))}").ToList();
-        page.Stat("Saves", string.Join(", ", saves));
-        page.Stat("Skills", string.Join(", ", rules.Skills.Where(s => Trained(rules, sheet, s.Id)).Select(s => $"{s.Name} {SheetView.Signed(sheet.CheckModifier(rules, s.Id))}")));
-        if (sheet.WeaponItem is Item weapon)
+        SheetLayout layout = rules.Sheet;
+        // the system says which parts there are and in what order; a rule closes the top block and the scores
+        bool ruled = false;
+        foreach (string section in layout.Order)
         {
-            page.Stat("Weapon", $"{weapon.Name}, {weapon.Definition.Damage}");
-        }
-        page.Stat("Feats", string.Join(", ", Feats(compendium, choices).Select(f => f.Name)));
-        page.Stat("Uses", string.Join(", ", sheet.Resources.Select(r => $"{Words(r.Key)} {r.Value.Current}/{r.Value.Max}")));
-        page.Stat("Conditions", string.Join(", ", sheet.Conditions.Select(c => rules.Condition(c.Id)?.Name ?? c.Id)));
-        if (carrying)
-        {
-            var gear = sheet.Inventory.Select(i => (i.Quantity > 1 ? $"{i.Name} x{i.Quantity}" : i.Name) + (i.Equipped ? (i.Held ? " (in hand)" : " (worn)") : "")).ToList();
-            if (sheet.Coins > 0)
+            bool block = section is "vitals" or "level" or "scores";
+            if (!block && !ruled)
             {
-                gear.Add(Coins.Text(sheet.Coins));
+                page.Rule();
+                ruled = true;
             }
-            page.Stat("Carrying", string.Join(", ", gear));
+            switch (section)
+            {
+                case "vitals":
+                    string hp = $"{System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}" + (sheet.TempHp > 0 ? $" (+{sheet.TempHp})" : "");
+                    page.Stats((layout.NameOf("ac"), sheet.ArmorClass(rules).ToString()), (layout.NameOf("hp"), hp), (layout.NameOf("speed"), $"{sheet.SpeedFeet} ft"));
+                    break;
+                case "level":
+                    int xp = choices != null ? System.Math.Max(choices.Xp, sheet.Xp) : sheet.Xp;
+                    string next = sheet.Level - 1 < rules.XpForLevel.Count ? $" of {rules.XpForLevel[sheet.Level - 1]}" : "";
+                    page.Stats((layout.NameOf("hitDie"), sheet.HitDie), (layout.NameOf("xp"), $"{xp}{next}"));
+                    break;
+                case "scores":
+                    page.Rule();
+                    page.Table(rules.Abilities.Select(a => a.Id.ToUpperInvariant()).ToList(),
+                        rules.Abilities.Select(a => sheet.AbilityScore(a.Id).ToString())
+                            .Concat(rules.Abilities.Select(a => $"({SheetView.Signed(sheet.AbilityModifier(rules, a.Id))})")).ToList());
+                    page.Rule();
+                    ruled = true;
+                    break;
+                case "saves":
+                    page.Stat(layout.NameOf("saves"), string.Join(", ", SheetLayout.Saves(rules, sheet).Select(s => $"{s.Name} {SheetView.Signed(s.Modifier)}")));
+                    break;
+                case "skills":
+                    page.Stat(layout.NameOf("skills"), string.Join(", ", rules.Skills.Where(s => Trained(rules, sheet, s.Id)).Select(s => $"{s.Name} {SheetView.Signed(sheet.CheckModifier(rules, s.Id))}")));
+                    break;
+                case "defences":
+                    page.Stat(layout.NameOf("defences"), string.Join(", ", SheetLayout.Defences(sheet)));
+                    break;
+                case "weapon" when sheet.WeaponItem is Item weapon:
+                    page.Stat(layout.NameOf("weapon"), $"{weapon.Name}, {weapon.Definition.Damage}");
+                    break;
+                case "feats":
+                    page.Stat(layout.NameOf("feats"), string.Join(", ", Feats(compendium, choices).Select(f => f.Name)));
+                    break;
+                case "uses":
+                    page.Stat(layout.NameOf("uses"), string.Join(", ", sheet.Resources.Select(r => $"{Words(r.Key)} {r.Value.Current}/{r.Value.Max}")));
+                    break;
+                case "conditions":
+                    page.Stat(layout.NameOf("conditions"), string.Join(", ", sheet.Conditions.Select(c => rules.Condition(c.Id)?.Name ?? c.Id)));
+                    break;
+                case "carrying" when carrying:
+                    var gear = sheet.Inventory.Select(i => (i.Quantity > 1 ? $"{i.Name} x{i.Quantity}" : i.Name) + (i.Equipped ? (i.Held ? " (in hand)" : " (worn)") : "")).ToList();
+                    if (sheet.Coins > 0)
+                    {
+                        gear.Add(Coins.Text(sheet.Coins));
+                    }
+                    page.Stat(layout.NameOf("carrying"), string.Join(", ", gear));
+                    break;
+            }
         }
         return page.ToString();
     }

@@ -169,6 +169,24 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TheSheetShowsWhatTheSystemLists()
+    {
+        using WorldFixture pf2e = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = pf2e.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        Assert.Equal(new[] { "Fortitude", "Reflex", "Will" }, SheetLayout.Saves(w.Rules, ana).Select(s => s.Name));
+        ana.Stats.SetBase("resist.fire", 5);
+        ana.Stats.SetBase("immune.poison", 1);
+        Assert.Equal(new[] { "immune to poison", "resists fire 5" }, SheetLayout.Defences(ana));
+
+        using WorldFixture fate = Yard("rulesets/fate-accelerated", "character", "character");
+        SheetLayout layout = fate.World.Rules.Sheet;
+        Assert.True(!layout.Shows("level") && layout.Shows("vitals") && layout.NameOf("hp") == "Stress" && layout.NameOf("xp") == "XP");
+        ContentException error = TestContent.Refused(() => SheetLayout.Read(TestContent.Json("""{"sections": ["vitals", "luck"]}""")));
+        Assert.Contains("unknown section \"luck\"", error.Message);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

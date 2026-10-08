@@ -160,6 +160,14 @@
     "hpFirstLevel": "15",
     "hpPerLevel": "0"
   },
+  "sheet": {
+    "sections": ["vitals", "scores", "skills", "weapon", "feats", "uses", "conditions", "carrying"],
+    "names": {
+      "ac": "Defend",
+      "hp": "Stress",
+      "feats": "Stunts"
+    }
+  },
   "creation": {
     "steps": [
       {

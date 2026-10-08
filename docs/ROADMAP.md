@@ -342,8 +342,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     (`armorClass`: `min(mod.dex, stat.dexCap)`).
   - Done 10/8: typed bonuses (the best bonus and worst penalty of a type) and weapon `traits`
     that formulas and the attack penalty read (`trait.finesse`, `trait.agile`).
-  - Left: the sheet layout
-    from the system.
+  - Done 10/8: `sheet` in ruleset.json: the sections the sheet shows, in order, and their
+    labels; PF2e's saves listed by name; defences shown. Fate shows Stress and Stunts, no hit die.
+  - Left: sections a system invents (a Fate aspects box, a stress track drawn as boxes).
 - [ ] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
   (5e) or dying and wounded values with a recovery check (PF2e). UI: a downed hero's card shows
   the system's track.
