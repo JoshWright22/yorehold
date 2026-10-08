@@ -21,6 +21,31 @@ public class DiceFacesTests
         Assert.Equal(20, DiceFaces.Labels("d20").Count);
     }
 
+    [Theory]
+    [InlineData("d4", 4, 3)]
+    [InlineData("d6", 6, 4)]
+    [InlineData("d8", 8, 3)]
+    [InlineData("d10", 10, 4)]
+    [InlineData("d12", 12, 5)]
+    [InlineData("d20", 20, 3)]
+    [InlineData("dF", 6, 4)]
+    public void EachSolidHasAFacePerLabel(string shape, int faces, int corners)
+    {
+        DiceSolids.Solid solid = DiceSolids.Of(shape);
+        Assert.Equal(faces, solid.Faces.Count);
+        Assert.Equal(DiceFaces.Labels(shape).Count, solid.Faces.Count);
+        Assert.All(solid.Faces, face => Assert.Equal(corners, face.Length));
+        // flat faces, normals outward and all different, so each face can be turned up alone
+        for (int f = 0; f < solid.Faces.Count; f++)
+        {
+            System.Numerics.Vector3 n = solid.Normals[f];
+            float[] along = solid.Faces[f].Select(i => System.Numerics.Vector3.Dot(solid.Vertices[i], n)).ToArray();
+            Assert.True(along.Max() - along.Min() < 1e-3f, $"{shape} face {f} is flat");
+            Assert.True(along[0] > 0, $"{shape} face {f} faces outward");
+        }
+        Assert.Equal(solid.Normals.Count, solid.Normals.Select(n => (MathF.Round(n.X, 3), MathF.Round(n.Y, 3), MathF.Round(n.Z, 3))).Distinct().Count());
+    }
+
     [Fact]
     public void AnAttackThrowsItsDiceToTheScreen()
     {
