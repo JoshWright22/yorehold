@@ -47,7 +47,7 @@ public static class App
         }
         string system = RulesFolder.SystemOf(probe, chapterFolder).Id;
         var left = new List<string>();
-        List<string> sets = ContentSets.For(Places.SetFolders(), system, null, left);
+        List<string> sets = ContentSets.For(Places.SetFolders(), system, Settings.SetsOff, left);
         foreach (string why in left)
         {
             GD.Print($"Content set left out: {why}");

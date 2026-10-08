@@ -18,7 +18,7 @@ public sealed class SettingsPanel
     public static readonly string[] LightingWords = { "As the map says", "Off", "Mood", "Rules" };
     private static readonly string[] TimeWords = { "As the map says", "Day", "Dusk", "Night" };
     private static readonly string[] DiceWords = { "Off", "Fast", "Full" };
-    private static readonly string[] Groups = { "Display", "Gameplay", "Camera", "Controls", "Account" };
+    private static readonly string[] Groups = { "Display", "Gameplay", "Content", "Camera", "Controls", "Account" };
 
     // Escape, Enter and the digits always do the same thing (back, confirm, replies and hotbar slots)
     private static readonly Key[] Fixed =
@@ -64,6 +64,38 @@ public sealed class SettingsPanel
     };
 
     private const string LocalServer = "http://127.0.0.1:7350";
+
+    // A set turned on or off joins games from the next one loaded.
+    private void TurnSet(string id, bool on)
+    {
+        if (on)
+        {
+            App.Settings.SetsOff.Remove(id);
+        }
+        else
+        {
+            App.Settings.SetsOff.Add(id);
+        }
+        App.Save();
+        _said.Text = "Takes hold from the next adventure loaded.";
+    }
+
+    private static string Capital(string text) => text.Length == 0 ? "Content" : char.ToUpperInvariant(text[0]) + text[1..];
+
+    // A system's own name for its id, from its ruleset, when the game has it
+    private static string RulesName(string system)
+    {
+        ContentFiles game = App.Content();
+        foreach (string folder in game.Folders("rulesets"))
+        {
+            (string id, string name) = RulesFolder.SystemAt(game, "", folder);
+            if (id == system)
+            {
+                return name;
+            }
+        }
+        return system;
+    }
 
     // the installed skin after this one, round again to the first; none installed keeps the game's own
     private static string NextSkin(string now)
@@ -205,7 +237,8 @@ public sealed class SettingsPanel
 
         // made again only when what they show changes, so a press isn't lost to a rebuild
         string signature = $"{_group}|{_search.Text}|{_capturing}|{AccountWord()}|{App.Online.Status}|"
-            + string.Join("|", Settings.Select(s => s.Value(now))) + "|" + string.Join("|", keys.Actions.Select(a => keys.KeysText(a.Id)));
+            + string.Join("|", Settings.Select(s => s.Value(now))) + "|" + string.Join("|", keys.Actions.Select(a => keys.KeysText(a.Id)))
+            + "|" + string.Join(",", now.SetsOff) + "|" + string.Join(",", Places.SetFolders());
         if (signature == _shown)
         {
             return;
@@ -240,6 +273,20 @@ public sealed class SettingsPanel
             {
                 choices.AddChild(new Label { Text = now.Server, ThemeTypeVariation = "DimLabel" });
             }
+        }
+        // the content sets in the user folder's sets\, each on or off for the games of its system
+        List<ContentSets.Installed> sets = ContentSets.List(Places.SetFolders());
+        if (sets.Count == 0 && Wanted("Content", "content sets"))
+        {
+            Row("Content sets", "None installed. A set (more creatures, spells or feats for one system) goes in the sets folder of the user folder.", false);
+        }
+        foreach (ContentSets.Installed set in sets.Where(s => Wanted("Content", s.Name + " " + s.Kind + " " + s.System + " content sets")))
+        {
+            string about = set.Problem.Length > 0 ? $"Can't be used: {set.Problem}" : $"{Capital(set.Kind)} for {RulesName(set.System)} games.";
+            HBoxContainer row = Row(set.Name, about, now.SetsOff.Contains(set.Id));
+            bool off = now.SetsOff.Contains(set.Id);
+            Choice(row, "On", !off, () => TurnSet(set.Id, true), set.Problem.Length == 0);
+            Choice(row, "Off", off, () => TurnSet(set.Id, false), set.Problem.Length == 0);
         }
         if (Wanted("Account", "sign-in sign in account sync online " + App.Online.Status))
         {

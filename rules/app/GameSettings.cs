@@ -49,6 +49,9 @@ public sealed class GameSettings
     public string Skin { get; set; } = "";
     /// <summary>Rolls thrown as 3D dice: 0 off, 1 fast, 2 full.</summary>
     public int Dice { get; set; } = 2;
+    /// <summary>Installed content sets (by id) the player turned off: they join no game.</summary>
+    public SortedSet<string> SetsOff { get; } = new(StringComparer.Ordinal);
+
     /// <summary>Key bindings that differ from the shipped ones: action id to key names.</summary>
     public Dictionary<string, List<string>> Keys { get; } = new();
 
@@ -96,6 +99,16 @@ public sealed class GameSettings
         settings.StoryModelName = Clip(Text(j, "storyModelName", ""), 128);
         settings.Skin = Clip(Text(j, "skin", ""), 128);
         settings.Dice = j["dice"] is JsonValue dice && dice.TryGetValue(out int shown) ? Math.Clamp(shown, 0, 2) : settings.Dice;
+        if (j["setsOff"] is JsonArray setsOff)
+        {
+            foreach (JsonNode? set in setsOff)
+            {
+                if (set is JsonValue value && value.GetValueKind() == JsonValueKind.String && value.GetValue<string>().Length is > 0 and <= 128)
+                {
+                    settings.SetsOff.Add(value.GetValue<string>());
+                }
+            }
+        }
         if (j["keys"] is JsonObject keys)
         {
             foreach (KeyValuePair<string, JsonNode?> binding in keys)
@@ -166,6 +179,10 @@ public sealed class GameSettings
             keys[binding.Key] = new JsonArray(binding.Value.Select(k => (JsonNode)JsonValue.Create(k)).ToArray());
         }
         j["keys"] = keys;
+        if (SetsOff.Count > 0)
+        {
+            j["setsOff"] = new JsonArray(SetsOff.Select(id => (JsonNode)JsonValue.Create(id)).ToArray());
+        }
         foreach (KeyValuePair<string, JsonNode?> other in _others)
         {
             j[other.Key] = other.Value?.DeepClone();
@@ -196,6 +213,7 @@ public sealed class GameSettings
     {
         "zoomToCursor", "edgeScroll", "cameraFollows", "panSpeed", "fullscreen", "lighting", "timeOfDay", "sharedFog",
         "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName", "skin", "dice",
+        "setsOff",
     };
 
     private static string Clip(string text, int longest) => text.Length > longest ? text[..longest] : text;

@@ -38,7 +38,9 @@ public class MenuTests
             Lighting = 3, TimeOfDay = 2, SharedFog = false, ReactionPrompts = false, LastCreatePackage = "create/new-adventure",
         };
         settings.Keys["sheet"] = new List<string> { "P" };
+        settings.SetsOff.Add("more-feats");
         GameSettings back = GameSettings.Parse(settings.ToJson());
+        Assert.Equal(new[] { "more-feats" }, back.SetsOff);
         Assert.False(back.ZoomToCursor);
         Assert.False(back.EdgeScroll);
         Assert.False(back.CameraFollows);

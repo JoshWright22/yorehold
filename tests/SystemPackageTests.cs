@@ -695,6 +695,10 @@ public class SystemPackageTests
         Assert.Equal(new[] { feats.Folder }, ContentSets.For(new[] { feats.Folder, other.Folder }, "pf2e", null, left));
         Assert.Contains(left, why => why.Contains("for dnd5e, not pf2e"));
         Assert.Empty(ContentSets.For(new[] { feats.Folder }, "pf2e", new HashSet<string> { "more-feats" }, left));
+        // the list Settings turns them on and off from
+        List<ContentSets.Installed> listed = ContentSets.List(new[] { feats.Folder, other.Folder });
+        Assert.Equal(("more-feats", "feats", "pf2e", ""), (listed[0].Id, listed[0].Kind, listed[0].System, listed[0].Problem));
+        Assert.Equal("dnd5e", listed[1].System);
 
         // laid over the game's content, its feat joins the system's options
         ContentFiles files = TestContent.Shipped();

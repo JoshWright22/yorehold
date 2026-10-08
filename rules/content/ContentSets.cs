@@ -7,6 +7,31 @@ namespace Yorehold.Rules;
 /// </summary>
 public static class ContentSets
 {
+    /// <summary>One installed set as the Settings list shows it; Problem says why its manifest can't be read.</summary>
+    public sealed record Installed(string Folder, string Id, string Name, string Kind, string System, string Problem);
+
+    /// <summary>What each set folder holds, for a list the player turns them on and off from.</summary>
+    public static List<Installed> List(IEnumerable<string> folders)
+    {
+        var sets = new List<Installed>();
+        foreach (string folder in folders)
+        {
+            string name = Path.GetFileName(folder.TrimEnd('/', '\\'));
+            try
+            {
+                ContentPackage manifest = ContentPackage.Load(new ContentFiles(folder));
+                string problem = manifest.IsSet ? "" : $"a {(manifest.Kind.Length > 0 ? manifest.Kind : "package")}, not a content set";
+                sets.Add(new Installed(folder, manifest.Id.Length > 0 ? manifest.Id : name, manifest.Name.Length > 0 ? manifest.Name : name,
+                    manifest.Kind, manifest.Ruleset.Split('@')[0], problem));
+            }
+            catch (ContentException error)
+            {
+                sets.Add(new Installed(folder, name, name, "", "", error.Message));
+            }
+        }
+        return sets;
+    }
+
     /// <summary>The set folders for system (an id like "pf2e"), in the order given, and why the rest stayed out.</summary>
     public static List<string> For(IEnumerable<string> folders, string system, ISet<string>? off, List<string> left)
     {
