@@ -8,5 +8,6 @@
   "weight": 2,
   "traits": [
     "light"
-  ]
+  ],
+  "damageType": "bludgeoning"
 }

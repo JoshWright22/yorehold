@@ -359,9 +359,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     prone/grabbed, flanking, the dying and wounded track, Reactive Strike as a fighter grant,
     four classes to level 3, five spells, three ancestries, four creatures. A fight plays to
     the end. The ORC notice is in the credits.
+  - Done 10/8: weapons carry a `damageType`, so resistances meet Strikes in both systems.
   - Doesn't fit yet: Sudden Charge and other actions that move and strike (a step that moves
-    toward the target); damage types on weapon Strikes, so the skeleton's resistances only meet
-    typed spell damage; monsters use the PC proficiency maths plus a flat `attack` stat;
+    toward the target);
+    monsters use the PC proficiency maths plus a flat `attack` stat;
     backstabber, deadly and versatile traits do nothing yet; hidden is plain disadvantage, not
     a DC 11 flat check; heightening cantrips by rank is written per spell as a formula.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more

@@ -75,6 +75,10 @@ public sealed class Item
         {
             j["description"] = Definition.Description;
         }
+        if (Definition.DamageType.Length > 0)
+        {
+            j["damageType"] = Definition.DamageType;
+        }
         if (Definition.Traits.Count > 0)
         {
             j["traits"] = new JsonArray(Definition.Traits.Select(t => (JsonNode?)t).ToArray());

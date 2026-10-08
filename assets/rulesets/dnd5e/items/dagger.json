@@ -9,5 +9,6 @@
     "finesse",
     "light",
     "thrown"
-  ]
+  ],
+  "damageType": "piercing"
 }

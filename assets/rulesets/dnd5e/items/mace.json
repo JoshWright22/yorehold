@@ -5,5 +5,6 @@
   "slot": "mainHand",
   "damage": "1d6",
   "attackAbility": "str",
-  "weight": 4
+  "weight": 4,
+  "damageType": "bludgeoning"
 }

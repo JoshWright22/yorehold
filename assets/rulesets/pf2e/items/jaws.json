@@ -5,5 +5,6 @@
   "slot": "mainHand",
   "damage": "1d6",
   "attackAbility": "str",
-  "weight": 0
+  "weight": 0,
+  "damageType": "piercing"
 }

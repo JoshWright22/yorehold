@@ -9,5 +9,6 @@
   "weight": 7,
   "traits": [
     "heavy"
-  ]
+  ],
+  "damageType": "slashing"
 }

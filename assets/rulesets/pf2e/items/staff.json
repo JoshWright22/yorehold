@@ -8,5 +8,6 @@
   "weight": 1,
   "traits": [
     "two-hand"
-  ]
+  ],
+  "damageType": "bludgeoning"
 }

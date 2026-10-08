@@ -8,5 +8,6 @@
   "traits": [
     "finesse",
     "light"
-  ]
+  ],
+  "damageType": "slashing"
 }

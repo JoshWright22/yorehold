@@ -7,5 +7,6 @@
   "weight": 2,
   "traits": [
     "finesse"
-  ]
+  ],
+  "damageType": "piercing"
 }

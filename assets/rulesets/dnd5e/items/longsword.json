@@ -8,5 +8,6 @@
   "weight": 3,
   "traits": [
     "versatile"
-  ]
+  ],
+  "damageType": "slashing"
 }

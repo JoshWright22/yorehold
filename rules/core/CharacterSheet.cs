@@ -13,7 +13,7 @@ public sealed class ActiveCondition
 /// What a sheet attacks with. Nothing held is an unarmed strike: 1 damage, on the system's attack
 /// ability, as is a weapon whose ability is empty.
 /// </summary>
-public record Weapon(string Damage, string AttackAbility = "", int Hands = 1, IReadOnlyList<string>? Traits = null)
+public record Weapon(string Damage, string AttackAbility = "", int Hands = 1, IReadOnlyList<string>? Traits = null, string DamageType = "")
 {
     public bool Has(string trait) => Traits?.Contains(trait) == true;
 }
@@ -88,7 +88,7 @@ public sealed partial class CharacterSheet
         get
         {
             Item? held = WeaponItem;
-            return held != null ? new Weapon(held.Definition.Damage, held.Definition.AttackAbility, held.Hands, held.Definition.Traits) : _weapon;
+            return held != null ? new Weapon(held.Definition.Damage, held.Definition.AttackAbility, held.Hands, held.Definition.Traits, held.Definition.DamageType) : _weapon;
         }
         set => _weapon = value;
     }

@@ -8,5 +8,6 @@
   "traits": [
     "deadly",
     "finesse"
-  ]
+  ],
+  "damageType": "piercing"
 }
