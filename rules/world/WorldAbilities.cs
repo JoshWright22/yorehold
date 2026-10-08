@@ -22,11 +22,29 @@ public sealed partial class World
             }
             if (SpellOf(action) is not SpellDefinition spell)
             {
-                // not a spell: worth it only as a guard (Raise a Shield, Dodge), by the harm it saves
-                float guard = spellsOnly ? 0 : GuardWorth(me, action);
+                // not a spell: a guard (Raise a Shield, Dodge) by the harm it saves, or a trick aimed
+                // at someone that rolls no attack (Demoralize) by what it does to them
+                // a guard only once a foe is beside it: from across the room it walks in instead
+                bool engaged = Foes(me).Any(f => Adjacent(me, f));
+                float guard = spellsOnly || !engaged ? 0 : GuardWorth(me, action);
                 if (guard > 0.5f && (best == null || guard > best.Value))
                 {
                     best = new AbilityChoice(action, me, null, guard);
+                }
+                if (!spellsOnly && action.Target == ActionTarget.Creature && action.Id != StrikeAction)
+                {
+                    foreach ((int? target, Cell? _) in Aims(me, action))
+                    {
+                        if (target is not int at || at == me || AttackWorth(me, action, at) > 0)
+                        {
+                            continue;
+                        }
+                        float trick = WorthOn(me, action, at) / Math.Max(1, ActionCost(me, action));
+                        if (trick > 0.5f && (best == null || trick > best.Value))
+                        {
+                            best = new AbilityChoice(action, at, null, trick);
+                        }
+                    }
                 }
                 continue;
             }
@@ -91,7 +109,9 @@ public sealed partial class World
             double then = attack.ExpectedDamage(attack.Odds(bonus, guarded.AttackDefence(Rules), other.AttackAdvantage(Rules, guarded)), damage, Rules.Checks.CriticalDamage);
             saved += reach * (float)Math.Max(0, now - then);
         }
-        return saved / Math.Max(1, ActionCost(me, action));
+        // guarding only puts the fight off; striking ends it, so a guard has to save clearly more
+        const float PutsOff = 0.75f;
+        return PutsOff * saved / Math.Max(1, ActionCost(me, action));
     }
 
     /// <summary>
