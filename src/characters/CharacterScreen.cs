@@ -726,7 +726,15 @@ public partial class CharacterScreen : CanvasLayer
             }
             Grid(options, id => _compendium.Feats[id].Name, picked.Contains, 2, d.PickFeat);
         }
-        if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0)
+        (int boosts, int step) = d.LevelBoosts();
+        if (boosts > 0)
+        {
+            // the level's raises: each a different ability, by the class table's step
+            Heading(_body, $"{_rules.Creation.NameOf("scores")}: raise {boosts} by {step} each");
+            List<string> raised = d.Picked("boosts");
+            Grid(_rules.Abilities.Select(a => a.Id).ToList(), id => _rules.Ability(id)?.Name ?? id, raised.Contains, 3, d.ToggleBoost);
+        }
+        if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0 && boosts == 0)
         {
             Dim(_body, $"Nothing to pick at this {className} level.");
         }

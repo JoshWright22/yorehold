@@ -425,7 +425,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: heritages as the system's own option kind (R2c), fields (Fate's aspects), class
     optional.
   - Done 10/8: `boosts` as a score method (PF2e: four boosts of 2 from 10).
-  - Left: level-up choices beyond skills and feats.
+  - Done 10/8: ability raises at a level (`boosts` on class rows; 5e's level 4 improvement).
+  - Left: 5e's choice of +2 to one ability instead of +1 to two; PF2e's level 5 boosts (its
+    classes stop at 3 for now).
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
   - Done 10/8, first slice: `rulesets/dnd5e` (written by `.dev\make-dnd5e.py`): the six

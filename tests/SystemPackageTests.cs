@@ -581,6 +581,36 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void Level4RaisesTwoAbilitiesIn5e()
+    {
+        ContentFiles files = TestContent.Shipped();
+        Ruleset rules = RulesFolder.Load(files, "rulesets/dnd5e").Rules;
+        var compendium = new Compendium();
+        compendium.Load(files, "rulesets/dnd5e", "");
+        compendium.LoadOptions(files, "rulesets/dnd5e");
+        var draft = new CharacterDraft(rules, compendium);
+        draft.SetName("Ana");
+        CharacterChoices choices = draft.Choices;
+        for (int level = 2; level <= 4; level++)
+        {
+            draft = CharacterDraft.LevelUp(rules, compendium, choices);
+            if (level < 4)
+            {
+                Assert.Equal(0, draft.LevelBoosts().Count);
+                choices = draft.Choices;
+            }
+        }
+        Assert.Equal((2, 1), draft.LevelBoosts());
+        Assert.StartsWith("Raise 2 more", draft.StepProblem(draft.Step));
+        int str = CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str");
+        draft.ToggleBoost("str");
+        draft.ToggleBoost("con");
+        draft.ToggleBoost("dex"); // a third is one too many
+        Assert.Equal(new[] { "str", "con" }, draft.Choices.Levels[^1].Picked("boosts"));
+        Assert.Equal(str + 1, CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str"));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

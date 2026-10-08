@@ -119,8 +119,14 @@ public sealed class CharacterDraft
                 bool chosen = Picked("feats").Any(id => _compendium.Feats.TryGetValue(id, out FeatDefinition? f) && f.Kind == kind);
                 if (!chosen && FeatOptions(kind).Count > 0)
                 {
-                    return $"Pick a {kind} feat.";
+                    return $"Pick {Article(_rules.FeatKindName(kind))}.";
                 }
+            }
+            int boosts = LevelBoosts().Count - Picked("boosts").Count;
+            if (boosts > 0)
+            {
+                string scores = _rules.Creation.NameOf("scores").ToLowerInvariant();
+                return boosts == 1 ? $"Raise 1 more of the {scores}." : $"Raise {boosts} more of the {scores}.";
             }
             if (Sheet == null)
             {
@@ -346,6 +352,28 @@ public sealed class CharacterDraft
         if (skills.Count == 0)
         {
             Current.Picks.Remove("skills");
+        }
+        Rebuild();
+    }
+
+    /// <summary>How many abilities the level being chosen raises, and by how much each.</summary>
+    public (int Count, int Step) LevelBoosts() => Row() is ClassLevel row ? (row.Boosts, row.BoostStep) : (0, 0);
+
+    /// <summary>A level's raise to an ability, each one different; the same one again takes it back.</summary>
+    public void ToggleBoost(string ability)
+    {
+        if (_rules.Ability(ability) == null)
+        {
+            return;
+        }
+        List<string> boosts = Current.Picks.TryGetValue("boosts", out List<string>? list) ? list : Current.Picks["boosts"] = new List<string>();
+        if (!boosts.Remove(ability) && boosts.Count < LevelBoosts().Count)
+        {
+            boosts.Add(ability);
+        }
+        if (boosts.Count == 0)
+        {
+            Current.Picks.Remove("boosts");
         }
         Rebuild();
     }

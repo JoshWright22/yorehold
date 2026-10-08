@@ -188,6 +188,16 @@ public static class CharacterBuild
             ClassLevel? row = classLevel <= definition.Levels.Count ? definition.Levels[classLevel - 1] : null;
             if (row != null)
             {
+                // the abilities this level raises, each a different one, no higher than the system's top score
+                foreach (string ability in level.Picked("boosts").Distinct().Take(row.Boosts))
+                {
+                    if (rules.Ability(ability) == null)
+                    {
+                        error = $"levels[{i}].picks.boosts: no ability \"{ability}\"";
+                        return null;
+                    }
+                    c.Stats.SetBase(ability, Math.Min(rules.ScoreMax, c.Stats.Base(ability) + row.BoostStep));
+                }
                 foreach (ClassFeature feature in row.Features)
                 {
                     Grant(feature.Gives, $"build:feature:{definition.Id}:{feature.Id}");

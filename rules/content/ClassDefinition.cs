@@ -43,6 +43,9 @@ public class ClassLevel
     /// <summary>The kinds of feat the player may pick at this level, one pick each.</summary>
     public List<string> Feats { get; init; } = new();
     public int Skills { get; init; }
+    /// <summary>Abilities the player raises at this level, each a different one, by BoostStep (5e's +1 to two, PF2e's four boosts of 2).</summary>
+    public int Boosts { get; init; }
+    public int BoostStep { get; init; } = 2;
     /// <summary>Spell slots by slot level, as totals. A row without them keeps the previous row's.</summary>
     public SortedDictionary<int, int> Slots { get; init; } = new();
     public int Spells { get; init; }
@@ -57,7 +60,7 @@ public class ClassLevel
         foreach (ContentNode row in rows.Items())
         {
             row.RequireObject("is an object");
-            row.Only("features", "ranks", "feats", "skills", "slots", "spells");
+            row.Only("features", "ranks", "feats", "skills", "slots", "spells", "boosts", "boostStep");
             var features = new List<ClassFeature>();
             if (row.Get("features") is ContentNode list)
             {
@@ -104,6 +107,8 @@ public class ClassLevel
                 Ranks = ContentParts.NamesFrom(row, "ranks", ids: true),
                 Feats = feats,
                 Skills = row.Int("skills", 0, 0, 100),
+                Boosts = row.Int("boosts", 0, 0, 30),
+                BoostStep = row.Int("boostStep", 2, 1, 30),
                 Slots = slots,
                 Spells = row.Int("spells", 0, 0, 1000),
             });

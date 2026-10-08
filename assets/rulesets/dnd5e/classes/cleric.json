@@ -41,7 +41,9 @@
       "slots": {
         "1": 4,
         "2": 3
-      }
+      },
+      "boosts": 2,
+      "boostStep": 1
     },
     {
       "slots": {
