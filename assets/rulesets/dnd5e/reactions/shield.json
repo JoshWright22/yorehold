@@ -1,0 +1,7 @@
+{
+  "id": "shield",
+  "name": "Shield",
+  "trigger": "beforeHit",
+  "spell": "shield",
+  "order": 20
+}

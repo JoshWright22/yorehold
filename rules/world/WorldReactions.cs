@@ -99,7 +99,14 @@ public sealed partial class World
             Creatures[offer.Creature].ReadiedAction = "";
         }
         Say($"{Creatures[offer.Creature].Sheet.Name} takes {offer.Name}.");
-        RunActionEffect(offer.Creature, action, action.Target == ActionTarget.Self ? offer.Creature : offer.Target);
+        int? aimed = action.Target == ActionTarget.Self ? offer.Creature : offer.Target;
+        if (SpellOf(action) is SpellDefinition spell)
+        {
+            // a spell cast as a reaction spends its slot like any casting
+            CastSpell(offer.Creature, spell, aimed, null, Spellcasting.SlotFor(Creatures[offer.Creature].Sheet, spell, SpellRules, spell.Level) ?? 0);
+            return;
+        }
+        RunActionEffect(offer.Creature, action, aimed);
     }
 
     private void ContinueMovement()
@@ -232,13 +239,7 @@ public sealed partial class World
                         ReactionTrigger.AllyHit => reactor != target && Creatures[target].Team == Creatures[reactor].Team && e.Success,
                         _ => false,
                     };
-                    if (!fits || Unless(definition, attacker) || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
-                    {
-                        continue;
-                    }
-                    ActionDefinition? action = FindAction(definition.Action);
-                    if (action == null || !action.Meets(Creatures[reactor].Sheet, Rules, out _)
-                        || (action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, attacker)))
+                    if (!fits || Unless(definition, attacker) || ReactionAction(definition, reactor, attacker) is not ActionDefinition action)
                     {
                         continue;
                     }
@@ -248,6 +249,32 @@ public sealed partial class World
                 }
             }
         }
+    }
+
+    // What a reaction would run for reactor at source, or null when it can't: an action it is
+    // granted (or anyone has) and meets, or a spell it knows, can cast and has a slot for.
+    private ActionDefinition? ReactionAction(ReactionDefinition definition, int reactor, int source)
+    {
+        CharacterSheet sheet = Creatures[reactor].Sheet;
+        ActionDefinition? action;
+        if (definition.Spell.Length > 0)
+        {
+            if (FindSpell(definition.Spell) is not SpellDefinition spell || !sheet.Spells.Contains(spell.Id)
+                || !Spellcasting.CanCast(sheet, spell, SpellRules, out _) || (spell.Level > 0 && Spellcasting.SlotFor(sheet, spell, SpellRules, spell.Level) == null))
+            {
+                return null;
+            }
+            action = spell.Action;
+        }
+        else
+        {
+            action = (definition.General || sheet.Granted.Contains(definition.Id)) ? FindAction(definition.Action) : null;
+            if (action == null || !action.Meets(sheet, Rules, out _))
+            {
+                return null;
+            }
+        }
+        return action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, source) ? null : action;
     }
 
     // The one who set the reaction off has the flag that stops it (disengaged).
@@ -275,13 +302,7 @@ public sealed partial class World
             }
             foreach (ReactionDefinition definition in Chapter.Rules.Reactions.Where(r => r.Trigger == ReactionTrigger.SpellCast))
             {
-                if (Unless(definition, caster) || !definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id))
-                {
-                    continue;
-                }
-                ActionDefinition? action = FindAction(definition.Action);
-                if (action == null || !action.Meets(Creatures[reactor].Sheet, Rules, out _)
-                    || (action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, caster)))
+                if (Unless(definition, caster) || ReactionAction(definition, reactor, caster) is not ActionDefinition action)
                 {
                     continue;
                 }
@@ -306,13 +327,7 @@ public sealed partial class World
         }
         foreach (ReactionDefinition definition in Chapter.Rules.Reactions.Where(r => r.Trigger == ReactionTrigger.BeforeHit))
         {
-            if (Unless(definition, attacker) || !definition.General && !Creatures[target].Sheet.Granted.Contains(definition.Id))
-            {
-                continue;
-            }
-            ActionDefinition? action = FindAction(definition.Action);
-            if (action == null || !action.Meets(Creatures[target].Sheet, Rules, out _)
-                || (action.Target == ActionTarget.Creature && !ValidTarget(target, action, attacker)))
+            if (Unless(definition, attacker) || ReactionAction(definition, target, attacker) is not ActionDefinition action)
             {
                 continue;
             }

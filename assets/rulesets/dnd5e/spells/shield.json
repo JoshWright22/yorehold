@@ -1,0 +1,17 @@
+{
+  "id": "shield",
+  "name": "Shield",
+  "description": "Cast as a reaction when an attack would hit: +5 AC until the start of your next turn, against that attack too.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "self"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "shielded",
+      "target": "self"
+    }
+  ]
+}

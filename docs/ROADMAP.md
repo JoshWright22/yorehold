@@ -442,11 +442,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     fighting-style and epic-boon feat kinds; supplies for the long rest; poisoned and frightened
     hindering checks (`disadvantageOnChecks`).
   - Done 10/8: prone caring how far the attacker is, hits on the paralysed and unconscious from
-    beside them as critical hits.
+    beside them as critical hits; Shield cast as a reaction (a reaction may name a spell; the
+    slot is spent).
   - Doesn't fit yet (back to the steps):
-    Shield and Counterspell as spells cast as
-    reactions (the `beforeHit` and `spellCast` moments are there, a reaction spending a slot is
-    not); versatile and two-weapon fighting. Then the rest of the SRD: all
+    versatile and two-weapon fighting; Counterspell (the `spellCast` moment and spell reactions
+    are there; a 3rd-level slot needs wizard level 5 content). Then the rest of the SRD: all
     classes and levels, the spell list, the bestiary.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free

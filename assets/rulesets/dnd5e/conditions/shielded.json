@@ -1,0 +1,15 @@
+{
+  "id": "shielded",
+  "name": "Shielded",
+  "description": "+5 AC from the Shield spell until the start of its next turn.",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 5
+    }
+  ],
+  "ends": [
+    "turnStart"
+  ]
+}

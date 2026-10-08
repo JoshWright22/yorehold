@@ -470,6 +470,26 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AWizardCastsShieldAsAReaction()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet;
+        if (!bo.Spells.Contains("shield"))
+        {
+            bo.Spells.Add("shield");
+        }
+        bo.Stats.SetBase("ac", -1000); // every attack would hit
+        w.Creatures[2].Sheet.Stats.SetBase("dex", 2000); // Gik acts first
+        world.Put(2, new Cell(3, 4));
+        world.Fight();
+        int slots = bo.Resources.Where(r => r.Key.StartsWith("slots-", StringComparison.Ordinal)).Sum(r => r.Value.Current);
+        Assert.True(world.TurnTo(2) && world.Use("attack", 1), w.Refusal);
+        Assert.True(world.Said("Bo takes Shield") && bo.HasCondition("shielded"), string.Join("\n", world.Log.TakeLast(6)));
+        Assert.Equal(slots - 1, bo.Resources.Where(r => r.Key.StartsWith("slots-", StringComparison.Ordinal)).Sum(r => r.Value.Current));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

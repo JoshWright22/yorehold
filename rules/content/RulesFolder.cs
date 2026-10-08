@@ -111,6 +111,10 @@ public class RulesFolder
                 throw new ContentException(FileOf("classes", definition.Id), "levels", $"unknown feat kind \"{unknown}\"; the ruleset's are {kinds}");
             }
         }
+        foreach (ReactionDefinition reaction in Reactions.Where(r => r.Spell.Length > 0 && !compendium.Spells.ContainsKey(r.Spell)))
+        {
+            throw new ContentException($"{Folder}/reactions/{reaction.Id}.json", "spell", $"no spell \"{reaction.Spell}\" in the ruleset");
+        }
         foreach (OptionDefinition option in compendium.Options.Values)
         {
             if (Rules.OptionKinds.All(k => k.Id != option.Kind))
