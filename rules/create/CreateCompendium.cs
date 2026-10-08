@@ -80,6 +80,8 @@ public sealed partial class CreatePackage
             }
             else
             {
+                // a system's own classes, items and creatures, then the package's and its chapters'
+                folders.AddRange(rulesets.Select(r => r + "/" + kind.Form.Folder));
                 folders.Add(kind.Form.Folder);
                 folders.AddRange(Manifest.Chapters.Select(c => c + "/" + kind.Form.Folder));
                 _compendiumFolders[kind.Form.Id] = kind.Form.Folder;
@@ -123,7 +125,11 @@ public sealed partial class CreatePackage
             {
                 options[kind.Form.Folder] = list = new List<string>();
             }
-            foreach (string path in game.List(kind.Ruleset ? RulesFolder.Default + "/" + kind.Form.Folder : kind.Form.Folder))
+            // the game's own: in its system's folder, and at the root for anything older
+            string[] gameFolders = kind.Ruleset
+                ? new[] { RulesFolder.Default + "/" + kind.Form.Folder }
+                : new[] { RulesFolder.Default + "/" + kind.Form.Folder, kind.Form.Folder };
+            foreach (string path in gameFolders.SelectMany(game.List))
             {
                 string id = ContentFiles.Stem(path);
                 if (!list.Contains(id))

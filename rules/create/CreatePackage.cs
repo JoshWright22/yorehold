@@ -508,8 +508,7 @@ public sealed partial class CreatePackage
         ContentFiles all = PlayFiles();
         try
         {
-            compendium.Load(all, "");
-            compendium.Load(all, chapter);
+            compendium.Load(all, RulesFolder.Default, "", chapter);
         }
         catch (ContentException)
         {

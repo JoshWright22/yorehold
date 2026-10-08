@@ -35,30 +35,50 @@ public class Compendium
         return creature.Ai is ContentNode node ? AiProfile.Read(node, AiNamed) : AiProfile.Read(ContentNode.Parse("ai", "\"cunning\""), AiNamed);
     }
 
-    /// <summary>
-    /// Reads items/, classes/, ai/ and creatures/ under a folder ("" for the root). A file with the
-    /// same id as one already loaded replaces it.
-    /// </summary>
-    public void Load(ContentFiles files, string folder)
+    /// <summary>The game's own definitions: its system's folder, then anything older at the root.</summary>
+    public static Compendium OfGame(ContentFiles files)
     {
-        string prefix = folder.Length == 0 ? "" : folder + "/";
-        foreach (string path in files.List(prefix + "items"))
+        var compendium = new Compendium();
+        compendium.Load(files, RulesFolder.Default, "");
+        return compendium;
+    }
+
+    /// <summary>Where an entry was read from, by kind folder and id ("creatures", "goblin"), for messages.</summary>
+    public string PathOf(string kind, string id) => _paths.GetValueOrDefault($"{kind}/{id}", $"{kind}/{id}.json");
+
+    private readonly Dictionary<string, string> _paths = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Reads items/, classes/, ai/ and creatures/ under each folder in turn ("" for the root): a
+    /// chapter's ruleset folder, then the root, then the chapter. Each kind is read from every
+    /// folder before the next kind, so a creature anywhere can carry an item or use an AI profile
+    /// from any of them. A file with the same id as one already loaded replaces it.
+    /// </summary>
+    public void Load(ContentFiles files, params string[] folders)
+    {
+        string[] prefixes = folders.Select(folder => folder.Length == 0 ? "" : folder + "/").Distinct().ToArray();
+        foreach (string path in prefixes.SelectMany(prefix => files.List(prefix + "items")))
         {
             ContentNode node = ContentNode.Read(files, path);
             ItemDefinition item = ItemDefinition.Read(node);
             MatchName(node, item.Id, path);
             Items[item.Id] = item;
+            _paths["items/" + item.Id] = path;
         }
-        foreach (string path in files.List(prefix + "classes"))
+        foreach (string path in prefixes.SelectMany(prefix => files.List(prefix + "classes")))
         {
             ContentNode node = ContentNode.Read(files, path);
             ClassDefinition definition = ClassDefinition.Read(node);
             MatchName(node, definition.Id, path);
             CheckItems(node, "items", definition.Items);
             Classes[definition.Id] = definition;
+            _paths["classes/" + definition.Id] = path;
         }
-        LoadAi(files, prefix + "ai");
-        foreach (string path in files.List(prefix + "creatures"))
+        foreach (string prefix in prefixes)
+        {
+            LoadAi(files, prefix + "ai");
+        }
+        foreach (string path in prefixes.SelectMany(prefix => files.List(prefix + "creatures")))
         {
             ContentNode node = ContentNode.Read(files, path);
             CreatureDefinition creature = CreatureDefinition.Read(node);
@@ -70,6 +90,7 @@ public class Compendium
                 AiProfile.Read(ai, AiNamed);
             }
             Creatures[creature.Id] = creature;
+            _paths["creatures/" + creature.Id] = path;
         }
     }
 
@@ -147,7 +168,7 @@ public class Compendium
         {
             foreach (string id in creature.Spells.Where(id => !Spells.ContainsKey(id)))
             {
-                throw new ContentException($"creatures/{creature.Id}.json", "spells", $"no spell \"{id}\"");
+                throw new ContentException(PathOf("creatures", creature.Id), "spells", $"no spell \"{id}\"");
             }
         }
         // A ruleset with no spells at all simply has no casting: shared classes still load under it.
@@ -161,8 +182,7 @@ public class Compendium
             {
                 foreach (string id in level.Value)
                 {
-                    // Class files sit with the shared content, so their path is not under this folder.
-                    string file = $"classes/{definition.Id}.json";
+                    string file = PathOf("classes", definition.Id);
                     if (!Spells.TryGetValue(id, out SpellDefinition? spell))
                     {
                         throw new ContentException(file, $"spells.{level.Key}", $"no spell \"{id}\"");

@@ -68,8 +68,7 @@ public sealed class StoryImport
         if (Cast)
         {
             Stage = "Finding heroes, foes, talk and treasure";
-            var game = new Compendium();
-            game.Load(_game, "");
+            Compendium game = Compendium.OfGame(_game);
             BookCast.Add(source, draft, game.Classes.Keys.ToList());
         }
         Outline = draft;

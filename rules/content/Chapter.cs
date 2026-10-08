@@ -111,13 +111,10 @@ public class Chapter
 
         RulesFolder rules = RulesFolder.Load(files, j.Text("ruleset", RulesFolder.Default), folder);
 
-        // Shared content first, then the chapter's own, which can replace shared entries.
+        // The system's own definitions first, then shared content, then the chapter's own; each can
+        // replace entries of the ones before.
         var compendium = new Compendium();
-        compendium.Load(files, "");
-        if (folder.Length > 0)
-        {
-            compendium.Load(files, folder);
-        }
+        compendium.Load(files, rules.Folder, "", folder);
         // Races, backgrounds, feats and spells only come from the ruleset, never from a chapter.
         if (rules.Folder.Length > 0)
         {

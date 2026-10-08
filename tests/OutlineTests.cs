@@ -75,8 +75,7 @@ public class OutlineTests
     [Fact]
     public void NamesTheGameMustKnowAreCheckedAgainstItsContent()
     {
-        var game = new Compendium();
-        game.Load(TestContent.Shipped(), "");
+        Compendium game = Compendium.OfGame(TestContent.Shipped());
         Assert.Empty(SampleOutline.Read().Check(game));
         Outline wrong = Outline.Parse("outline.json", With(
             "{\"id\": \"h\", \"kind\": \"hero\", \"data\": {\"name\": \"H\", \"class\": \"necromancer\"}}, " +

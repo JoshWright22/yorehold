@@ -90,7 +90,7 @@ public class ContentPackage
         if (Chapters.Count == 0)
         {
             // Nothing to play: the shared definitions still have to load.
-            new Compendium().Load(files, "");
+            new Compendium().Load(files, RulesFolder.Default, "");
         }
         var ids = new HashSet<string>();
         foreach (string folder in Chapters)

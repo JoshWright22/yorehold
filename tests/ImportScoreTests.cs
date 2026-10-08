@@ -154,8 +154,7 @@ public class ImportScoreTests
         }
         SourceBook book = SourceBook.Load(folder);
         Outline draft = BookLayout.Draft(book);
-        var game = new Compendium();
-        game.Load(TestContent.Shipped(), "");
+        Compendium game = Compendium.OfGame(TestContent.Shipped());
         BookCast.Add(book, draft, game.Classes.Keys.ToList());
         draft.Save(folder);
         string package = Path.Combine(folder, "package");

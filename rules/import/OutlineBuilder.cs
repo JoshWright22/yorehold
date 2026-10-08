@@ -42,7 +42,7 @@ public sealed class OutlineBuilder
         _outline = outline;
         _importFolder = importFolder;
         _game = game;
-        _gameCompendium.Load(game, "");
+        _gameCompendium.Load(game, RulesFolder.Default, "");
     }
 
     public IReadOnlyList<ReportLine> Report => _report;
@@ -555,7 +555,9 @@ public sealed class OutlineBuilder
         }
         else
         {
-            data = (JsonObject)JsonNode.Parse(_game.ReadText($"creatures/{creature}.json"))!;
+            // The game's creatures belong to its system now; older content kept them at the root.
+            string path = $"{RulesFolder.Default}/creatures/{creature}.json";
+            data = (JsonObject)JsonNode.Parse(_game.ReadText(_game.Exists(path) ? path : $"creatures/{creature}.json"))!;
         }
         data["id"] = npc.Id;
         data["name"] = npc.Text("name");

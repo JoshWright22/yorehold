@@ -38,7 +38,7 @@ public sealed partial class StoryReader
     {
         _model = model;
         var compendium = new Compendium();
-        compendium.Load(game, "");
+        compendium.Load(game, RulesFolder.Default, "");
         OutlineSchemas schemas = OutlineSchemas.Load(game);
         var schemaText = new StringBuilder();
         foreach (OutlineKind kind in Enum.GetValues<OutlineKind>())

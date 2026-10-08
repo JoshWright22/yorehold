@@ -82,7 +82,7 @@ public sealed partial class CreatePackage
         var shared = new Compendium();
         try
         {
-            shared.Load(all, "");
+            shared.Load(all, RulesFolder.Default, "");
         }
         catch (ContentException)
         {
@@ -116,8 +116,7 @@ public sealed partial class CreatePackage
                 var local = new Compendium();
                 try
                 {
-                    local.Load(all, "");
-                    local.Load(all, folder);
+                    local.Load(all, RulesFolder.Default, "", folder);
                 }
                 catch (ContentException)
                 {

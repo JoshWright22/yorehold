@@ -152,11 +152,14 @@ Added files never change an adventure. Adventures are prewritten: each plays wit
 
 ```text
 content.json
-classes/fighter.json
+classes/fighter.json           a package's own definitions, over its system's
 items/longsword.json
 creatures/goblin.json
 rulesets/yorehold/             the game's rules (built in; see Rulesets)
   ruleset.json
+  classes/fighter.json         the system's own classes, items and creatures; a chapter loads
+  items/longsword.json         its ruleset folder's first, then the root's, then its own, each
+  creatures/goblin.json        replacing entries with the same id
   stealth.json
   conditions/prone.json        one file per condition
   races/elf.json               player options: one file each (see Races, backgrounds and feats)

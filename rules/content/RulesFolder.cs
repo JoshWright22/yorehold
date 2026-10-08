@@ -91,11 +91,7 @@ public class RulesFolder
     /// </summary>
     public void Check(Compendium compendium, string chapterFolder, ContentFiles files)
     {
-        string FileOf(string kind, string id)
-        {
-            string local = $"{chapterFolder}/{kind}/{id}.json";
-            return chapterFolder.Length > 0 && files.Exists(local) ? local : $"{kind}/{id}.json";
-        }
+        string FileOf(string kind, string id) => compendium.PathOf(kind, id);
         foreach (ClassDefinition definition in compendium.Classes.Values)
         {
             ClassDefinition.CheckRanks(Rules, definition.ProficiencyRanks, definition.DcAbility, FileOf("classes", definition.Id));
