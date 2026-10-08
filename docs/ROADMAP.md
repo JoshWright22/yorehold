@@ -280,9 +280,30 @@ screens it touches, so the game shows whatever the system says, and is tried on 
 - [ ] **R14. Sharing.** Upload and download systems, adventures and art packs through the site
   and in the game, with licence, author, links and the no-AI-uploads declaration; credits built
   from what an adventure uses. UI: the Library's Browse tab; the site's Submit form.
+- [ ] **R15. Premium content and publishers.** Josh, 10/8: support for companies like Paizo and
+  Wizards of the Coast, and any paid content.
+  - Accounts own what they bought or redeemed (a code from a book or a publisher's store); the
+	server holds the list. A premium package is signed and its files encrypted to the owner's
+	account, with an offline grace period so play doesn't need the internet every session. This
+	keeps honest players honest; it can't stop copying, and isn't sold as if it could.
+  - Publishers get verified accounts: upload with prices, previews and their own licence terms,
+	sales reports, payouts, takedowns, and their names and logos on their own store pages
+	(nowhere else). Any creator can sell too; free stays the default.
+  - Dependencies show what a player has: an adventure that needs a premium system or pack says so
+	on its page ("needs Pathfinder 2e Core, owned / €x"), and the game offers to get it before
+	loading. Art a player doesn't own falls back as usual, so a shared adventure still plays.
+  - A player's own import of a book they own stays private; publishers can sell their books
+	already converted, which is the better product.
+  - Selling uploads also need the no-AI declaration; a publisher signs it once for its catalogue.
+  - Needs decisions only Josh can make: the payment provider (a merchant of record such as Paddle
+	handles tax and VAT worldwide; Stripe Connect needs that done by hand), the store's cut, and
+	the publisher agreements themselves. Until then this step builds entitlements and locked
+	packages with test purchases only.
+  - UI: the Library's Browse tab shows price, publisher and owned; the site gets a store page
+	per package, a publisher dashboard, and Redeem a code.
 
 Order: R1 and R2 first (small, and every later step needs them), then R3-R8 each tried on both
-systems, R9 and R10 alongside them as the checks, then R11-R14. The bestiary import (S12-S15)
+systems, R9 and R10 alongside them as the checks, then R11-R15. The bestiary import (S12-S15)
 waits until R6, so stat blocks land in a system's creature format.
 
 ## S. Story import
