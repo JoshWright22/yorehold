@@ -209,7 +209,8 @@ Josh, 10/8: "a player-facing Foundry VTT, free to download, for assets and makin
 the current structure is very close, it needs abstracting a bit." Yorehold stays a video game to
 play (the fight screen, hotbar, portraits, BG3 feel), but what a turn, a check, a save or dying
 means comes from the rules system the adventure names, and systems, adventures and art are
-packages players make and share, like Foundry's systems and modules. There is no game master:
+packages players make and share on the site. Unlike Foundry there are no add-on modules: every
+package is one kind of content in the game's own format (below, R11). There is no game master:
 the AI decides for enemies and NPCs, and the import turns a PDF (an adventure or a rulebook) into
 game content quickly.
 
@@ -260,10 +261,17 @@ screens it touches, so the game shows whatever the system says, and is tried on 
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
-- [ ] **R11. Packages stack.** A game is a system, any add-on packages and an adventure, with art
-  packs over them, loaded in that order from what each manifest requires; `.yore` archives are
-  ported. UI: a Library screen (systems, adventures, add-ons, art packs: installed, update,
-  remove), and an adventure's page says what it needs and gets it.
+- [ ] **R11. Packages by kind, no add-ons.** Josh, 10/8: all content is in the format the game
+  sets and lives on the site; no add-ons, just skins, systems, monsters and so on. A package
+  has one `kind`: `system` (a ruleset folder, R1-R8), `adventure`, `skin` (R16), `art`, or a
+  content set of one type for one system (`creatures`, `items`, `spells`, `classes`, `feats`,
+  `races`, `backgrounds`, `maps`). A set only adds entries of its type in the game's files; it
+  can't change rules, other packages' entries, screens or code, and nothing is scripted. A game
+  loads its system, the sets the player turned on for that system, the adventure, then art and
+  the skin; a set or adventure names its system and is refused on another. The same loader
+  checks a package in the game, in Create and on the site, so anything that uploads also loads.
+  `.yore` archives are ported. UI: a Library screen with a tab per kind (installed, update,
+  remove, on/off for sets), and an adventure's page says what it needs and gets it.
 - [ ] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
   host tools; the AI makes the enemies' and NPCs' decisions. The fight AI reads the loaded
   system's actions, costs and odds (R3, R4) instead of d20 maths and the `strike` action, so it
@@ -277,9 +285,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   entry and listing what it couldn't place. The writer checks it in Create's compendium. Only
   books the writer owns; a system made from someone else's book stays private unless its licence
   allows sharing (SRD, ORC).
-- [ ] **R14. Sharing.** Upload and download systems, adventures and art packs through the site
-  and in the game, with licence, author, links and the no-AI-uploads declaration; credits built
-  from what an adventure uses. UI: the Library's Browse tab; the site's Submit form.
+- [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
+  with licence, author, links and the no-AI-uploads declaration; credits built from what an
+  adventure uses. The site runs the game's checks on each upload and refuses one that wouldn't
+  load, with the file and field. The site browses by kind and by system. UI: the Library's Browse
+  tab; the site's Submit form.
 - [ ] **R15. Premium content and publishers.** Josh, 10/8: support for companies like Paizo and
   Wizards of the Coast, and any paid content.
   - Accounts own what they bought or redeemed (a code from a book or a publisher's store); the
