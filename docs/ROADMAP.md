@@ -313,7 +313,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     resistances, weaknesses and immunities as `resist.<type>`/`weak.<type>`/`immune.<type>`
     stats through a `damageTaken` formula; creatures' `stats`. A Dex cap is a formula already
     (`armorClass`: `min(mod.dex, stat.dexCap)`).
-  - Left: typed bonuses (only the best of a type counts), weapon traits, and the sheet layout
+  - Done 10/8: typed bonuses (the best bonus and worst penalty of a type) and weapon `traits`
+    that formulas and the attack penalty read (`trait.finesse`, `trait.agile`).
+  - Left: the sheet layout
     from the system.
 - [ ] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
   (5e) or dying and wounded values with a recovery check (PF2e). UI: a downed hero's card shows

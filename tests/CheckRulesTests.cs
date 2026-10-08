@@ -32,6 +32,28 @@ public class CheckRulesTests
     }
 
     [Fact]
+    public void TypedBonusesDontStackAndTraitsReachTheFormulas()
+    {
+        var stats = new StatBlock();
+        stats.SetBase("ac", 10);
+        stats.AddModifier(new Modifier("ac", ModifierOp.Add, 2, "item"), "a");
+        stats.AddModifier(new Modifier("ac", ModifierOp.Add, 1, "item"), "b");
+        stats.AddModifier(new Modifier("ac", ModifierOp.Add, -1, "status"), "c");
+        stats.AddModifier(new Modifier("ac", ModifierOp.Add, 1), "d");
+        Assert.Equal(12, stats.Integer("ac"));
+
+        // finesse: the better of strength and dexterity
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "t", "name": "T", "abilities": [{"id": "str", "name": "S"}, {"id": "dex", "name": "D"}],
+             "formulas": {"attack": "(trait.finesse ? max(mod.str, mod.dex) : ability) + proficiency + bonus"}}
+            """);
+        var sheet = new CharacterSheet { Name = "Ash", Weapon = new Weapon("1d6", "", 1, new[] { "finesse" }) };
+        sheet.Stats.SetBase("str", 10);
+        sheet.Stats.SetBase("dex", 16);
+        Assert.Equal(3, sheet.AttackModifier(rules));
+    }
+
+    [Fact]
     public void DyingCanBeATrack()
     {
         // Dying 1 (2 on a critical) plus wounded; a hit while down adds 1; dead at 4.

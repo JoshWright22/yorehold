@@ -812,6 +812,8 @@ A formula is arithmetic: numbers, the names listed for its place, `+ - * / %`, c
 | `hpPerLevel` | `hitDie`, `ability` | `floor(hitDie / 2) + 1 + ability` |
 | `damageTaken` | `amount`, `resist`, `weak`, `immune` (the creature's `resist.<type>`, `weak.<type>`, `immune.<type>` stats plus the `.all` ones) | `immune ? 0 : max(0, amount - resist + weak)` |
 
+Formulas about a creature may also read `trait.<name>`: 1 when the weapon in hand has that trait. An item's `traits` lists them (`"traits": ["finesse", "agile"]`); `attackPenalty` can read them too (`"attacks == 0 ? 0 : (trait.agile ? -4 : -5) * min(attacks, 2)"`). A modifier may have a `type` (`"item"`, `"status"`, `"circumstance"`): adds of one type don't stack, only the biggest bonus and the biggest penalty of each type count; untyped adds all count.
+
 `saves` (beside `abilities`) lists saves of their own, each an `id`, `name` and the `ability` it rolls with (`{"id": "fortitude", "name": "Fortitude", "ability": "con"}`); anywhere a save is named, one of these or an ability will do. Proficiency in a save is by its id. A creature file's `stats` sets any other number on its sheet: `"stats": {"resist.fire": 5, "weak.cold": 5, "immune.poison": 1}`; items and conditions change them with modifiers like any stat.
 
 ```json

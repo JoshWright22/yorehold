@@ -175,7 +175,9 @@ public sealed partial class World
     private int AttackPenaltyNow(int attacker)
     {
         int made = Fighting && CurrentCreature == attacker ? Encounter!.Current.Budget.Attacks : 0;
-        return Rules.AttackPenalty?.Whole(name => name == "attacks" ? made : null) ?? 0;
+        Weapon? weapon = Creatures[attacker].Sheet.Weapon;
+        return Rules.AttackPenalty?.Whole(name => name == "attacks" ? made
+            : name.StartsWith("trait.", StringComparison.Ordinal) ? (weapon?.Has(name[6..]) == true ? 1 : 0) : null) ?? 0;
     }
 
     /// <summary>

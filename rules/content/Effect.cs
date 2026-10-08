@@ -260,9 +260,9 @@ public class Effect
             value = node.Int("value", 1, 1, 1000);
             break;
         case EffectKind.Modifier:
-            own = new[] { "id", "stat", "op", "value", "duration" };
+            own = new[] { "id", "stat", "op", "value", "duration", "type" };
             id = node.Name("id", "");
-            modifier = new Modifier(node.At("stat").AsName(), ContentParts.OpFrom(node, "op"), node.At("value").AsNumber(-100000, 100000));
+            modifier = new Modifier(node.At("stat").AsName(), ContentParts.OpFrom(node, "op"), node.At("value").AsNumber(-100000, 100000), node.Text("type", "", 64));
             duration = Rounds(node, -1);
             break;
         case EffectKind.Move:

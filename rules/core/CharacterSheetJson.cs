@@ -15,13 +15,19 @@ public sealed partial class CharacterSheet
         var modifiers = new JsonArray();
         foreach (AppliedModifier applied in Stats.Modifiers)
         {
-            modifiers.Add(new JsonObject
+            var entry = new JsonObject
             {
                 ["stat"] = applied.Modifier.Stat,
                 ["op"] = applied.Modifier.Op switch { ModifierOp.Multiply => "multiply", ModifierOp.Override => "override", _ => "add" },
                 ["value"] = applied.Modifier.Value,
                 ["source"] = applied.Source,
-            });
+            };
+            // only typed modifiers carry a type, so older saves and these read alike
+            if (applied.Modifier.Type.Length > 0)
+            {
+                entry["type"] = applied.Modifier.Type;
+            }
+            modifiers.Add(entry);
         }
         var resources = new JsonObject();
         foreach (KeyValuePair<string, Resource> resource in Resources)
@@ -101,7 +107,7 @@ public sealed partial class CharacterSheet
         }
         foreach (ContentNode m in node.Get("modifiers")?.Items() ?? Array.Empty<ContentNode>())
         {
-            var modifier = new Modifier(m.At("stat").AsText(), ContentParts.OpFrom(m, "op"), m.At("value").AsNumber());
+            var modifier = new Modifier(m.At("stat").AsText(), ContentParts.OpFrom(m, "op"), m.At("value").AsNumber(), m.Text("type", "", 64));
             sheet.Stats.AddModifier(modifier, m.Text("source", ""));
         }
         foreach (KeyValuePair<string, ContentNode> resource in node.Get("resources")?.Members() ?? Array.Empty<KeyValuePair<string, ContentNode>>())

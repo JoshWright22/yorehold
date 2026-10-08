@@ -12,6 +12,8 @@ public class ItemDefinition
     /// <summary>Empty = the system's attack ability (ruleset roles).</summary>
     public string AttackAbility { get; init; } = "";
     public int Hands { get; init; } = 1;
+    /// <summary>A weapon's traits ("finesse", "agile"), which the system's formulas read as trait.&lt;name&gt;.</summary>
+    public List<string> Traits { get; init; } = new();
     /// <summary>Pounds.</summary>
     public double Weight { get; init; }
     /// <summary>Copper.</summary>
@@ -60,6 +62,7 @@ public class ItemDefinition
             Slot = slot,
             Damage = damage,
             AttackAbility = node.Text("attackAbility", ""),
+            Traits = node.Names("traits"),
             Hands = hands,
             Weight = node.Number("weight", 0, 0),
             Value = node.Int("value", 0),

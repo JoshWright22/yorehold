@@ -514,7 +514,8 @@ internal sealed class EffectRun
         CheckKind kind = _rules.Checks.Kind(CheckRules.Attack);
         // each attack after the first in a turn takes the ruleset's penalty, this effect's own included
         int attacksSoFar = _context.AttacksMade + _result.Events.Count(e => e.Kind == EffectEventKind.Attack);
-        int penalty = _rules.AttackPenalty?.Whole(name => name == "attacks" ? attacksSoFar : null) ?? 0;
+        int penalty = _rules.AttackPenalty?.Whole(name => name == "attacks" ? attacksSoFar
+            : name.StartsWith("trait.", StringComparison.Ordinal) ? (self.Weapon?.Has(name[6..]) == true ? 1 : 0) : null) ?? 0;
         RollResult attack = kind.Roll(self.AttackModifier(_rules) + penalty, self.AttackAdvantage(_rules), _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
         int ac = _host.ArmorClass(actor, _context);

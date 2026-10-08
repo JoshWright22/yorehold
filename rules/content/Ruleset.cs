@@ -426,7 +426,7 @@ public class Ruleset
             ActionsPerTurn = node.Int("actionsPerTurn", 1, 1, 10),
             BonusActions = node.Bool("bonusActions", true),
             FreeMove = node.Bool("freeMove", true),
-            AttackPenalty = node.Get("attackPenalty") is ContentNode penalty ? FormulaOf(penalty, "attacks") : null,
+            AttackPenalty = node.Get("attackPenalty") is ContentNode penalty ? FormulaOf(penalty, "attacks", "trait.*") : null,
             StrikeCostsHands = node.Bool("strikeCostsHands", false),
             SharedTurns = node.Bool("sharedTurns", false),
             FeetPerSquare = node.Int("feetPerSquare", 5, 1),
@@ -698,7 +698,10 @@ public class Ruleset
     private static Formula FormulaOf(ContentNode node, params string[] names)
     {
         Formula formula = Formula.Parse(node.AsText(2000), out string error) ?? throw node.Fail(error);
-        foreach (string name in formula.Names.Where(name => !names.Contains(name)))
+        // "trait.*" lets the formula read any trait of the weapon in hand
+        bool Allowed(string name) => names.Contains(name)
+            || (names.Contains("trait.*") && name.StartsWith("trait.", StringComparison.Ordinal) && name.Length > 6);
+        foreach (string name in formula.Names.Where(name => !Allowed(name)))
         {
             throw node.Fail($"unknown name \"{name}\"; it can use {string.Join(", ", names)}");
         }

@@ -31,6 +31,8 @@ public sealed class StatBlock
         float add = 0;
         float multiply = 1;
         float? replaced = null;
+        // typed adds: the best bonus and the worst penalty of each type
+        Dictionary<string, (float Best, float Worst)>? typed = null;
         foreach (AppliedModifier applied in _modifiers)
         {
             Modifier modifier = applied.Modifier;
@@ -41,6 +43,11 @@ public sealed class StatBlock
             float value = (float)modifier.Value;
             switch (modifier.Op)
             {
+            case ModifierOp.Add when modifier.Type.Length > 0:
+                typed ??= new Dictionary<string, (float, float)>(StringComparer.Ordinal);
+                (float best, float worst) = typed.GetValueOrDefault(modifier.Type);
+                typed[modifier.Type] = (MathF.Max(best, value), MathF.Min(worst, value));
+                break;
             case ModifierOp.Add:
                 add += value;
                 break;
@@ -51,6 +58,10 @@ public sealed class StatBlock
                 replaced = MathF.Max(replaced ?? value, value);
                 break;
             }
+        }
+        foreach ((float best, float worst) in typed?.Values ?? Enumerable.Empty<(float, float)>())
+        {
+            add += best + worst;
         }
         return ((replaced ?? Base(stat)) + add) * multiply;
     }

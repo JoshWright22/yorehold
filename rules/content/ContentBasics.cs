@@ -14,7 +14,11 @@ public enum ModifierOp
 }
 
 /// <summary>A change to a stat while something lasts: "ac" add 2, "speed" multiply 0.5.</summary>
-public record Modifier(string Stat, ModifierOp Op, double Value);
+/// <summary>
+/// A change to a stat. Adds with the same Type don't stack: only the biggest bonus and the
+/// biggest penalty of each type count ("item", "status", "circumstance"); untyped ones all add.
+/// </summary>
+public record Modifier(string Stat, ModifierOp Op, double Value, string Type = "");
 
 public static class ContentIds
 {
@@ -97,11 +101,11 @@ public static class ContentParts
             entry.RequireObject("is an object with a stat and a value");
             if (strict)
             {
-                entry.Only("stat", "op", "value");
+                entry.Only("stat", "op", "value", "type");
             }
             // Stats are camelCase ("maxHp"), so they are names and not ids.
             string stat = entry.At("stat").AsName();
-            list.Add(new Modifier(stat, OpFrom(entry, "op"), entry.At("value").AsNumber()));
+            list.Add(new Modifier(stat, OpFrom(entry, "op"), entry.At("value").AsNumber(), entry.Text("type", "", 64)));
         }
         return list;
     }

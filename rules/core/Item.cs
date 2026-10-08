@@ -44,12 +44,17 @@ public sealed class Item
         var modifiers = new JsonArray();
         foreach (Modifier m in Definition.Modifiers)
         {
-            modifiers.Add(new JsonObject
+            var entry = new JsonObject
             {
                 ["stat"] = m.Stat,
                 ["op"] = m.Op switch { ModifierOp.Multiply => "multiply", ModifierOp.Override => "override", _ => "add" },
                 ["value"] = m.Value,
-            });
+            };
+            if (m.Type.Length > 0)
+            {
+                entry["type"] = m.Type;
+            }
+            modifiers.Add(entry);
         }
         var j = new JsonObject
         {
@@ -69,6 +74,10 @@ public sealed class Item
         if (Definition.Description.Length > 0)
         {
             j["description"] = Definition.Description;
+        }
+        if (Definition.Traits.Count > 0)
+        {
+            j["traits"] = new JsonArray(Definition.Traits.Select(t => (JsonNode?)t).ToArray());
         }
         if (Supplies > 0)
         {

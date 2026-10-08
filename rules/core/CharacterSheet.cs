@@ -13,7 +13,10 @@ public sealed class ActiveCondition
 /// What a sheet attacks with. Nothing held is an unarmed strike: 1 damage, on the system's attack
 /// ability, as is a weapon whose ability is empty.
 /// </summary>
-public record Weapon(string Damage, string AttackAbility = "", int Hands = 1);
+public record Weapon(string Damage, string AttackAbility = "", int Hands = 1, IReadOnlyList<string>? Traits = null)
+{
+    public bool Has(string trait) => Traits?.Contains(trait) == true;
+}
 
 /// <summary>Where a creature at 0 HP stands with death saves, when the ruleset uses them.</summary>
 public sealed class DeathState
@@ -85,7 +88,7 @@ public sealed partial class CharacterSheet
         get
         {
             Item? held = WeaponItem;
-            return held != null ? new Weapon(held.Definition.Damage, held.Definition.AttackAbility, held.Hands) : _weapon;
+            return held != null ? new Weapon(held.Definition.Damage, held.Definition.AttackAbility, held.Hands, held.Definition.Traits) : _weapon;
         }
         set => _weapon = value;
     }
@@ -246,6 +249,7 @@ public sealed partial class CharacterSheet
                 "stat" => Stats.Integer(of),
                 // "proficiency" itself can't ask for another proficiency: it would never end
                 "prof" => formula == "proficiency" ? null : ProficiencyModifier(rules, of),
+                "trait" => Weapon?.Has(of) == true ? 1 : 0,
                 _ => null,
             };
         });
