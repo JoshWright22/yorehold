@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold reaction (reactions/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "trigger": {
+      "enum": [
+        "leavesReach",
+        "entersReach",
+        "hit",
+        "missed",
+        "allyHit",
+        "beforeHit",
+        "spellCast"
+      ]
+    },
+    "action": {
+      "type": "string"
+    },
+    "spell": {
+      "type": "string"
+    },
+    "readied": {
+      "type": "boolean"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "promptSeconds": {
+      "type": "number"
+    },
+    "general": {
+      "type": "boolean"
+    },
+    "unless": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold creature (creatures/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "hp": {
+      "type": "integer"
+    },
+    "armorClass": {
+      "type": "integer"
+    },
+    "speed": {
+      "type": "integer"
+    },
+    "level": {
+      "type": "integer"
+    },
+    "darkvision": {
+      "type": "integer"
+    },
+    "abilities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "proficiencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    },
+    "proficiencyRanks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "dcAbility": {
+      "type": "string"
+    },
+    "deathSaves": {
+      "type": "boolean"
+    },
+    "resources": {
+      "type": "object"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    },
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "loot": {
+      "type": "object",
+      "properties": {
+        "coins": {
+          "type": "string",
+          "description": "dice such as 2d6+1, with formulas in braces: 2d8+{mod.wis}; Foundry's @paths read too"
+        },
+        "items": {
+          "type": "array"
+        }
+      }
+    },
+    "token": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "size": {
+          "type": "number"
+        },
+        "image": {
+          "type": "string"
+        }
+      }
+    },
+    "ai": {
+      "type": [
+        "string",
+        "object"
+      ],
+      "description": "an AI profile's name (cunning, brute, animal...) or changes to one"
+    }
+  }
+}

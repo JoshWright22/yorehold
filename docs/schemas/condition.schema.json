@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold condition (conditions/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "stat",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "stat": {
+            "type": "string",
+            "description": "the number it changes: ac, attack, damage, saves, checks, speed, maxHp, initiative, an ability, resist.fire..."
+          },
+          "op": {
+            "enum": [
+              "add",
+              "multiply",
+              "override",
+              "max",
+              "min"
+            ],
+            "description": "max: at least this much; min: at most"
+          },
+          "value": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "description": "typed bonuses don't stack: only the best of each type counts"
+          },
+          "if": {
+            "type": "string",
+            "description": "makes it situational: it counts only on a roll this holds for (ranged, save.dex, trait.agile, targetFlag.undead)"
+          }
+        }
+      }
+    },
+    "duration": {
+      "type": "integer"
+    },
+    "ends": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "events that end it: turnStart, turnEnd, attack, damage, move, rest, fightEnd, healed..."
+    },
+    "stacking": {
+      "enum": [
+        "refresh",
+        "longest",
+        "value"
+      ]
+    },
+    "maxValue": {
+      "type": "integer"
+    },
+    "perValue": {
+      "type": "boolean"
+    },
+    "decay": {
+      "type": "integer"
+    },
+    "removes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    },
+    "save": {
+      "type": "object",
+      "properties": {
+        "ability": {
+          "type": "string"
+        },
+        "dc": {
+          "type": "integer"
+        }
+      }
+    },
+    "advantageOnAttacks": {
+      "type": "boolean"
+    },
+    "disadvantageOnAttacks": {
+      "type": "boolean"
+    },
+    "attackersAdvantage": {
+      "type": "boolean"
+    },
+    "attackersDisadvantage": {
+      "type": "boolean"
+    },
+    "attackersWithin": {
+      "type": "integer"
+    },
+    "attackersBeyond": {
+      "type": [
+        "string",
+        "object"
+      ]
+    },
+    "hitsAreCritical": {
+      "type": "boolean"
+    },
+    "attackersFlatCheck": {
+      "type": "integer"
+    },
+    "advantageOnChecks": {
+      "type": "boolean"
+    },
+    "disadvantageOnChecks": {
+      "type": "boolean"
+    }
+  }
+}

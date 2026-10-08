@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold item (items/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "slot": {
+      "enum": [
+        "",
+        "mainHand",
+        "offHand",
+        "armor",
+        "ring"
+      ]
+    },
+    "hands": {
+      "type": "integer"
+    },
+    "damage": {
+      "type": "string",
+      "description": "dice such as 2d6+1, with formulas in braces: 2d8+{mod.wis}; Foundry's @paths read too"
+    },
+    "damageType": {
+      "type": "string"
+    },
+    "attackAbility": {
+      "type": "string"
+    },
+    "traits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "range": {
+      "type": "integer",
+      "description": "squares a weapon reaches; 1 by default"
+    },
+    "weight": {
+      "type": "number"
+    },
+    "value": {
+      "type": "integer",
+      "description": "copper"
+    },
+    "quantity": {
+      "type": "integer"
+    },
+    "magic": {
+      "type": "boolean"
+    },
+    "supplies": {
+      "type": "integer"
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "stat",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "stat": {
+            "type": "string",
+            "description": "the number it changes: ac, attack, damage, saves, checks, speed, maxHp, initiative, an ability, resist.fire..."
+          },
+          "op": {
+            "enum": [
+              "add",
+              "multiply",
+              "override",
+              "max",
+              "min"
+            ],
+            "description": "max: at least this much; min: at most"
+          },
+          "value": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "description": "typed bonuses don't stack: only the best of each type counts"
+          },
+          "if": {
+            "type": "string",
+            "description": "makes it situational: it counts only on a roll this holds for (ranged, save.dex, trait.agile, targetFlag.undead)"
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "granted-only actions it gives while worn or held"
+    },
+    "use": {
+      "type": "object",
+      "description": "what using it up does: an action's fields"
+    }
+  }
+}

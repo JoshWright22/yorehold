@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold race, species or ancestry (races/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "speed": {
+      "type": "integer"
+    },
+    "darkvision": {
+      "type": "integer"
+    },
+    "bonusHp": {
+      "type": "integer"
+    },
+    "abilities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "proficiencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    },
+    "feats": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    }
+  },
+  "additionalProperties": false
+}

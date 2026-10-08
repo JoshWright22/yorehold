@@ -745,6 +745,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     armour, spells, feats and creatures from a creator's own exports, one undoable change, a log
     line for each thing left out. Left: classes and their advancement, conditions and effects,
     Scenes as maps.
+  - Done 10/9: JSON schemas for twelve kinds (`docs/schemas/*.schema.json`, made by `make.py` from
+    the readers' fields; every shipped file passes), wired into VS Code by `.vscode/settings.json`
+    (`docs/schemas/vscode-settings.json` for a package folder of your own).
   - A word map: Actor = creature or hero, Item = item, feat, spell or class, Active Effect =
     condition and its modifiers, Rule Element = modifier with `if`, trigger or reaction, Activity
     = action, Advancement = class level rows, compendium pack = content set, `system.json` =

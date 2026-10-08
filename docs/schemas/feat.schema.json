@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold feat (feats/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "description": "one of the system's featKinds"
+    },
+    "repeatable": {
+      "type": "boolean"
+    },
+    "requires": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "integer"
+        },
+        "races": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,64}$",
+            "description": "a-z, 0-9, - and _; the file name without .json"
+          }
+        },
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,64}$",
+            "description": "a-z, 0-9, - and _; the file name without .json"
+          }
+        },
+        "abilities": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "proficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,64}$",
+            "description": "a-z, 0-9, - and _; the file name without .json"
+          }
+        }
+      }
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "stat",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "stat": {
+            "type": "string",
+            "description": "the number it changes: ac, attack, damage, saves, checks, speed, maxHp, initiative, an ability, resist.fire..."
+          },
+          "op": {
+            "enum": [
+              "add",
+              "multiply",
+              "override",
+              "max",
+              "min"
+            ],
+            "description": "max: at least this much; min: at most"
+          },
+          "value": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "description": "typed bonuses don't stack: only the best of each type counts"
+          },
+          "if": {
+            "type": "string",
+            "description": "makes it situational: it counts only on a roll this holds for (ranged, save.dex, trait.agile, targetFlag.undead)"
+          }
+        }
+      }
+    },
+    "proficiencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      }
+    },
+    "ranks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the system's granted-only actions, reactions and triggers"
+    },
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$",
+        "description": "a-z, 0-9, - and _; the file name without .json"
+      },
+      "description": "spells it knows from this: cantrips at will, others with a slot"
+    }
+  },
+  "additionalProperties": false
+}

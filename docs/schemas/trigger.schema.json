@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold trigger (triggers/<id>.json)",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "on": {
+      "enum": [
+        "hit",
+        "miss",
+        "crit",
+        "hitBy",
+        "kill",
+        "turnStart"
+      ]
+    },
+    "if": {
+      "type": "string",
+      "description": "a formula: numbers, names (level, mod.str, stat.ac, scale.x), + - * / %, comparisons, && || !, ?:, max min floor ceil clamp; Foundry's @abilities.str.mod reads too"
+    },
+    "once": {
+      "enum": [
+        "turn"
+      ]
+    },
+    "general": {
+      "type": "boolean"
+    },
+    "save": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ability": {
+          "type": "string"
+        },
+        "dc": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      }
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "step": {
+      "type": "object",
+      "required": [
+        "do"
+      ],
+      "properties": {
+        "do": {
+          "enum": [
+            "damage",
+            "heal",
+            "tempHp",
+            "condition",
+            "modifier",
+            "move",
+            "resource",
+            "summon",
+            "light",
+            "surface",
+            "flag",
+            "roll",
+            "repeat",
+            "choose"
+          ]
+        },
+        "target": {
+          "enum": [
+            "self",
+            "target",
+            "area",
+            "allies",
+            "enemies"
+          ]
+        },
+        "when": {
+          "type": "string",
+          "description": "an outcome of the roll above it (hit, miss, crit, saveFailed, success, criticalFailure...) or an event"
+        },
+        "ifFlag": {
+          "type": "string"
+        },
+        "scale": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "by": {
+              "enum": [
+                "level",
+                "slot"
+              ]
+            },
+            "from": {
+              "type": "integer"
+            },
+            "every": {
+              "type": "integer"
+            },
+            "dice": {
+              "type": "string",
+              "description": "dice such as 2d6+1, with formulas in braces: 2d8+{mod.wis}; Foundry's @paths read too"
+            },
+            "value": {
+              "type": "integer"
+            }
+          }
+        },
+        "onSave": {
+          "enum": [
+            "half",
+            "none",
+            "full"
+          ]
+        },
+        "dice": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "dice such as 2d6+1, with formulas in braces: 2d8+{mod.wis}; Foundry's @paths read too"
+        },
+        "type": {
+          "type": "string"
+        },
+        "crit": {
+          "type": "string",
+          "description": "dice such as 2d6+1, with formulas in braces: 2d8+{mod.wis}; Foundry's @paths read too"
+        },
+        "minimum": {
+          "type": "integer"
+        },
+        "track": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "remove": {
+          "type": "boolean"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "value": {
+          "type": "integer"
+        },
+        "stat": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "how": {
+          "type": "string",
+          "description": "a move: push, pull, teleport, approach; a resource: spend, restore"
+        },
+        "distance": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "amount": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "count": {
+          "type": "integer"
+        },
+        "radius": {
+          "type": "number"
+        },
+        "size": {
+          "type": "number"
+        },
+        "kind": {
+          "type": "string",
+          "description": "a roll: attack, check, save, or one of the system's roll kinds"
+        },
+        "ability": {
+          "type": "string"
+        },
+        "dc": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "a number, or \"caster\""
+        },
+        "against": {
+          "type": "string"
+        },
+        "reach": {
+          "type": "integer"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "times": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/step"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

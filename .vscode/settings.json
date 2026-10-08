@@ -1,0 +1,76 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "**/items/*.json"
+      ],
+      "url": "./docs/schemas/item.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/creatures/*.json"
+      ],
+      "url": "./docs/schemas/creature.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/actions/*.json"
+      ],
+      "url": "./docs/schemas/action.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/spells/*.json"
+      ],
+      "url": "./docs/schemas/spell.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/conditions/*.json"
+      ],
+      "url": "./docs/schemas/condition.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/feats/*.json"
+      ],
+      "url": "./docs/schemas/feat.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/options/*.json"
+      ],
+      "url": "./docs/schemas/option.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/races/*.json"
+      ],
+      "url": "./docs/schemas/race.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/backgrounds/*.json"
+      ],
+      "url": "./docs/schemas/background.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/triggers/*.json"
+      ],
+      "url": "./docs/schemas/trigger.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/reactions/*.json"
+      ],
+      "url": "./docs/schemas/reaction.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/classes/*.json"
+      ],
+      "url": "./docs/schemas/class.schema.json"
+    }
+  ]
+}
