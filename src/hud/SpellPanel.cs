@@ -165,8 +165,8 @@ public sealed class SpellPanel
         if (_view.Picked.StartsWith(ActionKey) && world.FindAction(_view.Picked[ActionKey.Length..]) is ActionDefinition other)
         {
             int cost = world.ActionCost(_hero, other);
-            var page = new BookPage().Title(other.Name).Sub("Action").Rule()
-                .Stats(("Cost", cost == 1 ? "1 action" : $"{cost} actions"));
+            var page = new BookPage().Title(other.Name).Sub(TurnWords.Capital(world.Rules.Words.Action)).Rule()
+                .Stats(("Cost", other.CostsBonus ? world.Rules.Words.Bonus : world.Rules.Words.Cost(cost)));
             if (other.Description.Length > 0)
             {
                 page.Rule().Text(other.Description);
@@ -226,7 +226,7 @@ public sealed class SpellPanel
         int cost = world.ActionCost(hero, a);
         string spends = spell.Spends.Count > 0 ? string.Join(", ", spell.Spends.Select(s => $"{s.Value} {SheetPage.Words(s.Key).ToLowerInvariant()}"))
             : spell.Level > 0 ? $"a level {spell.Level} slot{(world.SpellRules.Upcast ? " or higher" : "")}" : "nothing";
-        page.Stats(("Cost", cost == 1 ? "1 action" : $"{cost} actions"), ("Hands", spell.Hands.ToString()));
+        page.Stats(("Cost", a.CostsBonus ? world.Rules.Words.Bonus : world.Rules.Words.Cost(cost)), ("Hands", spell.Hands.ToString()));
         page.Stat("Spends", spends);
         string side = a.Side switch
         {

@@ -162,6 +162,8 @@ public class Ruleset
     public SheetFormulas Formulas { get; init; } = new();
     /// <summary>The steps of making a character.</summary>
     public CreationRules Creation { get; init; } = new();
+    /// <summary>What the system calls an action, a bonus action and a reaction.</summary>
+    public TurnWords Words { get; init; } = new();
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -459,6 +461,7 @@ public class Ruleset
             Checks = CheckRules.Read(node.Get("checks")),
             Formulas = SheetFormulas.Read(node.Get("formulas")),
             Creation = CreationRules.Read(node.Get("creation")),
+            Words = TurnWords.Read(node.Get("turnWords")),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,

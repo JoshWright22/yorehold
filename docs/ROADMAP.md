@@ -311,8 +311,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     and `"cost": "bonus"` actions that spend the bonus action (the hotbar tip says so).
   - Done 10/8: reaction triggers `hit`, `missed` and `allyHit` (after the attack, no prompt);
     agile and other traits through formulas.
-  - Left: reactions before a hit lands (Shield), prompts for them, a spell being cast; the
-    pips' names from the system.
+  - Done 10/8: `turnWords`: costs read as the system names them ("2 actions", "free action").
+  - Left: reactions before a hit lands (Shield), prompts for them, a spell being cast.
 - [ ] **R5. Features that do things.** Classes, subclasses, races, heritages and feats grant
   actions, reactions, passive modifiers and triggered effects, not only numbers; feat kinds come
   from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's

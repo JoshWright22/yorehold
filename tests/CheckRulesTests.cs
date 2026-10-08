@@ -8,8 +8,10 @@ public class CheckRulesTests
         // No free move, a bonus-action cost, and -5 then -10 on later attacks.
         Ruleset rules = RulesTesting.Rules("""
             {"id": "t", "name": "T", "abilities": [{"id": "str", "name": "Strength"}],
-             "actionsPerTurn": 3, "freeMove": false, "attackPenalty": "attacks >= 2 ? -10 : attacks * -5"}
+             "actionsPerTurn": 3, "freeMove": false, "attackPenalty": "attacks >= 2 ? -10 : attacks * -5",
+             "turnWords": {"action": "move", "actions": "moves", "free": "free action"}}
             """);
+        Assert.Equal(("1 move", "3 moves", "free action", "bonus action"), (rules.Words.Cost(1), rules.Words.Cost(3), rules.Words.Cost(0), rules.Words.Bonus));
         Assert.Equal((false, -5, -10), (rules.FreeMove, rules.AttackPenalty!.Whole(n => n == "attacks" ? 1 : null), rules.AttackPenalty.Whole(n => n == "attacks" ? 3 : null)));
         ActionDefinition bonus = ActionDefinition.Read(TestContent.Json("""{"id": "dash", "name": "Dash", "cost": "bonus"}"""), new ActionDefinition.Defaults());
         Assert.True(bonus.CostsBonus && bonus.Cost == 0);

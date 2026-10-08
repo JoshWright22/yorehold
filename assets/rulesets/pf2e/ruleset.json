@@ -305,6 +305,9 @@
   ],
   "proficientRank": "trained",
   "untrainedRank": "untrained",
+  "turnWords": {
+    "free": "free action"
+  },
   "featKinds": [
     { "id": "ancestry", "name": "Ancestry feat" },
     { "id": "class", "name": "Class feat" },

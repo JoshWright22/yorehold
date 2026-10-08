@@ -71,12 +71,12 @@ public sealed partial class World
         }
         if (!Encounter.CanAct(ActionCost(creature, action)))
         {
-            why = "not enough actions left";
+            why = $"not enough {Rules.Words.Actions} left";
             return false;
         }
         if (action.CostsBonus && Encounter.Current.Budget is { BonusAction: false })
         {
-            why = Rules.BonusActions ? "the bonus action is used" : "these rules have no bonus action";
+            why = Rules.BonusActions ? $"the {Rules.Words.Bonus} is used" : $"these rules have no {Rules.Words.Bonus}";
             return false;
         }
         if (SpellOf(action) is SpellDefinition spell && !Spellcasting.CanCast(Creatures[creature].Sheet, spell, SpellRules, out why))
