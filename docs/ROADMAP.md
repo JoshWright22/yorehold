@@ -348,7 +348,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     Done 10/8: a `resource` step reaches a track by its id, attacks name a defence with
     `against`, and formulas read `field.<id>`, `stat.<name>` and the defences. Left: a damage
     step aimed at one track; the documented core (with R2b's reference).
-- [ ] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
+- [x] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
   nat 20; PF2e: four degrees, ±10, nat 20/1 move a step), what a critical does (double dice or
   double total), and advantage from the target or the place as well as the attacker. Every
   effect branches on all four outcomes for attacks, saves and checks. UI: hit chance at the
@@ -393,7 +393,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: Create's creature and feat forms have an "actions" list from the system's actions,
     reactions and triggers, and a feat's kind is picked from the system's feat kinds.
   - Left: grants on class features inside the levels table (edited as JSON there).
-- [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
+- [x] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's
   Dex cap. UI: the sheet's layout (vitals, saves, defences) is a list the system gives.
@@ -405,8 +405,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     that formulas and the attack penalty read (`trait.finesse`, `trait.agile`).
   - Done 10/8: `sheet` in ruleset.json: the sections the sheet shows, in order, and their
     labels; PF2e's saves listed by name; defences shown. Fate shows Stress and Stunts, no hit die.
-  - Left: sections a system invents (a Fate aspects box, a stress track drawn as boxes).
-- [ ] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
+  - Done 10/8: sections a system invents come from its own data: `fields` (Fate's aspects) and
+    `tracks` (stress and consequences, drawn as marks on the cards).
+- [x] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
   (5e) or dying and wounded values with a recovery check (PF2e). UI: a downed hero's card shows
   the system's track.
   - Done 10/8: `death.track` (start, damage, the recovery roll and DC, each outcome's change,
