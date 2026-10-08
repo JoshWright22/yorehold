@@ -397,7 +397,7 @@ public sealed class ImportScore
         int readByRoom = Math.Max(0, kept.OfKind(OutlineKind.Place).Count(p => p.Texts("readAloud").Count > 0) - 1);
         if (readByRoom > 0)
         {
-            facts.Add($"{readByRoom} passages are shown as one line spoken by the room's name on entering");
+            facts.Add($"{readByRoom} passages are read out as narration on entering their room");
         }
         if (report != null)
         {
@@ -422,7 +422,7 @@ public sealed class ImportScore
         };
         if (Count(OutlineKind.Encounter) == 0)
         {
-            facts.Add("no fights at all: the layout can't find them, the story model does");
+            facts.Add("no fights at all: the book has no fight boxes the layout can read (foes with hit point boxes); the story model finds the rest");
         }
         return new Part("cast", "Fights, people and things", 0, 0, new(), facts);
     }
@@ -587,7 +587,7 @@ public sealed class ImportScore
     /// <summary>The headline: what to say first to someone who has just imported a book.</summary>
     public string Headline() => ModelRan
         ? $"Import score {Overall} of 100{(HasKey ? "" : " (no answer key for this book)")}"
-        : $"Import score {Overall} of 100. No story model ran: only the book's layout was read, so there are no fights, people, talk, items or heroes";
+        : $"Import score {Overall} of 100{(HasKey ? "" : " (no answer key for this book)")}. No story model ran: only what the book's layout shows was read";
 
     /// <summary>The whole score as plain lines, for a log.</summary>
     public List<string> Lines()

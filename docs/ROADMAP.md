@@ -398,17 +398,24 @@ Rules for all of it:
   - Default: the overall score is the plain mean of the counted parts; `words` counts rules and
     credits too, so it stays low and is read for its list of what's missing, not its number.
 - [ ] **S9. What the scores show is missing**, each held against the Caves of Shadow key and history:
-  - Create > Import says before reading that no story model is set and what that leaves out, with
-    Read anyway; today it is only said in small text while it reads.
-  - The layout draft gives heroes from captioned pictures (a short heading under a picture
-	followed by a race and class line, "Human Fighter"), so their pictures come in with no model.
-  - Room text: a place's passages are read as one line spoken by the room's name; show them as a
-    narrator's caption instead, and keep conversations for people. Quoted lines of a person
-    (Jeffries' answers) become their conversation's replies, in the book's words.
-  - Things in a room the book describes (the sack of 50 gold, the cart's greatsword, the bag
-    under the bed) become chests or searchable spots in that room.
-  - Walls: rooms from the map picture (the model reading its grid, walls and doors, S7's later
-    part), scored by `shape`; places sized from the map rather than 8 by 8.
+  - Done 10/7 (Josh: "it isn't generating any stat blocks or encounters or dialogue or populating
+    the rooms"): `BookCast` reads them from the layout with no model. Heroes from a short name
+    under a picture with a "Human Fighter" line; foes from framed boxes listing hit point boxes
+    ("Orc #1: o o o o o o"), their "13 or better" to hit, "roll 1 die" damage and the weapon the
+    text has them hold; a fight per place with such a box; talk from bullet questions each
+    followed by a quoted answer, spoken by the person the text names ("name is Jeffries");
+    finds under "Look in the Sack" / "Search the..." headings (gold and known things, potions by
+    colour, a find on a foe goes on the foe); "go to Area 3" as ways, locked with a Dex check
+    when the text around says so, a jump over a chasm; shaded passages before area 1 as the
+    chapter's intro. Rooms with a number on the book's map are put where it draws them, joined
+    by corridors. Caves of Shadow with no model: score 31 to 89, key 7 to 41 of 42 (orc 6 HP,
+    hit on 13, spear 1d6; rat 5, 14, teeth; Jezer the ogre 18, 14, axe 2d6). The key's coins
+    are gold now.
+  - Done 10/7: a room's passage is narration (no speaker, no faces), not a line spoken by the
+    room's name.
+  - Left: Create > Import says before reading that no story model is set, with Read anyway; a
+    quest from the opening passage; rooms sized from the map and walls read off it (S7's later
+    part), scored by `shape`.
 
 ## U. Game feel (playtest, 10/7)
 

@@ -381,7 +381,8 @@ public sealed class OutlineBuilder
             {
                 ["id"] = talk,
                 ["start"] = "read",
-                ["nodes"] = new JsonArray(new JsonObject { ["id"] = "read", ["speaker"] = place.Text("name"), ["text"] = string.Join("\n\n", place.Texts("readAloud")) }),
+                // narration: nobody speaks it, so it shows with no name plate and no faces
+                ["nodes"] = new JsonArray(new JsonObject { ["id"] = "read", ["text"] = string.Join("\n\n", place.Texts("readAloud")) }),
             });
             triggers.Add(new JsonObject { ["id"] = talk, ["when"] = new JsonArray(flag), ["dialogue"] = $"dialogue/{talk}.json" });
         }
@@ -763,7 +764,16 @@ public sealed class OutlineBuilder
                         continue;
                     }
                     (string from, string to) = _rooms.ContainsKey(a) ? (a, b) : (b, a);
-                    PlaceBeside(from, _places.First(p => p.Id == to));
+                    OutlineEntry next = _places.First(p => p.Id == to);
+                    // where the book's map draws it wins over beside the room it links from; the way is cut through if they don't touch
+                    if (OnBookMap(next) is (int mx, int my))
+                    {
+                        PlaceNear(next, mx, my);
+                    }
+                    else
+                    {
+                        PlaceBeside(from, next);
+                    }
                     Join(link, from, to, report);
                     pending.Remove(link);
                     progress = true;

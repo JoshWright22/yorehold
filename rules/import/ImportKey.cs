@@ -186,7 +186,8 @@ public sealed class ImportKey
                 List<string> held = chests.SelectMany(c => c.Texts("items")).Select(i => i + " " + (o.Find(i)?.Text("name") ?? "")).ToList();
                 return chests.Count > 0
                     && line.Texts("holds").All(wanted => held.Any(h => Named(h, wanted)))
-                    && (!line.Has("coins") || chests.Sum(c => c.Data["coins"]?.GetValue<int>() ?? 0) == line.Int("coins", 0));
+                    // the key gives gold as the book does; the game counts copper, a hundred to the gold piece
+                    && (!line.Has("coins") || chests.Sum(c => c.Data["coins"]?.GetValue<int>() ?? 0) == line.Int("coins", 0) * 100);
             }
             case "quest":
                 return o.OfKind(OutlineKind.Quest).Any(q => Named(q.Text("title") + " " + q.Text("description"), what));
@@ -232,7 +233,7 @@ public sealed class ImportKey
                 var holds = line.Texts("holds");
                 if (line.Has("coins"))
                 {
-                    holds.Add($"{line.Int("coins", 0)} coins");
+                    holds.Add($"{line.Int("coins", 0)} gold");
                 }
                 return $"something to open in {what}" + (holds.Count > 0 ? $" holding {string.Join(", ", holds)}" : "");
             default:

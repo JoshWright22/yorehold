@@ -442,6 +442,8 @@ public partial class PlayHud : Control
         CharacterSheet me = world.Creatures[hero].Sheet;
         _listenerView.Show(me.Name, world.Tokens.Tokens[hero].Color.ToGodot(), false, Portraits.Of(world, hero));
         _speakerView.Visible = with >= 0;
+        // narration (a room's passage, nobody speaking) is read over the map, not between two faces
+        _listenerView.Visible = with >= 0 || node.Speaker.Length > 0;
 
         List<DialogueChoice> choices = talk.Choices();
         string shown = $"{talk.Dialogue.Id}/{node.Id}/{string.Join(",", choices.Select(c => c.Id))}";

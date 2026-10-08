@@ -57,6 +57,10 @@ public sealed class StoryImport
         source.Save(Folder);
         Stage = "Finding places and pictures";
         Outline draft = BookLayout.Draft(source);
+        Stage = "Finding heroes, foes, talk and treasure";
+        var game = new Compendium();
+        game.Load(_game, "");
+        BookCast.Add(source, draft, game.Classes.Keys.ToList());
         Outline = draft;
         if (model != null)
         {

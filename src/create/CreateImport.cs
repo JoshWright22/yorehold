@@ -126,11 +126,11 @@ public partial class CreateScreen
             else
             {
                 waiting.Text(StoryModel() == null
-                    ? "No story model is set, so only what the book's layout shows is drafted: its numbered places, the passages to read out and the map."
+                    ? "No story model is set, so only what the book's layout shows is drafted: places, passages, the map, heroes, foes from fight boxes, talk set as questions and answers, finds and ways."
                     : "The story model reads the book a few pages at a time. A book of twenty pages takes a few minutes.");
             }
-            _start.SetEntry(waiting.Gap().Note(import.Package).ToString(), new[] { new DataAction("import-close", "Close") }, "");
-            _start.SetFoot(import.Folder);
+            _start.SetEntry(waiting.ToString(), new[] { new DataAction("import-close", "Close") }, "");
+            _start.SetFoot("");
             return;
         }
         if (_buildWhenRead)
@@ -185,7 +185,7 @@ public partial class CreateScreen
         actions.Add(new DataAction("import-build", "Build"));
         actions.Add(new DataAction("import-close", "Close"));
         _start.SetEntry(page.ToString(), actions, import.Problems.Count > 0 ? "Couldn't build: " + string.Join("; ", import.Problems) : "");
-        _start.SetFoot(import.Folder);
+        _start.SetFoot("");
     }
 
     // how much of the book got in, part by part, with what is missing under each
@@ -199,8 +199,9 @@ public partial class CreateScreen
         page.Gap().Heading("How much of the book got in");
         if (!score.ModelRan)
         {
-            page.Warn("No story model ran. Only the book's layout was read: its numbered places, the passages to read out and the map. "
-                + "Fights, people, talk, items, heroes and the ways between places come from the story model (Settings file: storyModel).");
+            page.Warn("No story model ran, so only what the book's layout shows was read: numbered places and their passages, the map, "
+                + "heroes under their pictures, foes from fight boxes, questions and quoted answers, finds under \"Search the...\" headings, "
+                + "and \"go to Area 3\" ways. A story model (Settings file: storyModel) reads the rest.");
         }
         page.Stats(("Score", $"{score.Overall} of 100"), ("Answer key", score.HasKey ? "yes" : "none for this book"));
         foreach (ImportScore.Part part in score.Parts)

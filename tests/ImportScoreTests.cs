@@ -97,8 +97,8 @@ public class ImportScoreTests
                {"says": "Nobody crosses after dark"},
                {"item": "mill key|iron key"},
                {"creature": "goblin"},
-               {"chest": "2", "holds": ["healing"], "coins": 30},
-               {"chest": "2", "coins": 31},
+               {"chest": "2", "holds": ["healing"]},
+               {"chest": "2", "coins": 1},
                {"quest": "fare"}]}
             """);
         List<(string Line, bool Met)> lines = key.Check(Sample());
@@ -131,6 +131,35 @@ public class ImportScoreTests
         ImportKey? key = string.IsNullOrEmpty(keyFile) ? null : ImportKey.Parse(Path.GetFileName(keyFile), File.ReadAllText(keyFile));
         ImportScore score = ImportScore.Of(folder, Outline.Load(folder), string.IsNullOrEmpty(package) ? null : package, key);
         File.WriteAllLines(Path.Combine(folder, "score.txt"), score.Lines());
+    }
+
+    // Drafts an import folder again from its source.json with no model, builds it into package/ and
+    // scores it into score.txt: YOREHOLD_REDRAFT_IMPORT is the folder, YOREHOLD_SCORE_KEY a key file.
+    [Fact]
+    public void AnImportFolderIsDraftedAgainForALook()
+    {
+        string? folder = Environment.GetEnvironmentVariable("YOREHOLD_REDRAFT_IMPORT");
+        if (string.IsNullOrEmpty(folder))
+        {
+            return;
+        }
+        SourceBook book = SourceBook.Load(folder);
+        Outline draft = BookLayout.Draft(book);
+        var game = new Compendium();
+        game.Load(TestContent.Shipped(), "");
+        BookCast.Add(book, draft, game.Classes.Keys.ToList());
+        draft.Save(folder);
+        string package = Path.Combine(folder, "package");
+        if (Directory.Exists(package))
+        {
+            Directory.Delete(package, true);
+        }
+        List<string> problems = new OutlineBuilder(draft, folder, TestContent.Shipped()).Build(package);
+        string? keyFile = Environment.GetEnvironmentVariable("YOREHOLD_SCORE_KEY");
+        ImportKey? key = string.IsNullOrEmpty(keyFile) ? null : ImportKey.Parse(Path.GetFileName(keyFile), File.ReadAllText(keyFile));
+        ImportScore score = ImportScore.Of(folder, draft, package, key);
+        File.WriteAllLines(Path.Combine(folder, "score.txt"), problems.Select(p => "BUILD PROBLEM " + p).Concat(score.Lines()));
+        Assert.Empty(problems);
     }
 
     [Fact]

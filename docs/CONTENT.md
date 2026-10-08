@@ -500,7 +500,7 @@ outdoors; a link is a gap in that wall, a `door` kit, or a `locked-door` kit wit
 the link's check as its lock. The party starts in the first place of the chapter, whose passage
 to read out joins the chapter's `intro`; every other room's passage is read the first time a hero
 steps in (an area setting `entered_<place>`, a trigger on it and a one-line conversation
-`dialogue/read-<place>.json`). Foes stand on the far side of their room. An NPC with a
+`dialogue/read-<place>.json`, with no speaker). Foes stand on the far side of their room. An NPC with a
 picture gets a creature of its own carrying it. A locked chest is a `locked-chest` map object. When the chapter has a `mapPicture`, it
 is taken as 60 squares across: a first place with `mapAt` sits where its number is, and a place
 no link reaches sits where its number is too (in the nearest free spot), joined to the nearest
@@ -563,6 +563,33 @@ and its framed boxes as notes, and a note with the map picture: the picture with
 numbers printed on it, and where each number sits on it. `BookLayout.PictureNames` gives each
 picture the short heading set right under it in its column (or over it), the name of who it shows.
 
+`BookCast.Add` then reads, still with no model (before the model's pass when there is one):
+- a hero for a picture's name followed by a line of a race and a class the game has ("Human
+  Fighter"), with that picture and the paragraph after as its description;
+- the shaded passages before the first numbered place as the chapter's `intro`;
+- in each numbered place's part of the book, a framed box listing foes with hit point boxes
+  (`Orc #1: o o o o o o`, a run-on row of boxes adding to the one before): a creature per kind
+  (the last word of the name before any "with ..."), its hit points the most boxes, its armour
+  class the box's "N or better" for it (else for all, else 12), level hit points / 6, and a weapon
+  item (the weapon the place's text has it hold, else the nearest named; damage the box's "roll N
+  die/dice ... damage" as Nd6). A fight in the place holds them, counted, with a name the text
+  gives ("Jezer the Ogre");
+- bullet questions ("•Who are you?") each followed by a quoted answer: a conversation spoken by the
+  person the text names ("The old man's name is Jeffries", else "Stranger"), opening on the first
+  answer, every other question a reply, and "Farewell." to end; that person stands in the place;
+- a heading "Search / Look in / Open / Check / Examine the X" whose text gives gold ("50 gold
+  pieces", not "sold for 50 gold") or known things (rope, crossbow, greatsword, statue, necklace...,
+  potions by colour, a healing one being the game's `healing-potion`): something to open named X
+  (or the bag or sack the text names), or, when X is a foe of that place, coins and things it
+  carries;
+- "go to Area 3" (or proceed, continue, head) as a link to that place: locked with a check when
+  the text since the last heading says locked (Dex to pick a lock, else Athletics; the "N or
+  better" as its difficulty, else 15), a jump past a chasm or crevice, a door when it names one.
+
+When the builder lays rooms out from links, a room whose number is on the book's map goes where
+the map draws it rather than beside the room it links from, and the way is cut through as a
+corridor. A room's passage is narration, with no speaker and no faces.
+
 ### How much of the book got in
 
 Every import is scored when it is read and again when it is built (`ImportScore`), into
@@ -598,7 +625,8 @@ package, model run, overall, each part's found and of) are in `user://import-sco
 ```
 
 A line's first field is its kind; places are named by the book's labels; `a|b` takes either name,
-matched as whole words in the id, name or the foe's own name. `notPictures` aren't counted in
+matched as whole words in the id, name or the foe's own name. A chest's `coins` are gold, as books
+give them (the game counts copper, 100 to the gold). `notPictures` aren't counted in
 `pictures`. Setting `YOREHOLD_SCORE_IMPORT` (with `_PACKAGE` and `_KEY`) makes the tests score an
 import folder into its `score.txt`.
 
