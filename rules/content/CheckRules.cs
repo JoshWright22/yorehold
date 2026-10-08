@@ -103,6 +103,19 @@ public sealed class CheckKind
     }
 
     /// <summary>
+    /// The odds as the aim shows them: the chance to pass, and the critical share when the
+    /// system has a critical that passes ("55%, 5% critical"; a plain "55%" where it has none).
+    /// </summary>
+    public string OddsLine(Dictionary<string, double> odds)
+    {
+        static string Percent(double chance) => $"{(int)Math.Round(chance * 100)}%";
+        double pass = Outcomes.Where(o => o.Passes).Sum(o => odds.GetValueOrDefault(o.Id));
+        List<CheckOutcome> critical = Outcomes.Where(o => o.Passes && o.Critical).ToList();
+        double crit = critical.Sum(o => odds.GetValueOrDefault(o.Id));
+        return critical.Count == 0 || crit < 0.005 ? Percent(pass) : $"{Percent(pass)}, {Percent(crit)} critical";
+    }
+
+    /// <summary>
     /// The damage a roll of this kind deals on average, given each outcome's chance: nothing on
     /// one that doesn't pass, the damage's average on one that does, and on a critical the dice
     /// twice or what the system's critical formula makes of the average dice.

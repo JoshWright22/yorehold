@@ -185,7 +185,7 @@ public partial class FightControl : Node
             if (w.ValidTarget(me, action, aimed))
             {
                 Aim.Target = aimed;
-                Aim.Label = HudText.RollsAttack(action) ? Percent(w.HitChance(me, aimed, action.Id)) : action.Name;
+                Aim.Label = HudText.RollsAttack(action) ? w.AttackOddsLine(me, aimed, action.Id) : action.Name;
             }
             else
             {
@@ -201,7 +201,7 @@ public partial class FightControl : Node
             if (w.CanUse(me, w.StrikeAction))
             {
                 Aim.Target = foe;
-                Aim.Label = Percent(w.HitChance(me, foe));
+                Aim.Label = w.AttackOddsLine(me, foe);
             }
             return;
         }
@@ -421,6 +421,4 @@ public partial class FightControl : Node
     {
         return w.Creatures[creature].Team == 0 || w.Tokens.Tokens[creature].Floor == 0;
     }
-
-    private static string Percent(float chance) => $"{(int)MathF.Round(chance * 100)}%";
 }

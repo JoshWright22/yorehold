@@ -171,6 +171,16 @@ public sealed partial class World
         return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
     }
 
+    /// <summary>The same attack's odds as the aim shows them ("55%, 5% critical").</summary>
+    public string AttackOddsLine(int attacker, int target, string? actionId = null)
+    {
+        if (attacker < 0 || attacker >= Creatures.Count || target < 0 || target >= Creatures.Count)
+        {
+            return "";
+        }
+        return Rules.Checks.Kind(CheckRules.Attack).OddsLine(AttackOdds(attacker, target, actionId));
+    }
+
     /// <summary>The damage the same attack deals on average with its weapon, misses and criticals counted.</summary>
     public double ExpectedDamage(int attacker, int target, string? actionId = null)
     {

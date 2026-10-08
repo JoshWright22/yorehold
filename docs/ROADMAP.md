@@ -300,6 +300,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   double total), and advantage from the target or the place as well as the attacker. Every
   effect branches on all four outcomes for attacks, saves and checks. UI: hit chance at the
   cursor shows the system's outcomes (one figure for 5e, four bands for PF2e); the log names them.
+  - Done 10/8 (through R2b): degrees, criticals and opposed rolls in data, steps waiting on any
+    outcome, the log naming the outcome; the aim reads "55%, 5% critical" from the system's own
+    outcomes.
+  - Left: advantage from the place (darkness, high ground) as data.
 - [ ] **R4. The turn in data.** Action kinds per system (5e: action, bonus action, reaction,
   movement; PF2e: three actions, a reaction, free actions), a switch for the free move, attacks
   counted for a multiple attack penalty and `agile`, conditions that add or take actions

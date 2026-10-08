@@ -180,5 +180,9 @@ public class CheckRulesTests
         Assert.Equal(4.35, Math.Round(attack.ExpectedDamage(odds, sword, null), 3));
         // a system whose critical doubles the whole damage
         Assert.Equal(4.5, Math.Round(attack.ExpectedDamage(odds, sword, Formula.Parse("(dice + flat) * 2", out _)), 3));
+
+        // the aim's line: the chance to pass, and the critical share where the system has one
+        Assert.Equal("55%, 5% critical", attack.OddsLine(odds));
+        Assert.Equal("50%", checks.Kind(CheckRules.Check).OddsLine(checks.Kind(CheckRules.Check).Odds(0, 11)));
     }
 }
