@@ -1,0 +1,33 @@
+{
+  "id": "eldritch-blast",
+  "name": "Eldritch Blast",
+  "description": "A beam of crackling force: a ranged spell attack for 1d10; a second beam from level 5.",
+  "level": 0,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "repeat",
+      "times": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}",
+      "steps": [
+        {
+          "do": "roll",
+          "kind": "attack",
+          "ability": "caster",
+          "steps": [
+            {
+              "do": "damage",
+              "dice": "1d10",
+              "type": "force",
+              "when": "hit"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

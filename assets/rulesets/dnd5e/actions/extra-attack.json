@@ -1,0 +1,33 @@
+{
+  "id": "extra-attack",
+  "name": "Attack (Extra Attack)",
+  "description": "Two attacks with the weapon in hand, one after the other.",
+  "order": 11,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "repeat",
+      "times": "2",
+      "steps": [
+        {
+          "do": "roll",
+          "kind": "attack",
+          "steps": [
+            {
+              "do": "damage",
+              "dice": "weapon",
+              "when": "hit",
+              "minimum": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -323,7 +323,8 @@
         "amount": 1
       },
       "restores": [
-        "second-wind"
+        "second-wind",
+        "focus"
       ]
     },
     {
@@ -336,7 +337,11 @@
       },
       "restores": [
         "slots-*",
-        "second-wind"
+        "second-wind",
+        "focus",
+        "rage",
+        "lay-on-hands",
+        "bardic-inspiration"
       ],
       "supplyCost": 40,
       "campOnly": true

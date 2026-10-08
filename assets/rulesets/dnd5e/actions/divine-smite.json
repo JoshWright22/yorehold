@@ -1,0 +1,46 @@
+{
+  "id": "divine-smite",
+  "name": "Divine Smite",
+  "description": "An attack that, on a hit, burns a 1st-level slot for 2d8 radiant on top of the weapon's damage.",
+  "order": 12,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "requires": {
+    "resources": {
+      "slots-1": 1
+    }
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        },
+        {
+          "do": "resource",
+          "id": "slots-1",
+          "op": "spend",
+          "amount": 1,
+          "target": "self",
+          "when": "hit"
+        },
+        {
+          "do": "damage",
+          "dice": "2d8",
+          "type": "radiant",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

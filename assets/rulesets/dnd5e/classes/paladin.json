@@ -1,0 +1,108 @@
+{
+  "id": "paladin",
+  "name": "Paladin",
+  "description": "A holy warrior bound by an oath.",
+  "hitDie": 10,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "cha",
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "wis",
+    "cha",
+    "athletics",
+    "religion"
+  ],
+  "items": [
+    "longsword",
+    "chain-mail",
+    "shield"
+  ],
+  "casting": "prepared",
+  "spells": {
+    "1": [
+      "cure-wounds",
+      "command"
+    ],
+    "2": [
+      "lesser-restoration"
+    ]
+  },
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "lay-on-hands",
+          "name": "Lay on Hands",
+          "description": "Heal 5 HP per level with a touch, once a long rest.",
+          "resources": {
+            "lay-on-hands": 1
+          },
+          "actions": [
+            "lay-on-hands"
+          ]
+        }
+      ]
+    },
+    {
+      "slots": {
+        "1": 2
+      },
+      "spells": 2,
+      "features": [
+        {
+          "id": "fighting-style",
+          "name": "Fighting Style: Defense",
+          "description": "+1 AC while wearing armor.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "id": "divine-smite",
+          "name": "Divine Smite",
+          "description": "Burn a spell slot on a hit for radiant damage.",
+          "actions": [
+            "divine-smite"
+          ]
+        }
+      ]
+    },
+    {
+      "slots": {
+        "1": 3
+      },
+      "spells": 3
+    },
+    {
+      "slots": {
+        "1": 3
+      },
+      "spells": 4,
+      "boosts": 2,
+      "boostStep": 1,
+      "boostsRepeat": true
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 2
+      },
+      "spells": 5,
+      "features": [
+        {
+          "id": "extra-attack",
+          "name": "Extra Attack",
+          "description": "Attack twice when you take the Attack action.",
+          "actions": [
+            "extra-attack"
+          ]
+        }
+      ]
+    }
+  ]
+}

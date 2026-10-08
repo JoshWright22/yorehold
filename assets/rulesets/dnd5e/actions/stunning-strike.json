@@ -1,0 +1,55 @@
+{
+  "id": "stunning-strike",
+  "name": "Stunning Strike",
+  "description": "1 focus point: an unarmed strike that, on a hit, stuns the target until your next turn unless it makes a Constitution save.",
+  "order": 13,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "requires": {
+    "resources": {
+      "focus": 1
+    }
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        },
+        {
+          "do": "resource",
+          "id": "focus",
+          "op": "spend",
+          "amount": 1,
+          "target": "self",
+          "when": "hit"
+        },
+        {
+          "do": "roll",
+          "kind": "save",
+          "ability": "con",
+          "dc": "caster",
+          "when": "hit",
+          "steps": [
+            {
+              "do": "condition",
+              "id": "stunned",
+              "duration": 1,
+              "when": "saveFailed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

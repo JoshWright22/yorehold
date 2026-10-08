@@ -1,38 +1,53 @@
 {
-  "id": "fighter",
-  "name": "Fighter",
-  "description": "A master of weapons and armor.",
+  "id": "ranger",
+  "name": "Ranger",
+  "description": "A hunter of the wild places and what lurks there.",
   "hitDie": 10,
   "bonusHp": 0,
   "speed": 30,
-  "dcAbility": "str",
+  "dcAbility": "wis",
   "proficiencies": [
     "weapons",
     "armor",
     "str",
-    "con",
-    "athletics",
+    "dex",
+    "survival",
+    "stealth",
     "perception"
   ],
   "items": [
-    "longsword",
-    "chain-mail",
-    "shield"
+    "scimitar",
+    "leather"
   ],
+  "casting": "prepared",
+  "spells": {
+    "1": [
+      "hunters-mark",
+      "cure-wounds"
+    ],
+    "2": [
+      "lesser-restoration"
+    ]
+  },
   "levels": [
     {
       "features": [
         {
-          "id": "second-wind",
-          "name": "Second Wind",
-          "description": "A bonus action that heals 1d10 + level, once a short rest.",
-          "resources": {
-            "second-wind": 1
-          },
+          "id": "favored-enemy",
+          "name": "Favored Enemy",
+          "description": "Your hits on a creature you marked deal 1d6 more.",
           "actions": [
-            "second-wind"
+            "hunters-mark-damage"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "slots": {
+        "1": 2
+      },
+      "spells": 2,
+      "features": [
         {
           "id": "fighting-style",
           "name": "Fighting Style: Defense",
@@ -46,14 +61,27 @@
         }
       ]
     },
-    {},
-    {},
     {
+      "slots": {
+        "1": 3
+      },
+      "spells": 3
+    },
+    {
+      "slots": {
+        "1": 3
+      },
+      "spells": 4,
       "boosts": 2,
       "boostStep": 1,
       "boostsRepeat": true
     },
     {
+      "slots": {
+        "1": 4,
+        "2": 2
+      },
+      "spells": 5,
       "features": [
         {
           "id": "extra-attack",

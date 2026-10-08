@@ -1,0 +1,33 @@
+{
+  "id": "lay-on-hands",
+  "name": "Lay on Hands",
+  "description": "A touch that heals 5 HP per paladin level, once a long rest.",
+  "order": 62,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1,
+    "downed": true
+  },
+  "requires": {
+    "resources": {
+      "lay-on-hands": 1
+    }
+  },
+  "log": "{name} lays on hands.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "lay-on-hands",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "heal",
+      "dice": "{5 * level}"
+    }
+  ]
+}

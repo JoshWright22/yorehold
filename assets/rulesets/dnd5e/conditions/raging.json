@@ -1,0 +1,33 @@
+{
+  "id": "raging",
+  "name": "Raging",
+  "description": "+2 melee damage; bludgeoning, piercing and slashing damage halved.",
+  "flags": [
+    "raging"
+  ],
+  "modifiers": [
+    {
+      "stat": "damage",
+      "op": "add",
+      "value": 2
+    },
+    {
+      "stat": "resist.bludgeoning",
+      "op": "add",
+      "value": 1
+    },
+    {
+      "stat": "resist.piercing",
+      "op": "add",
+      "value": 1
+    },
+    {
+      "stat": "resist.slashing",
+      "op": "add",
+      "value": 1
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "id": "monk",
+  "name": "Monk",
+  "description": "A fighter whose body is the weapon.",
+  "hitDie": 8,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "wis",
+  "proficiencies": [
+    "weapons",
+    "str",
+    "dex",
+    "acrobatics",
+    "stealth"
+  ],
+  "items": [
+    "unarmed"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "martial-arts",
+          "name": "Martial Arts",
+          "description": "An unarmed strike as a bonus action.",
+          "actions": [
+            "martial-arts"
+          ]
+        },
+        {
+          "id": "unarmored-defense",
+          "name": "Unarmored Defense",
+          "description": "+3 AC without armour.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "features": [
+        {
+          "id": "focus",
+          "name": "Monk's Focus",
+          "description": "Two focus points a short rest for Flurry of Blows and Patient Defense.",
+          "resources": {
+            "focus": 2
+          },
+          "actions": [
+            "flurry-of-blows",
+            "patient-defense"
+          ]
+        },
+        {
+          "id": "unarmored-movement",
+          "name": "Unarmored Movement",
+          "description": "+10 feet of speed.",
+          "modifiers": [
+            {
+              "stat": "speed",
+              "value": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "features": [
+        {
+          "id": "more-focus",
+          "name": "Deflect Attacks",
+          "description": "One more focus point.",
+          "resources": {
+            "focus": 1
+          }
+        }
+      ]
+    },
+    {
+      "boosts": 2,
+      "boostStep": 1,
+      "boostsRepeat": true,
+      "features": [
+        {
+          "id": "more-focus-4",
+          "name": "Slow Fall",
+          "description": "One more focus point.",
+          "resources": {
+            "focus": 1
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        {
+          "id": "extra-attack",
+          "name": "Extra Attack",
+          "description": "Attack twice when you take the Attack action.",
+          "actions": [
+            "extra-attack"
+          ]
+        },
+        {
+          "id": "stunning-strike",
+          "name": "Stunning Strike",
+          "description": "Spend focus on a hit to stun.",
+          "actions": [
+            "stunning-strike"
+          ],
+          "resources": {
+            "focus": 1
+          }
+        }
+      ]
+    }
+  ]
+}

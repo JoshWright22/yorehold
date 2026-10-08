@@ -481,6 +481,13 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     giant rat, kobold, cultist, cult fanatic (a caster with slots), guard, tough, brown bear,
     dire wolf, worg and owlbear beside the first six, with natural weapons and on-hit riders as
     triggers with a save (a wolf's bite knocks down, a spider's venom, a ghoul's paralysis).
+  - Done 10/8: the other eight classes to level 5: barbarian (Rage), bard (Bardic Inspiration),
+    druid, monk (Martial Arts, focus for Flurry of Blows, Patient Defense, Stunning Strike),
+    paladin (Lay on Hands, Divine Smite), ranger and warlock (Hunter's Mark and Hex as a spell
+    plus a granted trigger), sorcerer; Extra Attack at 5 for the martial ones; Eldritch Blast,
+    Produce Flame and Vicious Mockery. Doesn't fit yet: ranged weapons (attacks reach one
+    square), unarmoured defence as a formula of the armour worn, warlock slots back on a short
+    rest, Wild Shape, subclasses beyond a single path.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
     move, Strike/Stride/Raise a Shield/Demoralize/Hide/Stand, the multiple attack penalty with

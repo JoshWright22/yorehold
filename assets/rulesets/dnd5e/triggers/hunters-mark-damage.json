@@ -1,0 +1,13 @@
+{
+  "id": "hunters-mark-damage",
+  "name": "Hunter's Mark",
+  "description": "A hit on the creature you marked deals 1d6 more.",
+  "on": "hit",
+  "if": "targetFlag.hunted",
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d6"
+    }
+  ]
+}

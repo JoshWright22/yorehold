@@ -1,0 +1,32 @@
+{
+  "id": "bardic-inspiration",
+  "name": "Bardic Inspiration",
+  "description": "As a bonus action: an ally within 60 feet gains +2 on its next attack, check or save.",
+  "order": 63,
+  "cost": "bonus",
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 12
+  },
+  "requires": {
+    "resources": {
+      "bardic-inspiration": 1
+    }
+  },
+  "log": "{name} inspires an ally.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "bardic-inspiration",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "condition",
+      "id": "inspired"
+    }
+  ]
+}

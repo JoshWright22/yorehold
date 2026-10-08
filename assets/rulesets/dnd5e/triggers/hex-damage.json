@@ -1,0 +1,14 @@
+{
+  "id": "hex-damage",
+  "name": "Hex",
+  "description": "A hit on the creature you hexed deals 1d6 necrotic more.",
+  "on": "hit",
+  "if": "targetFlag.hexed",
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d6",
+      "type": "necrotic"
+    }
+  ]
+}

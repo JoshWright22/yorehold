@@ -1,0 +1,28 @@
+{
+  "id": "rage",
+  "name": "Rage",
+  "description": "As a bonus action: +2 damage and half damage from bludgeoning, piercing and slashing until the fight ends. Twice a long rest (three times from level 3).",
+  "order": 61,
+  "cost": "bonus",
+  "general": false,
+  "requires": {
+    "resources": {
+      "rage": 1
+    }
+  },
+  "log": "{name} flies into a rage.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "rage",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "condition",
+      "id": "raging",
+      "target": "self"
+    }
+  ]
+}

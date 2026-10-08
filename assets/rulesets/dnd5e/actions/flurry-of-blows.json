@@ -1,0 +1,45 @@
+{
+  "id": "flurry-of-blows",
+  "name": "Flurry of Blows",
+  "description": "1 focus point, as a bonus action: two unarmed strikes.",
+  "order": 65,
+  "cost": "bonus",
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "requires": {
+    "resources": {
+      "focus": 1
+    }
+  },
+  "effects": [
+    {
+      "do": "resource",
+      "id": "focus",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "repeat",
+      "times": "2",
+      "steps": [
+        {
+          "do": "roll",
+          "kind": "attack",
+          "steps": [
+            {
+              "do": "damage",
+              "dice": "weapon",
+              "when": "hit",
+              "minimum": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

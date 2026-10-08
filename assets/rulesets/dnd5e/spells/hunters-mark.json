@@ -1,0 +1,21 @@
+{
+  "id": "hunters-mark",
+  "name": "Hunter's Mark",
+  "description": "As a bonus action, mark a creature: your hits on it deal 1d6 more while you concentrate.",
+  "level": 1,
+  "hands": 0,
+  "cost": "bonus",
+  "concentration": true,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 18
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "hunted",
+      "duration": 10
+    }
+  ]
+}

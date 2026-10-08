@@ -32,6 +32,37 @@ public class SystemPackageTests
         Assert.True(world.Said("Fire Bolt") || world.Said("attacks"), "Heroes attack under the system's own actions");
     }
 
+    [Theory]
+    [InlineData("barbarian", "warlock")]
+    [InlineData("monk", "sorcerer")]
+    [InlineData("paladin", "bard")]
+    [InlineData("ranger", "druid")]
+    public void Every5eClassPlaysAFight(string fighter, string caster)
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", fighter, caster);
+        PlayOut(world);
+    }
+
+    [Fact]
+    public void RageAndInspirationDoTheirSums()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "bard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet, bo = w.Creatures[1].Sheet;
+        ana.Stats.SetBase("dex", 2000); // Ana, then Bo
+        bo.Stats.SetBase("dex", 1000);
+        world.Fight();
+        Assert.True(world.TurnTo(0) && world.Use("rage"), w.Refusal);
+        Assert.True(ana.HasCondition("raging"));
+        // half of a slashing hit while raging
+        int hp = ana.Hp;
+        ana.TakeDamage(ana.DamageAfterDefences(w.Rules, 10, "slashing"), w.Rules);
+        Assert.Equal(hp - 5, ana.Hp);
+        int check = ana.CheckModifier(w.Rules, "athletics"), save = ana.SaveModifier(w.Rules, "dex");
+        Assert.True(world.TurnTo(1) && world.Use("bardic-inspiration", 0), w.Refusal);
+        Assert.Equal((check + 2, save + 2), (ana.CheckModifier(w.Rules, "athletics"), ana.SaveModifier(w.Rules, "dex")));
+    }
+
     [Fact]
     public void SneakAttackIsATrigger()
     {

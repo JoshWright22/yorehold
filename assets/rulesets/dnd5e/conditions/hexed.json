@@ -1,0 +1,9 @@
+{
+  "id": "hexed",
+  "name": "Hexed",
+  "description": "Cursed: a warlock's hits on it deal 1d6 necrotic more.",
+  "flags": [
+    "hexed"
+  ],
+  "duration": 10
+}

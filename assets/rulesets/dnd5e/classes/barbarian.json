@@ -1,0 +1,104 @@
+{
+  "id": "barbarian",
+  "name": "Barbarian",
+  "description": "A warrior whose fury carries them through.",
+  "hitDie": 12,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "str",
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "str",
+    "con",
+    "athletics",
+    "perception"
+  ],
+  "items": [
+    "greataxe",
+    "leather"
+  ],
+  "levels": [
+    {
+      "features": [
+        {
+          "id": "rage",
+          "name": "Rage",
+          "description": "A bonus action: +2 damage and resistance to weapon damage until the fight ends, twice a long rest.",
+          "resources": {
+            "rage": 2
+          },
+          "actions": [
+            "rage"
+          ]
+        },
+        {
+          "id": "unarmored-defense",
+          "name": "Tough Hide",
+          "description": "+2 AC from a life of hard knocks.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "features": [
+        {
+          "id": "danger-sense",
+          "name": "Danger Sense",
+          "description": "Quick to see a blow or a blast coming: +1 to every save.",
+          "modifiers": [
+            {
+              "stat": "saves",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "features": [
+        {
+          "id": "primal-path",
+          "name": "Path of the Berserker",
+          "description": "One more rage a long rest.",
+          "resources": {
+            "rage": 1
+          }
+        }
+      ]
+    },
+    {
+      "boosts": 2,
+      "boostStep": 1,
+      "boostsRepeat": true
+    },
+    {
+      "features": [
+        {
+          "id": "extra-attack",
+          "name": "Extra Attack",
+          "description": "Attack twice when you take the Attack action.",
+          "actions": [
+            "extra-attack"
+          ]
+        },
+        {
+          "id": "fast-movement",
+          "name": "Fast Movement",
+          "description": "+10 feet of speed.",
+          "modifiers": [
+            {
+              "stat": "speed",
+              "value": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

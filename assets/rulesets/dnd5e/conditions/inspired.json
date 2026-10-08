@@ -1,0 +1,26 @@
+{
+  "id": "inspired",
+  "name": "Inspired",
+  "description": "+2 on its next attack, check or save.",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "op": "add",
+      "value": 2
+    },
+    {
+      "stat": "checks",
+      "op": "add",
+      "value": 2
+    },
+    {
+      "stat": "saves",
+      "op": "add",
+      "value": 2
+    }
+  ],
+  "ends": [
+    "attack",
+    "fightEnd"
+  ]
+}

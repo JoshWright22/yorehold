@@ -1,0 +1,28 @@
+{
+  "id": "patient-defense",
+  "name": "Patient Defense",
+  "description": "1 focus point, as a bonus action: Dodge.",
+  "order": 66,
+  "cost": "bonus",
+  "general": false,
+  "requires": {
+    "resources": {
+      "focus": 1
+    }
+  },
+  "log": "{name} falls back on guard.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "focus",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "condition",
+      "id": "dodging",
+      "target": "self"
+    }
+  ]
+}

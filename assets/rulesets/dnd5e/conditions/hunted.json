@@ -1,0 +1,9 @@
+{
+  "id": "hunted",
+  "name": "Hunter's Mark",
+  "description": "Marked: a ranger's hits on it deal 1d6 more.",
+  "flags": [
+    "hunted"
+  ],
+  "duration": 10
+}

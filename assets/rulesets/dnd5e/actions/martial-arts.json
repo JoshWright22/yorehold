@@ -1,0 +1,27 @@
+{
+  "id": "martial-arts",
+  "name": "Martial Arts",
+  "description": "An unarmed strike as a bonus action.",
+  "order": 64,
+  "cost": "bonus",
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

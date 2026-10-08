@@ -1,0 +1,75 @@
+{
+  "id": "sorcerer",
+  "name": "Sorcerer",
+  "description": "Magic in the blood, shaped by will.",
+  "hitDie": 6,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "cha",
+  "proficiencies": [
+    "weapons",
+    "con",
+    "cha",
+    "arcana",
+    "intimidation"
+  ],
+  "items": [
+    "dagger"
+  ],
+  "casting": "known",
+  "spells": {
+    "0": [
+      "fire-bolt"
+    ],
+    "1": [
+      "magic-missile",
+      "burning-hands",
+      "shield",
+      "thunderwave"
+    ],
+    "2": [
+      "scorching-ray",
+      "shatter",
+      "hold-person"
+    ],
+    "3": [
+      "fireball",
+      "lightning-bolt",
+      "counterspell"
+    ]
+  },
+  "levels": [
+    {
+      "slots": {
+        "1": 2
+      }
+    },
+    {
+      "slots": {
+        "1": 3
+      }
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 2
+      }
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 3
+      },
+      "boosts": 2,
+      "boostStep": 1,
+      "boostsRepeat": true
+    },
+    {
+      "slots": {
+        "1": 4,
+        "2": 3,
+        "3": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "id": "warlock",
+  "name": "Warlock",
+  "description": "Power bargained for from something old.",
+  "hitDie": 8,
+  "bonusHp": 0,
+  "speed": 30,
+  "dcAbility": "cha",
+  "proficiencies": [
+    "weapons",
+    "armor",
+    "wis",
+    "cha",
+    "arcana",
+    "deception"
+  ],
+  "items": [
+    "dagger",
+    "leather"
+  ],
+  "casting": "known",
+  "spells": {
+    "0": [
+      "eldritch-blast"
+    ],
+    "1": [
+      "hex"
+    ],
+    "2": [
+      "hold-person"
+    ],
+    "3": [
+      "counterspell"
+    ]
+  },
+  "levels": [
+    {
+      "slots": {
+        "1": 1
+      },
+      "features": [
+        {
+          "id": "pact-curse",
+          "name": "Hex",
+          "description": "Your hits on a creature you hexed deal 1d6 necrotic more.",
+          "actions": [
+            "hex-damage"
+          ]
+        }
+      ]
+    },
+    {
+      "slots": {
+        "1": 2
+      }
+    },
+    {
+      "slots": {
+        "2": 2
+      }
+    },
+    {
+      "slots": {
+        "2": 2
+      },
+      "boosts": 2,
+      "boostStep": 1,
+      "boostsRepeat": true
+    },
+    {
+      "slots": {
+        "3": 2
+      }
+    }
+  ]
+}
