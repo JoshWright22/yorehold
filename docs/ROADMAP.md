@@ -733,6 +733,31 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     check rolls (Archery, Danger Sense on Dexterity saves, Fate's Forceful Blows). Left: the aim's
     odds and the sheet's shown bonus counting them; defences (`ac`) read against an attacker.
 
+- [ ] **R22. Easy to start making things, above all for people who know Foundry.** Josh, 10/9: notes
+  on Foundry's structure so its users find their way here. In `docs/FOUNDRY_NOTES.md` (its "For
+  people coming from Foundry" part) and the creator docs:
+  - A word map: Actor = creature or hero, Item = item, feat, spell or class, Active Effect =
+    condition and its modifiers, Rule Element = modifier with `if`, trigger or reaction, Activity
+    = action, Advancement = class level rows, compendium pack = content set, `system.json` =
+    `ruleset.json` and `content.json`, World = adventure, Scene = chapter map, Journal = journal.
+  - Formulas that also take Foundry's spelling: `@abilities.str.mod`, `@details.level`,
+    `@actor.level` read as `mod.str`, `level`, so a formula pasted from a Foundry item works.
+  - An importer for Foundry exports a creator owns (an Item or Actor exported as JSON from their
+    own world, dnd5e or pf2e shape) into this system's files, with a report of what didn't fit:
+    the fastest way to bring homebrew across.
+  - JSON schemas for every file kind (`docs/schemas/*.json`), so VS Code and other editors check
+    and complete as people type; the game's own checker as one command (`check.ps1 -Package
+    <folder>`) that names the file and field, and Create showing the same.
+  - A starter package per system (one class, one spell, one creature, one item, one map, one
+    chapter) to copy, a "your first adventure" page, and examples on every field in CONTENT.md.
+  - Reload while the game runs: content files changed on disk show on the next turn in Test play.
+
+- [ ] **R23. A 3D map beside the 2D one** (Josh, 10/9: long after the 2D game ships). Nothing to
+  build now; what keeps it open: the rules know only the grid (R2c), never pixels; maps keep their
+  data (tiles, walls, heights where given, lights) apart from how they are drawn; tokens and art
+  are named pictures a 3D view could swap for models; the camera, fog and lighting stay behind
+  the map view so a second view can replace them.
+
 - [ ] **R20. The screens match the design.** Josh, 10/9: the game, editor and website look as the
   design of 10/9 shows, with the UI's own motion. The plan, the design's pictures and the state
   of each page are in `docs/design/PLAN.md`, kept up to date as each step lands. Tokens first,
