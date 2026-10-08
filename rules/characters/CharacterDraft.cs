@@ -122,6 +122,14 @@ public sealed class CharacterDraft
                     return $"Pick {Article(_rules.FeatKindName(kind))}.";
                 }
             }
+            foreach (string kind in LevelOptionKinds())
+            {
+                bool chosen = Picked("options").Any(id => _compendium.Options.TryGetValue(id, out OptionDefinition? o) && o.Kind == kind);
+                if (!chosen && LevelOptionIds(kind).Count > 0)
+                {
+                    return $"Pick {Article(_rules.OptionKinds.Find(k => k.Id == kind)?.Name ?? kind)}.";
+                }
+            }
             int boosts = LevelBoosts().Count - Picked("boosts").Count;
             if (boosts > 0)
             {
@@ -352,6 +360,38 @@ public sealed class CharacterDraft
         if (skills.Count == 0)
         {
             Current.Picks.Remove("skills");
+        }
+        Rebuild();
+    }
+
+    /// <summary>The system's option kinds the level being chosen offers (an archetype at level 2).</summary>
+    public List<string> LevelOptionKinds() => Row()?.Options ?? new List<string>();
+
+    /// <summary>Options of a kind the level could take: open to this race and the level's class, not taken before.</summary>
+    public List<string> LevelOptionIds(string kind)
+    {
+        var taken = _choices.Levels.Take(_choices.Levels.Count - 1).SelectMany(l => l.Picked("options")).ToHashSet();
+        return ByName(_compendium.Options.Where(o => o.Value.Kind == kind && o.Value.OpenTo(_choices.Race, Current.ClassId) && !taken.Contains(o.Key))
+            .ToDictionary(o => o.Key, o => o.Value), o => o.Name);
+    }
+
+    /// <summary>One option per kind the level offers: a new one replaces any of its kind; the same one again takes it back.</summary>
+    public void PickLevelOption(string id)
+    {
+        if (!_compendium.Options.TryGetValue(id, out OptionDefinition? option))
+        {
+            return;
+        }
+        List<string> picked = Current.Picks.TryGetValue("options", out List<string>? list) ? list : Current.Picks["options"] = new List<string>();
+        bool was = picked.Contains(id);
+        picked.RemoveAll(other => _compendium.Options.TryGetValue(other, out OptionDefinition? o) && o.Kind == option.Kind);
+        if (!was)
+        {
+            picked.Add(id);
+        }
+        if (picked.Count == 0)
+        {
+            Current.Picks.Remove("options");
         }
         Rebuild();
     }

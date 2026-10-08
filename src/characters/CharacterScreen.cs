@@ -729,6 +729,18 @@ public partial class CharacterScreen : CanvasLayer
             }
             Grid(options, id => _compendium.Feats[id].Name, picked.Contains, 2, d.PickFeat);
         }
+        foreach (string kind in d.LevelOptionKinds())
+        {
+            // the system's own picks at this level (an archetype, a subclass)
+            Heading(_body, _rules.OptionKinds.Find(k => k.Id == kind)?.Name ?? kind);
+            List<string> open = d.LevelOptionIds(kind);
+            if (open.Count == 0)
+            {
+                Dim(_body, "None the character can take yet.");
+            }
+            List<string> chosen = d.Picked("options");
+            Grid(open, id => _compendium.Options[id].Name, chosen.Contains, 2, d.PickLevelOption);
+        }
         (int boosts, int step) = d.LevelBoosts();
         if (boosts > 0)
         {
@@ -739,7 +751,7 @@ public partial class CharacterScreen : CanvasLayer
             Heading(_body, $"{_rules.Creation.NameOf("scores")}: raise {boosts} by {step} each{taken}");
             Grid(_rules.Abilities.Select(a => a.Id).ToList(), id => _rules.Ability(id)?.Name ?? id, raised.Contains, 3, d.ToggleBoost);
         }
-        if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0 && boosts == 0)
+        if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0 && boosts == 0 && d.LevelOptionKinds().Count == 0)
         {
             Dim(_body, $"Nothing to pick at this {className} level.");
         }

@@ -110,6 +110,10 @@ public class RulesFolder
             {
                 throw new ContentException(FileOf("classes", definition.Id), "levels", $"unknown feat kind \"{unknown}\"; the ruleset's are {kinds}");
             }
+            if (definition.Levels.SelectMany(level => level.Options).FirstOrDefault(kind => Rules.OptionKinds.All(k => k.Id != kind)) is string option)
+            {
+                throw new ContentException(FileOf("classes", definition.Id), "levels", $"unknown option kind \"{option}\"; the ruleset's are {string.Join(", ", Rules.OptionKinds.Select(k => k.Id))}");
+            }
         }
         foreach (ReactionDefinition reaction in Reactions.Where(r => r.Spell.Length > 0 && !compendium.Spells.ContainsKey(r.Spell)))
         {

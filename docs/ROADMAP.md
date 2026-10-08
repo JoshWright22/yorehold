@@ -334,7 +334,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     dwarf, cavern and woodland elf, skilled and hardy human), open by race and class, granting
     like features, picked in creation. Class is optional: a system whose creation never asks
     for one builds on its first class unseen (Fate), and the sheet names no level without
-    advancement. Left: options taken at later levels (archetypes).
+    advancement. Done 10/8: options taken at later levels (a class row's `options`: an archetype, a
+    subclass), picked on the level-up screen.
   - Advancement: levels and XP are one mode beside milestones, Fate's milestones (swap a skill,
     +1 to an approach) and none.
     Done 10/8: `advancement`: xp, milestone (a level for each chapter gone on from) or none;

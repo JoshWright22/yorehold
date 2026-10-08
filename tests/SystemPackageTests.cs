@@ -670,6 +670,37 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ALevelCanOfferAnArchetype()
+    {
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "x", "name": "X", "abilities": [{"id": "str", "name": "Str"}, {"id": "con", "name": "Con"}],
+             "optionKinds": [{"id": "path", "name": "Path"}], "scoreMethods": {"standardArray": [15, 14]}}
+            """);
+        var compendium = new Compendium();
+        compendium.Classes["warrior"] = ClassDefinition.Read(TestContent.Json("""
+            {"id": "warrior", "name": "Warrior", "hitDie": 10, "levels": [{}, {"options": ["path"]}]}
+            """));
+        compendium.Options["brute"] = OptionDefinition.Read(TestContent.Json("""
+            {"id": "brute", "name": "Brute", "kind": "path", "classes": ["warrior"], "modifiers": [{"stat": "damage", "op": "add", "value": 2}]}
+            """));
+        compendium.Options["duelist"] = OptionDefinition.Read(TestContent.Json("""{"id": "duelist", "name": "Duelist", "kind": "path"}"""));
+        var draft = new CharacterDraft(rules, compendium);
+        draft.SetName("Ana");
+        draft = CharacterDraft.LevelUp(rules, compendium, draft.Choices);
+        Assert.Equal(new[] { "path" }, draft.LevelOptionKinds());
+        Assert.Equal(new[] { "brute", "duelist" }, draft.LevelOptionIds("path"));
+        Assert.Equal("Pick a path.", draft.StepProblem(draft.Step));
+        draft.PickLevelOption("brute");
+        draft.PickLevelOption("duelist"); // one per kind: the new one replaces it
+        draft.PickLevelOption("brute");
+        Assert.Equal(new[] { "brute" }, draft.Choices.Levels[^1].Picked("options"));
+        CharacterSheet? built = CharacterBuild.Build(rules, compendium, draft.Choices, out string why);
+        Assert.True(built != null, why + " / " + draft.Problem);
+        CharacterSheet ana = built!;
+        Assert.Equal(2, ana.Stats.Integer("damage"));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

@@ -202,6 +202,23 @@ public static class CharacterBuild
                 {
                     Grant(feature.Gives, $"build:feature:{definition.Id}:{feature.Id}");
                 }
+                // the system's own picks this level offered (an archetype): what each grants, and its feats
+                foreach (string id in level.Picked("options"))
+                {
+                    if (!compendium.Options.TryGetValue(id, out OptionDefinition? option) || !row.Options.Contains(option.Kind))
+                    {
+                        error = $"levels[{i}].picks.options: \"{id}\" isn't offered at this level";
+                        return null;
+                    }
+                    Grant(option.Gives, "build:option:" + option.Id);
+                    foreach (string featId in option.Feats.Where(f => !taken.Contains(f)))
+                    {
+                        if (compendium.Feats.TryGetValue(featId, out FeatDefinition? given))
+                        {
+                            Take(given);
+                        }
+                    }
+                }
                 Raise(row.Ranks);
                 if (row.Slots.Count > 0)
                 {
