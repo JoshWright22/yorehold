@@ -386,6 +386,30 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ThePf2eAiStridesMoreThanOnce()
+    {
+        // Rak moves one square a Stride and starts far off: with three actions it strides on
+        // (Demoralize only from beside them here, so it can't spend its actions on that instead)
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard",
+            ("rulesets/pf2e/actions/demoralize.json", """
+                {"id": "demoralize", "name": "Demoralize", "cost": 1, "target": {"kind": "creature", "side": "enemy", "range": 1},
+                 "effects": [{"do": "condition", "id": "frightened", "value": 1}]}
+                """));
+        World w = world.World;
+        CharacterSheet rak = w.Creatures[3].Sheet;
+        rak.Stats.SetBase("speed", 5);
+        rak.Stats.SetBase("perception", 2000); // acts first
+        world.Put(2, new Cell(6, 1));
+        world.Put(3, new Cell(6, 6));
+        world.Fight();
+        Assert.True(world.TurnTo(3), w.Refusal);
+        Cell start = w.CellOf(3);
+        Assert.True(world.StepUntil(() => w.CurrentCreature != 3, 20));
+        Assert.True(Math.Abs(start.X - w.CellOf(3).X) + Math.Abs(start.Y - w.CellOf(3).Y) >= 2,
+            "It strode more than once:\n" + string.Join("\n", world.Log.TakeLast(6)));
+    }
+
+    [Fact]
     public void AWolfsBiteKnocksDown()
     {
         // the bestiary's on-hit riders: a failed Strength save leaves the bitten prone

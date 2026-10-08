@@ -40,6 +40,8 @@ public sealed partial class World
     private string _pendingAction = "";
     private Cell? _pendingStep;
     private EnemyStep _enemyStep;
+    // How many times this turn the AI walked and thought again, so a turn can't wander for ever.
+    private int _enemyWalks;
     private double _enemyTimer;
     private int? _enemyTarget;
 
@@ -373,6 +375,7 @@ public sealed partial class World
         Tokens.Settings.ActiveTurn = current;
         _pendingAttack = null;
         _enemyStep = EnemyStep.Think;
+        _enemyWalks = 0;
         _enemyTimer = 0;
         _enemyTarget = null;
         if (Creatures[current.Value].Team == 0)
@@ -783,6 +786,12 @@ public sealed partial class World
                     return;
                 }
                 _enemyStep = _enemyTarget is int aimed && Adjacent(me, aimed) && (CanUse(me, StrikeAction) || BestAttack(me, aimed) != null) ? EnemyStep.Strike : EnemyStep.Wait;
+                // Short of its target with actions still to pay for another Stride (a system with
+                // no free move, or a Dash after moving): it thinks again rather than stopping.
+                if (_enemyStep == EnemyStep.Wait && !Creatures[me].Fleeing && Encounter!.Current.Budget.Actions >= 1 && ++_enemyWalks < 3)
+                {
+                    _enemyStep = EnemyStep.Think;
+                }
                 return;
             case EnemyStep.Strike:
             {

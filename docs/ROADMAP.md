@@ -542,7 +542,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     reason in the log. Option sets (feats, spells, races, backgrounds) read from a set's root.
   - Left: turning sets on and off in Settings, the Library screen with a tab per kind, the
     same check in Create and on the site, `.yore` archives.
-- [ ] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
+- [x] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
   host tools; the AI makes the enemies' and NPCs' decisions. The fight AI reads the loaded
   system's actions, costs and odds (R3, R4, through R2b's evaluator) instead of d20 maths and the `strike` action, so it
   plays a PF2e turn (three actions, the attack penalty, Raise a Shield) as well as a 5e one, and
@@ -561,7 +561,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     flat guess, so Demoralize and a stun are worth what they do; non-spell tricks aimed at someone
     else (Demoralize) are weighed like spells; a guard only once a foe is beside it, at three
     quarters of what it saves (guarding puts a fight off, striking ends it).
-  - Left: the AI's own walk (Stride as an action it must pay for when planning).
+  - Done 10/8: the AI's walk: a cell past its move costs it a Stride (or Dash), and short of its
+    target with actions left it thinks again, so a PF2e creature strides twice and strikes, or
+    strides three times, rather than stopping after one.
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each
