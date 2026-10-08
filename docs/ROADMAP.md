@@ -271,7 +271,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     proficiency, attack, damage, AC, checks, saves, DC, passive scores).
   - Done 10/8: exploding dice, success counts and Fate dice ("1d6!", "6d6s5", "4dF").
   - Done 10/8: the fight AI scores attacks with the system's own odds (`Tactics.HitChance`).
-  - Left: a trap's "fumbled by 5" and dialogue checks still read a bare total; opposed rolls;
+  - Done 10/8: opposed rolls (`"opposed": true` on a roll kind).
+  - Left: a trap's "fumbled by 5" and dialogue checks still read a bare total;
     triggered effects; expected damage and simulated fights in the evaluator; the schema and
     reference for the story model.
   - Readable by the AI: the language has a schema and a reference written for people and for
@@ -378,7 +379,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     refresh 3, three foes. A fight plays to the end.
   - Engine pieces it needed, now general: `margin` in dice formulas (how far a roll beat its
     DC), attacks that name the ability they use, scores of 0.
-  - Doesn't fit yet: active defence (the defender rolls too: opposed rolls); stress boxes and
+  - Done 10/8: active defence (`"opposed": true` on its attacks and checks).
+  - Doesn't fit yet: stress boxes and
     consequences are one HP pool; aspects as things on the scene; compels; zones instead of
     squares; ties' boosts; concessions.
 - [ ] **R11. Packages by kind, no add-ons.** Josh, 10/8: all content is in the format the game

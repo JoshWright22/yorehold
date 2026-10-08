@@ -27,6 +27,8 @@ public enum EffectEventKind
 {
     Attack,
     Check,
+    /// <summary>The other side's roll in an opposed attack or contest; Amount is what it came to.</summary>
+    Defence,
     Save,
     Damage,
     Heal,

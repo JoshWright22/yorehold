@@ -51,7 +51,7 @@ public class SystemPackageTests
         Assert.True(w.Rules.Id == "fate-accelerated" && w.Creatures[0].Sheet.MaxHp == 15);
         Assert.Contains(w.ActionsOf(0), a => a.Id == "create-advantage");
         PlayOut(world);
-        Assert.True(world.Said("4dF"), "Rolls are Fate dice");
+        Assert.True(world.Said("4dF") && world.Said("defends"), "Rolls are Fate dice, and defenders roll too");
     }
 
     // Heroes attack the nearest goblin in reach or fire at any, else end the turn; enemies play themselves.

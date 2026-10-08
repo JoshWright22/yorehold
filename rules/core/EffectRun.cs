@@ -514,6 +514,13 @@ internal sealed class EffectRun
         if (step.How == "check")
         {
             int dc = step.Against.Length > 0 ? subject.PassiveScore(_rules, step.Against) : step.CasterDc ? _context.Dc : step.Dc;
+            CheckKind checks = _rules.Checks.Kind(CheckRules.Check);
+            if (step.Against.Length > 0 && checks.Opposed)
+            {
+                // a contest: the other side rolls their own modifier rather than standing on a passive score
+                dc = checks.Defence(dc - _rules.PassiveBase, _random, out RollResult? resisted);
+                Note(EffectEventKind.Defence, actor, step.Against, dc, resisted);
+            }
             RollResult roll = self.RollCheck(_rules, step.Ability, Advantage.None, _random);
             outcome.Check = _rules.Checks.Kind(CheckRules.Check).Resolve(roll, dc);
             outcome.Margin = roll.Total - dc;
@@ -536,7 +543,12 @@ internal sealed class EffectRun
             : self.AttackModifier(_rules);
         RollResult attack = kind.Roll(bonus + penalty, self.AttackAdvantage(_rules, subject), _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
-        int ac = _host.ArmorClass(actor, _context);
+        int ac = kind.Defence(_host.ArmorClass(actor, _context), _random, out RollResult? defended);
+        if (defended != null)
+        {
+            // the defender's own roll, shown before the attack it meets
+            Note(EffectEventKind.Defence, actor, "defence", ac, defended);
+        }
         outcome.Attack = kind.Resolve(attack, ac);
         outcome.Margin = attack.Total - ac;
         _result.Events.Add(new EffectEvent

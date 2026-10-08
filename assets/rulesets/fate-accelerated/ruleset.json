@@ -94,7 +94,8 @@
           "passes": true
         }
       ],
-      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2"
+      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2",
+      "opposed": true
     },
     "check": {
       "dice": "4dF",
@@ -120,7 +121,8 @@
           "passes": true
         }
       ],
-      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2"
+      "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2",
+      "opposed": true
     },
     "save": {
       "dice": "4dF",

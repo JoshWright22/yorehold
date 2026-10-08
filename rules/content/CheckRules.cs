@@ -22,6 +22,18 @@ public sealed class CheckKind
     public DiceExpression WithDisadvantage { get; init; } = DiceExpression.Parse("2d20kl1")!;
     public List<CheckOutcome> Outcomes { get; init; } = new();
     public Formula Degree { get; init; } = Formula.Parse("total >= dc", out _)!;
+    /// <summary>
+    /// The one it is rolled against rolls too: the DC is their roll of Dice plus their defence
+    /// (AC for an attack, the passive score less its base for a check). Fate's active defence.
+    /// </summary>
+    public bool Opposed { get; init; }
+
+    /// <summary>The DC a roll of this kind meets: the defence itself, or the defender's roll on it.</summary>
+    public int Defence(int defence, Rng random, out RollResult? rolled)
+    {
+        rolled = Opposed ? Roll(defence, Advantage.None, random) : null;
+        return rolled?.Total ?? defence;
+    }
 
     public CheckOutcome? Outcome(string id) => Outcomes.Find(o => o.Id == id);
 
@@ -71,9 +83,14 @@ public sealed class CheckKind
     public Dictionary<string, double> Odds(int modifier, int dc, Advantage advantage = Advantage.None)
     {
         var odds = Outcomes.ToDictionary(o => o.Id, _ => 0.0, StringComparer.Ordinal);
+        // an opposed roll: every way the defender's dice can fall, each with its own DC
+        Dictionary<int, double> defender = Opposed ? Spread(Dice) : new Dictionary<int, double> { [0] = 1 };
         foreach (KeyValuePair<int, double> die in Spread(DiceFor(advantage)))
         {
-            odds[Resolve(die.Key, modifier, dc).Id] += die.Value;
+            foreach (KeyValuePair<int, double> against in defender)
+            {
+                odds[Resolve(die.Key, modifier, dc + against.Key).Id] += die.Value * against.Value;
+            }
         }
         return odds;
     }
@@ -222,7 +239,7 @@ public sealed class CheckRules
             }
             ContentNode kind = member.Value;
             kind.RequireObject("is an object with dice, outcomes and a degree");
-            kind.Only("dice", "advantage", "disadvantage", "outcomes", "degree");
+            kind.Only("dice", "advantage", "disadvantage", "outcomes", "degree", "opposed");
             CheckKind standard = rules.Kind(member.Key);
             var outcomes = new List<CheckOutcome>();
             if (kind.Get("outcomes") is ContentNode list)
@@ -256,6 +273,7 @@ public sealed class CheckRules
                 WithAdvantage = DiceAt(kind, "advantage", kind.Has("dice") ? DiceAt(kind, "dice", standard.Dice) : standard.WithAdvantage),
                 WithDisadvantage = DiceAt(kind, "disadvantage", kind.Has("dice") ? DiceAt(kind, "dice", standard.Dice) : standard.WithDisadvantage),
                 Outcomes = outcomes,
+                Opposed = kind.Bool("opposed", standard.Opposed),
                 Degree = kind.Get("degree") is ContentNode degree ? FormulaAt(degree, "total", "die", "modifier", "dc")
                     : kind.Has("outcomes") ? throw kind.Fail("degree", "is needed with outcomes: the formula that picks one")
                     : standard.Degree,
