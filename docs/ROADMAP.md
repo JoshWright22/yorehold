@@ -724,6 +724,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     dice; rolls made on the sheet.
   - Josh, 10/9: the dice don't look like they roll across a table. See R19 for the plan.
 
+- [ ] **R20. The screens match the design.** Josh, 10/9: the game, editor and website look as the
+  design of 10/9 shows, with the UI's own motion. The plan, the design's pictures and the state
+  of each page are in `docs/design/PLAN.md`, kept up to date as each step lands. Tokens first,
+  then the game screens in the order players meet them, then motion (shared with R19), the
+  editor, and the website in its own repo.
+
 - [ ] **R19. A fight is shown beat by beat: dice, then the blow, then the numbers.** Josh, 10/9:
   attack animations play after the dice stop; nothing of the result (log line, floater, HP bar,
   "goes down") shows until the dice have landed on their faces; attacks of different kinds
