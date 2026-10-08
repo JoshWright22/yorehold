@@ -130,6 +130,10 @@ public class Ruleset
     public List<int> XpForLevel { get; init; } = new();
     public int ActionsPerTurn { get; init; } = 1;
     public bool BonusActions { get; init; } = true;
+    /// <summary>A turn starts with its speed to move for free; false: moving takes an action (Stride).</summary>
+    public bool FreeMove { get; init; } = true;
+    /// <summary>Added to each attack after the first in a turn, from "attacks" (made so far this turn). Null = none.</summary>
+    public Formula? AttackPenalty { get; init; }
     public bool StrikeCostsHands { get; init; }
     public bool SharedTurns { get; init; }
     public int FeetPerSquare { get; init; } = 5;
@@ -379,6 +383,8 @@ public class Ruleset
             XpForLevel = xp,
             ActionsPerTurn = node.Int("actionsPerTurn", 1, 1, 10),
             BonusActions = node.Bool("bonusActions", true),
+            FreeMove = node.Bool("freeMove", true),
+            AttackPenalty = node.Get("attackPenalty") is ContentNode penalty ? FormulaOf(penalty, "attacks") : null,
             StrikeCostsHands = node.Bool("strikeCostsHands", false),
             SharedTurns = node.Bool("sharedTurns", false),
             FeetPerSquare = node.Int("feetPerSquare", 5, 1),
@@ -622,6 +628,16 @@ public class Ruleset
             SlotPrefix = prefix,
             Focus = Name("focus", defaults.Focus),
         };
+    }
+
+    private static Formula FormulaOf(ContentNode node, params string[] names)
+    {
+        Formula formula = Formula.Parse(node.AsText(2000), out string error) ?? throw node.Fail(error);
+        foreach (string name in formula.Names.Where(name => !names.Contains(name)))
+        {
+            throw node.Fail($"unknown name \"{name}\"; it can use {string.Join(", ", names)}");
+        }
+        return formula;
     }
 
     private static CompanionRules CompanionsFrom(ContentNode? found)

@@ -10,6 +10,8 @@ public sealed class TurnBudget
     public bool Reaction { get; set; } = true;
     /// <summary>Squares.</summary>
     public int MovementLeft { get; set; }
+    /// <summary>Attacks made this turn, for the ruleset's attack penalty.</summary>
+    public int Attacks { get; set; }
 
     public TurnBudget Copy() => (TurnBudget)MemberwiseClone();
 }
@@ -353,6 +355,17 @@ public sealed class Encounter
         return true;
     }
 
+    /// <summary>Spends the bonus action; false if it's gone or the rules have none.</summary>
+    public bool SpendBonusAction()
+    {
+        if (!Started || Finished || _order.Count == 0 || !_order[_current].Budget.BonusAction)
+        {
+            return false;
+        }
+        _order[_current].Budget.BonusAction = false;
+        return true;
+    }
+
     /// <summary>Spends actions on anything else (Defend, Help, Interact...); false if there aren't enough.</summary>
     public bool SpendActions(int count)
     {
@@ -446,9 +459,13 @@ public sealed class Encounter
     private void RefreshTurn(Combatant c)
     {
         ConditionsEnded(c.Sheet, c.Sheet.ConditionEvent(_rules, "turnStart"));
+        // conditions add or take actions through the "actions" stat (quickened +1, slowed -1)
         c.Budget = new TurnBudget
         {
-            Actions = _rules.ActionsPerTurn, BonusAction = _rules.BonusActions, Reaction = true, MovementLeft = c.Sheet.SpeedSquares(_rules),
+            Actions = Math.Clamp(_rules.ActionsPerTurn + c.Sheet.Stats.Integer("actions"), 0, 10),
+            BonusAction = _rules.BonusActions,
+            Reaction = true,
+            MovementLeft = _rules.FreeMove ? c.Sheet.SpeedSquares(_rules) : 0,
         };
         if (c.Sheet.HasFlag(_rules, "cantAct"))
         {

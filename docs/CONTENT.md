@@ -762,6 +762,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `death` | Optional death-save rules; absent/disabled keeps older play (see Downed and death). |
 | `xpForLevel` | Total XP needed for each level, level 2 first. |
 | `actionsPerTurn`, `bonusActions`, `strikeCostsHands` | Actions in a turn (1 to 10), whether there is a bonus action as well, and whether a Strike costs one action per hand the weapon needs. |
+| `freeMove`, `attackPenalty` | Whether a turn starts with its speed to move for free (true; false: moving takes an action, the Stride/Dash action), and a formula added to each attack from `attacks`, the attacks made earlier that turn (`"attacks >= 2 ? -10 : attacks * -5"`; none by default). A condition adds or takes actions with a modifier on the `actions` stat (`{"stat": "actions", "op": "add", "value": -1}`). An action's `cost` may be `"bonus"`: it takes the bonus action instead. |
 | `sharedTurns` | Consecutive allies share an active initiative block. True for Yorehold; absent means sequential turns for older rulesets. |
 | `feetPerSquare` | Size of a map square. |
 | `carryPerStrength` | Pounds carried per point of the first ability. |

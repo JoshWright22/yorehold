@@ -74,6 +74,11 @@ public sealed partial class World
             why = "not enough actions left";
             return false;
         }
+        if (action.CostsBonus && Encounter.Current.Budget is { BonusAction: false })
+        {
+            why = Rules.BonusActions ? "the bonus action is used" : "these rules have no bonus action";
+            return false;
+        }
         if (SpellOf(action) is SpellDefinition spell && !Spellcasting.CanCast(Creatures[creature].Sheet, spell, SpellRules, out why))
         {
             return false;
@@ -154,7 +159,7 @@ public sealed partial class World
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
         // counted from the system's own dice and outcomes, so it is right for any of them
-        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules), ac, sheet.AttackAdvantage(Rules));
+        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules));
     }
 
     /// <summary>The same attack as HitChance, as the chance of each of the system's outcomes by id.</summary>
@@ -163,7 +168,14 @@ public sealed partial class World
         ActionDefinition? action = FindAction(actionId ?? StrikeAction);
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
-        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules), ac, sheet.AttackAdvantage(Rules));
+        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules));
+    }
+
+    // What the ruleset's attack penalty takes off the attacker's next attack this turn.
+    private int AttackPenaltyNow(int attacker)
+    {
+        int made = Fighting && CurrentCreature == attacker ? Encounter!.Current.Budget.Attacks : 0;
+        return Rules.AttackPenalty?.Whole(name => name == "attacks" ? made : null) ?? 0;
     }
 
     /// <summary>
@@ -223,6 +235,10 @@ public sealed partial class World
         int me = CurrentCreature!.Value;
         Creatures[me].ReadiedAction = action.Readies;
         Encounter!.SpendActions(ActionCost(me, action));
+        if (action.CostsBonus)
+        {
+            Encounter.SpendBonusAction();
+        }
         SyncLog();
         if (action.Log.Length > 0)
         {
@@ -265,9 +281,14 @@ public sealed partial class World
                 Source = action.Id,
                 Slot = slot,
                 Dc = Creatures[me].Sheet.DifficultyClass(Rules),
+                AttacksMade = Fighting && CurrentCreature == me ? Encounter!.Current.Budget.Attacks : 0,
             };
             _aim = aim;
             result = action.Effect.Run(new WorldEffectHost(this), context);
+            if (Fighting && CurrentCreature == me)
+            {
+                Encounter!.Current.Budget.Attacks += result.Events.Count(e => e.Kind == EffectEventKind.Attack);
+            }
             _aim = null;
             Narrate(result);
             ConcentrationChecks(result, random);

@@ -512,7 +512,10 @@ internal sealed class EffectRun
         // An attack with whatever the doer holds, against armour class, read the way the system
         // reads attacks (the game's own: a natural 1 misses, a natural 20 is a critical hit).
         CheckKind kind = _rules.Checks.Kind(CheckRules.Attack);
-        RollResult attack = kind.Roll(self.AttackModifier(_rules), self.AttackAdvantage(_rules), _random);
+        // each attack after the first in a turn takes the ruleset's penalty, this effect's own included
+        int attacksSoFar = _context.AttacksMade + _result.Events.Count(e => e.Kind == EffectEventKind.Attack);
+        int penalty = _rules.AttackPenalty?.Whole(name => name == "attacks" ? attacksSoFar : null) ?? 0;
+        RollResult attack = kind.Roll(self.AttackModifier(_rules) + penalty, self.AttackAdvantage(_rules), _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
         int ac = _host.ArmorClass(actor, _context);
         outcome.Attack = kind.Resolve(attack, ac);

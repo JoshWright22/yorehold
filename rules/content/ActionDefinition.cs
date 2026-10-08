@@ -44,6 +44,8 @@ public class ActionDefinition
     public int Cost { get; init; } = 1;
     /// <summary>One action per hand the weapon in use needs, in place of Cost.</summary>
     public bool CostsHands { get; init; }
+    /// <summary>Takes the turn's bonus action instead of actions.</summary>
+    public bool CostsBonus { get; init; }
     public bool EndsTurn { get; init; }
     /// <summary>True: every creature has it. False: something has to grant it.</summary>
     public bool General { get; init; } = true;
@@ -122,11 +124,17 @@ public class ActionDefinition
 
         int cost = defaults.Cost ?? 1;
         bool costsHands = false;
+        bool costsBonus = false;
         if (node.Get("cost") is ContentNode costNode)
         {
             if (costNode.IsString && costNode.AsText() == "hands")
             {
                 costsHands = true;
+            }
+            else if (costNode.IsString && costNode.AsText() == "bonus")
+            {
+                costsBonus = true;
+                cost = 0;
             }
             else if (costNode.IsWhole && costNode.AsInt() >= 0 && costNode.AsInt() <= 10)
             {
@@ -134,7 +142,7 @@ public class ActionDefinition
             }
             else
             {
-                throw costNode.Fail("is a number of actions from 0 to 10, or \"hands\"");
+                throw costNode.Fail("is a number of actions from 0 to 10, \"hands\" or \"bonus\"");
             }
         }
 
@@ -223,6 +231,7 @@ public class ActionDefinition
             Order = node.Int("order", defaults.Order ?? 0, -100000, 100000),
             Cost = cost,
             CostsHands = costsHands,
+            CostsBonus = costsBonus,
             EndsTurn = node.Bool("endsTurn", false),
             General = defaults.General && node.Bool("general", true),
             Readies = node.Text("readies", "", 64),

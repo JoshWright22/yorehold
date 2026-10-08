@@ -61,7 +61,7 @@ public static class HudText
     /// <summary>What an action costs and where it can be aimed, for its tooltip.</summary>
     public static string ActionMeta(World world, ActionDefinition action, int cost)
     {
-        string price = cost <= 0 ? "Free" : cost == 1 ? "1 action" : $"{cost} actions";
+        string price = action.CostsBonus ? "Bonus action" : cost <= 0 ? "Free" : cost == 1 ? "1 action" : $"{cost} actions";
         if (action.EndsTurn)
         {
             price += ", ends the turn";

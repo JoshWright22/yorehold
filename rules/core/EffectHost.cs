@@ -17,6 +17,8 @@ public sealed record EffectContext(Ruleset Rules, Rng Random)
     public int Slot { get; set; }
     /// <summary>The doer's DC, for saves and checks that ask for "caster".</summary>
     public int Dc { get; set; } = 10;
+    /// <summary>Attacks the doer made earlier this turn, for the ruleset's attack penalty.</summary>
+    public int AttacksMade { get; set; }
     /// <summary>Set on the context handed to the host's Damage for a critical hit.</summary>
     public bool CriticalDamage { get; set; }
 }
