@@ -372,7 +372,9 @@ public partial class CharacterScreen : CanvasLayer
 
     private bool CanLevel(LibraryEntry entry)
     {
-        return !entry.Retired && entry.Away.Length == 0 && _rules.LevelForXp(entry.Choices.Xp) > entry.Choices.Level
+        // a new level the experience allows, or the picks a level gained in play still owes
+        return !entry.Retired && entry.Away.Length == 0
+            && (_rules.LevelForXp(entry.Choices.Xp) > entry.Choices.Level || CharacterDraft.OwesPicks(_rules, _compendium, entry.Choices))
             && CharacterBuild.Build(_rules, _compendium, entry.Choices) != null;
     }
 
@@ -386,7 +388,9 @@ public partial class CharacterScreen : CanvasLayer
                 break;
             case "level" when chosen != null:
                 _draftBack = View.Characters;
-                _draft = CharacterDraft.LevelUp(_rules, _compendium, chosen.Choices);
+                _draft = CharacterDraft.OwesPicks(_rules, _compendium, chosen.Choices)
+                    ? CharacterDraft.FillLevel(_rules, _compendium, chosen.Choices)
+                    : CharacterDraft.LevelUp(_rules, _compendium, chosen.Choices);
                 Showing = View.Draft;
                 break;
             case "close":

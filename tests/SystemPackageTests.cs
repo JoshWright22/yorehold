@@ -626,6 +626,9 @@ public class SystemPackageTests
             }
         }
         Assert.Equal((2, 1), draft.LevelBoosts());
+        // gained in play with no picks, the level still owes them, and the same screen fills them in
+        Assert.True(CharacterDraft.OwesPicks(rules, compendium, draft.Choices));
+        Assert.Equal(4, CharacterDraft.FillLevel(rules, compendium, draft.Choices).Choices.Level);
         Assert.StartsWith("Raise 2 more", draft.StepProblem(draft.Step));
         int str = CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str");
         draft.ToggleBoost("str");

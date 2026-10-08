@@ -50,6 +50,30 @@ public sealed class CharacterDraft
         return draft;
     }
 
+    /// <summary>
+    /// The picks the latest level still owes (it was gained in play, from experience or a
+    /// milestone, with none made): the same screen as a level-up, adding no level.
+    /// </summary>
+    public static CharacterDraft FillLevel(Ruleset rules, Compendium compendium, CharacterChoices choices)
+    {
+        int picks = Math.Max(rules.Creation.StepOf("skills"), rules.Creation.StepOf("feats"));
+        var draft = new CharacterDraft(rules, compendium) { LevellingUp = true, Step = picks >= 0 ? picks : rules.Creation.Steps.Count - 1 };
+        draft._choices = choices.Copy();
+        draft.Rebuild();
+        return draft;
+    }
+
+    /// <summary>Whether the latest level (past the first) still owes picks its class row offers.</summary>
+    public static bool OwesPicks(Ruleset rules, Compendium compendium, CharacterChoices choices)
+    {
+        if (choices.Levels.Count < 2)
+        {
+            return false;
+        }
+        CharacterDraft draft = FillLevel(rules, compendium, choices);
+        return draft.Sheet != null && !draft.StepDone(draft.Step);
+    }
+
     public CharacterChoices Choices => _choices;
     public CharacterSheet? Sheet { get; private set; }
     public string Problem { get; private set; } = "";
