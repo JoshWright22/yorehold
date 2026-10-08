@@ -181,7 +181,8 @@ public sealed class Encounter
         c.InitiativeRoll = _rules.TurnOrder.Roll ? _rules.Checks.Kind("initiative").Roll(modifier, Advantage.None, Random)
             : new RollResult { Expression = modifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Flat = modifier, Total = modifier };
         c.Initiative = c.InitiativeRoll.Total;
-        AddLog($"{c.Sheet.Name} {how}initiative {c.InitiativeRoll.Describe()}");
+        // with no roll the number is all there is to say
+        AddLog($"{c.Sheet.Name} {how}initiative {(_rules.TurnOrder.Roll ? c.InitiativeRoll.Describe() : modifier.ToString(System.Globalization.CultureInfo.InvariantCulture))}");
     }
 
     /// <summary>Rolls initiative (the system's roll plus the initiative modifier, ties to the higher modifier) and starts round 1.</summary>
@@ -340,7 +341,7 @@ public sealed class Encounter
         CheckOutcome outcome = attack.Resolve(result.AttackRoll, ac);
         result.Critical = outcome.Critical;
         result.Hit = outcome.Passes;
-        string line = $"{self.Name} attacks {target.Name} (AC {ac}): {result.AttackRoll.Describe()}";
+        string line = $"{self.Name} attacks {target.Name} ({_rules.DefenceName(_rules.Checks.Kind(CheckRules.Attack).DefenceId)} {ac}): {result.AttackRoll.Describe()}";
         if (!result.Hit)
         {
             AddLog(line + " - miss");

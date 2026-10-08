@@ -384,7 +384,7 @@ public sealed partial class World
             {
                 case EffectEventKind.Attack:
                     Flush();
-                    attackLine = $"{Name(e.By)} attacks {Name(e.Who)} (AC {e.Dc}): {e.Roll.Describe()}";
+                    attackLine = $"{Name(e.By)} attacks {Name(e.Who)} ({Rules.DefenceName(Rules.Checks.Kind(CheckRules.Attack).DefenceId)} {e.Dc}): {e.Roll.Describe()}";
                     attacked = e.Who;
                     hitPending = e.Success;
                     if (!e.Success)

@@ -618,7 +618,8 @@ public partial class PlayHud : Control
         _portrait.Show(sheet.Name, world.Tokens.Tokens[shown].Color.ToGodot(), sheet.Down, Portraits.Of(world, shown), Portraits.FocusOf(world, shown));
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
-        _hpText.Text = $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
+        (string downed, _) = sheet.DownedText(world.Rules);
+        _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
 
         // off their turn a hero has nothing to spend, whatever was left over from the last one
         TurnBudget? budget = world.BudgetOf(shown);

@@ -23,9 +23,9 @@ public static class HudText
         return found;
     }
 
-    /// <summary>A system's tracks as boxes, one group per track, filled for each point left: "■■□ ■ ■ □" (Fate's stress, then its consequences).</summary>
+    /// <summary>A system's tracks as marks, one group per track, filled for each point left: "●●○  ●  ●  ○" (Fate's stress, then its consequences).</summary>
     public static string TrackBoxes(CharacterSheet sheet) =>
-        string.Join(" ", sheet.Tracks.Where(t => t.Max > 0).Select(t => new string('■', Math.Max(0, t.Value)) + new string('□', Math.Max(0, t.Max - t.Value))));
+        string.Join("  ", sheet.Tracks.Where(t => t.Max > 0).Select(t => new string('●', Math.Max(0, t.Value)) + new string('○', Math.Max(0, t.Max - t.Value))));
 
     public static string Health(World world, CharacterSheet sheet)
     {

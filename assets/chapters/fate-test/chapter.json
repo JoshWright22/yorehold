@@ -1,0 +1,24 @@
+{
+  "id": "fate-test",
+  "title": "Fate Test",
+  "map": "map.json",
+  "ruleset": "rulesets/fate-accelerated",
+  "intro": [
+    "A chapter for trying Fate Accelerated: two heroes, a bandit chief with consequences to burn and her goblin."
+  ],
+  "victoryText": "Victory!",
+  "party": [
+    { "name": "Ana", "class": "character", "color": [220, 90, 80], "at": [3, 3] },
+    { "name": "Bo", "class": "character", "color": [90, 160, 230], "at": [3, 4] }
+  ],
+  "encounters": [
+    {
+      "id": "yard",
+      "text": "The bandit chief draws steel.",
+      "creatures": [
+        { "creature": "bandit-chief", "name": "Vex", "at": [9, 3] },
+        { "creature": "goblin", "name": "Gik", "at": [9, 5] }
+      ]
+    }
+  ]
+}
