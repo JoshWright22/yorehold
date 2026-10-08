@@ -71,6 +71,8 @@ public static class Palette
     /// </summary>
     public static void Load(Rules.ContentFiles files)
     {
+        // what each role was before, so the hand-made theme's copies of them can follow
+        Color[] before = Roles();
         Rules.UiColors colors;
         try
         {
@@ -104,6 +106,51 @@ public static class Palette
         Blue = Role("blue.mid", Blue);
         Indigo = Role("blue.dark", Indigo);
         Moss = Role("blue.deep", Moss);
+        Color[] after = Roles();
+        var changed = new System.Collections.Generic.Dictionary<Color, Color>();
+        for (int i = 0; i < before.Length; i++)
+        {
+            if (before[i] != after[i])
+            {
+                changed.TryAdd(before[i], after[i]);
+            }
+        }
+        if (changed.Count > 0)
+        {
+            Recolor(GD.Load<Theme>("res://scenes/hud/hud-theme.tres"), changed);
+        }
+    }
+
+    // Every role, in one order, to see which a scheme changed.
+    private static Color[] Roles() => new[]
+    {
+        Night, Ink, Dusk, Iron, Slate, Smoke, Ash, Sand, Bone, Straw, Amber, Leather, Red, Rose, Rust, Mauve, Sky, Mint, Blue, Indigo, Moss,
+    };
+
+    // The theme the scenes share holds the same colours as the code: each one a scheme changed
+    // follows it, in its boxes' fills and edges and its text colours. Alpha stays the theme's.
+    private static void Recolor(Theme theme, System.Collections.Generic.Dictionary<Color, Color> changed)
+    {
+        Color Swap(Color c)
+        {
+            var opaque = new Color(c.R, c.G, c.B);
+            return changed.TryGetValue(opaque, out Color to) ? new Color(to.R, to.G, to.B, c.A) : c;
+        }
+        foreach (string type in theme.GetTypeList())
+        {
+            foreach (string name in theme.GetStyleboxList(type))
+            {
+                if (theme.GetStylebox(name, type) is StyleBoxFlat box)
+                {
+                    box.BgColor = Swap(box.BgColor);
+                    box.BorderColor = Swap(box.BorderColor);
+                }
+            }
+            foreach (string name in theme.GetColorList(type))
+            {
+                theme.SetColor(name, type, Swap(theme.GetColor(name, type)));
+            }
+        }
     }
 
     /// <summary>The palette colour closest to any colour, for content colours drawn on a panel.</summary>

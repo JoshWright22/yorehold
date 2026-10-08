@@ -600,7 +600,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: the screens' colours are read from `ui/colors.json` at start (`UiColors`,
     `Palette.Load`): a file laid on top (an art pack now, a skin later) recolours every screen
     drawn in code; a role it leaves out keeps the game's own.
-  - Left: hud-theme.tres built from the same file; fonts, edges, corners and icons; skins as
+  - Done 10/8: the shared Godot theme follows: every fill, edge and text colour in it that
+    matches a role the file changed takes the new colour at start.
+  - Left: fonts, edges, corners and icons; skins as
     packages picked in Settings; the stylesheet and layout files.
 - [ ] **R17. 3D dice.** Josh, 10/8: dice render in 3D when rolled, like Foundry's Dice So Nice. The
   result comes first from the game's seeded dice (R2b), so rolls stay fair and replayable; the
