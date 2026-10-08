@@ -1,0 +1,12 @@
+{
+  "id": "dwarven-resilience",
+  "name": "Dwarven Resilience",
+  "description": "Poison damage is halved.",
+  "kind": "species",
+  "modifiers": [
+    {
+      "stat": "resist.poison",
+      "value": 1
+    }
+  ]
+}

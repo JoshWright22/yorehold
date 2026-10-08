@@ -1,0 +1,15 @@
+{
+  "id": "umbral-gnome",
+  "name": "Umbral gnome",
+  "description": "Sees in the dark: darkvision.",
+  "kind": "heritage",
+  "races": [
+    "gnome"
+  ],
+  "modifiers": [
+    {
+      "stat": "darkvision",
+      "value": 60
+    }
+  ]
+}

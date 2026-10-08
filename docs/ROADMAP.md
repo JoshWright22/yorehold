@@ -490,6 +490,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     goblin archers), and an enemy with a bow shoots from where it stands. Doesn't fit yet: long
     range with disadvantage, a ranged attack beside a foe, ammunition, unarmoured defence as a formula of the armour worn, warlock slots back on a short
     rest, Wild Shape, subclasses beyond a single path.
+  - Done 10/8: origins: nine species (traits as "species" feats: Breath Weapon, Draconic and
+    Dwarven Resilience, Adrenaline Rush, Infernal Legacy), the four SRD backgrounds with their
+    origin feats (Alert, Magic Initiate, Savage Attacker, Skilled), two fighting styles. Feats,
+    features and options can grant spells.
 - [ ] **R10. Pathfinder 2e (Remaster, ORC) as a package.** The real test of R3-R8.
   - Done 10/8, first slice: `rulesets/pf2e` (`.dev\make-pf2e.py`): three actions and no free
     move, Strike/Stride/Raise a Shield/Demoralize/Hide/Stand, the multiple attack penalty with
@@ -517,6 +521,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     monk (Flurry of Blows once a turn), bard (Courageous Anthem, Daze), druid and sorcerer; bows.
     Doesn't fit yet: rage's wait before raging again, compositions lasting while sustained,
     instincts, causes and bloodlines beyond one each.
+  - Done 10/8: gnome, goblin, halfling, orc and leshy with two heritages each; eight
+    backgrounds; feats of all four kinds (ancestry lores, First World Magic, Power Attack, Nimble
+    Dodge, Counterspell, Hunted Shot, Crane Stance, Battle Medicine, Toughness, Fleet,
+    Incredible Initiative), offered at levels 1 to 5 as the book does.
   - Done 10/8: deadly and backstabber as general triggers (anyone wielding the trait), the
     hidden as a DC 11 flat check (`attackersFlatCheck`), heritages, boosts, a free action named.
 - [ ] **R10b. Fate Accelerated (SRD, CC BY 3.0) as a package.** Josh, 10/8: a third, more

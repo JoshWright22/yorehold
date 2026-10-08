@@ -1,0 +1,12 @@
+{
+  "id": "acrobat",
+  "name": "Acrobat",
+  "description": "Tumbled and balanced for crowds.",
+  "abilities": {
+    "str": 2,
+    "dex": 2
+  },
+  "proficiencies": [
+    "acrobatics"
+  ]
+}

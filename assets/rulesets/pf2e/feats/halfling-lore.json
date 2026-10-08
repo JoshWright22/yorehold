@@ -1,0 +1,15 @@
+{
+  "id": "halfling-lore",
+  "name": "Halfling Lore",
+  "description": "Trained in Acrobatics and Stealth.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "halfling"
+    ]
+  },
+  "proficiencies": [
+    "acrobatics",
+    "stealth"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "infernal-legacy",
+  "name": "Infernal Legacy",
+  "description": "Fire resistance, and the Fire Bolt cantrip.",
+  "kind": "species",
+  "modifiers": [
+    {
+      "stat": "resist.fire",
+      "value": 1
+    }
+  ],
+  "spells": [
+    "fire-bolt"
+  ]
+}

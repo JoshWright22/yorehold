@@ -1,0 +1,13 @@
+{
+  "id": "goblin",
+  "name": "Goblin",
+  "description": "Small, loud, fond of fire and harder to kill than anyone expects.",
+  "bonusHp": 6,
+  "speed": 25,
+  "abilities": {
+    "dex": 2,
+    "cha": 2,
+    "wis": -2
+  },
+  "darkvision": 60
+}

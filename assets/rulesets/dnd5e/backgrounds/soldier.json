@@ -1,0 +1,16 @@
+{
+  "id": "soldier",
+  "name": "Soldier",
+  "description": "Trained for war and marched in it.",
+  "abilities": {
+    "str": 2,
+    "con": 1
+  },
+  "proficiencies": [
+    "athletics",
+    "intimidation"
+  ],
+  "feats": [
+    "savage-attacker"
+  ]
+}

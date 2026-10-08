@@ -1,0 +1,14 @@
+{
+  "id": "crane-stance",
+  "name": "Crane Stance",
+  "description": "One action: a stance that gives +1 circumstance bonus to AC until the fight ends.",
+  "kind": "class",
+  "requires": {
+    "classes": [
+      "monk"
+    ]
+  },
+  "actions": [
+    "crane-stance"
+  ]
+}

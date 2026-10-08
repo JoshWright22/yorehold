@@ -1,0 +1,12 @@
+{
+  "id": "gnome",
+  "name": "Gnome",
+  "description": "Small, bright and drawn to the strange; the First World is in their blood.",
+  "bonusHp": 8,
+  "speed": 25,
+  "abilities": {
+    "con": 2,
+    "cha": 2,
+    "str": -2
+  }
+}

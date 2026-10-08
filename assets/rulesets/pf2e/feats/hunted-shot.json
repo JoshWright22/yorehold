@@ -1,0 +1,14 @@
+{
+  "id": "hunted-shot",
+  "name": "Hunted Shot",
+  "description": "One action, once a turn: two Strikes against your prey.",
+  "kind": "class",
+  "requires": {
+    "classes": [
+      "ranger"
+    ]
+  },
+  "actions": [
+    "hunted-shot"
+  ]
+}

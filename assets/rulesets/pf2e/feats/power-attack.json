@@ -1,0 +1,14 @@
+{
+  "id": "power-attack",
+  "name": "Power Attack",
+  "description": "Two actions: a Strike with one more die of damage (a d8 here).",
+  "kind": "class",
+  "requires": {
+    "classes": [
+      "fighter"
+    ]
+  },
+  "actions": [
+    "power-attack"
+  ]
+}

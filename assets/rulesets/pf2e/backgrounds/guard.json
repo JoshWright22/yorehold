@@ -1,0 +1,12 @@
+{
+  "id": "guard",
+  "name": "Guard",
+  "description": "Kept watch at a gate or a wall.",
+  "abilities": {
+    "str": 2,
+    "cha": 2
+  },
+  "proficiencies": [
+    "intimidation"
+  ]
+}

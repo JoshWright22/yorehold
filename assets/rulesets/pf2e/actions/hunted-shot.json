@@ -1,0 +1,43 @@
+{
+  "id": "hunted-shot",
+  "name": "Hunted Shot",
+  "description": "Once a turn: two Strikes against your prey.",
+  "order": 14,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": "weapon"
+  },
+  "requires": {
+    "without": [
+      "shotTwice"
+    ]
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "shot-twice",
+      "target": "self"
+    },
+    {
+      "do": "repeat",
+      "times": "2",
+      "steps": [
+        {
+          "do": "roll",
+          "kind": "attack",
+          "steps": [
+            {
+              "do": "damage",
+              "dice": "weapon",
+              "when": "hit",
+              "minimum": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

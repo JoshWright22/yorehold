@@ -1,0 +1,15 @@
+{
+  "id": "goblin-lore",
+  "name": "Goblin Lore",
+  "description": "Trained in Nature and Stealth.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "goblin"
+    ]
+  },
+  "proficiencies": [
+    "nature",
+    "stealth"
+  ]
+}

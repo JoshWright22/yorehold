@@ -1,0 +1,11 @@
+{
+  "id": "dwarf",
+  "name": "Dwarf",
+  "description": "Stout folk of stone halls, hard to poison and hard to put down.",
+  "speed": 30,
+  "darkvision": 120,
+  "bonusHp": 1,
+  "feats": [
+    "dwarven-resilience"
+  ]
+}

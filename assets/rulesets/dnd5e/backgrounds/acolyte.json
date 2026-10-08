@@ -1,0 +1,16 @@
+{
+  "id": "acolyte",
+  "name": "Acolyte",
+  "description": "Raised in service at a temple.",
+  "abilities": {
+    "wis": 2,
+    "int": 1
+  },
+  "proficiencies": [
+    "insight",
+    "religion"
+  ],
+  "feats": [
+    "magic-initiate-cleric"
+  ]
+}

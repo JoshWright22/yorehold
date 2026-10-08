@@ -1,0 +1,7 @@
+{
+  "id": "goliath",
+  "name": "Goliath",
+  "description": "Towering mountain folk with a giant somewhere in the family.",
+  "speed": 35,
+  "bonusHp": 2
+}

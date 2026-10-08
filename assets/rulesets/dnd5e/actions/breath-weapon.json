@@ -1,0 +1,42 @@
+{
+  "id": "breath-weapon",
+  "name": "Breath Weapon",
+  "description": "A 15-foot cone of fire: 1d10 fire, more at levels 5, 11 and 17; half on a Dexterity save.",
+  "order": 67,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 3
+  },
+  "area": {
+    "shape": "cone",
+    "size": 3
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "requires": {
+    "resources": {
+      "breath-weapon": 1
+    }
+  },
+  "log": "{name} breathes fire.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "breath-weapon",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "damage",
+      "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d10",
+      "type": "fire",
+      "onSave": "half"
+    }
+  ]
+}

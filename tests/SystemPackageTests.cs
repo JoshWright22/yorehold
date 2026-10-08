@@ -770,7 +770,7 @@ public class SystemPackageTests
     {
         using var feats = new Scratch();
         feats.Write("content.json", """{"format": "yorehold.content", "version": 1, "id": "more-feats", "kind": "feats", "ruleset": "pf2e"}""");
-        feats.Write("feats/toughness.json", """{"id": "toughness", "name": "Toughness", "kind": "general", "modifiers": [{"stat": "maxHp", "op": "add", "value": 3}]}""");
+        feats.Write("feats/thick-skin.json", """{"id": "thick-skin", "name": "Thick Skin", "kind": "general", "modifiers": [{"stat": "maxHp", "op": "add", "value": 3}]}""");
         using var other = new Scratch();
         other.Write("content.json", """{"format": "yorehold.content", "version": 1, "kind": "feats", "ruleset": "dnd5e"}""");
         var left = new List<string>();
@@ -786,9 +786,10 @@ public class SystemPackageTests
         ContentFiles files = TestContent.Shipped();
         files.Add(feats.Folder);
         var compendium = new Compendium();
+        compendium.Load(files, "rulesets/pf2e", "");
         compendium.LoadOptions(files, "rulesets/pf2e");
         compendium.LoadOptions(files, "");
-        Assert.True(compendium.Feats.ContainsKey("toughness"));
+        Assert.True(compendium.Feats.ContainsKey("thick-skin"));
     }
 
     [Fact]
@@ -827,6 +828,26 @@ public class SystemPackageTests
         draft.ToggleBoost("str");
         Assert.Equal(new[] { "str", "str" }, draft.Choices.Levels[^1].Picked("boosts"));
         Assert.Equal(str + 2, CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str"));
+    }
+
+    [Fact]
+    public void A5eOriginGivesSpellsAndFeats()
+    {
+        ContentFiles files = TestContent.Shipped();
+        Ruleset rules = RulesFolder.Load(files, "rulesets/dnd5e").Rules;
+        var compendium = new Compendium();
+        compendium.Load(files, "rulesets/dnd5e", "");
+        compendium.LoadOptions(files, "rulesets/dnd5e");
+        var draft = new CharacterDraft(rules, compendium);
+        draft.SetName("Ash");
+        draft.SetClass("fighter");
+        draft.SetRace("tiefling");
+        draft.SetBackground("criminal");
+        CharacterSheet sheet = CharacterBuild.Build(rules, compendium, draft.Choices, out string problem) ?? throw new Xunit.Sdk.XunitException(problem);
+        // the tiefling's cantrip and fire resistance, and the criminal's Alert on top of Dexterity
+        Assert.Contains("fire-bolt", sheet.Spells);
+        Assert.Equal(1, sheet.Stats.Integer("resist.fire"));
+        Assert.Equal(sheet.CheckModifier(rules, "dex") + 2, sheet.InitiativeModifier(rules));
     }
 
     [Fact]

@@ -1,0 +1,15 @@
+{
+  "id": "hold-scarred-orc",
+  "name": "Hold-scarred orc",
+  "description": "Scarred by the old rites: +2 maximum HP.",
+  "kind": "heritage",
+  "races": [
+    "orc"
+  ],
+  "modifiers": [
+    {
+      "stat": "maxHp",
+      "value": 2
+    }
+  ]
+}

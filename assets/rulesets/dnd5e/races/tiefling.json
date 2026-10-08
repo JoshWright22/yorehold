@@ -1,0 +1,10 @@
+{
+  "id": "tiefling",
+  "name": "Tiefling",
+  "description": "Touched by a fiendish legacy that shows in horns and fire.",
+  "speed": 30,
+  "darkvision": 60,
+  "feats": [
+    "infernal-legacy"
+  ]
+}

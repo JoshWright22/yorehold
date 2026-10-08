@@ -1,0 +1,10 @@
+{
+  "id": "elf",
+  "name": "Elf",
+  "description": "Long-lived and keen-eyed, with a little of the Feywild in them.",
+  "speed": 30,
+  "darkvision": 60,
+  "proficiencies": [
+    "perception"
+  ]
+}

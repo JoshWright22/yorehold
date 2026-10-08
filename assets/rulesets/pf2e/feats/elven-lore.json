@@ -1,0 +1,15 @@
+{
+  "id": "elven-lore",
+  "name": "Elven Lore",
+  "description": "Trained in Arcana and Nature.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "elf"
+    ]
+  },
+  "proficiencies": [
+    "arcana",
+    "nature"
+  ]
+}

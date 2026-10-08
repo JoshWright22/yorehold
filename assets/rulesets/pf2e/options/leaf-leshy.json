@@ -1,0 +1,15 @@
+{
+  "id": "leaf-leshy",
+  "name": "Leaf leshy",
+  "description": "Light as a leaf: +5 feet of speed.",
+  "kind": "heritage",
+  "races": [
+    "leshy"
+  ],
+  "modifiers": [
+    {
+      "stat": "speed",
+      "value": 5
+    }
+  ]
+}

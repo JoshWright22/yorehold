@@ -1,0 +1,12 @@
+{
+  "id": "toughness",
+  "name": "Toughness",
+  "description": "+3 maximum HP.",
+  "kind": "general",
+  "modifiers": [
+    {
+      "stat": "maxHp",
+      "value": 3
+    }
+  ]
+}

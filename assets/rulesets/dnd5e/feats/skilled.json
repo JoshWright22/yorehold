@@ -1,0 +1,11 @@
+{
+  "id": "skilled",
+  "name": "Skilled",
+  "description": "Proficiency in Insight, Perception and Persuasion.",
+  "kind": "origin",
+  "proficiencies": [
+    "insight",
+    "perception",
+    "persuasion"
+  ]
+}

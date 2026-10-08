@@ -1,0 +1,15 @@
+{
+  "id": "fungus-leshy",
+  "name": "Fungus leshy",
+  "description": "Grown in the dark: darkvision.",
+  "kind": "heritage",
+  "races": [
+    "leshy"
+  ],
+  "modifiers": [
+    {
+      "stat": "darkvision",
+      "value": 60
+    }
+  ]
+}

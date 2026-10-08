@@ -39,10 +39,17 @@
             "sneak-attack"
           ]
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "skills": 1,
@@ -58,10 +65,17 @@
             }
           ]
         }
+      ],
+      "feats": [
+        "general"
       ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "boosts": 4,
@@ -76,6 +90,9 @@
           "name": "Weapon Tricks",
           "description": "Expert with your weapons; Sneak Attack deals 2d6."
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     }
   ]

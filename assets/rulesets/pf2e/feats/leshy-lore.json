@@ -1,0 +1,15 @@
+{
+  "id": "leshy-lore",
+  "name": "Leshy Lore",
+  "description": "Trained in Nature and Diplomacy.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "leshy"
+    ]
+  },
+  "proficiencies": [
+    "nature",
+    "diplomacy"
+  ]
+}

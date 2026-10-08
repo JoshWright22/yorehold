@@ -235,6 +235,7 @@
   },
   "featKinds": [
     { "id": "origin", "name": "Origin feat" },
+    { "id": "species", "name": "Species trait" },
     { "id": "general", "name": "General feat" },
     { "id": "fighting-style", "name": "Fighting Style feat" },
     { "id": "epic-boon", "name": "Epic Boon feat" }
@@ -341,7 +342,9 @@
         "focus",
         "rage",
         "lay-on-hands",
-        "bardic-inspiration"
+        "bardic-inspiration",
+        "breath-weapon",
+        "adrenaline-rush"
       ],
       "supplyCost": 40,
       "campOnly": true

@@ -1,0 +1,14 @@
+{
+  "id": "nimble-dodge",
+  "name": "Nimble Dodge",
+  "description": "Reaction, as an attack would hit you: +2 circumstance bonus to AC against it.",
+  "kind": "class",
+  "requires": {
+    "classes": [
+      "rogue"
+    ]
+  },
+  "actions": [
+    "nimble-dodge"
+  ]
+}

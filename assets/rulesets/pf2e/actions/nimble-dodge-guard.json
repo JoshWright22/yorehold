@@ -1,0 +1,15 @@
+{
+  "id": "nimble-dodge-guard",
+  "name": "Nimble Dodge",
+  "description": "+2 circumstance bonus to AC against the attack.",
+  "order": 70,
+  "cost": 1,
+  "general": false,
+  "effects": [
+    {
+      "do": "condition",
+      "id": "nimble",
+      "target": "self"
+    }
+  ]
+}

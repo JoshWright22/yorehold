@@ -46,9 +46,17 @@
             "sudden-charge"
           ]
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     },
-    {},
+    {
+      "feats": [
+        "class",
+        "skill"
+      ]
+    },
     {
       "skills": 1,
       "ranks": {
@@ -60,9 +68,17 @@
           "name": "Bravery",
           "description": "Will saves become expert; fear has a harder time holding you."
         }
+      ],
+      "feats": [
+        "general"
       ]
     },
-    {},
+    {
+      "feats": [
+        "class",
+        "skill"
+      ]
+    },
     {
       "boosts": 4,
       "boostStep": 2,
@@ -76,6 +92,9 @@
           "name": "Fighter Weapon Mastery",
           "description": "Master with your weapons."
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     }
   ]

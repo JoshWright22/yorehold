@@ -1,0 +1,14 @@
+{
+  "id": "sudden-charge-feat",
+  "name": "Sudden Charge",
+  "description": "Two actions: Stride twice and Strike.",
+  "kind": "class",
+  "requires": {
+    "classes": [
+      "barbarian"
+    ]
+  },
+  "actions": [
+    "sudden-charge"
+  ]
+}

@@ -35,7 +35,7 @@ public sealed class OptionDefinition
     public static OptionDefinition Read(ContentNode node)
     {
         node.RequireObject("an option is a JSON object");
-        node.Only("id", "name", "description", "kind", "races", "classes", "feats", "modifiers", "proficiencies", "ranks", "resources", "actions");
+        node.Only("id", "name", "description", "kind", "races", "classes", "feats", "modifiers", "proficiencies", "ranks", "resources", "actions", "spells");
         string id = node.At("id").AsId();
         return new OptionDefinition
         {

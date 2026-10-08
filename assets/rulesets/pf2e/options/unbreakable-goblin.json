@@ -1,0 +1,15 @@
+{
+  "id": "unbreakable-goblin",
+  "name": "Unbreakable goblin",
+  "description": "Tough beyond their size: +4 maximum HP.",
+  "kind": "heritage",
+  "races": [
+    "goblin"
+  ],
+  "modifiers": [
+    {
+      "stat": "maxHp",
+      "value": 4
+    }
+  ]
+}

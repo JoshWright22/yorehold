@@ -45,27 +45,41 @@
     {
       "slots": {
         "1": 2
-      }
+      },
+      "feats": [
+        "ancestry"
+      ]
     },
     {
       "slots": {
         "1": 3
       },
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "slots": {
         "1": 3,
         "2": 2
       },
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "general"
+      ]
     },
     {
       "slots": {
         "1": 3,
         "2": 3
       },
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "slots": {
@@ -78,7 +92,10 @@
       "boostStep": 2,
       "ranks": {
         "reflex": "expert"
-      }
+      },
+      "feats": [
+        "ancestry"
+      ]
     }
   ]
 }

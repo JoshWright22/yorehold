@@ -1,0 +1,14 @@
+{
+  "id": "battle-medicine",
+  "name": "Battle Medicine",
+  "description": "One action: a Medicine check (DC 15) heals an ally 2d8, 4d8 on a critical success.",
+  "kind": "skill",
+  "requires": {
+    "proficiencies": [
+      "medicine"
+    ]
+  },
+  "actions": [
+    "battle-medicine"
+  ]
+}

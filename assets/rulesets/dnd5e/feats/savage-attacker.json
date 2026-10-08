@@ -1,0 +1,12 @@
+{
+  "id": "savage-attacker",
+  "name": "Savage Attacker",
+  "description": "Your weapon hits land harder: +1 damage.",
+  "kind": "origin",
+  "modifiers": [
+    {
+      "stat": "damage",
+      "value": 1
+    }
+  ]
+}

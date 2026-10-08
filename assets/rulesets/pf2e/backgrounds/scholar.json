@@ -1,0 +1,12 @@
+{
+  "id": "scholar",
+  "name": "Scholar",
+  "description": "Studied at an academy.",
+  "abilities": {
+    "int": 2,
+    "wis": 2
+  },
+  "proficiencies": [
+    "arcana"
+  ]
+}

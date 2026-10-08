@@ -1,0 +1,12 @@
+{
+  "id": "criminal",
+  "name": "Criminal",
+  "description": "Lived outside the law.",
+  "abilities": {
+    "dex": 2,
+    "int": 2
+  },
+  "proficiencies": [
+    "stealth"
+  ]
+}

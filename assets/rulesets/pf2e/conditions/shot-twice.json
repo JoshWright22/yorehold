@@ -1,0 +1,11 @@
+{
+  "id": "shot-twice",
+  "name": "Hunted Shot",
+  "description": "Used Hunted Shot this turn.",
+  "flags": [
+    "shotTwice"
+  ],
+  "ends": [
+    "turnEnd"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "crane",
+  "name": "Crane Stance",
+  "description": "+1 circumstance bonus to AC.",
+  "flags": [
+    "crane"
+  ],
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 1,
+      "type": "circumstance"
+    }
+  ],
+  "ends": [
+    "fightEnd"
+  ]
+}

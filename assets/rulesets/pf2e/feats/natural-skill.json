@@ -1,0 +1,15 @@
+{
+  "id": "natural-skill",
+  "name": "Natural Skill",
+  "description": "Trained in Diplomacy and Society.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "human"
+    ]
+  },
+  "proficiencies": [
+    "diplomacy",
+    "society"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "breath-weapon",
+  "name": "Breath Weapon",
+  "description": "In place of an attack, breathe a 15-foot cone of fire: 1d10 fire (more at levels 5, 11 and 17), half on a Dexterity save. Twice a long rest.",
+  "kind": "species",
+  "resources": {
+    "breath-weapon": 2
+  },
+  "actions": [
+    "breath-weapon"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "nimble",
+  "name": "Nimble Dodge",
+  "description": "+2 circumstance bonus to AC until its next turn.",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "op": "add",
+      "value": 2,
+      "type": "circumstance"
+    }
+  ],
+  "ends": [
+    "turnStart"
+  ]
+}

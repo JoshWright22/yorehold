@@ -1,0 +1,15 @@
+{
+  "id": "dwarven-lore",
+  "name": "Dwarven Lore",
+  "description": "Trained in Crafting and Religion.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "dwarf"
+    ]
+  },
+  "proficiencies": [
+    "crafting",
+    "religion"
+  ]
+}

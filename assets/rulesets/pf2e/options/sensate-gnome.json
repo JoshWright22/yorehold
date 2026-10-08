@@ -1,0 +1,15 @@
+{
+  "id": "sensate-gnome",
+  "name": "Sensate gnome",
+  "description": "Keen senses: +2 to Perception.",
+  "kind": "heritage",
+  "races": [
+    "gnome"
+  ],
+  "modifiers": [
+    {
+      "stat": "perception",
+      "value": 2
+    }
+  ]
+}

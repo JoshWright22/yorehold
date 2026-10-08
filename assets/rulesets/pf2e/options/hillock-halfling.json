@@ -1,0 +1,15 @@
+{
+  "id": "hillock-halfling",
+  "name": "Hillock halfling",
+  "description": "Comfortable and well fed: +2 maximum HP.",
+  "kind": "heritage",
+  "races": [
+    "halfling"
+  ],
+  "modifiers": [
+    {
+      "stat": "maxHp",
+      "value": 2
+    }
+  ]
+}

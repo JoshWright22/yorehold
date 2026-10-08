@@ -1,0 +1,11 @@
+{
+  "id": "dragonborn",
+  "name": "Dragonborn",
+  "description": "Born of dragons: scaled, proud, with fire in the lungs.",
+  "speed": 30,
+  "darkvision": 60,
+  "feats": [
+    "breath-weapon",
+    "draconic-resistance"
+  ]
+}

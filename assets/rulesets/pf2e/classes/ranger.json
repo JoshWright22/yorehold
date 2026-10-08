@@ -45,16 +45,30 @@
             "hunters-edge"
           ]
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "general"
+      ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "skills": 1,
@@ -69,6 +83,9 @@
           "name": "Ranger Weapon Expertise",
           "description": "Expert with your weapons."
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     }
   ]

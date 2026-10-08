@@ -384,7 +384,8 @@ public sealed partial class CharacterSheet
 
     public int InitiativeModifier(Ruleset rules)
     {
-        return rules.Roles.Initiative.Length == 0 ? 0 : CheckModifier(rules, rules.Roles.Initiative);
+        // "initiative" on the sheet (an Alert feat) adds to whatever the system rolls it with
+        return (rules.Roles.Initiative.Length == 0 ? 0 : CheckModifier(rules, rules.Roles.Initiative)) + Stats.Integer("initiative");
     }
 
     public RollResult RollCheck(Ruleset rules, string abilityOrSkill, Advantage advantage, Rng random)

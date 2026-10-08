@@ -1,0 +1,12 @@
+{
+  "id": "incredible-initiative",
+  "name": "Incredible Initiative",
+  "description": "+2 circumstance bonus to initiative.",
+  "kind": "general",
+  "modifiers": [
+    {
+      "stat": "initiative",
+      "value": 2
+    }
+  ]
+}

@@ -45,10 +45,17 @@
             }
           ]
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "skills": 1,
@@ -64,10 +71,17 @@
             }
           ]
         }
+      ],
+      "feats": [
+        "general"
       ]
     },
     {
-      "skills": 1
+      "skills": 1,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "skills": 1,
@@ -82,6 +96,9 @@
           "name": "Expert Strikes",
           "description": "Expert with your unarmed attacks."
         }
+      ],
+      "feats": [
+        "ancestry"
       ]
     }
   ]

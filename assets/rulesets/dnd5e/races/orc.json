@@ -1,0 +1,10 @@
+{
+  "id": "orc",
+  "name": "Orc",
+  "description": "Strong, enduring and fast to rally.",
+  "speed": 30,
+  "darkvision": 120,
+  "feats": [
+    "adrenaline-rush"
+  ]
+}

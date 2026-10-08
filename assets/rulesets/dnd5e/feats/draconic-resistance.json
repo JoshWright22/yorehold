@@ -1,0 +1,12 @@
+{
+  "id": "draconic-resistance",
+  "name": "Draconic Resistance",
+  "description": "Fire damage is halved.",
+  "kind": "species",
+  "modifiers": [
+    {
+      "stat": "resist.fire",
+      "value": 1
+    }
+  ]
+}

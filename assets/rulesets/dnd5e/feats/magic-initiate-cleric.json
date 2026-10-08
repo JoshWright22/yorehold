@@ -1,0 +1,10 @@
+{
+  "id": "magic-initiate-cleric",
+  "name": "Magic Initiate (Cleric)",
+  "description": "The Sacred Flame cantrip, and Cure Wounds to cast with a spell slot.",
+  "kind": "origin",
+  "spells": [
+    "sacred-flame",
+    "cure-wounds"
+  ]
+}

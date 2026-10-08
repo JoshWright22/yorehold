@@ -30,13 +30,20 @@
       "slots": {
         "1": 2
       },
-      "spells": 2
+      "spells": 2,
+      "feats": [
+        "ancestry"
+      ]
     },
     {
       "slots": {
         "1": 3
       },
-      "spells": 3
+      "spells": 3,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "slots": {
@@ -54,14 +61,21 @@
           "description": "Fortitude saves become expert."
         }
       ],
-      "spells": 5
+      "spells": 5,
+      "feats": [
+        "general"
+      ]
     },
     {
       "slots": {
         "1": 3,
         "2": 3
       },
-      "spells": 6
+      "spells": 6,
+      "feats": [
+        "class",
+        "skill"
+      ]
     },
     {
       "boosts": 4,
@@ -82,7 +96,10 @@
           "description": "Perception becomes expert."
         }
       ],
-      "spells": 8
+      "spells": 8,
+      "feats": [
+        "ancestry"
+      ]
     }
   ],
   "casting": "prepared",

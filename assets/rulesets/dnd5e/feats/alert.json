@@ -1,0 +1,12 @@
+{
+  "id": "alert",
+  "name": "Alert",
+  "description": "Always ready: add your proficiency bonus (+2 here) to initiative.",
+  "kind": "origin",
+  "modifiers": [
+    {
+      "stat": "initiative",
+      "value": 2
+    }
+  ]
+}

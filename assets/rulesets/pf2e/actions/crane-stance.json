@@ -1,0 +1,21 @@
+{
+  "id": "crane-stance",
+  "name": "Crane Stance",
+  "description": "A stance: +1 circumstance bonus to AC until the fight ends.",
+  "order": 72,
+  "cost": 1,
+  "general": false,
+  "requires": {
+    "without": [
+      "crane"
+    ]
+  },
+  "log": "{name} takes the crane stance.",
+  "effects": [
+    {
+      "do": "condition",
+      "id": "crane",
+      "target": "self"
+    }
+  ]
+}

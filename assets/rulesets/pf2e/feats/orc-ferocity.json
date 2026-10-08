@@ -1,0 +1,17 @@
+{
+  "id": "orc-ferocity",
+  "name": "Orc Ferocity",
+  "description": "Hard to drop: +4 maximum HP.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "orc"
+    ]
+  },
+  "modifiers": [
+    {
+      "stat": "maxHp",
+      "value": 4
+    }
+  ]
+}

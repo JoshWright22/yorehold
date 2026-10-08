@@ -1,0 +1,35 @@
+{
+  "id": "battle-medicine",
+  "name": "Battle Medicine",
+  "description": "A Medicine check against DC 15: heals 2d8, 4d8 on a critical success.",
+  "order": 73,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1,
+    "downed": true
+  },
+  "log": "{name} patches up a wound.",
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "check",
+      "ability": "medicine",
+      "dc": 15,
+      "steps": [
+        {
+          "do": "heal",
+          "dice": "2d8",
+          "when": "success"
+        },
+        {
+          "do": "heal",
+          "dice": "4d8",
+          "when": "criticalSuccess"
+        }
+      ]
+    }
+  ]
+}

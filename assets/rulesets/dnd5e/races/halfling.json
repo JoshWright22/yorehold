@@ -1,0 +1,9 @@
+{
+  "id": "halfling",
+  "name": "Halfling",
+  "description": "Small, cheerful and harder to catch than they look.",
+  "speed": 30,
+  "proficiencies": [
+    "stealth"
+  ]
+}

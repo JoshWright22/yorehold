@@ -1,0 +1,11 @@
+{
+  "id": "countered",
+  "name": "Countered",
+  "description": "The spell it was casting comes apart.",
+  "flags": [
+    "spellLost"
+  ],
+  "ends": [
+    "turnEnd"
+  ]
+}

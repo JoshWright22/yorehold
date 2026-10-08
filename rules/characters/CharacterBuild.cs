@@ -123,8 +123,10 @@ public static class CharacterBuild
                 }
             }
         }
+        var grantedSpells = new List<string>();
         void Grant(Grants gives, string source)
         {
+            grantedSpells.AddRange(gives.Spells);
             foreach (Modifier modifier in gives.Modifiers)
             {
                 c.Stats.AddModifier(modifier, source);
@@ -321,6 +323,11 @@ public static class CharacterBuild
             c.Resources[rules.Roles.SlotPrefix + slot.Key] = new Resource(slot.Value, slot.Value);
         }
         AddSpells(c, compendium, choices, classes, slots, spellCountByClass);
+        // spells a feat, a feature or an option gave, beside the class's own
+        foreach (string id in grantedSpells.Where(id => compendium.Spells.ContainsKey(id) && !c.Spells.Contains(id)))
+        {
+            c.Spells.Add(id);
+        }
 
         // HP last, so race and feat changes to the HP ability (CON) count
         int con = rules.Roles.HpAbility.Length == 0 ? 0 : c.AbilityModifier(rules, rules.Roles.HpAbility);

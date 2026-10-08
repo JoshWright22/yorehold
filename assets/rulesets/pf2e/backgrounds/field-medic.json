@@ -1,0 +1,15 @@
+{
+  "id": "field-medic",
+  "name": "Field Medic",
+  "description": "Patched up the wounded under fire.",
+  "abilities": {
+    "con": 2,
+    "wis": 2
+  },
+  "proficiencies": [
+    "medicine"
+  ],
+  "feats": [
+    "battle-medicine"
+  ]
+}

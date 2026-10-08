@@ -1,0 +1,10 @@
+{
+  "id": "magic-initiate-wizard",
+  "name": "Magic Initiate (Wizard)",
+  "description": "The Fire Bolt cantrip, and Magic Missile to cast with a spell slot.",
+  "kind": "origin",
+  "spells": [
+    "fire-bolt",
+    "magic-missile"
+  ]
+}

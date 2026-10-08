@@ -1,0 +1,12 @@
+{
+  "id": "defense-style",
+  "name": "Defense",
+  "description": "+1 AC while wearing armor.",
+  "kind": "fighting-style",
+  "modifiers": [
+    {
+      "stat": "ac",
+      "value": 1
+    }
+  ]
+}

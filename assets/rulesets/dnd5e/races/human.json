@@ -1,0 +1,9 @@
+{
+  "id": "human",
+  "name": "Human",
+  "description": "Short-lived, quick to learn, found everywhere.",
+  "speed": 30,
+  "feats": [
+    "skilled"
+  ]
+}

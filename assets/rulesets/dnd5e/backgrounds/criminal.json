@@ -1,0 +1,19 @@
+{
+  "id": "criminal",
+  "name": "Criminal",
+  "description": "Made a living in the dark corners of a city.",
+  "abilities": {
+    "dex": 2,
+    "con": 1
+  },
+  "proficiencies": [
+    "sleight-of-hand",
+    "stealth"
+  ],
+  "feats": [
+    "alert"
+  ],
+  "items": [
+    "dagger"
+  ]
+}

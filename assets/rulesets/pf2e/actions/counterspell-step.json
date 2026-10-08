@@ -1,0 +1,31 @@
+{
+  "id": "counterspell-step",
+  "name": "Counterspell",
+  "description": "Spend a 1st-rank slot: the spell being cast is lost.",
+  "order": 71,
+  "cost": 1,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "requires": {
+    "resources": {
+      "slots-1": 1
+    }
+  },
+  "effects": [
+    {
+      "do": "resource",
+      "id": "slots-1",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "condition",
+      "id": "countered"
+    }
+  ]
+}

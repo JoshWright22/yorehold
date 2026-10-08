@@ -1,0 +1,12 @@
+{
+  "id": "warrior",
+  "name": "Warrior",
+  "description": "Fought for a living before taking up adventure.",
+  "abilities": {
+    "str": 2,
+    "con": 2
+  },
+  "proficiencies": [
+    "intimidation"
+  ]
+}

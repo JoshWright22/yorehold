@@ -165,6 +165,10 @@ public class Compendium
         foreach (FeatDefinition feat in Feats.Values)
         {
             string file = $"{folder}/feats/{feat.Id}.json";
+            if (feat.Gives.Spells.FirstOrDefault(s => !Spells.ContainsKey(s)) is string unknown)
+            {
+                throw new ContentException(file, "spells", $"no spell \"{unknown}\"");
+            }
             foreach (string race in feat.Needs.Races.Where(race => !Races.ContainsKey(race)))
             {
                 throw new ContentException(file, "requires.races", $"no race \"{race}\"");

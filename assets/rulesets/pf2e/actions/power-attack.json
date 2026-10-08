@@ -1,0 +1,32 @@
+{
+  "id": "power-attack",
+  "name": "Power Attack",
+  "description": "Two actions: a Strike with one more die of damage (a d8 here).",
+  "order": 13,
+  "cost": 2,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": "weapon"
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        },
+        {
+          "do": "damage",
+          "dice": "1d8",
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

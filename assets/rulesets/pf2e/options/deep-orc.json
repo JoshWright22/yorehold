@@ -1,0 +1,12 @@
+{
+  "id": "deep-orc",
+  "name": "Deep orc",
+  "description": "From the deep places: trained in Athletics.",
+  "kind": "heritage",
+  "races": [
+    "orc"
+  ],
+  "proficiencies": [
+    "athletics"
+  ]
+}

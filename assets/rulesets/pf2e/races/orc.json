@@ -1,0 +1,12 @@
+{
+  "id": "orc",
+  "name": "Orc",
+  "description": "Strong and enduring, proud of their scars.",
+  "bonusHp": 10,
+  "speed": 25,
+  "abilities": {
+    "str": 2,
+    "con": 2
+  },
+  "darkvision": 60
+}

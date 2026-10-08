@@ -1,0 +1,14 @@
+{
+  "id": "first-world-magic",
+  "name": "First World Magic",
+  "description": "The Electric Arc cantrip, as innate magic.",
+  "kind": "ancestry",
+  "requires": {
+    "races": [
+      "gnome"
+    ]
+  },
+  "spells": [
+    "electric-arc"
+  ]
+}

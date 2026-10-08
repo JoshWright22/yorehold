@@ -1,0 +1,10 @@
+{
+  "id": "gnome",
+  "name": "Gnome",
+  "description": "Small, curious and quick of mind.",
+  "speed": 30,
+  "darkvision": 60,
+  "proficiencies": [
+    "arcana"
+  ]
+}

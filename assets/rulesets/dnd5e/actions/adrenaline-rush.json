@@ -1,0 +1,28 @@
+{
+  "id": "adrenaline-rush",
+  "name": "Adrenaline Rush",
+  "description": "As a bonus action: temporary HP equal to your proficiency bonus.",
+  "order": 68,
+  "cost": "bonus",
+  "general": false,
+  "requires": {
+    "resources": {
+      "adrenaline-rush": 1
+    }
+  },
+  "log": "{name} rallies.",
+  "effects": [
+    {
+      "do": "resource",
+      "id": "adrenaline-rush",
+      "op": "spend",
+      "amount": 1,
+      "target": "self"
+    },
+    {
+      "do": "tempHp",
+      "dice": "{2 + floor((level - 1) / 4)}",
+      "target": "self"
+    }
+  ]
+}

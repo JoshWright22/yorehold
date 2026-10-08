@@ -1,0 +1,12 @@
+{
+  "id": "halfling",
+  "name": "Halfling",
+  "description": "Small, lucky and at home anywhere.",
+  "bonusHp": 6,
+  "speed": 25,
+  "abilities": {
+    "dex": 2,
+    "wis": 2,
+    "str": -2
+  }
+}

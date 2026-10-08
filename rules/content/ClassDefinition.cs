@@ -13,6 +13,8 @@ public class Grants
     public Dictionary<string, int> Resources { get; init; } = new();
     /// <summary>Actions and reactions of the ruleset that only those granted them have ("general": false).</summary>
     public List<string> Actions { get; init; } = new();
+    /// <summary>Spells it knows from this (5e's Magic Initiate): cantrips at will, others with a slot.</summary>
+    public List<string> Spells { get; init; } = new();
 
     public static Grants Read(ContentNode node)
     {
@@ -23,6 +25,7 @@ public class Grants
             Ranks = ContentParts.NamesFrom(node, "ranks", ids: true),
             Resources = ContentParts.NumbersFrom(node, "resources", 1, 1000, idKeys: true),
             Actions = node.Names("actions").Distinct().ToList(),
+            Spells = node.Ids("spells").Distinct().ToList(),
         };
     }
 }
@@ -75,7 +78,7 @@ public class ClassLevel
                 foreach (ContentNode f in list.Items())
                 {
                     f.RequireObject("is an object with an id");
-                    f.Only("id", "name", "description", "modifiers", "proficiencies", "ranks", "resources", "actions");
+                    f.Only("id", "name", "description", "modifiers", "proficiencies", "ranks", "resources", "actions", "spells");
                     string id = f.At("id").AsId();
                     features.Add(new ClassFeature
                     {

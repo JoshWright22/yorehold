@@ -1,0 +1,12 @@
+{
+  "id": "acolyte",
+  "name": "Acolyte",
+  "description": "Raised in a temple's service.",
+  "abilities": {
+    "int": 2,
+    "wis": 2
+  },
+  "proficiencies": [
+    "religion"
+  ]
+}

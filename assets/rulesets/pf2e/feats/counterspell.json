@@ -1,0 +1,16 @@
+{
+  "id": "counterspell",
+  "name": "Counterspell",
+  "description": "Reaction, as a foe casts a spell: spend a 1st-rank slot and the spell is lost.",
+  "kind": "class",
+  "requires": {
+    "classes": [
+      "wizard",
+      "sorcerer",
+      "druid"
+    ]
+  },
+  "actions": [
+    "counterspell"
+  ]
+}

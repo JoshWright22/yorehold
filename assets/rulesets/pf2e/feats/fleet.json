@@ -1,0 +1,12 @@
+{
+  "id": "fleet",
+  "name": "Fleet",
+  "description": "+5 feet of speed.",
+  "kind": "general",
+  "modifiers": [
+    {
+      "stat": "speed",
+      "value": 5
+    }
+  ]
+}

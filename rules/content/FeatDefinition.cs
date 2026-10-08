@@ -31,7 +31,7 @@ public class FeatDefinition
     public static FeatDefinition Read(ContentNode node)
     {
         node.RequireObject("a feat is a JSON object");
-        node.Only("id", "name", "description", "kind", "repeatable", "requires", "modifiers", "proficiencies", "ranks", "resources", "actions");
+        node.Only("id", "name", "description", "kind", "repeatable", "requires", "modifiers", "proficiencies", "ranks", "resources", "actions", "spells");
         string id = node.At("id").AsId();
         // one of the ruleset's featKinds; the rules folder checks which once it has the ruleset
         string kind = node.Has("kind") ? node.At("kind").AsId() : "general";

@@ -1,0 +1,12 @@
+{
+  "id": "great-weapon-fighting",
+  "name": "Great Weapon Fighting",
+  "description": "Two-handed weapon blows land harder: +1 damage.",
+  "kind": "fighting-style",
+  "modifiers": [
+    {
+      "stat": "damage",
+      "value": 1
+    }
+  ]
+}

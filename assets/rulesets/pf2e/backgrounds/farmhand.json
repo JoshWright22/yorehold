@@ -1,0 +1,12 @@
+{
+  "id": "farmhand",
+  "name": "Farmhand",
+  "description": "Worked the fields from dawn to dusk.",
+  "abilities": {
+    "con": 2,
+    "wis": 2
+  },
+  "proficiencies": [
+    "athletics"
+  ]
+}

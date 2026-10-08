@@ -1,0 +1,15 @@
+{
+  "id": "charhide-goblin",
+  "name": "Charhide goblin",
+  "description": "Fire barely bothers them: fire resistance 1.",
+  "kind": "heritage",
+  "races": [
+    "goblin"
+  ],
+  "modifiers": [
+    {
+      "stat": "resist.fire",
+      "value": 1
+    }
+  ]
+}

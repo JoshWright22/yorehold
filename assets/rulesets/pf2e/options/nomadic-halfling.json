@@ -1,0 +1,12 @@
+{
+  "id": "nomadic-halfling",
+  "name": "Nomadic halfling",
+  "description": "Has wandered far: trained in Survival.",
+  "kind": "heritage",
+  "races": [
+    "halfling"
+  ],
+  "proficiencies": [
+    "survival"
+  ]
+}

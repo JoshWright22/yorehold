@@ -1,0 +1,12 @@
+{
+  "id": "adrenaline-rush",
+  "name": "Adrenaline Rush",
+  "description": "As a bonus action, gain temporary HP equal to your proficiency bonus. Twice a long rest.",
+  "kind": "species",
+  "resources": {
+    "adrenaline-rush": 2
+  },
+  "actions": [
+    "adrenaline-rush"
+  ]
+}
