@@ -39,6 +39,7 @@ public partial class FightControl : Node
         hud.EndTurnPressed += EndTurn;
         hud.CreaturePressed += PickCreature;
         hud.ReactionAnswered += take => _world?.React(take);
+        hud.ReactionHeld += (hero, id, held) => _world?.HoldReaction(hero, id, held);
     }
 
     /// <summary>A turn began: the camera goes to whoever has it, if the party can see them.</summary>

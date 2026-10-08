@@ -40,6 +40,8 @@ public sealed class WorldCreature
     public bool Fled { get; set; }
     /// <summary>The action a Ready recorded, for its reaction; empty when none.</summary>
     public string ReadiedAction { get; set; } = "";
+    /// <summary>Reactions its player is holding back (ids): not offered and not taken until let go.</summary>
+    public HashSet<string> HeldReactions { get; } = new(StringComparer.Ordinal);
     /// <summary>A hero's choices, which its sheet is built from; null for everyone else.</summary>
     public CharacterChoices? Choices { get; set; }
     /// <summary>The library file a brought character came from; empty for a ready-made hero.</summary>

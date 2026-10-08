@@ -1162,6 +1162,8 @@ The ruleset's `reactions/<id>.json` files name movement triggers and the action 
 
 Every edge of voluntary movement is checked, including free movement and movement bought with Dash. An opportunity happens before leaving; a readied action happens after entering. Forced movement does not provoke. A lethal reaction stops movement where it happened and advances the turn. Planned movement is paid when the move starts.
 
+A hero's reactions are listed on Sheet > Features; pressing one holds it back (not offered, not taken) until it is pressed again. This is how a player keeps a Shield or a counterspell for later, since those are taken in the middle of someone else's roll with no prompt. Saves keep the held ones per creature as `heldReactions`.
+
 Reactions are automatic by default. The host's Settings switch asks the reacting hero's owner to Take or Skip and defaults to Take after `promptSeconds`. The move waits for the answer; Skip preserves the reaction budget. Each offer has its own id, so stale replies cannot choose a later offer. Other actions wait while an offer is open; the host supplies the prompt setting in the movement command so peers use the same rule. The test browser's Reaction prompt scene holds time for inspection.
 
 ## Stealth rules

@@ -496,6 +496,31 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AHeldReactionIsNotTaken()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard",
+            ("rulesets/dnd5e/conditions/shielded.json", """{"id": "shielded", "name": "Shielded", "modifiers": [{"stat": "ac", "op": "add", "value": 5000}], "ends": ["turnStart"]}"""));
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet;
+        if (!bo.Spells.Contains("shield"))
+        {
+            bo.Spells.Add("shield");
+        }
+        bo.Stats.SetBase("ac", -1000);
+        w.Creatures[2].Sheet.Stats.SetBase("dex", 2000);
+        world.Put(2, new Cell(3, 4));
+        world.Fight();
+        Assert.Contains(w.ReactionsOf(1), r => r.Id == "shield");
+        Assert.DoesNotContain(w.ReactionsOf(0), r => r.Id == "shield");
+        Assert.False(w.HoldReaction(0, "shield", true));
+        Assert.True(w.HoldReaction(1, "shield", true), w.Refusal);
+        Assert.True(world.TurnTo(2) && world.Use("attack", 1), w.Refusal);
+        Assert.False(world.Said("Bo takes Shield"));
+        Assert.True(w.HoldReaction(1, "shield", false));
+        Assert.Empty(w.Creatures[1].HeldReactions);
+    }
+
+    [Fact]
     public void AShieldThatCantTurnTheHitIsKept()
     {
         // the real Shield (+5) against a hit that beats AC by a thousand: not worth the slot

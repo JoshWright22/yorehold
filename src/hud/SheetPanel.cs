@@ -20,6 +20,8 @@ public partial class SheetPanel : PanelContainer
     /// <summary>A hero's name in the head was pressed.</summary>
     public event Action<int>? HeroPicked;
     public event Action? ClosePressed;
+    /// <summary>A reaction on the Features page was pressed: hold it back (true) or let it go.</summary>
+    public event Action<int, string, bool>? ReactionHeld;
 
     private PortraitView _portrait = null!;
     private Label _name = null!;
@@ -41,6 +43,8 @@ public partial class SheetPanel : PanelContainer
     private string _abilitiesShown = "";
     private string _skillsShown = "";
     private string _pageShown = "";
+    private int _hero;
+    private HashSet<string> _held = new();
 
     public override void _Ready()
     {
@@ -138,6 +142,14 @@ public partial class SheetPanel : PanelContainer
         side.AddChild(pageCard);
         _page = new RichTextLabel { ThemeTypeVariation = "PageText", BbcodeEnabled = true, ScrollActive = true };
         pageCard.AddChild(_page);
+        _page.MetaClicked += meta =>
+        {
+            string pressed = meta.AsString();
+            if (pressed.StartsWith("hold:", StringComparison.Ordinal))
+            {
+                ReactionHeld?.Invoke(_hero, pressed[5..], !_held.Contains(pressed[5..]));
+            }
+        };
 
         _foot = new Label { ThemeTypeVariation = "DimLabel" };
         rows.AddChild(_foot);
@@ -176,6 +188,8 @@ public partial class SheetPanel : PanelContainer
         WorldCreature c = world.Creatures[hero];
         CharacterSheet sheet = c.Sheet;
         Ruleset rules = world.Rules;
+        _hero = hero;
+        _held = c.HeldReactions;
         Compendium compendium = world.Chapter.Compendium;
 
         _portrait.Show(sheet.Name, world.Tokens.Tokens[hero].Color.ToGodot(), sheet.Down, Portraits.Of(world, hero), Portraits.FocusOf(world, hero));
@@ -359,6 +373,17 @@ public partial class SheetPanel : PanelContainer
                     {
                         page.Heading($"{reaction.Name} ({rules.Words.Reaction})").Gap();
                     }
+                }
+                // every reaction it has, each one used when it comes up or held back until let go
+                List<ReactionDefinition> reactions = world.ReactionsOf(_hero);
+                if (reactions.Count > 0)
+                {
+                    page.Heading($"{rules.Words.Reaction}s");
+                    foreach (ReactionDefinition reaction in reactions)
+                    {
+                        page.Switch(reaction.Name, c.HeldReactions.Contains(reaction.Id) ? "held back" : "used when it comes up", "hold:" + reaction.Id);
+                    }
+                    page.Gap();
                 }
                 if (feats.Count == 0 && sheet.Granted.Count == 0 && (c.Choices?.Options.Count ?? 0) == 0)
                 {

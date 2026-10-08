@@ -33,6 +33,7 @@ public partial class PlayHud : Control
     public event Action<int>? CreaturePressed;
     /// <summary>True for use it, false for pass.</summary>
     public event Action<bool>? ReactionAnswered;
+    public event Action<int, string, bool>? ReactionHeld;
     /// <summary>A button on the menu beside the hotbar, by its node name ("Characters").</summary>
     public event Action<string>? MenuPressed;
     /// <summary>Something pressed on the gear panel.</summary>
@@ -166,6 +167,7 @@ public partial class PlayHud : Control
         _sheet = GetNode<SheetPanel>("Sheet");
         _sheet.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _sheet.ClosePressed += () => OpenPanel = "";
+        _sheet.ReactionHeld += (hero, id, held) => ReactionHeld?.Invoke(hero, id, held);
         _sheetButton = GetNode<Button>("Bottom/Menu/Sheet");
         _gearView = GetNode<DataPanel>("Gear");
         _gearButton = GetNode<Button>("Bottom/Menu/Gear");

@@ -144,6 +144,10 @@ public sealed partial class World
                 ["dropped"] = c.Dropped,
                 ["mayPrepare"] = c.MayPrepare,
             };
+            if (c.HeldReactions.Count > 0)
+            {
+                cj["heldReactions"] = new JsonArray(c.HeldReactions.OrderBy(id => id, StringComparer.Ordinal).Select(id => (JsonNode?)id).ToArray());
+            }
             if (c.Concentration.Active)
             {
                 cj["concentration"] = new JsonObject
@@ -258,7 +262,7 @@ public sealed partial class World
 
     private sealed record SavedCreature(
         CharacterSheet Sheet, Vector2 At, int Team, bool Awake, float Facing, bool Fled, bool Surrendered, bool Dropped,
-        bool MayPrepare, Concentration Concentration);
+        bool MayPrepare, Concentration Concentration, List<string> HeldReactions);
 
     private void RestoreFrom(ContentNode data)
     {
@@ -372,7 +376,7 @@ public sealed partial class World
             }
             saved.Add(new SavedCreature(sheet, at, c.Int("team", 1, 0, 2), c.Bool("awake", false),
                 (float)c.Number("facing", 0), c.Bool("fled", false), c.Bool("surrendered", false), c.Bool("dropped", false),
-                c.Bool("mayPrepare", true), held));
+                c.Bool("mayPrepare", true), held, c.Get("heldReactions") is ContentNode kept ? kept.Items().Select(k => k.AsText(64)).ToList() : new List<string>()));
         }
 
         // Doors, chests and traps as they were left.
@@ -493,6 +497,8 @@ public sealed partial class World
             c.Awake = s.Awake;
             c.Facing = s.Facing;
             c.MayPrepare = s.MayPrepare;
+            c.HeldReactions.Clear();
+            c.HeldReactions.UnionWith(s.HeldReactions);
             c.Fled = s.Fled && s.Sheet.Down;
             c.Surrendered = s.Surrendered;
             c.Dropped = s.Dropped;

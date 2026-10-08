@@ -382,8 +382,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: `spellCast` reactions, before the spell acts; a `spellLost` flag counters it.
   - Done 10/8: a hero's reactions to hits and misses are asked for when prompts are on (the
     fight waits on the answer); spells cast as reactions (Shield, slot spent).
-  - Left: prompts for reactions taken in the middle of an attack (`beforeHit`) and to a spell
-    (`spellCast`), which are still taken at once.
+  - Done 10/8: reactions taken in the middle of an attack (`beforeHit`) or a casting
+    (`spellCast`) can't wait for an answer, so a player holds any of a hero's reactions back
+    ahead of time: Sheet > Features lists them, each "used when it comes up" or "held back"
+    (`HoldReaction`, kept in the save).
   - Done 10/8: a `beforeHit` guard is taken only when the defence it adds would make the roll
     miss (a Shield against a hit by 10 is kept, slot and all).
 - [ ] **R5. Features that do things.** Classes, subclasses, races, heritages and feats grant

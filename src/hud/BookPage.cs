@@ -83,6 +83,13 @@ public sealed class BookPage
         return this;
     }
 
+    /// <summary>A stat whose value is pressed to change it; the page's reader gets meta back.</summary>
+    public BookPage Switch(string label, string value, string meta)
+    {
+        _text.Append($"[color={Bright}][b]{Escape(label)}[/b][/color] [url={meta}]{Escape(value)}[/url]\n");
+        return this;
+    }
+
     /// <summary>A note in the faint ink, for what is not a rule (how many there are, where it came from).</summary>
     public BookPage Note(string words)
     {

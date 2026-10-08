@@ -135,7 +135,7 @@ public sealed partial class World
                 }
                 foreach (ReactionDefinition definition in Chapter.Rules.Reactions)
                 {
-                    if (definition.Trigger != phase || Unless(definition, mover) || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
+                    if (definition.Trigger != phase || Unless(definition, mover) || Creatures[reactor].HeldReactions.Contains(definition.Id) || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
                     {
                         continue;
                     }
@@ -266,6 +266,10 @@ public sealed partial class World
     {
         CharacterSheet sheet = Creatures[reactor].Sheet;
         ActionDefinition? action;
+        if (Creatures[reactor].HeldReactions.Contains(definition.Id))
+        {
+            return null;
+        }
         if (definition.Spell.Length > 0)
         {
             if (FindSpell(definition.Spell) is not SpellDefinition spell || !sheet.Spells.Contains(spell.Id)
@@ -284,6 +288,37 @@ public sealed partial class World
             }
         }
         return action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, source) ? null : action;
+    }
+
+    /// <summary>
+    /// The reactions a creature has: everyone's, the ones it was granted and the spells it knows
+    /// that are cast as one. A reaction taken in the middle of an attack or a casting can't wait
+    /// for an answer, so its player holds it back or lets it go ahead of time.
+    /// </summary>
+    public List<ReactionDefinition> ReactionsOf(int who)
+    {
+        CharacterSheet sheet = Creatures[who].Sheet;
+        return Chapter.Rules.Reactions.Where(r => r.Spell.Length > 0 ? sheet.Spells.Contains(r.Spell) : r.General || sheet.Granted.Contains(r.Id)).ToList();
+    }
+
+    /// <summary>Holds one of a creature's reactions back, or lets it go again.</summary>
+    public bool HoldReaction(int who, string reaction, bool held)
+    {
+        Refusal = "";
+        if (who < 0 || who >= Creatures.Count || !ReactionsOf(who).Exists(r => r.Id == reaction))
+        {
+            Refusal = "No such reaction.";
+            return false;
+        }
+        if (held)
+        {
+            Creatures[who].HeldReactions.Add(reaction);
+        }
+        else
+        {
+            Creatures[who].HeldReactions.Remove(reaction);
+        }
+        return true;
     }
 
     // Whether a guard taken now would make a hit that beat the defence by margin miss: the
