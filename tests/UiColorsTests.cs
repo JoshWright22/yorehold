@@ -18,6 +18,16 @@ public class UiColorsTests
     }
 
     [Fact]
+    public void TheScreensShapesAreData()
+    {
+        UiShapes shipped = UiShapes.Read(ContentNode.Read(TestContent.Shipped(), UiShapes.File));
+        Assert.Equal((2, 1, 0), (shipped.Corners, shipped.Edges, shipped.Shadow));
+        UiShapes skin = UiShapes.Read(TestContent.Json("""{"format": "yorehold.shapes", "version": 1, "corners": 0}"""));
+        Assert.Equal((0, (int?)null), (skin.Corners, skin.Edges));
+        Assert.Equal("edges", TestContent.Refused(() => UiShapes.Read(TestContent.Json("""{"format": "yorehold.shapes", "version": 1, "edges": 40}"""))).Field);
+    }
+
+    [Fact]
     public void TheScreensFacesAreData()
     {
         UiFonts shipped = UiFonts.Read(ContentNode.Read(TestContent.Shipped(), UiFonts.File));

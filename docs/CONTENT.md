@@ -93,6 +93,9 @@ What the port reads so far, and where it differs:
   replaces the roles it names, in what the code draws and in the shared theme alike. A role's
   list may start with a font file the skin brings (`"book": ["ui/fonts/body.ttf", "Georgia"]`,
   .ttf, .otf, .woff or .woff2, one per role); the system names after it fill in missing letters.
+  `ui/shapes.json` cuts the boxes: `corners` (the radius of every corner that is rounded at
+  all; square ones stay square), `edges` (the width of the thin 1 px lines; thick accent bars
+  keep theirs) and `shadow` (a hard offset in px, 0 for none), each optional.
 - `ui/credits.json` is new: the game's own credits. `{"entries": [{"name", "kind", "by", "licence",
   "text"}]}`; `kind` is the tab it shows under. The engine and the libraries inside it are not in the
   file: the credits screen asks the engine for them and their licence texts.

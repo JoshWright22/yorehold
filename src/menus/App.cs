@@ -78,6 +78,7 @@ public static class App
         // the screens' colours are data: ui/colors.json, a skin's when one is on top
         Palette.Load(Content());
         Palette.LoadFonts(Content());
+        Palette.LoadShapes(Content());
         try
         {
             Keys = KeyBindings.Read(ContentNode.Read(Content(), "ui/keys.json"));

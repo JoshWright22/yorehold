@@ -57,6 +57,7 @@ public class ContentTests
         // the screens' colours, shared with the site; src/hud/Palette.cs holds them and PaletteTests checks they agree
         Try("ui/colors.json", () => UiColors.Read(ContentNode.Read(files, UiColors.File)));
         Try("ui/fonts.json", () => UiFonts.Read(ContentNode.Read(files, UiFonts.File)));
+        Try("ui/shapes.json", () => UiShapes.Read(ContentNode.Read(files, UiShapes.File)));
         Try("create/compendium.json", () =>
         {
             if (!new CompendiumEditor(new History()).SetKinds(files.ReadText("create/compendium.json"), out string error))

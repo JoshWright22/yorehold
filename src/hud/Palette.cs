@@ -213,6 +213,69 @@ public static class Palette
         }
     }
 
+    /// <summary>
+    /// Cuts the shared theme's boxes as ui/shapes.json says (a skin's when one is laid on top): its
+    /// radius on every corner that is rounded at all, its width on every thin edge, and a hard
+    /// shadow. What the file leaves out stays as the theme has it.
+    /// </summary>
+    public static void LoadShapes(Rules.ContentFiles files)
+    {
+        if (!files.Exists(Rules.UiShapes.File))
+        {
+            return;
+        }
+        Rules.UiShapes shapes;
+        try
+        {
+            shapes = Rules.UiShapes.Read(Rules.ContentNode.Read(files, Rules.UiShapes.File));
+        }
+        catch (Rules.ContentException error)
+        {
+            GD.PushWarning($"The screens' shapes can't be read, so they are the game's own: {error.Message}");
+            return;
+        }
+        Theme theme = GD.Load<Theme>("res://scenes/hud/hud-theme.tres");
+        var seen = new System.Collections.Generic.HashSet<StyleBoxFlat>();
+        foreach (string type in theme.GetTypeList())
+        {
+            foreach (string name in theme.GetStyleboxList(type))
+            {
+                if (theme.GetStylebox(name, type) is not StyleBoxFlat box || !seen.Add(box))
+                {
+                    continue;
+                }
+                if (shapes.Corners is int radius)
+                {
+                    foreach (Corner corner in new[] { Corner.TopLeft, Corner.TopRight, Corner.BottomRight, Corner.BottomLeft })
+                    {
+                        if (box.GetCornerRadius(corner) > 0)
+                        {
+                            box.SetCornerRadius(corner, radius);
+                        }
+                    }
+                }
+                if (shapes.Edges is int edge)
+                {
+                    foreach (Side side in new[] { Side.Left, Side.Top, Side.Right, Side.Bottom })
+                    {
+                        // the thin lines only; a thick accent bar keeps its weight
+                        if (box.GetBorderWidth(side) == 1)
+                        {
+                            box.SetBorderWidth(side, edge);
+                        }
+                    }
+                }
+                if (shapes.Shadow is int shadow && shadow > 0 && box.BgColor.A > 0)
+                {
+                    // one hard offset in the darkest grey, no blur
+                    box.ShadowSize = 1;
+                    box.ShadowOffset = new Vector2(shadow, shadow);
+                    box.ShadowColor = new Color(Night, 1);
+                }
+            }
+        }
+    }
+
     // Every role, in one order, to see which a scheme changed.
     private static Color[] Roles() => new[]
     {

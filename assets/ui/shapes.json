@@ -1,0 +1,8 @@
+{
+  "format": "yorehold.shapes",
+  "version": 1,
+  "about": "How the boxes of the screens are cut. corners: the radius of every corner that is rounded at all (square ones stay square); edges: the width of the thin 1 px lines; shadow: a hard shadow offset, 0 for none. A skin's own file changes what it names.",
+  "corners": 2,
+  "edges": 1,
+  "shadow": 0
+}
