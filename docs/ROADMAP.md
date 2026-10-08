@@ -405,6 +405,14 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   entry and listing what it couldn't place. The writer checks it in Create's compendium. Only
   books the writer owns; a system made from someone else's book stays private unless its licence
   allows sharing (SRD, ORC).
+- [ ] **R13b. Adventures import and are built for the chosen system.** Josh, 10/8: imports and
+  AI-driven adventure creation working in every system without much lag. The adventure import
+  and the outline builder stop writing yorehold ids (`BookCast` "dex"/"athletics", the game's
+  classes and goblin, `SystemTable` "perception"): the writer picks a system, the story model
+  is given that system's skills, conditions, classes and creatures from its JSON, and stat
+  blocks land in its creature format (S12-S15). DCs and encounters are set by R2b's evaluator
+  for that system. Speed: rules, odds and the fight AI stay local; simulated fights for balance
+  run in the background in Create, never in play; only what the story model writes waits on it.
 - [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
   with licence, author, links and the no-AI-uploads declaration; credits built from what an
   adventure uses. The site runs the game's checks on each upload and refuses one that wouldn't
