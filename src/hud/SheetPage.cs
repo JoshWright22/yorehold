@@ -117,6 +117,12 @@ public static class SheetPage
         {
             who += " " + sheet.Ancestry;
         }
+        // the system's own picks after the race: "Dwarf (Forge dwarf)"
+        List<string> picked = choices?.Options.Values.Where(compendium.Options.ContainsKey).Select(id => compendium.Options[id].Name).ToList() ?? new List<string>();
+        if (picked.Count > 0)
+        {
+            who += $" ({string.Join(", ", picked)})";
+        }
         if (sheet.ClassName.Length > 0)
         {
             who += " " + sheet.ClassName;

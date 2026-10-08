@@ -308,6 +308,9 @@
   "turnWords": {
     "free": "free action"
   },
+  "optionKinds": [
+    { "id": "heritage", "name": "Heritage" }
+  ],
   "featKinds": [
     { "id": "ancestry", "name": "Ancestry feat" },
     { "id": "class", "name": "Class feat" },
@@ -321,6 +324,7 @@
         "parts": [
           "name",
           "race",
+          "options",
           "background"
         ]
       },

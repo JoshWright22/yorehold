@@ -1,0 +1,8 @@
+{
+  "id": "forge-dwarf",
+  "name": "Forge dwarf",
+  "description": "Born near the great forges: resistance to fire.",
+  "kind": "heritage",
+  "races": ["dwarf"],
+  "modifiers": [{ "stat": "resist.fire", "op": "add", "value": 2 }]
+}

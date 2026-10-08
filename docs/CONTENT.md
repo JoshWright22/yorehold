@@ -852,6 +852,8 @@ Player options live only in the ruleset folder: `races/`, `backgrounds/` and `fe
 
 The game ships human, elf, dwarf and halfling; acolyte, criminal, farmhand, sage, soldier and noble; and a first feat set of each kind: race feats each race gives, skill feats the backgrounds give (expert in one of their skills), and general and class feats for the level slots the class level tables open. A character's `race` and `background` in a save name these ids. The content check builds every race and background with every class and takes every feat once.
 
+A system may have kinds of pick of its own beside race, background and class: `"optionKinds": [{"id": "heritage", "name": "Heritage"}]` in `ruleset.json`, and one file per choice in the ruleset folder's `options/`: `{"id": "forge-dwarf", "name": "Forge dwarf", "kind": "heritage", "races": ["dwarf"], "modifiers": [{"stat": "resist.fire", "op": "add", "value": 2}]}`. `races` and `classes` say who may take it (anyone when left out); it grants what a class feature grants (`modifiers`, `proficiencies`, `ranks`, `resources`, `actions`) and `feats`. Creation asks for one of each kind where a step lists the part `options` (only when one is open to the character); a character file keeps them as `"options": {"heritage": "forge-dwarf"}`, and the sheet names them after the race.
+
 A feat's `kind` and a class level's `feats` name one of the ruleset's `featKinds`: `[{"id": "ancestry", "name": "Ancestry feat"}, ...]`, 1 to 16 of them, each name what the creation screen calls a slot of that kind. Without the list a ruleset has the game's own: `class`, `skill`, `general` and `race`. A kind the ruleset doesn't list stops the ruleset loading and names the file.
 
 ## Class level tables

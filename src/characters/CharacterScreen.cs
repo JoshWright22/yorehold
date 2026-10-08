@@ -566,6 +566,20 @@ public partial class CharacterScreen : CanvasLayer
                 case "fields" when _rules.Fields.Count > 0:
                     FieldsPart(d);
                     break;
+                case "options":
+                    // the system's own kinds of pick (a heritage), each from those open to this character
+                    foreach (OptionKind kind in _rules.OptionKinds)
+                    {
+                        List<string> open = d.OptionIds(kind.Id);
+                        if (open.Count == 0)
+                        {
+                            continue;
+                        }
+                        Heading(_body, kind.Name);
+                        string id = kind.Id;
+                        Grid(open, o => _compendium.Options[o].Name, o => d.Choices.Options.GetValueOrDefault(id) == o, 3, o => d.SetOption(id, o));
+                    }
+                    break;
                 case "race" when _compendium.Races.Count > 0:
                     Heading(_body, _rules.Creation.NameOf("race"));
                     Grid(d.RaceIds(), id => _compendium.Races[id].Name, id => id == d.Choices.Race, 4, d.SetRace);

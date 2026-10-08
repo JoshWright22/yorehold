@@ -1,0 +1,8 @@
+{
+  "id": "cavern-elf",
+  "name": "Cavern elf",
+  "description": "Raised under the earth: they see in darkness.",
+  "kind": "heritage",
+  "races": ["elf"],
+  "modifiers": [{ "stat": "darkvision", "op": "add", "value": 60 }]
+}

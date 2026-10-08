@@ -14,6 +14,8 @@ public class Compendium
     public SortedDictionary<string, BackgroundDefinition> Backgrounds { get; } = new(StringComparer.Ordinal);
     public SortedDictionary<string, FeatDefinition> Feats { get; } = new(StringComparer.Ordinal);
     public SortedDictionary<string, SpellDefinition> Spells { get; } = new(StringComparer.Ordinal);
+    /// <summary>Picks of the system's own option kinds (options/), by id.</summary>
+    public SortedDictionary<string, OptionDefinition> Options { get; } = new(StringComparer.Ordinal);
 
     public Compendium()
     {
@@ -131,6 +133,30 @@ public class Compendium
                 throw node.Fail("id", "uses a-z, 0-9, - and _");
             }
             Spells[spell.Id] = spell;
+        }
+
+        foreach (string path in files.List(folder + "/options"))
+        {
+            ContentNode node = ContentNode.Read(files, path);
+            OptionDefinition option = OptionDefinition.Read(node);
+            MatchName(node, option.Id, path);
+            Options[option.Id] = option;
+        }
+        foreach (OptionDefinition option in Options.Values)
+        {
+            string file = $"{folder}/options/{option.Id}.json";
+            if (option.Races.FirstOrDefault(race => !Races.ContainsKey(race)) is string race)
+            {
+                throw new ContentException(file, "races", $"no race \"{race}\"");
+            }
+            if (option.Classes.FirstOrDefault(c => !Classes.ContainsKey(c)) is string needed)
+            {
+                throw new ContentException(file, "classes", $"no class \"{needed}\"");
+            }
+            if (option.Feats.FirstOrDefault(f => !Feats.ContainsKey(f)) is string feat)
+            {
+                throw new ContentException(file, "feats", $"no feat \"{feat}\"");
+            }
         }
 
         foreach (FeatDefinition feat in Feats.Values)

@@ -111,6 +111,15 @@ public class RulesFolder
                 throw new ContentException(FileOf("classes", definition.Id), "levels", $"unknown feat kind \"{unknown}\"; the ruleset's are {kinds}");
             }
         }
+        foreach (OptionDefinition option in compendium.Options.Values)
+        {
+            if (Rules.OptionKinds.All(k => k.Id != option.Kind))
+            {
+                throw new ContentException($"{Folder}/options/{option.Id}.json", "kind",
+                    $"unknown option kind \"{option.Kind}\"; the ruleset's are {string.Join(", ", Rules.OptionKinds.Select(k => k.Id))}");
+            }
+            Granted(option.Gives.Actions, $"{Folder}/options/{option.Id}.json");
+        }
         foreach (FeatDefinition feat in compendium.Feats.Values.Where(feat => !KnownKind(feat.Kind)))
         {
             throw new ContentException($"{Folder}/feats/{feat.Id}.json", "kind", $"unknown feat kind \"{feat.Kind}\"; the ruleset's are {kinds}");

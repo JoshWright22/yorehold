@@ -1,0 +1,8 @@
+{
+  "id": "woodland-elf",
+  "name": "Woodland elf",
+  "description": "At home among trees, quick through the undergrowth.",
+  "kind": "heritage",
+  "races": ["elf"],
+  "modifiers": [{ "stat": "speed", "op": "add", "value": 5 }]
+}

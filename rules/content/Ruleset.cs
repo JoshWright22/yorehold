@@ -168,6 +168,8 @@ public class Ruleset
     public SheetLayout Sheet { get; init; } = new();
     /// <summary>What harm uses up, in the order it does; empty = plain HP.</summary>
     public List<TrackDefinition> Tracks { get; init; } = new();
+    /// <summary>Kinds of pick of its own beside race, background and class (PF2e's heritage).</summary>
+    public List<OptionKind> OptionKinds { get; init; } = new();
     /// <summary>Words a character is made of (Fate's aspects), beside its numbers.</summary>
     public List<FieldDefinition> Fields { get; init; } = new();
     /// <summary>Who acts when: one initiative order, or side by side.</summary>
@@ -486,6 +488,7 @@ public class Ruleset
             Tracks = (node.Get("tracks")?.Items() ?? Array.Empty<ContentNode>()).Select(TrackDefinition.Read).ToList(),
             TurnOrder = TurnOrder.Read(node.Get("turnOrder")),
             Fields = (node.Get("fields")?.Items() ?? Array.Empty<ContentNode>()).Select(FieldDefinition.Read).ToList(),
+            OptionKinds = (node.Get("optionKinds")?.Items() ?? Array.Empty<ContentNode>()).Select(OptionKind.Read).ToList(),
             Defences = (node.Get("defences")?.Items() ?? Array.Empty<ContentNode>()).Select(DefenceDefinition.Read).ToList(),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,

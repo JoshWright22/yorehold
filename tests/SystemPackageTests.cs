@@ -83,6 +83,20 @@ public class SystemPackageTests
         var hero = new CharacterDraft(pf2e, pf2eCompendium);
         hero.SetName("Ana");
         Assert.Equal("Pick an ancestry.", hero.StepProblem(0));
+
+        // a heritage: the system's own kind of pick, open by ancestry, granting what it says
+        hero.SetRace("dwarf");
+        Assert.Equal(new[] { "forge-dwarf", "strong-blooded-dwarf" }, hero.OptionIds("heritage"));
+        Assert.Equal("Pick a heritage.", hero.StepProblem(0));
+        hero.SetOption("heritage", "forge-dwarf");
+        CharacterSheet ana = CharacterBuild.Build(pf2e, pf2eCompendium, hero.Choices)!;
+        Assert.Equal(2, ana.Stats.Integer("resist.fire"));
+        hero.SetRace("elf"); // a forge dwarf heritage doesn't fit an elf
+        Assert.False(hero.Choices.Options.ContainsKey("heritage"));
+        CharacterChoices wrong = hero.Choices.Copy();
+        wrong.Options["heritage"] = "forge-dwarf";
+        Assert.Null(CharacterBuild.Build(pf2e, pf2eCompendium, wrong, out string why));
+        Assert.Contains("isn't open", why);
     }
 
     [Fact]

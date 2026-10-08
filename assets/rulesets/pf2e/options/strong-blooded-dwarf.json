@@ -1,0 +1,8 @@
+{
+  "id": "strong-blooded-dwarf",
+  "name": "Strong-blooded dwarf",
+  "description": "Poison barely takes hold of them: resistance to poison.",
+  "kind": "heritage",
+  "races": ["dwarf"],
+  "modifiers": [{ "stat": "resist.poison", "op": "add", "value": 2 }]
+}

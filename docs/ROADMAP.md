@@ -324,6 +324,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Options in place of classes: a system declares its option kinds (class, ancestry,
     heritage, background, archetype; Fate: none) and what each grants as the character advances.
     Creation's parts come from these.
+    Done 10/8: `optionKinds` and `options/` files (PF2e heritages: forge and strong-blooded
+    dwarf, cavern and woodland elf, skilled and hardy human), open by race and class, granting
+    like features, picked in creation. Left: making class itself optional (Fate still has one
+    "character" class), options taken at later levels (archetypes).
   - Advancement: levels and XP are one mode beside milestones, Fate's milestones (swap a skill,
     +1 to an approach) and none.
     Done 10/8: `advancement`: xp, milestone (a level for each chapter gone on from) or none;

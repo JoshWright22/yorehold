@@ -151,6 +151,28 @@ public static class CharacterBuild
                 Take(given);
             }
         }
+        // the system's own picks (a heritage): what each grants, and its feats
+        foreach (KeyValuePair<string, string> pick in choices.Options)
+        {
+            if (!compendium.Options.TryGetValue(pick.Value, out OptionDefinition? option) || option.Kind != pick.Key)
+            {
+                error = $"options.{pick.Key}: no {pick.Key} \"{pick.Value}\"";
+                return null;
+            }
+            if (!option.OpenTo(choices.Race, choices.Levels[0].ClassId))
+            {
+                error = $"options.{pick.Key}: {option.Name} isn't open to this character";
+                return null;
+            }
+            Grant(option.Gives, "build:option:" + option.Id);
+            foreach (string id in option.Feats.Where(id => !taken.Contains(id)))
+            {
+                if (compendium.Feats.TryGetValue(id, out FeatDefinition? given))
+                {
+                    Take(given);
+                }
+            }
+        }
 
         var classesSoFar = new HashSet<string>();
         var classLevels = new Dictionary<string, int>();

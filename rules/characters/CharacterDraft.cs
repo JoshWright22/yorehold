@@ -80,6 +80,10 @@ public sealed class CharacterDraft
             {
                 return $"Pick {Article(creation.NameOf("race"))}.";
             }
+            if (StepHas(which, "options") && _rules.OptionKinds.FirstOrDefault(k => !_choices.Options.ContainsKey(k.Id) && OptionIds(k.Id).Count > 0) is OptionKind open)
+            {
+                return $"Pick {Article(open.Name)}.";
+            }
             if (StepHas(which, "background") && _compendium.Backgrounds.Count > 0 && !_compendium.Backgrounds.ContainsKey(_choices.Background))
             {
                 return $"Pick {Article(creation.NameOf("background"))}.";
@@ -379,9 +383,28 @@ public sealed class CharacterDraft
         return values;
     }
 
+    /// <summary>The options of a kind this character may take now, by name.</summary>
+    public List<string> OptionIds(string kind) =>
+        ByName(_compendium.Options.Where(o => o.Value.Kind == kind && o.Value.OpenTo(_choices.Race, _choices.Levels[0].ClassId))
+            .ToDictionary(o => o.Key, o => o.Value), o => o.Name);
+
+    public void SetOption(string kind, string id)
+    {
+        _choices.Options[kind] = id;
+        Rebuild();
+    }
+
     private void Rebuild()
     {
         Problem = "";
+        // a new race or class can close an option picked before it
+        foreach (KeyValuePair<string, string> pick in _choices.Options.ToList())
+        {
+            if (!_compendium.Options.TryGetValue(pick.Value, out OptionDefinition? option) || !option.OpenTo(_choices.Race, _choices.Levels[0].ClassId))
+            {
+                _choices.Options.Remove(pick.Key);
+            }
+        }
         Sheet = null;
         _skillOptions.Clear();
         _featOptions.Clear();

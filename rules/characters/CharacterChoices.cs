@@ -59,6 +59,8 @@ public sealed class CharacterChoices
     public string Notes { get; set; } = "";
     /// <summary>The ruleset's fields as written for this character, by field id.</summary>
     public SortedDictionary<string, List<string>> Fields { get; } = new(StringComparer.Ordinal);
+    /// <summary>The pick of each of the ruleset's option kinds (heritage: an option id).</summary>
+    public SortedDictionary<string, string> Options { get; } = new(StringComparer.Ordinal);
 
     public int Level => Levels.Count;
 
@@ -76,6 +78,10 @@ public sealed class CharacterChoices
         foreach (KeyValuePair<string, List<string>> field in Fields)
         {
             copy.Fields[field.Key] = field.Value.ToList();
+        }
+        foreach (KeyValuePair<string, string> option in Options)
+        {
+            copy.Options[option.Key] = option.Value;
         }
         return copy;
     }
@@ -229,13 +235,17 @@ public sealed class CharacterChoices
             }
             j["fields"] = fields;
         }
+        if (Options.Count > 0)
+        {
+            j["options"] = new JsonObject(Options.Select(o => KeyValuePair.Create(o.Key, (JsonNode?)JsonValue.Create(o.Value))));
+        }
         return j;
     }
 
     public static CharacterChoices Read(ContentNode node)
     {
         node.RequireObject("a character is a JSON object");
-        node.Only("version", "name", "race", "background", "scoreMethod", "scores", "levels", "xp", "ruleset", "notes", "fields");
+        node.Only("version", "name", "race", "background", "scoreMethod", "scores", "levels", "xp", "ruleset", "notes", "fields", "options");
         int version = node.Int("version", Version, 1);
         if (version > Version)
         {
@@ -258,6 +268,14 @@ public sealed class CharacterChoices
                 throw field.Value.Fail("is a list of up to 20 lines");
             }
             choices.Fields[field.Key] = field.Value.Items().Select(line => line.AsText(FieldDefinition.MostLetters)).ToList();
+        }
+        foreach (KeyValuePair<string, ContentNode> option in node.Get("options")?.Members() ?? Enumerable.Empty<KeyValuePair<string, ContentNode>>())
+        {
+            if (!ContentIds.IsId(option.Key))
+            {
+                throw option.Value.Fail("option kinds use a-z, 0-9, - and _");
+            }
+            choices.Options[option.Key] = option.Value.AsId();
         }
         if (!Methods.Contains(choices.ScoreMethod))
         {

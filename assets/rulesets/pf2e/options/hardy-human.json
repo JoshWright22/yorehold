@@ -1,0 +1,8 @@
+{
+  "id": "hardy-human",
+  "name": "Hardy human",
+  "description": "Raised rough: more hit points.",
+  "kind": "heritage",
+  "races": ["human"],
+  "modifiers": [{ "stat": "maxHp", "op": "add", "value": 4 }]
+}

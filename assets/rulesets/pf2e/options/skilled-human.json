@@ -1,0 +1,8 @@
+{
+  "id": "skilled-human",
+  "name": "Skilled human",
+  "description": "A knack for getting along: trained in Diplomacy.",
+  "kind": "heritage",
+  "races": ["human"],
+  "proficiencies": ["diplomacy"]
+}
