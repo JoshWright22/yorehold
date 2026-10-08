@@ -1,4 +1,7 @@
 # playtest setup, title: a quick start, then Escape for the pause list
+30 button Play
+31 down left
+32 up left
 40 button Quick_start
 41 down left
 42 up left

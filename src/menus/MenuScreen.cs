@@ -39,7 +39,11 @@ public partial class MenuScreen : CanvasLayer
         Adventures,
     }
 
-    private sealed record Entry(string Id, string Label, string Fact, bool Enabled, string Why);
+    // Under: one of Play's choices, shown smaller under it while Play is open
+    private sealed record Entry(string Id, string Label, string Fact, bool Enabled, string Why, bool Under = false);
+
+    // the title's Play is open: its choices (continue, new, quick, load, characters) show under it
+    private bool _playOpen;
 
     /// <summary>An entry was picked; the text is the save's path for LoadSave.</summary>
     public event Action<MenuOrder, string>? Ordered;
@@ -217,6 +221,10 @@ public partial class MenuScreen : CanvasLayer
         }
         switch (key.Keycode)
         {
+            case Key.Escape when Showing == Page.Title && _playOpen:
+                _playOpen = false;
+                _picked = 0;
+                break;
             case Key.Escape:
                 if (Showing == Page.Pause)
                 {
@@ -293,16 +301,21 @@ public partial class MenuScreen : CanvasLayer
             _list.Add(new Entry("quit", "Save and quit to title", "", true, ""));
             return;
         }
-        SaveSummary? save = Autosave();
-        bool loadable = save != null && save.Problem.Length == 0;
-        _list.Add(new Entry("continue", "Continue", loadable ? save!.ChapterTitle : "no save", loadable,
-            save == null ? "There is no save yet." : "The save can't be read: " + save.Problem));
-        _list.Add(new Entry("new", "New adventure", "pick one", true, ""));
-        _list.Add(new Entry("quick", "Quick start", "ready-made party", true, ""));
-        _list.Add(new Entry("load", "Load", Count(_saves.Count, "save"), _saves.Count > 0, "There is no save yet."));
-        _list.Add(new Entry("characters", "Characters", LibraryFact(), true, ""));
-        _list.Add(new Entry("create", "Create", "the editor", true, ""));
-        _list.Add(new Entry("settings", "Settings", "", true, ""));
+        // Josh, 10/7: four buttons; what playing can start opens under Play
+        _list.Add(new Entry("play", "Play", _playOpen ? "" : "continue, new, load", true, ""));
+        if (_playOpen)
+        {
+            SaveSummary? save = Autosave();
+            bool loadable = save != null && save.Problem.Length == 0;
+            _list.Add(new Entry("continue", "Continue", loadable ? save!.ChapterTitle : "no save", loadable,
+                save == null ? "There is no save yet." : "The save can't be read: " + save.Problem, true));
+            _list.Add(new Entry("new", "New adventure", "pick one", true, "", true));
+            _list.Add(new Entry("quick", "Quick start", "ready-made party", true, "", true));
+            _list.Add(new Entry("load", "Load", Count(_saves.Count, "save"), _saves.Count > 0, "There is no save yet.", true));
+            _list.Add(new Entry("characters", "Characters", LibraryFact(), true, "", true));
+        }
+        _list.Add(new Entry("create", "Edit", "make adventures", true, ""));
+        _list.Add(new Entry("settings", "Options", "", true, ""));
         _list.Add(new Entry("exit", "Exit", "", true, ""));
     }
 
@@ -366,7 +379,7 @@ public partial class MenuScreen : CanvasLayer
             {
                 int index = i;
                 Entry entry = _list[i];
-                Button button = GameScreen.BigButton(entry.Label, entry.Fact);
+                Button button = entry.Under ? GameScreen.UnderButton(entry.Label, entry.Fact) : GameScreen.BigButton(entry.Label, entry.Fact);
                 GameScreen.SetEnabled(button, entry.Enabled);
                 button.MouseEntered += () => _picked = index;
                 button.Pressed += () => Press(index);
@@ -410,6 +423,12 @@ public partial class MenuScreen : CanvasLayer
         }
         switch (entry.Id)
         {
+            case "play":
+                _playOpen = !_playOpen;
+                BuildList();
+                // opened, the first choice that can be taken is picked: Continue, or New adventure
+                _picked = _playOpen ? Math.Max(0, _list.FindIndex(e => e.Under && e.Enabled)) : 0;
+                break;
             case "continue": Ordered?.Invoke(MenuOrder.Continue, Places.SaveFile()); break;
             case "new": Open(Page.Adventures); break;
             case "quick": Ordered?.Invoke(MenuOrder.QuickStart, ""); break;
@@ -429,6 +448,10 @@ public partial class MenuScreen : CanvasLayer
         var page = new BookPage().Title(entry.Label);
         switch (entry.Id)
         {
+            case "play":
+                page.Sub("continue, start or load an adventure").Rule()
+                    .Text("Continue where the party left off, start a new adventure with your characters, or load an older save.");
+                break;
             case "continue":
                 if (Autosave() is SaveSummary save)
                 {

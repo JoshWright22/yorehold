@@ -119,7 +119,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_type_variation = &"KeyLabel"
-theme_override_colors/font_color = Color(0.9216, 0.9294, 0.9137, 1)
+theme_override_colors/font_color = Color(0.9686, 0.9686, 0.9686, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -155,7 +155,7 @@ layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("8")
-Full = Color(0.8549, 0.5255, 0.2431, 1)
+Full = Color(0.7882, 0.7216, 0.4, 1)
 
 [node name="ReactionLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
 layout_mode = 2
@@ -167,7 +167,7 @@ layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("8")
-Full = Color(0.7765, 0.3176, 0.5922, 1)
+Full = Color(0.8784, 0.4039, 0.3686, 1)
 
 [node name="MoveLabel" type="Label" parent="Bottom/Hotbar/Rows/Status"]
 layout_mode = 2
@@ -186,7 +186,7 @@ script = ExtResource("9")
 custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-theme_override_colors/font_color = Color(0.9216, 0.9294, 0.9137, 1)
+theme_override_colors/font_color = Color(0.9686, 0.9686, 0.9686, 1)
 text = "30 ft"
 horizontal_alignment = 2
 
@@ -404,10 +404,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0824, 0.1137, 0.1569, 1)
+color = Color(0.1176, 0.1176, 0.1176, 1)
 
 [node name="Listener" type="Control" parent="Talk"]
-modulate = Color(0.5059, 0.5922, 0.5882, 1)
+modulate = Color(0.4902, 0.4902, 0.4902, 1)
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -476,7 +476,7 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_type_variation = &"BookLabel"
-theme_override_colors/font_color = Color(0.9216, 0.9294, 0.9137, 1)
+theme_override_colors/font_color = Color(0.9686, 0.9686, 0.9686, 1)
 theme_override_font_sizes/font_size = 20
 autowrap_mode = 3
 
@@ -557,7 +557,7 @@ z_index = 9
 layout_mode = 0
 offset_right = 120.0
 offset_bottom = 28.0
-theme_override_colors/font_color = Color(0.9216, 0.9294, 0.9137, 1)
-theme_override_colors/font_outline_color = Color(0.0824, 0.1137, 0.1569, 1)
+theme_override_colors/font_color = Color(0.9686, 0.9686, 0.9686, 1)
+theme_override_colors/font_outline_color = Color(0.1176, 0.1176, 0.1176, 1)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 22

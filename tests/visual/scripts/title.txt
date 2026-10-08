@@ -2,7 +2,7 @@
 # the pause list, save and quit, then the title with a save to continue and the load screen
 # run with -Screen title
 20 shot .dev/p11-title.png
-25 button Settings
+25 button Options
 26 down left
 27 up left
 40 button Camera
@@ -32,6 +32,9 @@
 135 shot .dev/p11-credits.png
 140 key Escape
 141 keyup Escape
+140 button Play
+141 down left
+142 up left
 150 button Quick_start
 151 down left
 152 up left

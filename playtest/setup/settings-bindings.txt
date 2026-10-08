@@ -1,5 +1,5 @@
 # playtest setup, title: open Settings on its Controls group (the keys)
-40 button Settings
+40 button Options
 41 down left
 42 up left
 90 button Controls

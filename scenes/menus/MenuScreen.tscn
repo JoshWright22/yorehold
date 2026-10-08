@@ -15,7 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0824, 0.1137, 0.1569, 1)
+color = Color(0.1176, 0.1176, 0.1176, 1)
 
 [node name="Banner" type="Control" parent="."]
 layout_mode = 3
@@ -44,7 +44,7 @@ anchor_bottom = 1.0
 offset_right = 440.0
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0824, 0.1137, 0.1569, 1)
+color = Color(0.1176, 0.1176, 0.1176, 1)
 
 [node name="Edge" type="ColorRect" parent="Title"]
 layout_mode = 1
@@ -54,7 +54,7 @@ offset_left = 440.0
 offset_right = 441.0
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.2235, 0.2902, 0.3137, 1)
+color = Color(0.2275, 0.2275, 0.2275, 1)
 
 [node name="Logo" type="TextureRect" parent="Title"]
 visible = false
@@ -74,7 +74,7 @@ offset_top = 44.0
 offset_right = 420.0
 offset_bottom = 124.0
 theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(0.9216, 0.9294, 0.9137, 1)
+theme_override_colors/font_color = Color(0.9686, 0.9686, 0.9686, 1)
 theme_override_font_sizes/font_size = 60
 text = "YOREHOLD"
 
@@ -93,7 +93,7 @@ offset_top = 160.0
 offset_right = 400.0
 offset_bottom = 161.0
 mouse_filter = 2
-color = Color(0.2235, 0.2902, 0.3137, 1)
+color = Color(0.2275, 0.2275, 0.2275, 1)
 
 [node name="Entries" type="VBoxContainer" parent="Title"]
 layout_mode = 0

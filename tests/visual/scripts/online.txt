@@ -1,7 +1,7 @@
 # online: the account settings with no server, then pointed at this computer where nothing listens,
 # so the sign-in fails and says why on the page and the title
 # run with -Screen title -Frames 700
-20 button Settings
+20 button Options
 21 down left
 22 up left
 30 button Account

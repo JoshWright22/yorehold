@@ -4,8 +4,9 @@ using System.Text.RegularExpressions;
 namespace Yorehold.Rules.Tests;
 
 /// <summary>
-/// Everything is drawn in Apollo and nothing else. These read the scenes, the theme, the shaders and
-/// the C# drawing code as text and fail on a colour written into them that is not one of its 46.
+/// Screens are drawn in the scheme ui/colors.json lists, the map's art in Apollo, and nothing else.
+/// These read the scenes, the theme, the shaders and the C# drawing code as text and fail on a
+/// colour written into them that is in neither.
 /// </summary>
 public class PaletteTests
 {
@@ -23,6 +24,13 @@ public class PaletteTests
         .Select(h => (Convert.ToInt32(h[..2], 16), Convert.ToInt32(h[2..4], 16), Convert.ToInt32(h[4..], 16)))
         .ToArray();
 
+    // the screens' scheme (Josh, 10/7): greys and three highlights, as ui/colors.json lists them
+    private static readonly (int R, int G, int B)[] Scheme = Regex.Matches(File.ReadAllText(Path.Combine(TestContent.AssetsFolder(), "ui", "colors.json")), @"#([0-9a-fA-F]{6})\b")
+        .Select(m => m.Groups[1].Value)
+        .Select(h => (Convert.ToInt32(h[..2], 16), Convert.ToInt32(h[2..4], 16), Convert.ToInt32(h[4..], 16)))
+        .Distinct()
+        .ToArray();
+
     private static readonly Regex FloatColour = new(@"(?<![A-Za-z])Color\(\s*([0-9.]+)f?\s*,\s*([0-9.]+)f?\s*,\s*([0-9.]+)f?\s*(?:,\s*([0-9.]+)f?\s*)?\)");
     private static readonly Regex ByteColour = new(@"Color8\(\s*(?:\(byte\))?(?:0x)?([0-9a-fA-F]+)\s*,\s*(?:\(byte\))?(?:0x)?([0-9a-fA-F]+)\s*,\s*(?:\(byte\))?(?:0x)?([0-9a-fA-F]+)");
     private static readonly Regex HexColour = new(@"#([0-9a-fA-F]{6})\b");
@@ -38,7 +46,7 @@ public class PaletteTests
 
     // a byte off either way is how a float written to four places comes back
     private static bool InPalette(int r, int g, int b) =>
-        Colours.Any(c => Math.Abs(c.R - r) <= 1 && Math.Abs(c.G - g) <= 1 && Math.Abs(c.B - b) <= 1);
+        Colours.Concat(Scheme).Any(c => Math.Abs(c.R - r) <= 1 && Math.Abs(c.G - g) <= 1 && Math.Abs(c.B - b) <= 1);
 
     private static int Byte(string value) => (int)Math.Round(double.Parse(value, CultureInfo.InvariantCulture) * 255);
 
@@ -138,6 +146,6 @@ public class PaletteTests
         var found = ByteColour.Matches(palette)
             .Select(m => (Convert.ToInt32(m.Groups[1].Value, 16), Convert.ToInt32(m.Groups[2].Value, 16), Convert.ToInt32(m.Groups[3].Value, 16)))
             .ToHashSet();
-        Assert.True(found.SetEquals(Colours), "src/hud/Palette.cs does not hold exactly the 46 Apollo colours");
+        Assert.True(found.SetEquals(Colours.Concat(Scheme)), "src/hud/Palette.cs does not hold exactly the 46 Apollo colours and ui/colors.json's");
     }
 }

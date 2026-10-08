@@ -35,9 +35,9 @@ public static class GameScreen
         };
         button.AddThemeFontSizeOverride("font_size", Sizes.ButtonFont);
         button.AddThemeStyleboxOverride("normal", Box(Palette.Ink, Palette.Iron));
-        button.AddThemeStyleboxOverride("hover", Box(Palette.Indigo, Palette.Slate));
-        button.AddThemeStyleboxOverride("pressed", Box(Palette.Indigo, Palette.Straw));
-        button.AddThemeStyleboxOverride("hover_pressed", Box(Palette.Indigo, Palette.Straw));
+        button.AddThemeStyleboxOverride("hover", Box(Palette.Dusk, Palette.Slate));
+        button.AddThemeStyleboxOverride("pressed", Box(Palette.Dusk, Palette.Straw));
+        button.AddThemeStyleboxOverride("hover_pressed", Box(Palette.Dusk, Palette.Straw));
         button.AddThemeStyleboxOverride("disabled", Box(Palette.Ink, Palette.Iron));
         button.AddThemeColorOverride("font_color", Palette.Bone);
         button.AddThemeColorOverride("font_hover_color", Palette.Bone);
@@ -57,6 +57,19 @@ public static class GameScreen
         fact.OffsetLeft = Sizes.BandWidth * 0.45f;
         fact.OffsetRight = -14;
         button.AddChild(fact);
+        return button;
+    }
+
+    /// <summary>A choice under a big button (Play's Continue, Load...): smaller, set in from the left.</summary>
+    public static Button UnderButton(string text, string right = "")
+    {
+        Button button = BigButton(text, right);
+        button.CustomMinimumSize = new Vector2(0, Sizes.ButtonHeight * 0.72f);
+        button.AddThemeFontSizeOverride("font_size", (int)(Sizes.ButtonFont * 0.8f));
+        foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "disabled" })
+        {
+            ((StyleBoxFlat)button.GetThemeStylebox(state)).ContentMarginLeft = 34;
+        }
         return button;
     }
 

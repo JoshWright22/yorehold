@@ -15,6 +15,7 @@
     { "id": "end_turn", "name": "End turn", "group": "Fight", "keys": ["Space"], "description": "Ends the acting hero's turn." },
     { "id": "save", "name": "Save", "group": "Game", "keys": ["F5"], "description": "Writes the save now. Only between fights." },
     { "id": "load", "name": "Load", "group": "Game", "keys": ["F9"], "description": "Goes back to the last save. Only between fights." },
-    { "id": "help", "name": "How to play", "group": "Game", "keys": ["F1"], "description": "Shows the controls card." }
+    { "id": "help", "name": "How to play", "group": "Game", "keys": ["F1"], "description": "Shows the controls card." },
+    { "id": "chat", "name": "Chat", "group": "Game", "keys": ["T"], "description": "Pulls the chat out from the right edge and puts it away. Escape in the chat box puts it away too." }
   ]
 }

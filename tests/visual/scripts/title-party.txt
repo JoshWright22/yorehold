@@ -1,5 +1,8 @@
 # title-party: New adventure from the title opens the seats; Escape there goes back to the title
 # run with -Screen title
+12 button Play
+13 down left
+14 up left
 20 button New_adventure
 21 down left
 22 up left
