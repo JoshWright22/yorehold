@@ -364,6 +364,28 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   sheet and then leave the numbers in the log. Settings: off, fast, or full; with many rolls at
   once (a fireball's saves) they throw together. Hidden rolls (an enemy's stealth) aren't shown.
 
+- [ ] **R18. A large free asset library for the map maker and portraits.** Josh, 10/8: anything
+  the game may ship without asking, with the authors in the credits. Allowed: CC0, public domain,
+  CC BY, OGA-BY. CC BY-SA only as separate, unchanged files outside paid packs (it forbids
+  locking). Not allowed: non-commercial (NC), no-derivatives (ND), or "free for personal use"
+  terms (Forgotten Adventures, 2-Minute Tabletop, Tom Cartos), and anything AI-made (itch's "No
+  AI" tag where there is one; otherwise uploads from before 2022 or an author's statement).
+  - Sources, first pass: Kenney (CC0: roguelike, dungeon, indoors, map packs); 0x72 DungeonTileset
+    II (CC0); Dungeon Crawl Stone Soup tiles (public domain, 6000+ incl. the supplemental set:
+    terrain, walls, monsters, items, spell effects); Screaming Brain Studios (CC0 top-down
+    tiles); OpenGameArt's CC0 collections, item by item; ambientCG and Poly Haven (CC0
+    textures for painted floors, terrain and dice materials); Quaternius (CC0 3D, for 3D dice
+    and props rendered top-down); game-icons.net (CC BY, 4000+ icons for actions, conditions,
+    items). Portraits: museum open access (the Met, Art Institute of Chicago, Cleveland,
+    Smithsonian, National Gallery of Art, Rijksmuseum): CC0 paintings, cropped to faces.
+  - Each file keeps its source, author, licence and link in the art pack's manifest; the
+    credits screen is built from it. A small downloader in `.dev` tool form fetches, checks the
+    licence field, crops and sorts into art packs (tiles, props, tokens, portraits, icons) and
+    tags them for search in the map maker.
+  - Mixed styles don't mix on one map: packs are grouped by style (pixel 16/32 px, painted,
+    museum painting), the map maker filters by the map's style, and a pack can be recoloured
+    to the Apollo palette on import (CC BY credits note the change).
+
 Order: R1 and R2 first (small, and every later step needs them), then R3-R8 each tried on both
 systems, R9 and R10 alongside them as the checks, then R11-R17. The bestiary import (S12-S15)
 waits until R6, so stat blocks land in a system's creature format.
