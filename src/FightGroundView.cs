@@ -55,7 +55,7 @@ public partial class FightGroundView : Node2D
         {
             Color edge = action.Side == ActionSide.Ally ? AllyRange : EnemyRange;
             var inRange = new List<Cell>();
-            int range = Mathf.Max(1, action.Range);
+            int range = Mathf.Max(1, w.RangeOf(me, action));
             for (int dy = -range; dy <= range; dy++)
             {
                 for (int dx = -range; dx <= range; dx++)

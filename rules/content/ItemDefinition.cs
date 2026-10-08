@@ -25,6 +25,8 @@ public class ItemDefinition
     /// <summary>Camp supply points each unit is worth; 0 = not food.</summary>
     public int Supplies { get; init; }
     public List<Modifier> Modifiers { get; init; } = new();
+    /// <summary>A weapon's reach in squares: 1 in melee, more for a bow or a thrown spear.</summary>
+    public int Range { get; init; } = 1;
     /// <summary>What using it up does, for consumables.</summary>
     public ActionDefinition? Use { get; init; }
     /// <summary>The "use" object as written, so a carried item is saved the way it was read.</summary>
@@ -67,6 +69,7 @@ public class ItemDefinition
             Traits = node.Names("traits"),
             DamageType = node.Text("damageType", "", 64),
             Hands = hands,
+            Range = node.Int("range", 1, 1, 1000),
             Weight = node.Number("weight", 0, 0),
             Value = node.Int("value", 0),
             Quantity = node.Int("quantity", 1, 0),

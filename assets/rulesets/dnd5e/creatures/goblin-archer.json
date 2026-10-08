@@ -1,0 +1,37 @@
+{
+  "id": "goblin-archer",
+  "name": "Goblin Archer",
+  "description": "Shoots from cover and runs when you get close.",
+  "hp": 7,
+  "armorClass": 13,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 8,
+    "dex": 14,
+    "con": 10,
+    "int": 10,
+    "wis": 8,
+    "cha": 8
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "shortbow",
+    "leather"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      110,
+      140,
+      60
+    ],
+    "size": 0.36
+  },
+  "ai": "skirmisher",
+  "loot": {
+    "coins": "2d6"
+  }
+}

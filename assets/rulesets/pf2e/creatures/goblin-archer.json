@@ -1,0 +1,44 @@
+{
+  "id": "goblin-archer",
+  "name": "Goblin Archer",
+  "description": "A goblin who prefers to be far away.",
+  "level": 0,
+  "hp": 6,
+  "armorClass": 16,
+  "speed": 25,
+  "abilities": {
+    "str": 8,
+    "dex": 16,
+    "con": 12,
+    "int": 10,
+    "wis": 8,
+    "cha": 8
+  },
+  "proficiencyRanks": {
+    "weapons": "trained",
+    "dc": "trained",
+    "fortitude": "trained",
+    "reflex": "trained",
+    "will": "trained",
+    "perception": "trained"
+  },
+  "items": [
+    "shortbow"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      110,
+      140,
+      60
+    ],
+    "size": 0.36
+  },
+  "ai": "skirmisher",
+  "stats": {
+    "attack": 3
+  },
+  "loot": {
+    "coins": "2d6"
+  }
+}

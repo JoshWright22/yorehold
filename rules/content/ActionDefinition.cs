@@ -56,6 +56,8 @@ public class ActionDefinition
     public ActionTarget Target { get; init; }
     public ActionSide Side { get; init; }
     public int Range { get; init; } = 1;
+    /// <summary>"range": "weapon": it reaches as far as the weapon in hand (a bow), Range when there is none.</summary>
+    public bool WeaponRange { get; init; }
     public bool AllowsDowned { get; init; }
     public ActionArea? Area { get; init; }
     public string Log { get; init; } = "";
@@ -163,6 +165,7 @@ public class ActionDefinition
         ActionTarget target = ActionTarget.Self;
         ActionSide side = ActionSide.Enemy;
         int range = 1;
+        bool weaponRange = false;
         bool allowsDowned = false;
         if (node.Get("target") is ContentNode targetNode)
         {
@@ -183,7 +186,8 @@ public class ActionDefinition
                 "any" => ActionSide.Any,
                 _ => throw targetNode.Fail("side", "is \"enemy\", \"ally\" or \"any\""),
             };
-            range = targetNode.Int("range", 1, 1, 1000);
+            weaponRange = targetNode.Get("range") is ContentNode reach && reach.IsString && reach.AsText() == "weapon";
+            range = weaponRange ? 1 : targetNode.Int("range", 1, 1, 1000);
             // An area around the doer still says whose side it lands on.
             bool sided = targetNode.Has("side") || targetNode.Has("downed");
             if (target == ActionTarget.Self && (targetNode.Has("range") || (sided && !node.Has("area"))))
@@ -243,6 +247,7 @@ public class ActionDefinition
             Target = target,
             Side = side,
             Range = range,
+            WeaponRange = weaponRange,
             AllowsDowned = allowsDowned,
             Area = area,
             Log = node.Text("log", "", 200),

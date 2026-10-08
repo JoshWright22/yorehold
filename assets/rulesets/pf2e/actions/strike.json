@@ -7,7 +7,7 @@
   "target": {
     "kind": "creature",
     "side": "enemy",
-    "range": 1
+    "range": "weapon"
   },
   "effects": [
     {

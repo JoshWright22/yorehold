@@ -44,6 +44,28 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ABowReachesAcrossTheYard()
+    {
+        // goblins with shortbows shoot from across the yard; a sword only reaches the next square
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "ranger",
+            ("rulesets/dnd5e/creatures/goblin.json", """
+                {"id": "goblin", "name": "Goblin Archer", "hp": 10, "armorClass": 15, "speed": 30, "level": 1,
+                 "abilities": {"str": 8, "dex": 15, "con": 10, "int": 10, "wis": 8, "cha": 8}, "proficiencies": ["weapons"], "items": ["shortbow"]}
+                """));
+        World w = world.World;
+        int bow = 3;
+        w.Creatures[bow].Sheet.Stats.SetBase("dex", 2000); // shoots first
+        world.Put(2, new Cell(6, 1));
+        world.Put(3, new Cell(6, 6));
+        world.Fight();
+        ActionDefinition attack = w.FindAction("attack")!;
+        Assert.Equal(16, w.RangeOf(bow, attack));
+        Assert.Equal(1, w.RangeOf(0, attack));
+        Assert.True(world.StepUntil(() => world.Said("Rak attacks"), 10), string.Join("\n", world.Log.TakeLast(6)));
+        Assert.Equal(new Cell(6, 6), w.CellOf(bow));
+    }
+
+    [Fact]
     public void RageAndInspirationDoTheirSums()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "bard");

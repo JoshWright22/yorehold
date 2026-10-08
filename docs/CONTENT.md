@@ -247,7 +247,7 @@ One file per id. Filenames must match `id`, which uses lowercase letters, digits
 
 | Kind | Fields |
 |---|---|
-| Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `weight` (lb), `value` (cp), `quantity`, `magic`, `supplies` (camp supply points per unit), `modifiers` |
+| Item | `id`, `name`, `slot`, `hands`, `damage` dice, `attackAbility`, `range` (squares a weapon reaches, 1 by default; a bow's more), `weight` (lb), `value` (cp), `quantity`, `magic`, `supplies` (camp supply points per unit), `modifiers` |
 | Class | `id`, `name`, `description`, `hitDie`, `bonusHp`, `speed`, `proficiencies`, starting `items` ids |
 | Creature | `id`, `name`, `description`, `hp`, `armorClass`, `speed`, fixed `abilities`, `proficiencies`, `items`, `loot`, `token` |
 
@@ -1095,7 +1095,7 @@ What a creature can do on its turn is a file in the ruleset folder, `actions/<id
 | `endsTurn` | `true` ends the turn once it is done. |
 | `general` | `true` (default): every creature has it. `false`: only creatures something grants it to. |
 | `requires` | `{ "flags": [...], "without": [...], "resources": { "name": 1 } }`: condition flags needed, flags that bar it, and resources it uses. |
-| `target` | `kind` `self` (default), `creature` or `point` (a square, for an action with an `area`); a creature or point target has `side` (`enemy`, `ally`, `any`), `range` in squares, and `downed` (default false) to allow unconscious targets. Dead or withdrawn creatures cannot be targeted. Ranged creature actions need a clear line of sight. |
+| `target` | `kind` `self` (default), `creature` or `point` (a square, for an action with an `area`); a creature or point target has `side` (`enemy`, `ally`, `any`), `range` in squares (or `"weapon"`: as far as the weapon in hand reaches, one square without one), and `downed` (default false) to allow unconscious targets. Dead or withdrawn creatures cannot be targeted. Ranged creature actions need a clear line of sight. |
 | `area` | `shape` `burst`, `cone`, `line` or `square` with `size` in squares (plus `width` for a line, `angle` for a cone). The effect lands on everyone of the target's `side` inside it with a clear line from where it starts; see Spells. |
 | `readies` | Records this action id for a reaction, until the creature's next turn or the fight ends. It must name an existing action that neither readies another nor ends the turn. |
 | `log` | A line for the log when it is done; `{name}` is whoever does it. |

@@ -16,8 +16,9 @@
     "perception"
   ],
   "items": [
-    "scimitar",
-    "leather"
+    "longbow",
+    "leather",
+    "scimitar"
   ],
   "casting": "prepared",
   "spells": {

@@ -684,7 +684,7 @@ public partial class PlayHud : Control
             slot.Show(action.Id, action.Name, key, cost, usable, aim.Action == action.Id,
                 ActionIcon.PictureOf(world, action.Id));
             slot.TipTitle = action.Name;
-            slot.TipMeta = HudText.ActionMeta(world, action, cost);
+            slot.TipMeta = HudText.ActionMeta(world, action, cost, shown);
             slot.TipBody = action.Description;
             slot.TipWarning = usable ? ""
                 : !fighting ? "Used in a fight."

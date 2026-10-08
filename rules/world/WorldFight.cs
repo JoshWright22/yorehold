@@ -670,7 +670,7 @@ public sealed partial class World
             return Use(with, target);
         }
         Cell goal = CellOf(target);
-        float range = action.Range + 0.01f;
+        float range = RangeOf(me, action) + 0.01f;
         Cell? best = null;
         float bestCost = 0;
         foreach ((Cell c, float cost) in OrderedReach())
@@ -744,6 +744,15 @@ public sealed partial class World
                 // A spell worth more than a swing is cast from where it stands, then it thinks again.
                 if (!Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight" && PickAbility(me) is AbilityChoice spell
                     && spell.Value >= StrikeWorth(me) && Use(spell.Action.Id, spell.Target, spell.At))
+                {
+                    _enemyTimer = 0;
+                    return;
+                }
+                // A bow in hand: it shoots the foe it is likeliest to hit from where it stands, rather
+                // than walking up to them, and thinks again while it has the actions.
+                if (!Creatures[me].Fleeing && Creatures[me].BreakAs is "" or "fight" && FindAction(StrikeAction) is ActionDefinition shot && RangeOf(me, shot) > 1
+                    && CanUse(me, shot, out _) && Foes(me).Where(f => ValidTarget(me, shot, f)).OrderByDescending(f => HitChance(me, f)).FirstOrDefault(-1) is int mark
+                    && mark >= 0 && Use(StrikeAction, mark))
                 {
                     _enemyTimer = 0;
                     return;

@@ -1,0 +1,12 @@
+{
+  "id": "light-crossbow",
+  "name": "Light Crossbow",
+  "value": 2500,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "attackAbility": "dex",
+  "hands": 2,
+  "range": 16,
+  "weight": 5,
+  "damageType": "piercing"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "longbow",
+  "name": "Longbow",
+  "value": 5000,
+  "slot": "mainHand",
+  "damage": "1d8",
+  "attackAbility": "dex",
+  "hands": 2,
+  "range": 30,
+  "weight": 2,
+  "traits": [
+    "heavy"
+  ],
+  "damageType": "piercing"
+}

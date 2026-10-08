@@ -261,7 +261,7 @@ public sealed partial class World
         foreach (ActionDefinition action in ActionsOf(me))
         {
             if (SpellOf(action) is not SpellDefinition spell || action.Target == ActionTarget.Self || action.Side == ActionSide.Ally
-                || action.Range <= 1 || !CanUse(me, action, out _))
+                || RangeOf(me, action) <= 1 || !CanUse(me, action, out _))
             {
                 continue;
             }
@@ -289,7 +289,7 @@ public sealed partial class World
             foreach ((ActionDefinition action, int foe) in aimed)
             {
                 Cell there = CellOf(foe);
-                if (Grid.Distance(cell, there) <= action.Range + 0.01f && Sight.LineOfSight(Grid.Center(cell), Grid.Center(there), Map.Walls))
+                if (Grid.Distance(cell, there) <= RangeOf(me, action) + 0.01f && Sight.LineOfSight(Grid.Center(cell), Grid.Center(there), Map.Walls))
                 {
                     best = cell;
                     bestCost = cost;

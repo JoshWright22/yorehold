@@ -123,9 +123,9 @@ public sealed partial class World
         PositioningRules positioning = Chapter.Rules.Positioning;
         if (positioning.Enabled)
         {
-            return (action.Range <= 1 && !positioning.CoverAgainstMelee) || CoverFrom(creature, target) != Cover.Full;
+            return (RangeOf(creature, action) <= 1 && !positioning.CoverAgainstMelee) || CoverFrom(creature, target) != Cover.Full;
         }
-        return action.Range <= 1 || Sight.LineOfSight(Grid.Center(CellOf(creature)), Grid.Center(CellOf(target)), Map.Walls);
+        return RangeOf(creature, action) <= 1 || Sight.LineOfSight(Grid.Center(CellOf(creature)), Grid.Center(CellOf(target)), Map.Walls);
     }
 
     /// <summary>Everyone the creature whose turn it is could aim the action at right now.</summary>
@@ -141,8 +141,14 @@ public sealed partial class World
 
     public bool InRange(int creature, ActionDefinition action, int target)
     {
-        return action.Range <= 1 ? Adjacent(creature, target) : Grid.Distance(CellOf(creature), CellOf(target)) <= action.Range + 0.01f;
+        int range = RangeOf(creature, action);
+        return range <= 1 ? Adjacent(creature, target) : Grid.Distance(CellOf(creature), CellOf(target)) <= range + 0.01f;
     }
+
+    /// <summary>How far an action reaches for this creature: its own range, or the weapon in hand's for one that says "weapon".</summary>
+    public int RangeOf(int creature, ActionDefinition action) =>
+        action.WeaponRange && creature >= 0 && creature < Creatures.Count && Creatures[creature].Sheet.WeaponItem is Item weapon
+            ? Math.Max(1, weapon.Definition.Range) : action.Range;
 
     /// <summary>
     /// The chance from 0 to 1 that an attack by attacker hits target from where they stand: its
@@ -157,7 +163,7 @@ public sealed partial class World
         }
         ActionDefinition? action = FindAction(actionId);
         CharacterSheet sheet = Creatures[attacker].Sheet;
-        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.AttackDefence(Rules);
+        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && RangeOf(attacker, action) > 1) : Creatures[target].Sheet.AttackDefence(Rules);
         // counted from the system's own dice and outcomes, so it is right for any of them
         return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null, Grid.Distance(CellOf(attacker), CellOf(target))));
     }
@@ -167,7 +173,7 @@ public sealed partial class World
     {
         ActionDefinition? action = FindAction(actionId ?? StrikeAction);
         CharacterSheet sheet = Creatures[attacker].Sheet;
-        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.AttackDefence(Rules);
+        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && RangeOf(attacker, action) > 1) : Creatures[target].Sheet.AttackDefence(Rules);
         return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null, Grid.Distance(CellOf(attacker), CellOf(target))));
     }
 
@@ -482,7 +488,7 @@ public sealed partial class World
                 return base.ArmorClass(who, context, defence);
             }
             ActionDefinition? action = _world.FindAction(context.Source);
-            return _world.AttackArmorClass(context.Self, who, action != null && action.Range > 1, defence);
+            return _world.AttackArmorClass(context.Self, who, action != null && _world.RangeOf(context.Self, action) > 1, defence);
         }
 
         public override bool BeforeHit(int who, int attacker, EffectContext context, int margin = 0) => _world.BeforeHitReaction(who, attacker, margin);

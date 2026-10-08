@@ -1,0 +1,15 @@
+{
+  "id": "shortbow",
+  "name": "Shortbow",
+  "value": 300,
+  "slot": "mainHand",
+  "damage": "1d6",
+  "attackAbility": "dex",
+  "hands": 2,
+  "range": 12,
+  "weight": 1,
+  "traits": [
+    "deadly"
+  ],
+  "damageType": "piercing"
+}

@@ -74,7 +74,7 @@ public static class HudText
     }
 
     /// <summary>What an action costs and where it can be aimed, for its tooltip.</summary>
-    public static string ActionMeta(World world, ActionDefinition action, int cost)
+    public static string ActionMeta(World world, ActionDefinition action, int cost, int who = -1)
     {
         TurnWords words = world.Rules.Words;
         string price = TurnWords.Capital(action.CostsBonus ? words.Bonus : words.Cost(cost));
@@ -99,7 +99,9 @@ public static class HudText
             {
                 side = "a square";
             }
-            range = action.Range <= 1 ? $"Reach, {side}" : $"{action.Range * world.Rules.FeetPerSquare} ft, {side}";
+            // an attack with the weapon in hand reaches as far as that weapon does
+            int reach = who >= 0 ? world.RangeOf(who, action) : action.Range;
+            range = reach <= 1 ? $"Reach, {side}" : $"{reach * world.Rules.FeetPerSquare} ft, {side}";
         }
         return $"Cost: {price}\nRange: {range}";
     }
