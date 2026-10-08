@@ -426,6 +426,9 @@ public partial class PlayScreen : Node2D
         }
         switch (name)
         {
+            case "Pause":
+                PauseAsked?.Invoke();
+                return;
             case "Characters":
                 WriteBack(); // so the library shows what the brought characters have now
                 _characters.Open(_world, Places.CharactersFolder(), CharacterScreen.View.Characters);

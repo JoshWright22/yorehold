@@ -203,6 +203,80 @@ focus_mode = 0
 theme_type_variation = &"EndTurnButton"
 text = "End Turn"
 
+[node name="Menu" type="GridContainer" parent="Bottom"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/h_separation = 3
+theme_override_constants/v_separation = 3
+columns = 2
+
+[node name="Sheet" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Sheet (C)"
+
+[node name="Gear" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Gear (I)"
+
+[node name="Spells" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Spells (K)"
+
+[node name="Journal" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Journal (J)"
+
+[node name="Camp" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+toggle_mode = true
+theme_type_variation = &"PickButton"
+text = "Camp (R)"
+
+[node name="Characters" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+text = "Characters"
+
+[node name="Save" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+text = "Save (F5)"
+
+[node name="Pause" type="Button" parent="Bottom/Menu"]
+custom_minimum_size = Vector2(88, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 14
+text = "Menu (Esc)"
+
 [node name="Log" parent="." instance=ExtResource("6")]
 layout_mode = 1
 anchors_preset = 3
@@ -410,68 +484,6 @@ autowrap_mode = 3
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="Menu" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -126.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = 46.0
-grow_horizontal = 0
-mouse_filter = 2
-theme_override_constants/separation = 3
-
-[node name="Characters" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-text = "Characters"
-
-[node name="Sheet" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-theme_type_variation = &"PickButton"
-text = "Sheet (C)"
-
-[node name="Gear" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-theme_type_variation = &"PickButton"
-text = "Gear (I)"
-
-[node name="Spells" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-theme_type_variation = &"PickButton"
-text = "Spells (K)"
-
-[node name="Journal" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-theme_type_variation = &"PickButton"
-text = "Journal (J)"
-
-[node name="Camp" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-theme_type_variation = &"PickButton"
-text = "Camp (R)"
-
-[node name="Save" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-text = "Save (F5)"
-
-[node name="Load" type="Button" parent="Menu"]
-layout_mode = 2
-focus_mode = 0
-text = "Load (F9)"
 
 [node name="Journal" parent="." instance=ExtResource("11")]
 visible = false

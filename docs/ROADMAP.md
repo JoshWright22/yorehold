@@ -535,8 +535,9 @@ reopened (`playtest.ps1 -Problems`).
   - Done 10/7: a "How to play" card the first time play opens (`shownHelp` in settings) and on
     F1 (`help` in `ui/keys.json`), with the keys bound now; Esc or Got it puts it away. Screenshot
     and playtest runs don't open it by themselves (`.dev\help-card.png`).
-  - The play side menu (8 buttons down the right) moves to small buttons beside the hotbar, as
-    BG3 does; Save and Load stay on F5, F9 and the pause menu.
+  - Done 10/7: the play menu is two columns of small buttons right of the hotbar, as in BG3
+    (panels, Characters, Save, and Menu for the pause list); Load is F9 and on the pause list. The
+    top right is the map's again (`.dev\playtest-fight.png`, `playtest-keep.png`).
   - Done 10/7: "Alice's turn" is in the turn order strip, after the cards. Left: the log is a
     large empty box outside fights; it should open as one line and grow.
   - Gear, chest, shop and loot are one panel with Pack and the other side as tabs; a chest or

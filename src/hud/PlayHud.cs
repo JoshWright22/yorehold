@@ -33,7 +33,7 @@ public partial class PlayHud : Control
     public event Action<int>? CreaturePressed;
     /// <summary>True for use it, false for pass.</summary>
     public event Action<bool>? ReactionAnswered;
-    /// <summary>A button on the menu along the top right, by its node name ("Characters").</summary>
+    /// <summary>A button on the menu beside the hotbar, by its node name ("Characters").</summary>
     public event Action<string>? MenuPressed;
     /// <summary>Something pressed on the gear panel.</summary>
     public event Action<ItemOrder>? ItemOrdered;
@@ -166,29 +166,29 @@ public partial class PlayHud : Control
         _sheet = GetNode<SheetPanel>("Sheet");
         _sheet.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _sheet.ClosePressed += () => OpenPanel = "";
-        _sheetButton = GetNode<Button>("Menu/Sheet");
+        _sheetButton = GetNode<Button>("Bottom/Menu/Sheet");
         _gearView = GetNode<DataPanel>("Gear");
-        _gearButton = GetNode<Button>("Menu/Gear");
+        _gearButton = GetNode<Button>("Bottom/Menu/Gear");
         _gear = new GearPanel(_gearView);
         _gear.Ordered += order => ItemOrdered?.Invoke(order);
         _gearView.ClosePressed += () => OpenPanel = "";
         _spellsView = GetNode<DataPanel>("Spells");
-        _spellsButton = GetNode<Button>("Menu/Spells");
+        _spellsButton = GetNode<Button>("Bottom/Menu/Spells");
         _spells = new SpellPanel(_spellsView);
         _spells.Ordered += order => SpellOrdered?.Invoke(order);
         _spells.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _spellsView.ClosePressed += () => OpenPanel = "";
         _journalView = GetNode<DataPanel>("Journal");
-        _journalButton = GetNode<Button>("Menu/Journal");
+        _journalButton = GetNode<Button>("Bottom/Menu/Journal");
         _journal = new JournalPanel(_journalView);
         _journalView.ClosePressed += () => OpenPanel = "";
         _campView = GetNode<DataPanel>("Camp");
-        _campButton = GetNode<Button>("Menu/Camp");
+        _campButton = GetNode<Button>("Bottom/Menu/Camp");
         _camp = new CampPanel(_campView);
         _camp.Ordered += order => CampOrdered?.Invoke(order);
         _camp.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _campView.ClosePressed += () => OpenPanel = "";
-        foreach (Node child in GetNode("Menu").GetChildren())
+        foreach (Node child in GetNode("Bottom/Menu").GetChildren())
         {
             if (child is Button button)
             {
@@ -254,10 +254,10 @@ public partial class PlayHud : Control
         foreach ((string button, string label, string action) in new[]
         {
             ("Sheet", "Sheet", "sheet"), ("Gear", "Gear", "gear"), ("Spells", "Spells", "spells"), ("Journal", "Journal", "journal"),
-            ("Camp", "Camp", "camp"), ("Save", "Save", "save"), ("Load", "Load", "load"),
+            ("Camp", "Camp", "camp"), ("Save", "Save", "save"),
         })
         {
-            GetNode<Button>("Menu/" + button).Text = App.WithKey(label, action);
+            GetNode<Button>("Bottom/Menu/" + button).Text = App.WithKey(label, action);
         }
     }
 
@@ -425,7 +425,6 @@ public partial class PlayHud : Control
         // like a visual novel, the conversation has the screen: the party and the log step back
         _party.Visible = node == null;
         _log.Visible = node == null;
-        GetNode<Control>("Menu").Visible = node == null;
         if (talk == null || node == null)
         {
             _talkShown = "";
