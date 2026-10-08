@@ -1,0 +1,30 @@
+{
+  "id": "giant-spider",
+  "name": "Giant spider",
+  "description": "Waits above the path; strikes from where you don't look.",
+  "hp": 15,
+  "stats": {
+    "stress": 3
+  },
+  "armorClass": 0,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 1,
+    "clever": 0,
+    "flashy": 0,
+    "forceful": 2,
+    "quick": 2,
+    "sneaky": 3
+  },
+  "items": [],
+  "token": {
+    "color": [
+      70,
+      60,
+      80
+    ],
+    "size": 0.5
+  },
+  "ai": "animal"
+}

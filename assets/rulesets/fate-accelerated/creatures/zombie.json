@@ -1,0 +1,31 @@
+{
+  "id": "zombie",
+  "name": "Shambling dead",
+  "description": "Slow, relentless and hard to stop.",
+  "hp": 3,
+  "stats": {
+    "stress": 3,
+    "mook": 1
+  },
+  "armorClass": 0,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 0,
+    "clever": 0,
+    "flashy": 0,
+    "forceful": 2,
+    "quick": 0,
+    "sneaky": 0
+  },
+  "items": [],
+  "token": {
+    "color": [
+      110,
+      130,
+      100
+    ],
+    "size": 0.4
+  },
+  "ai": "mindless"
+}

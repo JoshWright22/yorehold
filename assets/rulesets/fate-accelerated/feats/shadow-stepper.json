@@ -1,0 +1,12 @@
+{
+  "id": "shadow-stepper",
+  "name": "Shadow-Stepper",
+  "description": "Because I was raised in alleys, I get +1 Sneaky.",
+  "kind": "stunt",
+  "modifiers": [
+    {
+      "stat": "sneaky",
+      "value": 1
+    }
+  ]
+}

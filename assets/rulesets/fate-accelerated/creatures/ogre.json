@@ -1,0 +1,30 @@
+{
+  "id": "ogre",
+  "name": "Ogre",
+  "description": "Huge, hungry and harder to hurt than to annoy.",
+  "hp": 16,
+  "stats": {
+    "stress": 4
+  },
+  "armorClass": 0,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 0,
+    "clever": 0,
+    "flashy": 1,
+    "forceful": 4,
+    "quick": 0,
+    "sneaky": 0
+  },
+  "items": [],
+  "token": {
+    "color": [
+      150,
+      140,
+      100
+    ],
+    "size": 0.6
+  },
+  "ai": "brute"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "tough-as-nails",
+  "name": "Tough as Nails",
+  "description": "Because I've taken worse, I have one more stress box.",
+  "kind": "stunt",
+  "modifiers": [
+    {
+      "stat": "extraStress",
+      "value": 1
+    }
+  ]
+}

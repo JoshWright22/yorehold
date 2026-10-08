@@ -1,0 +1,9 @@
+{
+  "id": "lucky-break",
+  "name": "Lucky Break",
+  "description": "Because fortune likes me, I start each scene with one more fate point.",
+  "kind": "stunt",
+  "resources": {
+    "fate": 1
+  }
+}

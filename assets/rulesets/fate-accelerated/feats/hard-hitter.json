@@ -1,0 +1,12 @@
+{
+  "id": "hard-hitter",
+  "name": "Hard Hitter",
+  "description": "Because I hit first and hard, I get +1 when I attack.",
+  "kind": "stunt",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "value": 1
+    }
+  ]
+}

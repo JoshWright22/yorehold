@@ -1,0 +1,31 @@
+{
+  "id": "cultist",
+  "name": "Robed cultist",
+  "description": "A nameless follower who fights for the voice in the dark.",
+  "hp": 1,
+  "stats": {
+    "stress": 1,
+    "mook": 1
+  },
+  "armorClass": 0,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 0,
+    "clever": 1,
+    "flashy": 1,
+    "forceful": 1,
+    "quick": 0,
+    "sneaky": 1
+  },
+  "items": [],
+  "token": {
+    "color": [
+      110,
+      60,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

@@ -544,6 +544,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8 (R2c): stress and mild, moderate and severe consequences as tracks, stress
     clearing when the fight ends; Defend as its own defence, no AC; order by Quick with no
     roll; high concept, trouble and aspects as fields; no class asked for, no levels.
+  - Done 10/8: stunts as the system's one feat kind, one picked when the character is made and
+    one more at the third and sixth milestones (Tough as Nails, Sure-Footed, Hard Hitter, Quick
+    off the Mark, Lucky Break, Shadow-Stepper), read through the stress and Defend formulas;
+    six more foes (cultist, guard and shambling dead as mooks, a giant spider, an ogre, a
+    masked duelist).
   - Doesn't fit yet: aspects as things on the scene and invoking a character's own aspects
     by name; compels; zones instead of squares; ties' boosts; concessions; choosing which
     consequence takes a hit (the game fills them mildest first).

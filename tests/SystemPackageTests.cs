@@ -149,7 +149,11 @@ public class SystemPackageTests
         Assert.True(!fate.Creation.AsksClass && pf2eAsks(), "Fate never asks for a class; it builds on its one");
         bool pf2eAsks() => RulesFolder.Load(files, "rulesets/pf2e").Rules.Creation.AsksClass;
         draft.SetName("Zed");
-        Assert.True(draft.Finished(), "A Fate character is a name and approaches: " + draft.StepProblem(0) + draft.Problem);
+        Assert.Equal("Pick a stunt.", draft.StepProblem(0));
+        draft.PickFeat("tough-as-nails");
+        Assert.True(draft.Finished(), "A Fate character is a name, approaches and a stunt: " + draft.StepProblem(0) + draft.Problem);
+        // the stunt's stress box, on top of the three everyone has
+        Assert.Equal(4, CharacterBuild.Build(fate, fateCompendium, draft.Choices)!.Tracks.First(t => t.Id == "stress").Max);
 
         // Fate's words: high concept, trouble and three aspects, kept on the character and the sheet
         draft.SetField("high-concept", 0, "Wizard detective of the north");

@@ -171,10 +171,13 @@
     "picked": true
   },
   "defences": [
-    { "id": "defend", "name": "Defend", "value": "max(mod.quick, mod.careful)" }
+    { "id": "defend", "name": "Defend", "value": "max(mod.quick, mod.careful) + stat.defend" }
+  ],
+  "featKinds": [
+    { "id": "stunt", "name": "Stunt" }
   ],
   "tracks": [
-    { "id": "stress", "name": "Stress", "max": "stat.stress > 0 ? stat.stress : 3", "clears": ["fightEnd"] },
+    { "id": "stress", "name": "Stress", "max": "(stat.stress > 0 ? stat.stress : 3) + stat.extraStress", "clears": ["fightEnd"] },
     { "id": "mild", "name": "Mild consequence", "max": "stat.mook > 0 ? 0 : 1", "absorbs": 2, "heals": false, "clears": ["scene"] },
     { "id": "moderate", "name": "Moderate consequence", "max": "stat.mook > 0 ? 0 : 1", "absorbs": 4, "heals": false, "clears": ["scene"] },
     { "id": "severe", "name": "Severe consequence", "max": "stat.mook > 0 ? 0 : 1", "absorbs": 6, "heals": false }
@@ -194,7 +197,8 @@
         "parts": [
           "name",
           "fields",
-          "scores"
+          "scores",
+          "feats"
         ]
       }
     ],

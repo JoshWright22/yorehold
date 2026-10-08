@@ -1,0 +1,12 @@
+{
+  "id": "quick-off-the-mark",
+  "name": "Quick off the Mark",
+  "description": "Because I'm always watching, I act earlier in a fight: +2 to my turn order.",
+  "kind": "stunt",
+  "modifiers": [
+    {
+      "stat": "initiative",
+      "value": 2
+    }
+  ]
+}

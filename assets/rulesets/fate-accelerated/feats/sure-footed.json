@@ -1,0 +1,12 @@
+{
+  "id": "sure-footed",
+  "name": "Sure-Footed",
+  "description": "Because I'm hard to pin down, I get +1 to Defend.",
+  "kind": "stunt",
+  "modifiers": [
+    {
+      "stat": "defend",
+      "value": 1
+    }
+  ]
+}

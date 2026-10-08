@@ -1,0 +1,31 @@
+{
+  "id": "duelist",
+  "name": "Masked duelist",
+  "description": "A named rival with a fast blade and a faster tongue.",
+  "hp": 15,
+  "stats": {
+    "stress": 3,
+    "defend": 1
+  },
+  "armorClass": 0,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "careful": 2,
+    "clever": 2,
+    "flashy": 3,
+    "forceful": 1,
+    "quick": 3,
+    "sneaky": 1
+  },
+  "items": [],
+  "token": {
+    "color": [
+      180,
+      160,
+      90
+    ],
+    "size": 0.42
+  },
+  "ai": "tactical"
+}
