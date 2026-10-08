@@ -82,6 +82,33 @@ public sealed class SettingsPanel
 
     private static string Capital(string text) => text.Length == 0 ? "Content" : char.ToUpperInvariant(text[0]) + text[1..];
 
+    // The game's rules systems by name, with how much each holds.
+    private static List<(string Name, string Counts)> Systems()
+    {
+        ContentFiles game = App.Content();
+        var systems = new List<(string, string)>();
+        foreach (string folder in game.Folders("rulesets"))
+        {
+            (string id, string name) = RulesFolder.SystemAt(game, "", folder);
+            if (id.Length == 0)
+            {
+                continue;
+            }
+            int classes = game.List(folder + "/classes").Count, creatures = game.List(folder + "/creatures").Count, spells = game.List(folder + "/spells").Count;
+            string Many(int n, string one, string more) => $"{n} {(n == 1 ? one : more)}";
+            systems.Add((name, $"{Many(classes, "class", "classes")}, {Many(creatures, "creature", "creatures")}, {Many(spells, "spell", "spells")}"));
+        }
+        return systems;
+    }
+
+    // A folder of the user folder in the system's file browser, made first so it opens.
+    private static void OpenFolder(string path)
+    {
+        string folder = ProjectSettings.GlobalizePath(path);
+        System.IO.Directory.CreateDirectory(folder);
+        OS.ShellOpen(folder);
+    }
+
     // A system's own name for its id, from its ruleset, when the game has it
     private static string RulesName(string system)
     {
@@ -274,11 +301,34 @@ public sealed class SettingsPanel
                 choices.AddChild(new Label { Text = now.Server, ThemeTypeVariation = "DimLabel" });
             }
         }
+        // What is installed, by kind, the way a library lists it: the game's rules systems, then
+        // the player's skins, art packs and content sets, each kind with its folder to open.
+        if (Wanted("Content", "rules systems library"))
+        {
+            List<(string Name, string Counts)> systems = Systems();
+            Row("Rules systems", string.Join("; ", systems.Select(s => $"{s.Name} ({s.Counts})")) + ". An adventure says which it plays.", false);
+        }
+        if (Wanted("Content", "skins library look"))
+        {
+            List<string> skins = Places.SkinNames();
+            HBoxContainer row = Row("Skins", skins.Count == 0 ? "None installed. A skin is a folder in skins: its colours, fonts, faces and frames."
+                : $"{string.Join(", ", skins)}. Pick one under Display > Skin.", false);
+            Choice(row, "Open folder", false, () => OpenFolder("user://skins"));
+        }
+        if (Wanted("Content", "art packs pictures library"))
+        {
+            List<string> art = Places.ArtFolders().Select(System.IO.Path.GetFileName).OfType<string>().ToList();
+            HBoxContainer row = Row("Art packs", art.Count == 0 ? "None installed. A pack is a folder in art: tiles, portraits and objects by the game's names."
+                : $"{string.Join(", ", art)}. Used everywhere, the last by name winning.", false);
+            Choice(row, "Open folder", false, () => OpenFolder("user://art"));
+        }
         // the content sets in the user folder's sets\, each on or off for the games of its system
         List<ContentSets.Installed> sets = ContentSets.List(Places.SetFolders());
-        if (sets.Count == 0 && Wanted("Content", "content sets"))
+        if (Wanted("Content", "content sets library"))
         {
-            Row("Content sets", "None installed. A set (more creatures, spells or feats for one system) goes in the sets folder of the user folder.", false);
+            HBoxContainer row = Row("Content sets", sets.Count == 0 ? "None installed. A set (more creatures, spells or feats for one system) goes in the sets folder."
+                : "Each below is on or off for the games of its system.", false);
+            Choice(row, "Open folder", false, () => OpenFolder("user://sets"));
         }
         foreach (ContentSets.Installed set in sets.Where(s => Wanted("Content", s.Name + " " + s.Kind + " " + s.System + " content sets")))
         {

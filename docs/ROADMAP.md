@@ -566,7 +566,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     reason in the log. Option sets (feats, spells, races, backgrounds) read from a set's root.
   - Done 10/8: Settings > Content lists the installed sets (name, kind, the system's name, or why
     one can't be used), each On or Off; the settings file keeps the ids turned off (`setsOff`).
-  - Left: the Library screen with a tab per kind, the same check in Create and on the site,
+  - Done 10/8: Options > Content is the library for now (Josh's four title buttons stay): the
+    rules systems with what each holds, installed skins, art packs and content sets, each kind
+    with its folder to open.
+  - Left: update and remove from the site (R14), the same check in Create and on the site,
     `.yore` archives.
 - [x] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
   host tools; the AI makes the enemies' and NPCs' decisions. The fight AI reads the loaded
