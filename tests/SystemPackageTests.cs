@@ -222,6 +222,34 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AttacksAreRolledAgainstTheSystemsDefence()
+    {
+        // Fate: no armour class; an attack meets Defend, the better of Quick and Careful
+        using WorldFixture fate = Yard("rulesets/fate-accelerated", "character", "character");
+        World w = fate.World;
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        int quick = gik.AbilityModifier(w.Rules, "quick");
+        int careful = gik.AbilityModifier(w.Rules, "careful");
+        Assert.Equal(Math.Max(quick, careful), gik.AttackDefence(w.Rules));
+        gik.Stats.SetBase("careful", 40);
+        Assert.Equal(gik.AbilityModifier(w.Rules, "careful"), gik.AttackDefence(w.Rules));
+        Assert.Equal("Defend", w.Rules.DefenceName("defend"));
+
+        // an attack step may name another defence; one the system lacks is refused
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "x", "name": "X", "abilities": [{"id": "dex", "name": "Dex"}],
+             "defences": [{"id": "reflex", "name": "Reflex", "value": "10 + mod.dex"}]}
+            """);
+        RulesTesting.Effect("""[{"do": "roll", "kind": "attack", "against": "reflex", "steps": [{"do": "damage", "dice": "1d6"}]}]""").Check(rules, "x.json");
+        ContentException error = TestContent.Refused(() =>
+            RulesTesting.Effect("""[{"do": "roll", "kind": "attack", "against": "will", "steps": [{"do": "damage", "dice": "1d6"}]}]""").Check(rules, "x.json"));
+        Assert.Contains("unknown defence \"will\"", error.Message);
+        var nimble = new CharacterSheet();
+        nimble.Stats.SetBase("dex", 14);
+        Assert.Equal(10 + nimble.AbilityModifier(rules, "dex"), nimble.Defence(rules, "reflex"));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

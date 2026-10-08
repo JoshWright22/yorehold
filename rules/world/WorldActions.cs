@@ -157,7 +157,7 @@ public sealed partial class World
         }
         ActionDefinition? action = FindAction(actionId);
         CharacterSheet sheet = Creatures[attacker].Sheet;
-        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
+        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.AttackDefence(Rules);
         // counted from the system's own dice and outcomes, so it is right for any of them
         return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
     }
@@ -167,7 +167,7 @@ public sealed partial class World
     {
         ActionDefinition? action = FindAction(actionId ?? StrikeAction);
         CharacterSheet sheet = Creatures[attacker].Sheet;
-        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
+        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.AttackDefence(Rules);
         return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet));
     }
 
@@ -459,14 +459,14 @@ public sealed partial class World
         }
 
         // Flanking applies for this roll only and never stays on the sheet.
-        public override int ArmorClass(int who, EffectContext context)
+        public override int ArmorClass(int who, EffectContext context, string defence = "")
         {
             if (Sheet(who) == null || Sheet(context.Self) == null || !_world.Fighting)
             {
-                return base.ArmorClass(who, context);
+                return base.ArmorClass(who, context, defence);
             }
             ActionDefinition? action = _world.FindAction(context.Source);
-            return _world.AttackArmorClass(context.Self, who, action != null && action.Range > 1);
+            return _world.AttackArmorClass(context.Self, who, action != null && action.Range > 1, defence);
         }
 
         public override bool BeforeHit(int who, int attacker, EffectContext context) => _world.BeforeHitReaction(who, attacker);

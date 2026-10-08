@@ -27,6 +27,8 @@ public sealed class CheckKind
     /// (AC for an attack, the passive score less its base for a check). Fate's active defence.
     /// </summary>
     public bool Opposed { get; init; }
+    /// <summary>The defence an attack of this kind is rolled against: one of the system's defences, or "ac".</summary>
+    public string DefenceId { get; init; } = DefenceDefinition.ArmorClass;
 
     /// <summary>The DC a roll of this kind meets: the defence itself, or the defender's roll on it.</summary>
     public int Defence(int defence, Rng random, out RollResult? rolled)
@@ -273,7 +275,7 @@ public sealed class CheckRules
             }
             ContentNode kind = member.Value;
             kind.RequireObject("is an object with dice, outcomes and a degree");
-            kind.Only("dice", "advantage", "disadvantage", "outcomes", "degree", "opposed");
+            kind.Only("dice", "advantage", "disadvantage", "outcomes", "degree", "opposed", "defence");
             CheckKind standard = rules.Kind(member.Key);
             var outcomes = new List<CheckOutcome>();
             if (kind.Get("outcomes") is ContentNode list)
@@ -308,6 +310,7 @@ public sealed class CheckRules
                 WithDisadvantage = DiceAt(kind, "disadvantage", kind.Has("dice") ? DiceAt(kind, "dice", standard.Dice) : standard.WithDisadvantage),
                 Outcomes = outcomes,
                 Opposed = kind.Bool("opposed", standard.Opposed),
+                DefenceId = kind.Get("defence") is ContentNode defence ? defence.AsId() : standard.DefenceId,
                 Degree = kind.Get("degree") is ContentNode degree ? FormulaAt(degree, "total", "die", "modifier", "dc")
                     : kind.Has("outcomes") ? throw kind.Fail("degree", "is needed with outcomes: the formula that picks one")
                     : standard.Degree,

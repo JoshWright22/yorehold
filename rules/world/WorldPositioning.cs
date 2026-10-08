@@ -44,26 +44,28 @@ public sealed partial class World
     }
 
     /// <summary>Its armour class with flanking, which counts as the flanking condition without staying on the sheet.</summary>
-    public int PositionalArmorClass(int target)
+    public int PositionalArmorClass(int target, string defence = "")
     {
         if (target < 0 || target >= Creatures.Count)
         {
             return 0;
         }
+        // the defence the attack names, else the one the system's attacks are rolled against
+        string id = defence.Length > 0 ? defence : Rules.Checks.Kind(CheckRules.Attack).DefenceId;
         CharacterSheet sheet = Creatures[target].Sheet;
         string flanking = Chapter.Rules.Positioning.FlankingCondition;
         if (!IsFlanked(target) || sheet.HasCondition(flanking))
         {
-            return sheet.ArmorClass(Rules);
+            return sheet.Defence(Rules, id);
         }
         CharacterSheet shown = sheet.Copy();
         shown.AddCondition(Rules, flanking);
-        return shown.ArmorClass(Rules);
+        return shown.Defence(Rules, id);
     }
 
     /// <summary>What an attack from one creature on another has to reach: flanking, and cover for ranged attacks.</summary>
-    public int AttackArmorClass(int from, int target, bool ranged)
+    public int AttackArmorClass(int from, int target, bool ranged, string defence = "")
     {
-        return PositionalArmorClass(target) + Chapter.Rules.Positioning.CoverArmorClass(CoverFrom(from, target), ranged);
+        return PositionalArmorClass(target, defence) +Chapter.Rules.Positioning.CoverArmorClass(CoverFrom(from, target), ranged);
     }
 }

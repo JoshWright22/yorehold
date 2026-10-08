@@ -215,7 +215,7 @@ public sealed partial class World
                 At = CellOf(i),
                 Hp = c.Sheet.Hp,
                 MaxHp = c.Sheet.MaxHp,
-                ArmorClass = c.Sheet.ArmorClass(Rules),
+                ArmorClass = c.Sheet.AttackDefence(Rules),
                 AttackBonus = c.Sheet.AttackModifier(Rules),
                 AverageDamage = damage != null ? Math.Max(1.0f, (float)damage.Average()) : 1.0f,
                 Damage = damage,

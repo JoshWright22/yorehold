@@ -23,12 +23,14 @@ public static class HudText
 
     public static string Health(World world, CharacterSheet sheet)
     {
-        string text = $"HP {System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}";
+        Ruleset rules = world.Rules;
+        string text = $"{rules.Sheet.NameOf("hp")} {System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}";
         if (sheet.TempHp > 0)
         {
             text += $" (+{sheet.TempHp})";
         }
-        return $"{text}    AC {sheet.ArmorClass(world.Rules)}";
+        string defence = rules.Checks.Kind(CheckRules.Attack).DefenceId;
+        return $"{text}    {rules.DefenceName(defence)} {sheet.Defence(rules, defence)}";
     }
 
     /// <summary>One line per condition: its name, value and rounds left, then what its file says it does.</summary>

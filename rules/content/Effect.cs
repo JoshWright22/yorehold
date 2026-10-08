@@ -309,11 +309,13 @@ public class Effect
             if (how == "attack")
             {
                 // with the weapon, with "ability": "caster" as a spell attack, or with a named ability
-                if (node.Has("dc") || node.Has("against"))
+                if (node.Has("dc"))
                 {
-                    throw node.Fail("an attack is rolled against armour class; it takes no dc or against");
+                    throw node.Fail("an attack is rolled against a defence; it takes no dc, and \"against\" may name the defence");
                 }
                 ability = node.Name("ability", "");
+                // a defence of the system's; left out, the one its attack roll names
+                against = node.Name("against", "");
             }
             else
             {
@@ -463,7 +465,14 @@ public class Effect
             {
                 throw new ContentException(file, at + ".ability", $"unknown ability or skill \"{step.Ability}\"");
             }
-            if (step.Against.Length > 0 && !Measurable(step.Against))
+            if (step.Kind == EffectKind.Roll && step.How == "attack" && step.Against.Length > 0)
+            {
+                if (!rules.IsDefence(step.Against))
+                {
+                    throw new ContentException(file, at + ".against", $"unknown defence \"{step.Against}\"; it is ac or one of the ruleset's defences");
+                }
+            }
+            else if (step.Against.Length > 0 && !Measurable(step.Against))
             {
                 throw new ContentException(file, at + ".against", $"unknown ability or skill \"{step.Against}\"");
             }

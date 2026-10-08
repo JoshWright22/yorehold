@@ -651,7 +651,7 @@ internal sealed class EffectRun
         outcome.Advantage = advantage == Advantage.Advantage;
         RollResult attack = kind.Roll(bonus + penalty, advantage, _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
-        int armor = _host.ArmorClass(actor, _context);
+        int armor = _host.ArmorClass(actor, _context, step.Against);
         int ac = kind.Defence(armor, _random, out RollResult? defended);
         if (defended != null)
         {
@@ -662,7 +662,7 @@ internal sealed class EffectRun
         if (outcome.Attack.Passes && _host.BeforeHit(actor, _context.Self, _context))
         {
             // its reaction may have raised its defence: the same roll, read against the new one
-            ac += _host.ArmorClass(actor, _context) - armor;
+            ac += _host.ArmorClass(actor, _context, step.Against) - armor;
             outcome.Attack = kind.Resolve(attack, ac);
         }
         outcome.Margin = attack.Total - ac;

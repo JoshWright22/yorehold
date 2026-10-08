@@ -461,7 +461,7 @@ public class EffectRunTests
 
         public override CharacterSheet? Sheet(int who) => Creature;
         public override List<int> Group(string which, EffectContext context) => new();
-        public override int ArmorClass(int who, EffectContext context) => 123;
+        public override int ArmorClass(int who, EffectContext context, string defence = "") => 123;
         public override bool HasFlag(int who, string flag, EffectContext context) => Positional && flag == "positioned";
     }
 }

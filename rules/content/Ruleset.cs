@@ -168,6 +168,13 @@ public class Ruleset
     public SheetLayout Sheet { get; init; } = new();
     /// <summary>What harm uses up, in the order it does; empty = plain HP.</summary>
     public List<TrackDefinition> Tracks { get; init; } = new();
+    /// <summary>Defences of its own beside armour class.</summary>
+    public List<DefenceDefinition> Defences { get; init; } = new();
+    public DefenceDefinition? Defence(string id) => Defences.Find(d => d.Id == id);
+    /// <summary>A defence attacks may name: "ac" or one of the system's.</summary>
+    public bool IsDefence(string id) => id == DefenceDefinition.ArmorClass || Defence(id) != null;
+    /// <summary>What the system calls a defence by id, for the sheet and the aim ("AC", "Defend").</summary>
+    public string DefenceName(string id) => Defence(id)?.Name ?? (id == DefenceDefinition.ArmorClass ? Sheet.NameOf("ac") : id);
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -468,6 +475,7 @@ public class Ruleset
             Words = TurnWords.Read(node.Get("turnWords")),
             Sheet = SheetLayout.Read(node.Get("sheet")),
             Tracks = (node.Get("tracks")?.Items() ?? Array.Empty<ContentNode>()).Select(TrackDefinition.Read).ToList(),
+            Defences = (node.Get("defences")?.Items() ?? Array.Empty<ContentNode>()).Select(DefenceDefinition.Read).ToList(),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,
@@ -514,6 +522,14 @@ public class Ruleset
         foreach (string rest in rules.Death.Track?.WoundedClearedBy.Where(id => rules.Rest(id) == null) ?? Enumerable.Empty<string>())
         {
             throw new ContentException(node.File, "death.track.woundedClearedBy", $"unknown rest \"{rest}\"");
+        }
+        if (rules.Defences.Select(d => d.Id).Distinct().Count() != rules.Defences.Count)
+        {
+            throw new ContentException(node.File, "defences", "defences have different ids");
+        }
+        foreach (CheckKind kind in rules.Checks.Kinds.Values.Where(k => !rules.IsDefence(k.DefenceId)))
+        {
+            throw new ContentException(node.File, $"checks.{kind.Id}.defence", $"unknown defence \"{kind.DefenceId}\"; it is ac or one of defences");
         }
         if (rules.Tracks.Select(t => t.Id).Distinct().Count() != rules.Tracks.Count)
         {

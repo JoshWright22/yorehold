@@ -91,9 +91,9 @@ public abstract class EffectHost
     public abstract List<int> Group(string which, EffectContext context);
 
     /// <summary>What an attack has to reach. A game with flanking and cover adds them here.</summary>
-    public virtual int ArmorClass(int who, EffectContext context)
+    public virtual int ArmorClass(int who, EffectContext context, string defence = "")
     {
-        return Sheet(who)?.ArmorClass(context.Rules) ?? 0;
+        return Sheet(who)?.Defence(context.Rules, defence.Length > 0 ? defence : context.Rules.Checks.Kind(CheckRules.Attack).DefenceId) ?? 0;
     }
 
     public virtual bool HasFlag(int who, string flag, EffectContext context)

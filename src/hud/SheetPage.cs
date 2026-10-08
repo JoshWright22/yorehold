@@ -29,7 +29,16 @@ public static class SheetPage
             {
                 case "vitals":
                     string hp = $"{System.Math.Max(0, sheet.Hp)} / {sheet.MaxHp}" + (sheet.TempHp > 0 ? $" (+{sheet.TempHp})" : "");
-                    page.Stats((layout.NameOf("ac"), sheet.ArmorClass(rules).ToString()), (layout.NameOf("hp"), hp), (layout.NameOf("speed"), $"{sheet.SpeedFeet} ft"));
+                    // armour class where the system uses it, then its own defences (Fate's Defend, a Reflex defence)
+                    var vitals = new List<(string, string)>();
+                    if (rules.Checks.Kind(CheckRules.Attack).DefenceId == DefenceDefinition.ArmorClass)
+                    {
+                        vitals.Add((layout.NameOf("ac"), sheet.ArmorClass(rules).ToString()));
+                    }
+                    vitals.AddRange(rules.Defences.Select(d => (d.Name, sheet.Defence(rules, d.Id).ToString())));
+                    vitals.Add((layout.NameOf("hp"), hp));
+                    vitals.Add((layout.NameOf("speed"), $"{sheet.SpeedFeet} ft"));
+                    page.Stats(vitals.ToArray());
                     break;
                 case "tracks":
                     // "Stress 2/3, Mild consequence 1/1"

@@ -95,7 +95,8 @@
         }
       ],
       "degree": "total < dc ? 0 : total == dc ? 1 : total >= dc + 3 ? 3 : 2",
-      "opposed": true
+      "opposed": true,
+      "defence": "defend"
     },
     "check": {
       "dice": "4dF",
@@ -160,6 +161,9 @@
     "hpFirstLevel": "15",
     "hpPerLevel": "0"
   },
+  "defences": [
+    { "id": "defend", "name": "Defend", "value": "max(mod.quick, mod.careful)" }
+  ],
   "tracks": [
     { "id": "stress", "name": "Stress", "max": "stat.stress > 0 ? stat.stress : 3", "clears": ["fightEnd"] },
     { "id": "mild", "name": "Mild consequence", "max": "stat.mook > 0 ? 0 : 1", "absorbs": 2, "heals": false, "clears": ["scene"] },
@@ -169,7 +173,6 @@
   "sheet": {
     "sections": ["vitals", "tracks", "scores", "skills", "weapon", "feats", "uses", "conditions", "carrying"],
     "names": {
-      "ac": "Defend",
       "hp": "Shifts left",
       "tracks": "Stress and consequences",
       "feats": "Stunts"

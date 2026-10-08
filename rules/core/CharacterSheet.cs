@@ -219,6 +219,19 @@ public sealed partial class CharacterSheet
             ("armor", Stats.Integer("ac")), ("ability", ability), ("proficiency", proficiency));
     }
 
+    /// <summary>A defence by id: "ac" (or empty) is ArmorClass, anything else the system's formula, which may read "ac" too.</summary>
+    public int Defence(Ruleset rules, string id)
+    {
+        if (id.Length == 0 || id == DefenceDefinition.ArmorClass || rules.Defence(id) is not DefenceDefinition defence)
+        {
+            return ArmorClass(rules);
+        }
+        return defence.Value.Whole(name => name == DefenceDefinition.ArmorClass ? ArmorClass(rules) : Named(rules, name));
+    }
+
+    /// <summary>What an attack is rolled against: the defence the system's attack roll names, AC unless it says.</summary>
+    public int AttackDefence(Ruleset rules) => Defence(rules, rules.Checks.Kind(CheckRules.Attack).DefenceId);
+
     /// <summary>
     /// A number on the sheet by the names formulas use: level, mod.&lt;ability&gt;,
     /// score.&lt;ability&gt;, stat.&lt;name&gt;, prof.&lt;target&gt;, trait.&lt;weapon trait&gt;. Null for any other name.

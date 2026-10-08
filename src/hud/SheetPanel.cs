@@ -193,7 +193,8 @@ public partial class SheetPanel : PanelContainer
         _hpBar.MaxValue = Math.Max(1, sheet.MaxHp);
         _hpBar.Value = Math.Max(0, sheet.Hp);
         _hpSub.Text = sheet.TempHp > 0 ? $"+{sheet.TempHp} temporary" : sheet.Down ? "down" : "";
-        Vital("Armor class", sheet.ArmorClass(rules).ToString(), "");
+        string defence = rules.Checks.Kind(CheckRules.Attack).DefenceId;
+        Vital(defence == DefenceDefinition.ArmorClass ? "Armor class" : rules.DefenceName(defence), sheet.Defence(rules, defence).ToString(), "");
         string rolledWith = rules.Roles.Initiative;
         Vital("Initiative", SheetView.Signed(sheet.InitiativeModifier(rules)),
             (rules.Skill(rolledWith)?.Name ?? rules.Ability(rolledWith)?.Name ?? rolledWith).ToLowerInvariant());

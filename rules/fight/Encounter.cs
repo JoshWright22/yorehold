@@ -305,7 +305,7 @@ public sealed class Encounter
         CheckKind attack = _rules.Checks.Kind(CheckRules.Attack);
         result.AttackRoll = attack.Roll(self.AttackModifier(_rules), self.AttackAdvantage(_rules, target), Random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still count for this roll
-        int ac = target.ArmorClass(_rules);
+        int ac = target.AttackDefence(_rules);
         CheckOutcome outcome = attack.Resolve(result.AttackRoll, ac);
         result.Critical = outcome.Critical;
         result.Hit = outcome.Passes;
