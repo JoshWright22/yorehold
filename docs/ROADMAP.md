@@ -338,17 +338,34 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   shadows, buttons, the hotbar and portrait frames, token frames (already a skin), condition and
   action icons, the cursor, sounds, and the title's banners and logo. The game's own look stays
   the default and keeps its rules (Apollo, flat, 1 px edges); a skin may break them on purpose.
-  - The Godot theme is built from the skin's data at start, not from the hand-made
+  - Josh, 10/8: the UI is driven by data, styled like CSS. Every screen is a layout file (a tree
+	of panels, lists, tables, bars and buttons, anchored and sized, bound to the system's data the
+	way R6's sheet layout is), and a stylesheet styles it: selectors by element type, class, id
+	and state (hover, pressed, disabled, selected), properties for colours, fonts, sizes, padding,
+	borders, corners, icons and sounds, with variables and later rules winning. Godot has no CSS,
+	so this is a subset the game parses into Godot themes and per-control overrides; no
+	animation, scripts or web layout. A skin is a stylesheet plus pictures, fonts and sounds, and
+	may also replace a screen's layout file, as long as every control the screen's job needs is
+	still there (the loader checks by id and falls back to the default layout if not).
+  - The Godot theme is built from the stylesheet at start, not from the hand-made
 	`scenes/hud/hud-theme.tres`, so a skin is files and no code. A skin that leaves something out
-	gets the default for it.
+	gets the default for it. The game's own look becomes the default stylesheet.
   - Checks: every screen's screenshot taken with a test skin as well as the default, so no
 	colour or font is left hard-coded (the palette test becomes "only colours the skin names").
   - Skins share and sell like any package (R14, R15); a publisher's system can ship its own look.
   - UI: Settings > Display > Skin with a preview; Create gains a skin editor (colours, fonts,
 	edges, with the screens shown live beside it).
+- [ ] **R17. 3D dice.** Josh, 10/8: dice render in 3D when rolled, like Foundry's Dice So Nice. The
+  result comes first from the game's seeded dice (R2b), so rolls stay fair and replayable; the
+  physics throw is then played with the die turned so the rolled face lands up. Dice shapes come
+  from the system's dice expressions (d4 to d100, custom faces such as Fudge or symbol dice, as
+  many as a pool rolls), and their look (colour, material, numbers, sound) from the skin, with a
+  player's own dice set chosen in Settings. Rolls are shown in a strip over the fight or the
+  sheet and then leave the numbers in the log. Settings: off, fast, or full; with many rolls at
+  once (a fireball's saves) they throw together. Hidden rolls (an enemy's stealth) aren't shown.
 
 Order: R1 and R2 first (small, and every later step needs them), then R3-R8 each tried on both
-systems, R9 and R10 alongside them as the checks, then R11-R16. The bestiary import (S12-S15)
+systems, R9 and R10 alongside them as the checks, then R11-R17. The bestiary import (S12-S15)
 waits until R6, so stat blocks land in a system's creature format.
 
 ## S. Story import
