@@ -14,6 +14,7 @@ public enum ItemOrderKind
     Take,
     TakeCoins,
     TakeAll,
+    Put,
     Buy,
     Sell,
 }
@@ -38,14 +39,18 @@ public sealed class GearPanel
     {
         new("Name", 150), new("Slot", 84), new("Qty", 34, true), new("Wt", 44, true), new("Value", 74, true),
     };
-    private static readonly DataColumn[] ShopColumns =
+    // a chest or shop beside the pack: two narrow lists
+    private static readonly DataColumn[] TradeColumns =
     {
-        new("Name", 150), new("Slot", 84), new("Stock", 44, true), new("Wt", 44, true), new("Price", 74, true),
+        new("Name", 110), new("Qty", 30, true), new("Value", 70, true),
     };
+    private const string Mine = "mine:";
 
     private readonly DataPanel _view;
     // what the rows stand for as of the last refresh: a row's key to its item's place in the list
     private readonly Dictionary<string, int> _places = new();
+    // the same for the pack, when it is the list beside a chest or shop
+    private readonly Dictionary<string, int> _mine = new();
     private int _hero;
     private int _pile = -1;
     private int _npc = -1;
@@ -73,7 +78,8 @@ public sealed class GearPanel
             {
                 Pile pile = world.Piles[i];
                 Cell at = world.CellOf(hero);
-                if (!pile.Empty && !world.PileLocked(i) && Math.Abs(pile.At.X - at.X) <= 1 && Math.Abs(pile.At.Y - at.Y) <= 1)
+                // the open chest stays open once emptied, so things can still be put in it
+                if ((!pile.Empty || Source == $"pile:{i}") && !world.PileLocked(i) && Math.Abs(pile.At.X - at.X) <= 1 && Math.Abs(pile.At.Y - at.Y) <= 1)
                 {
                     sources.Add(($"pile:{i}", pile.Name));
                 }
@@ -90,6 +96,11 @@ public sealed class GearPanel
         {
             Source = Pack;
         }
+        if (Source != Pack)
+        {
+            // the pack is the list beside the chest or shop, so it needs no button of its own
+            sources.RemoveAt(0);
+        }
         _view.SetSources(sources, Source);
         _view.SetTabs(Tabs);
         _view.SetChips(Chips);
@@ -99,30 +110,37 @@ public sealed class GearPanel
         if (_npc >= 0)
         {
             Merchant shop = world.Merchants[_npc]!;
-            _view.SetHead(world.Chapter.Npcs[_npc].Name, $"buying with {sheet.Name}'s coins");
-            _view.SetColumns(ShopColumns);
-            _view.SetRows(Rows(world, shop.Inventory, item => shop.BuyPrice(item), 0));
+            string name = world.Chapter.Npcs[_npc].Name;
+            _view.SetHead(name, $"buy from {name}, sell from {sheet.Name}'s pack");
+            _view.SetColumns(TradeColumns);
+            _view.SetRows(Rows(world, shop.Inventory, item => shop.BuyPrice(item), 0, _places, ""));
+            _view.SetOther($"{sheet.Name}'s pack", "For sale", Rows(world, sheet.Inventory, item => shop.SellPrice(item), 0, _mine, Mine));
         }
         else if (_pile >= 0)
         {
             Pile pile = world.Piles[_pile];
-            _view.SetHead(pile.Name, $"{sheet.Name} takes from it");
-            _view.SetColumns(PackColumns);
-            _view.SetRows(Rows(world, pile.Items, item => item.Value, pile.Coins));
+            _view.SetHead(pile.Name, $"take from it, or put things from {sheet.Name}'s pack in");
+            _view.SetColumns(TradeColumns);
+            _view.SetRows(Rows(world, pile.Items, item => item.Value, pile.Coins, _places, ""));
+            _view.SetOther($"{sheet.Name}'s pack", $"In {pile.Name}", Rows(world, sheet.Inventory, item => item.Value, 0, _mine, Mine));
         }
         else
         {
             _view.SetHead($"{sheet.Name}'s gear", world.Fighting ? "changing gear costs an action on their turn" : "");
             _view.SetColumns(PackColumns);
-            _view.SetRows(Rows(world, sheet.Inventory, item => item.Value, 0));
+            _view.SetRows(Rows(world, sheet.Inventory, item => item.Value, 0, _places, ""));
+            _view.SetOther("", "", null);
         }
         ShowEntry(world);
         _view.SetFoot(Foot(world, sheet));
     }
 
-    private List<DataRow> Rows(World world, List<Item> items, Func<Item, int> price, int coins)
+    // rows for a list of items; places gets each row's key to the item's place in the list.
+    // prefix tells the pack's rows apart from a chest's when both are shown.
+    private List<DataRow> Rows(World world, List<Item> items, Func<Item, int> price, int coins, Dictionary<string, int> places, string prefix)
     {
-        _places.Clear();
+        places.Clear();
+        bool trading = prefix.Length > 0 || _pile >= 0 || _npc >= 0;
         var rows = new List<DataRow>();
         var seen = new Dictionary<string, int>();
         for (int i = 0; i < items.Count; i++)
@@ -130,33 +148,32 @@ public sealed class GearPanel
             Item item = items[i];
             int n = seen.GetValueOrDefault(item.Id);
             seen[item.Id] = n + 1;
-            string key = $"{item.Id}#{n}";
-            _places[key] = i;
+            string key = $"{prefix}{item.Id}#{n}";
+            places[key] = i;
             int cost = price(item);
+            string name = item.Name + (item.Equipped ? "  (worn)" : "");
             rows.Add(new DataRow
             {
                 Key = key,
-                Cells = new[]
-                {
-                    item.Name + (item.Equipped ? "  (worn)" : ""),
-                    SlotName(item),
-                    item.Quantity.ToString(),
-                    Pounds(item.Weight * item.Quantity),
-                    cost > 0 ? Coins.Text(cost) : "-",
-                },
-                Sort = new IComparable?[] { item.Name, SlotName(item), item.Quantity, item.Weight * item.Quantity, cost },
+                // side by side there is room for what a trade needs: what, how many, worth
+                Cells = trading
+                    ? new[] { name, item.Quantity.ToString(), cost > 0 ? Coins.Text(cost) : "-" }
+                    : new[] { name, SlotName(item), item.Quantity.ToString(), Pounds(item.Weight * item.Quantity), cost > 0 ? Coins.Text(cost) : "-" },
+                Sort = trading
+                    ? new IComparable?[] { item.Name, item.Quantity, cost }
+                    : new IComparable?[] { item.Name, SlotName(item), item.Quantity, item.Weight * item.Quantity, cost },
                 Tags = TagsOf(item),
                 Search = item.Definition.Description,
             });
         }
         if (coins > 0)
         {
-            _places[CoinsKey] = -1;
+            places[CoinsKey] = -1;
             rows.Insert(0, new DataRow
             {
                 Key = CoinsKey,
-                Cells = new[] { "Coins", "", "", "", Coins.Text(coins) },
-                Sort = new IComparable?[] { "", "", 0, 0.0, coins },
+                Cells = new[] { "Coins", "", Coins.Text(coins) },
+                Sort = new IComparable?[] { "", 0, coins },
                 Tags = new HashSet<string> { "Other" },
             });
         }
@@ -166,6 +183,25 @@ public sealed class GearPanel
     private void ShowEntry(World world)
     {
         CharacterSheet sheet = world.Creatures[_hero].Sheet;
+        if (_mine.TryGetValue(_view.Picked, out int mine))
+        {
+            Item own = sheet.Inventory[mine];
+            var first = new List<DataAction>();
+            if (_pile >= 0)
+            {
+                first.Add(new DataAction("put", $"Put in {world.Piles[_pile].Name}"));
+            }
+            else if (_npc >= 0)
+            {
+                Merchant shop = world.Merchants[_npc]!;
+                bool can = shop.CanSell(sheet, mine, out string why);
+                first.Add(new DataAction($"sell:{_npc}", $"Sell for {Coins.Text(Math.Max(0, shop.SellPrice(own)))}", can, why));
+            }
+            // the rest of what the pack's own page offers, but selling elsewhere is for the shop's own panel
+            first.AddRange(PackActions(world, sheet, mine, own).Where(a => !a.Id.StartsWith("sell:")));
+            _view.SetEntry(Page(world, own, own.Value), first, "");
+            return;
+        }
         if (!_places.TryGetValue(_view.Picked, out int index))
         {
             string empty = _npc >= 0 ? "Sold out." : _pile >= 0 ? "Nothing left." : $"{sheet.Name} carries nothing.";
@@ -199,48 +235,56 @@ public sealed class GearPanel
         else
         {
             item = sheet.Inventory[index];
-            if (item.Slot.Length > 0)
+            actions.AddRange(PackActions(world, sheet, index, item));
+        }
+        _view.SetEntry(Page(world, item, _npc >= 0 ? world.Merchants[_npc]!.BuyPrice(item) : item.Value), actions, "");
+    }
+
+    // what can be done with an item in the hero's own pack: wear it, use it, hand it on or sell it
+    private List<DataAction> PackActions(World world, CharacterSheet sheet, int index, Item item)
+    {
+        var actions = new List<DataAction>();
+        if (item.Slot.Length > 0)
+        {
+            bool on = !item.Equipped;
+            bool can = world.CanEquip(_hero, index, on, out string why);
+            string label = on ? (item.Held ? "Take up" : "Put on") : (item.Held ? "Put away" : "Take off");
+            actions.Add(new DataAction(on ? "equip" : "unequip", label, can, why.Length > 0 ? why : "Not now."));
+        }
+        if (item.Use != null)
+        {
+            List<int> targets = world.ConsumeTargets(_hero, index);
+            foreach (int target in targets)
             {
-                bool on = !item.Equipped;
-                bool can = world.CanEquip(_hero, index, on, out string why);
-                string label = on ? (item.Held ? "Take up" : "Put on") : (item.Held ? "Put away" : "Take off");
-                actions.Add(new DataAction(on ? "equip" : "unequip", label, can, why.Length > 0 ? why : "Not now."));
+                actions.Add(new DataAction($"use:{target}", target == _hero ? "Use" : $"Use on {world.Creatures[target].Sheet.Name}"));
             }
-            if (item.Use != null)
+            if (targets.Count == 0)
             {
-                List<int> targets = world.ConsumeTargets(_hero, index);
-                foreach (int target in targets)
+                world.CanConsume(_hero, index, _hero, out string why);
+                actions.Add(new DataAction("use", "Use", false, why));
+            }
+        }
+        if (!world.Fighting)
+        {
+            for (int other = 0; other < world.HeroCount; other++)
+            {
+                if (other != _hero && !world.Creatures[other].Sheet.Down)
                 {
-                    actions.Add(new DataAction($"use:{target}", target == _hero ? "Use" : $"Use on {world.Creatures[target].Sheet.Name}"));
-                }
-                if (targets.Count == 0)
-                {
-                    world.CanConsume(_hero, index, _hero, out string why);
-                    actions.Add(new DataAction("use", "Use", false, why));
+                    bool room = !item.Magic || world.Creatures[other].Sheet.RoomForMagic(world.Rules, item.Quantity);
+                    actions.Add(new DataAction($"give:{other}", $"Give to {world.Creatures[other].Sheet.Name}", room, room ? "" : world.MagicLimitText(other)));
                 }
             }
-            if (!world.Fighting)
+            for (int npc = 0; npc < world.Merchants.Count; npc++)
             {
-                for (int other = 0; other < world.HeroCount; other++)
+                if (world.CanTrade(_hero, npc))
                 {
-                    if (other != _hero && !world.Creatures[other].Sheet.Down)
-                    {
-                        bool room = !item.Magic || world.Creatures[other].Sheet.RoomForMagic(world.Rules, item.Quantity);
-                        actions.Add(new DataAction($"give:{other}", $"Give to {world.Creatures[other].Sheet.Name}", room, room ? "" : world.MagicLimitText(other)));
-                    }
-                }
-                for (int npc = 0; npc < world.Merchants.Count; npc++)
-                {
-                    if (world.CanTrade(_hero, npc))
-                    {
-                        Merchant shop = world.Merchants[npc]!;
-                        bool can = shop.CanSell(sheet, index, out string why);
-                        actions.Add(new DataAction($"sell:{npc}", $"Sell to {world.Chapter.Npcs[npc].Name} for {Coins.Text(Math.Max(0, shop.SellPrice(item)))}", can, why));
-                    }
+                    Merchant shop = world.Merchants[npc]!;
+                    bool can = shop.CanSell(sheet, index, out string why);
+                    actions.Add(new DataAction($"sell:{npc}", $"Sell to {world.Chapter.Npcs[npc].Name} for {Coins.Text(Math.Max(0, shop.SellPrice(item)))}", can, why));
                 }
             }
         }
-        _view.SetEntry(Page(world, item, _npc >= 0 ? world.Merchants[_npc]!.BuyPrice(item) : item.Value), actions, "");
+        return actions;
     }
 
     /// <summary>An item's page: what it is, its numbers, what using it does and its description.</summary>
@@ -311,7 +355,7 @@ public sealed class GearPanel
 
     private void Act(string id)
     {
-        int index = _places.GetValueOrDefault(_view.Picked, -1);
+        int index = _mine.TryGetValue(_view.Picked, out int own) ? own : _places.GetValueOrDefault(_view.Picked, -1);
         string[] parts = id.Split(':');
         int number = parts.Length > 1 && int.TryParse(parts[1], out int n) ? n : -1;
         ItemOrder? order = parts[0] switch
@@ -322,6 +366,7 @@ public sealed class GearPanel
             "give" => new ItemOrder(ItemOrderKind.Give, _hero, index, number),
             "sell" => new ItemOrder(ItemOrderKind.Sell, _hero, index, Npc: number),
             "take" => new ItemOrder(ItemOrderKind.Take, _hero, index, Pile: _pile),
+            "put" => new ItemOrder(ItemOrderKind.Put, _hero, index, Pile: _pile),
             "takecoins" => new ItemOrder(ItemOrderKind.TakeCoins, _hero, Pile: _pile),
             "takeall" => new ItemOrder(ItemOrderKind.TakeAll, _hero, Pile: _pile),
             "buy" => new ItemOrder(ItemOrderKind.Buy, _hero, index, Npc: _npc),

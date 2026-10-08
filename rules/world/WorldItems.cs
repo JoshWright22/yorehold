@@ -243,6 +243,43 @@ public sealed partial class World
         return true;
     }
 
+    /// <summary>
+    /// A hero on or beside a pile puts an item (a whole entry, taken off first if worn) into it
+    /// between fights: to leave it behind, or to keep it in a chest for later.
+    /// </summary>
+    public bool Put(int hero, int pile, int item)
+    {
+        Refusal = "";
+        if (!Calm || hero < 0 || hero >= HeroCount || Creatures[hero].Sheet.Down || pile < 0 || pile >= Piles.Count)
+        {
+            Refusal = "Not now.";
+            return false;
+        }
+        Pile p = Piles[pile];
+        CharacterSheet sheet = Creatures[hero].Sheet;
+        if (PileLocked(pile))
+        {
+            Refusal = $"{p.Name} is locked.";
+            return false;
+        }
+        Cell at = CellOf(hero);
+        if (Math.Abs(p.At.X - at.X) > 1 || Math.Abs(p.At.Y - at.Y) > 1)
+        {
+            Refusal = $"{sheet.Name} is too far from {p.Name}.";
+            return false;
+        }
+        if (item < 0 || item >= sheet.Inventory.Count)
+        {
+            return false;
+        }
+        Item moved = sheet.TakeOut(item);
+        p.Items.Add(moved);
+        Say($"{sheet.Name} puts {moved.Name}{(moved.Quantity > 1 ? " x" + moved.Quantity : "")} in {p.Name}.");
+        sheet.Hp = Math.Min(sheet.Hp, sheet.MaxHp);
+        SyncLog();
+        return true;
+    }
+
     /// <summary>Hands an item (a whole entry) or coins to another hero, between fights and at any distance.</summary>
     public bool Give(int from, int to, int? item = null, int coins = 0)
     {

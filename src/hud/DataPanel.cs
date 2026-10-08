@@ -128,6 +128,10 @@ public partial class DataPanel : PanelContainer
         _actions = GetNode<HFlowContainer>("Rows/Body/Entry/Actions");
         _warning = GetNode<Label>("Rows/Body/Entry/Warning");
         _foot = GetNode<Label>("Rows/Foot");
+        _other = GetNode<VBoxContainer>("Rows/Body/Other");
+        _otherItems = GetNode<VBoxContainer>("Rows/Body/Other/Scroll/Items");
+        // yours on the left, theirs beside the page, as a chest or a shop reads in most games
+        GetNode<Control>("Rows/Body").MoveChild(_other, 0);
         _search.TextChanged += _ => _dirty = true;
         GetNode<Button>("Rows/Head/Close").Pressed += () => ClosePressed?.Invoke();
     }
@@ -261,6 +265,39 @@ public partial class DataPanel : PanelContainer
         GetNode<Control>("Rows/Filter").Visible = _rows.Count >= FilterFrom || _search.Text.Length > 0 || _chipsOn.Count > 0;
         ShowRows();
     }
+
+    /// <summary>
+    /// A second list left of the main one, for two sides of a trade: the hero's pack beside a
+    /// chest or a shop. Its rows' keys must differ from the main list's; picking one fills the
+    /// entry like a main row. heading names each list; null rows take the second list away.
+    /// </summary>
+    public void SetOther(string heading, string mainHeading, IReadOnlyList<DataRow>? rows)
+    {
+        bool shown = rows != null;
+        var head = GetNode<Label>("Rows/Body/List/Heading");
+        head.Visible = shown;
+        head.Text = mainHeading.ToUpperInvariant();
+        _other.Visible = shown;
+        GetNode<Label>("Rows/Body/Other/Heading").Text = heading.ToUpperInvariant();
+        var signature = new StringBuilder();
+        foreach (DataRow row in rows ?? Array.Empty<DataRow>())
+        {
+            signature.Append(row.Key).Append('\u001f').AppendJoin('\u001f', row.Cells).Append('\u001e');
+        }
+        if (signature.ToString() != _otherShown)
+        {
+            _otherShown = signature.ToString();
+            _otherRows.Clear();
+            _otherRows.AddRange(rows ?? Array.Empty<DataRow>());
+            _dirty = true;
+        }
+    }
+
+    private VBoxContainer _other = null!;
+    private VBoxContainer _otherItems = null!;
+    private readonly List<DataRow> _otherRows = new();
+    private readonly List<Button> _otherButtons = new();
+    private string _otherShown = "";
 
     /// <summary>The fewest rows that get the search box and filter chips.</summary>
     public const int FilterFrom = 8;
@@ -450,9 +487,12 @@ public partial class DataPanel : PanelContainer
         {
             shown = shown.Select((row, i) => (row, i)).OrderBy(p => p.row, Comparer<DataRow>.Create(Compare)).ThenBy(p => p.i).Select(p => p.row).ToList();
         }
-        if (shown.All(r => r.Key != Picked))
+        List<DataRow> other = _other.Visible
+            ? _otherRows.Where(Shows).Select((row, i) => (row, i)).OrderBy(p => p.row, Comparer<DataRow>.Create(Compare)).ThenBy(p => p.i).Select(p => p.row).ToList()
+            : new List<DataRow>();
+        if (shown.All(r => r.Key != Picked) && other.All(r => r.Key != Picked))
         {
-            Picked = shown.Count > 0 ? shown[0].Key : "";
+            Picked = shown.Count > 0 ? shown[0].Key : other.Count > 0 ? other[0].Key : "";
         }
         // a count only says something when a filter hides part of the list
         _count.Text = shown.Count == _rows.Count ? "" : $"{shown.Count} of {_rows.Count}";
@@ -461,8 +501,14 @@ public partial class DataPanel : PanelContainer
             ShowTiles(shown);
             return;
         }
+        FillRows(_items, _rowButtons, shown);
+        FillRows(_otherItems, _otherButtons, other);
+    }
 
-        while (_rowButtons.Count < shown.Count)
+    // one list's rows as buttons: made as needed, kept and reused, the rest hidden
+    private void FillRows(VBoxContainer items, List<Button> buttons, List<DataRow> shown)
+    {
+        while (buttons.Count < shown.Count)
         {
             var button = new Button
             {
@@ -487,12 +533,12 @@ public partial class DataPanel : PanelContainer
                     GetTree().CreateTimer(0.1).Timeout += DoMainAction;
                 }
             };
-            _items.AddChild(button);
-            _rowButtons.Add(button);
+            items.AddChild(button);
+            buttons.Add(button);
         }
-        for (int i = 0; i < _rowButtons.Count; i++)
+        for (int i = 0; i < buttons.Count; i++)
         {
-            Button button = _rowButtons[i];
+            Button button = buttons[i];
             button.Visible = i < shown.Count;
             if (!button.Visible)
             {

@@ -33,7 +33,15 @@ public class WorldItemTests
         Assert.True(w.Take(0, 0, item: 0) && ana.Inventory[^1].Id == "mace" && !ana.Inventory[^1].Equipped
             && w.Piles[0].Empty && w.PileNear(0) == null && !w.Take(0, 0, all: true), "Items go into the pack, and an empty container has nothing more");
 
-        Assert.True(w.Give(0, 1, item: ana.Inventory.Count - 1) && w.Creatures[1].Sheet.Inventory[^1].Id == "mace");
+        // and back in: an emptied chest still takes things, worn ones taken off first
+        int worn = ana.Inventory.FindIndex(i => i.Equipped && i.Slot == "mainHand");
+        string weaponId = ana.Inventory[worn].Id;
+        Assert.True(w.Put(0, 0, worn) && w.Piles[0].Items[^1].Id == weaponId && !w.Piles[0].Items[^1].Equipped && ana.WeaponItem == null);
+        Assert.True(world.Said($"Ana puts {w.Piles[0].Items[^1].Name} in Box."));
+        Assert.True(!w.Put(1, 0, 0) && w.Refusal.Contains("too far"), "Only from beside it");
+        Assert.True(w.Take(0, 0, item: 0) && ana.Inventory[^1].Id == weaponId && w.Equip(0, ana.Inventory.Count - 1, true));
+
+        Assert.True(w.Give(0, 1, item: Find(ana, "mace")) && w.Creatures[1].Sheet.Inventory[^1].Id == "mace");
         Assert.True(world.Said("Ana gives Mace to Bo."), "An item can be handed to an ally");
         Assert.True(w.Give(0, 1, coins: 20) && ana.Coins == 10 && w.Creatures[1].Sheet.Coins == 20
             && !w.Give(0, 1, coins: 11) && !w.Give(0, 0, coins: 1), "Coins can be handed over, but not more than there are");

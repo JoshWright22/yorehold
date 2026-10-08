@@ -694,6 +694,7 @@ public partial class PlayScreen : Node2D
             ItemOrderKind.Take => w.Take(order.Hero, order.Pile, item: order.Item),
             ItemOrderKind.TakeCoins => w.Take(order.Hero, order.Pile, coins: true),
             ItemOrderKind.TakeAll => w.Take(order.Hero, order.Pile, all: true),
+            ItemOrderKind.Put => w.Put(order.Hero, order.Pile, order.Item),
             ItemOrderKind.Buy => w.Buy(order.Hero, order.Npc, order.Item),
             ItemOrderKind.Sell => w.Sell(order.Hero, order.Npc, order.Item),
             _ => false,

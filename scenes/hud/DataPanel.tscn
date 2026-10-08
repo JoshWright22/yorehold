@@ -76,6 +76,11 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
+[node name="Heading" type="Label" parent="Rows/Body/List"]
+visible = false
+layout_mode = 2
+theme_type_variation = &"CapsLabel"
+
 [node name="Columns" type="HBoxContainer" parent="Rows/Body/List"]
 layout_mode = 2
 theme_override_constants/separation = 6
@@ -93,6 +98,26 @@ theme_override_constants/separation = 0
 [node name="Count" type="Label" parent="Rows/Body/List"]
 layout_mode = 2
 theme_type_variation = &"DimLabel"
+
+[node name="Other" type="VBoxContainer" parent="Rows/Body"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Heading" type="Label" parent="Rows/Body/Other"]
+layout_mode = 2
+theme_type_variation = &"CapsLabel"
+
+[node name="Scroll" type="ScrollContainer" parent="Rows/Body/Other"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Items" type="VBoxContainer" parent="Rows/Body/Other/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
 
 [node name="Entry" type="VBoxContainer" parent="Rows/Body"]
 custom_minimum_size = Vector2(390, 0)
