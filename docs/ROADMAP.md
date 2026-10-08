@@ -233,6 +233,25 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   `ruleset` and `requires` are read; a character records its system and is refused, with the
   reason, by an adventure on another. UI: New adventure in Create asks which system; the library
   shows each adventure's system.
+- [ ] **R2b. A rules language, so every rule is data.** Josh, 10/8: all of it data the AI can
+  evaluate when making adventures. Instead of a switch per known system, R3-R8 are written in a
+  small language the game interprets: dice expressions (pools, keep/drop, exploding, success
+  counts, custom faces), formulas over a creature's numbers, comparisons into named outcomes,
+  and procedures as lists of steps (roll, compare, branch on outcome, apply effect, ask a choice,
+  repeat a bounded number of times). It has no file, network or engine access, every loop has a
+  limit and every roll uses the game's seeded dice, so an uploaded system is safe to run and can
+  be replayed. Each step writes a plain line to the log, so a result can be explained.
+  - Readable by the AI: the language has a schema and a reference written for people and for
+    the story model, and every rule in a system carries a one-line plain description. The
+    import (R13) writes systems in it, and the game checks the draft by loading and running it.
+  - Evaluable: a rules evaluator runs a system without screens: the odds of a check or attack,
+    expected damage, and many simulated fights between a party and a group of creatures. The
+    adventure builder uses it to set DCs and balance encounters for the party's level in any
+    system, and Create shows the result ("this fight: 1 in 5 parties lose a hero").
+  - Shipped systems, the yorehold set first, are rewritten in the language, and their tests
+    must still pass, so the language is proved before R3-R8 build on it. An unusual mechanic
+    (a dice pool, a card draw, a stress track) is then a new system file, not a game update;
+    only a new kind of screen (R6's sheet layout, R4's hotbar) needs code.
 - [ ] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
   nat 20; PF2e: four degrees, ±10, nat 20/1 move a step), what a critical does (double dice or
   double total), and advantage from the target or the place as well as the attacker. Every
@@ -274,7 +293,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   remove, on/off for sets), and an adventure's page says what it needs and gets it.
 - [ ] **R12. The AI plays the other side, in any system.** Josh, 10/8: no game master and no
   host tools; the AI makes the enemies' and NPCs' decisions. The fight AI reads the loaded
-  system's actions, costs and odds (R3, R4) instead of d20 maths and the `strike` action, so it
+  system's actions, costs and odds (R3, R4, through R2b's evaluator) instead of d20 maths and the `strike` action, so it
   plays a PF2e turn (three actions, the attack penalty, Raise a Shield) as well as a 5e one, and
   keeps its flee, surrender and stealth behaviour. What a GM would decide outside fights (an
   NPC's answer, whether a guard believes a bluff) comes from the adventure's words and, where it
