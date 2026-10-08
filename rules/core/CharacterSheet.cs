@@ -131,7 +131,7 @@ public sealed partial class CharacterSheet
         copy._trackHp = _trackHp;
         copy.Tracks.AddRange(Tracks.Select(t => new TrackSlot
         {
-            Id = t.Id, Name = t.Name, Max = t.Max, Absorbs = t.Absorbs, Heals = t.Heals, Clears = t.Clears, Value = t.Value,
+            Id = t.Id, Name = t.Name, Max = t.Max, Absorbs = t.Absorbs, Heals = t.Heals, Shared = t.Shared, Clears = t.Clears, Value = t.Value,
         }));
         foreach (KeyValuePair<string, List<string>> field in Fields)
         {
@@ -487,12 +487,12 @@ public sealed partial class CharacterSheet
     }
 
     /// <summary>Damage burns temporary HP first. True if this took it to 0.</summary>
-    public bool TakeDamage(int amount)
+    public bool TakeDamage(int amount, string track = "")
     {
         amount = Math.Max(0, amount);
         if (Tracks.Count > 0)
         {
-            return TrackDamage(amount);
+            return TrackDamage(amount, track);
         }
         bool wasUp = Hp > 0;
         int absorbed = Math.Min(TempHp, amount);
@@ -552,7 +552,7 @@ public sealed partial class CharacterSheet
             Tracks.Add(new TrackSlot
             {
                 Id = track.Id, Name = track.Name, Max = max, Absorbs = Math.Max(1, track.Absorbs.Whole(names)),
-                Heals = track.Heals, Clears = track.Clears,
+                Heals = track.Heals, Shared = track.Shared, Clears = track.Clears,
                 Value = had.TryGetValue(track.Id, out int value) ? Math.Clamp(value, 0, max) : max,
             });
         }
@@ -597,14 +597,15 @@ public sealed partial class CharacterSheet
     }
 
     // Damage through the tracks in order, a point at a time; what none of them take puts it down.
-    private bool TrackDamage(int amount)
+    // Aimed at one track (mental stress), it goes there and to the shared ones (consequences) only.
+    private bool TrackDamage(int amount, string aimed = "")
     {
         TracksFollowHp();
         bool wasUp = Hp > 0;
         int absorbed = Math.Min(TempHp, amount);
         TempHp -= absorbed;
         int left = amount - absorbed;
-        foreach (TrackSlot track in Tracks)
+        foreach (TrackSlot track in Tracks.Where(t => aimed.Length == 0 || t.Id == aimed || t.Shared))
         {
             if (left <= 0)
             {
@@ -705,12 +706,12 @@ public sealed partial class CharacterSheet
     }
 
     /// <summary>Damage with the ruleset's death rules: a hit on someone already down costs death saves.</summary>
-    public bool TakeDamage(int amount, Ruleset rules, bool critical = false)
+    public bool TakeDamage(int amount, Ruleset rules, bool critical = false, string aimed = "")
     {
         SyncDeath(rules);
         bool wasDown = Down;
         int harm = Math.Max(0, amount - TempHp);
-        bool dropped = TakeDamage(amount);
+        bool dropped = TakeDamage(amount, aimed);
         DeathRules rule = rules.Death;
         if (rule.Enabled && rule.Track is DyingTrack track && Death.Saves && !Death.Dead && Down && (harm > 0 || !wasDown))
         {
@@ -1367,7 +1368,7 @@ public sealed partial class CharacterSheet
             {
                 Tracks.Add(new TrackSlot
                 {
-                    Id = track.Id, Name = track.Name, Max = track.Max, Absorbs = track.Absorbs, Heals = track.Heals, Clears = track.Clears,
+                    Id = track.Id, Name = track.Name, Max = track.Max, Absorbs = track.Absorbs, Heals = track.Heals, Shared = track.Shared, Clears = track.Clears,
                     Value = Math.Clamp(track.Max - had.GetValueOrDefault(track.Id), 0, track.Max),
                 });
             }

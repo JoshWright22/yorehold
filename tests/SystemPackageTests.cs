@@ -708,6 +708,29 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void DamageCanAimAtOneTrack()
+    {
+        // physical and mental stress apart, consequences shared, as Fate Core keeps them
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "x", "name": "X", "abilities": [{"id": "will", "name": "Will"}],
+             "tracks": [{"id": "physical", "name": "Physical stress", "max": "2"}, {"id": "mental", "name": "Mental stress", "max": "2"},
+                        {"id": "mild", "name": "Mild consequence", "max": "1", "absorbs": 2, "heals": false, "shared": true}]}
+            """);
+        var sheet = new CharacterSheet { Name = "Ana" };
+        sheet.UseTracks(rules);
+        sheet.TakeDamage(2, rules, false, "mental");
+        Assert.Equal("2 0 1", string.Join(" ", sheet.Tracks.Select(t => t.Value)));
+        sheet.TakeDamage(2, rules, false, "mental"); // no mental stress left: the shared consequence takes it
+        Assert.Equal("2 0 0", string.Join(" ", sheet.Tracks.Select(t => t.Value)));
+        Assert.False(sheet.Down);
+        Assert.True(sheet.TakeDamage(1, rules, false, "mental") && sheet.Down, "Physical stress doesn't take mental harm");
+
+        RulesTesting.Effect("""[{"do": "damage", "dice": "2", "track": "mental"}]""").Check(rules, "x.json");
+        ContentException error = TestContent.Refused(() => RulesTesting.Effect("""[{"do": "damage", "dice": "2", "track": "spirit"}]""").Check(rules, "x.json"));
+        Assert.Contains("unknown track \"spirit\"", error.Message);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

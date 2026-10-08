@@ -21,6 +21,8 @@ public sealed record EffectContext(Ruleset Rules, Rng Random)
     public int AttacksMade { get; set; }
     /// <summary>Set on the context handed to the host's Damage for a critical hit.</summary>
     public bool CriticalDamage { get; set; }
+    /// <summary>Set on the context handed to the host's Damage when a step aims at one track.</summary>
+    public string Track { get; set; } = "";
 }
 
 public enum EffectEventKind
@@ -110,7 +112,7 @@ public abstract class EffectHost
             return 0;
         }
         int dealt = sheet.DamageAfterDefences(context.Rules, amount, type);
-        sheet.TakeDamage(dealt, context.Rules, context.CriticalDamage);
+        sheet.TakeDamage(dealt, context.Rules, context.CriticalDamage, context.Track);
         return dealt;
     }
 

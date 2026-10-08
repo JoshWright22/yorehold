@@ -70,7 +70,7 @@ public sealed partial class CharacterSheet
             },
             ["tracks"] = new JsonArray(Tracks.Select(t => (JsonNode)new JsonObject
             {
-                ["id"] = t.Id, ["name"] = t.Name, ["max"] = t.Max, ["absorbs"] = t.Absorbs, ["heals"] = t.Heals,
+                ["id"] = t.Id, ["name"] = t.Name, ["max"] = t.Max, ["absorbs"] = t.Absorbs, ["heals"] = t.Heals, ["shared"] = t.Shared,
                 ["clears"] = Strings(t.Clears), ["value"] = t.Value,
             }).ToArray()),
             ["fields"] = new JsonObject(Fields.Select(f => KeyValuePair.Create(f.Key, (JsonNode?)Strings(f.Value)))),
@@ -152,7 +152,7 @@ public sealed partial class CharacterSheet
             sheet.Tracks.Add(new TrackSlot
             {
                 Id = t.At("id").AsText(64), Name = t.Text("name", "", 64), Max = max, Absorbs = t.Int("absorbs", 1, 1, 100000),
-                Heals = t.Bool("heals", true), Clears = t.Texts("clears"), Value = t.Int("value", max, 0, max),
+                Heals = t.Bool("heals", true), Shared = t.Bool("shared", false), Clears = t.Texts("clears"), Value = t.Int("value", max, 0, max),
             });
         }
         sheet._trackHp = sheet.Hp;

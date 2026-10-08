@@ -244,7 +244,9 @@ public class Effect
         switch (kind)
         {
         case EffectKind.Damage:
-            own = new[] { "dice", "type", "crit", "minimum" };
+            own = new[] { "dice", "type", "crit", "minimum", "track" };
+            // a track of the system's the damage goes to first (Fate Core's mental stress); left out, all of them in order
+            id = node.Name("track", "");
             amount = Amount(node, "dice", new[] { "weapon" });
             type = node.Name("type", "untyped");
             minimum = node.Int("minimum", 0, 0, 100000);
@@ -464,6 +466,10 @@ public class Effect
             if (step.Kind == EffectKind.Roll && step.How == "check" && !Measurable(step.Ability))
             {
                 throw new ContentException(file, at + ".ability", $"unknown ability or skill \"{step.Ability}\"");
+            }
+            if (step.Kind == EffectKind.Damage && step.Id.Length > 0 && rules.Tracks.All(t => t.Id != step.Id))
+            {
+                throw new ContentException(file, at + ".track", $"unknown track \"{step.Id}\"; the ruleset's are {string.Join(", ", rules.Tracks.Select(t => t.Id))}");
             }
             if (step.Kind == EffectKind.Roll && step.How == "attack" && step.Against.Length > 0)
             {

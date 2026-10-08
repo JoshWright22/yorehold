@@ -19,13 +19,15 @@ public sealed class TrackDefinition
     public Formula Absorbs { get; init; } = Formula.Parse("1", out _)!;
     /// <summary>Healing fills it back up; false for a consequence, which only Clears ends.</summary>
     public bool Heals { get; init; } = true;
+    /// <summary>Damage aimed at another track still reaches it (Fate Core's consequences take physical and mental harm).</summary>
+    public bool Shared { get; init; }
     /// <summary>Events that fill it again: "fightEnd" or rest ids.</summary>
     public List<string> Clears { get; init; } = new();
 
     public static TrackDefinition Read(ContentNode node)
     {
         node.RequireObject("a track is an object with an id, a name and a max");
-        node.Only("id", "name", "max", "absorbs", "heals", "clears");
+        node.Only("id", "name", "max", "absorbs", "heals", "shared", "clears");
         string id = node.At("id").AsId();
         return new TrackDefinition
         {
@@ -34,6 +36,7 @@ public sealed class TrackDefinition
             Max = FormulaAt(node.At("max")),
             Absorbs = node.Get("absorbs") is ContentNode absorbs ? FormulaAt(absorbs) : Formula.Parse("1", out _)!,
             Heals = node.Bool("heals", true),
+            Shared = node.Bool("shared", false),
             Clears = node.Names("clears"),
         };
     }
@@ -53,6 +56,7 @@ public sealed class TrackSlot
     public int Max { get; init; }
     public int Absorbs { get; init; } = 1;
     public bool Heals { get; init; } = true;
+    public bool Shared { get; init; }
     public List<string> Clears { get; init; } = new();
     public int Value { get; set; }
 

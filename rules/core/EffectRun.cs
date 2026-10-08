@@ -542,7 +542,7 @@ internal sealed class EffectRun
             bool wasUp = !sheet.Down;
             // a weapon's damage is of the weapon's type unless the step names one
             string type = step.Type.Length == 0 && step.Amount == "weapon" ? _host.Sheet(_context.Self)?.Weapon?.DamageType ?? "" : step.Type;
-            int dealt = _host.Damage(actor, Math.Max(0, amount), type, _context with { CriticalDamage = outcome.Critical });
+            int dealt = _host.Damage(actor, Math.Max(0, amount), type, _context with { CriticalDamage = outcome.Critical, Track = step.Id });
             _result.Events.Add(new EffectEvent
             {
                 Kind = EffectEventKind.Damage, Who = actor, By = _context.Self, Roll = rolled, Amount = dealt,
