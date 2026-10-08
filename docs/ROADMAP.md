@@ -371,8 +371,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     agile and other traits through formulas.
   - Done 10/8: `turnWords`: costs read as the system names them ("2 actions", "free action").
   - Done 10/8: `beforeHit` reactions (Shield): taken as a hit would land, the roll read again.
-  - Left: prompts for attack reactions (taken at once for now; the AI always takes them), a
-    spell being cast as a trigger; 5e's Shield as a spell that is also a reaction.
+  - Done 10/8: `spellCast` reactions, before the spell acts; a `spellLost` flag counters it.
+  - Left: prompts for attack reactions (taken at once for now; the AI always takes them); 5e's
+    Shield and Counterspell as spells that are also reactions (slots spent by a reaction).
 - [ ] **R5. Features that do things.** Classes, subclasses, races, heritages and feats grant
   actions, reactions, passive modifiers and triggered effects, not only numbers; feat kinds come
   from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's

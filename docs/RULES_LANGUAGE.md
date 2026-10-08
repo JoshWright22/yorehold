@@ -141,7 +141,7 @@ Steps nest at most six deep; triggers set off by triggers stop four deep.
 | Where | Moments |
 | --- | --- |
 | Trigger `on` | `hit`, `miss`, `crit` (its own attack), `hitBy`, `kill`, `turnStart`. |
-| Reaction `trigger` | `leavesReach`, `entersReach`, `hit`, `missed`, `allyHit`, `beforeHit`. |
+| Reaction `trigger` | `leavesReach`, `entersReach`, `hit`, `missed`, `allyHit`, `beforeHit`, `spellCast`. |
 | Condition `ends` and step `when` | `turnStart`, `turnEnd`, `attack`, `damage`, `healed`, `move`, `rest`, `fightStart`, `fightEnd`. |
 | Track `clears` | `fightEnd` or a rest's id. |
 

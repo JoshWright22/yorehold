@@ -250,6 +250,46 @@ public sealed partial class World
         }
     }
 
+    /// <summary>A flag a reaction can give a caster (through a condition) so the spell it is casting is lost: a counterspell.</summary>
+    public const string SpellLostFlag = "spellLost";
+
+    // A foe is casting: everyone on another side with a "spellCast" reaction in reach of the
+    // caster takes it now, before the spell does anything.
+    private void SpellCastReactions(int caster)
+    {
+        if (!Fighting || _pendingReaction != null)
+        {
+            return;
+        }
+        for (int reactor = 0; reactor < Creatures.Count && Fighting && !Creatures[caster].Sheet.Down; reactor++)
+        {
+            if (reactor == caster || Creatures[reactor].Team == Creatures[caster].Team || OrderIndex(reactor) is not int index
+                || !Encounter!.Order[index].Standing || !Encounter.Order[index].Budget.Reaction
+                || Creatures[reactor].Sheet.HasFlag(Rules, "cantAct"))
+            {
+                continue;
+            }
+            foreach (ReactionDefinition definition in Chapter.Rules.Reactions.Where(r => r.Trigger == ReactionTrigger.SpellCast))
+            {
+                if (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id))
+                {
+                    continue;
+                }
+                ActionDefinition? action = FindAction(definition.Action);
+                if (action == null || !action.Meets(Creatures[reactor].Sheet, Rules, out _)
+                    || (action.Target == ActionTarget.Creature && !ValidTarget(reactor, action, caster)))
+                {
+                    continue;
+                }
+                Cell? aim = _aim;
+                _pendingReaction = new PendingReaction(reactor, caster, action.Id, definition.Name, false);
+                ResolveReaction(true);
+                _aim = aim;
+                break;
+            }
+        }
+    }
+
     // An attack on target would land: a reaction it has for that (Shield) is taken at once, in the
     // middle of the attack, which is then read again against what the reaction changed.
     internal bool BeforeHitReaction(int target, int attacker)

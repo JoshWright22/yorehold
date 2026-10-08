@@ -323,6 +323,28 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AReactionCanCounterASpell()
+    {
+        // Gik answers a spell being cast: a hex that loses the caster the spell, slot and all
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard",
+            ("rulesets/pf2e/conditions/hexed.json", """{"id": "hexed", "name": "Hexed", "flags": ["spellLost"], "ends": ["turnEnd"]}"""),
+            ("rulesets/pf2e/actions/hex.json", """
+                {"id": "hex", "name": "Hex", "cost": 1, "general": false, "target": {"kind": "creature", "side": "enemy", "range": 12},
+                 "effects": [{"do": "condition", "id": "hexed"}]}
+                """),
+            ("rulesets/pf2e/reactions/hex.json", """{"id": "hex", "name": "Hex", "trigger": "spellCast", "action": "hex", "general": false}"""));
+        World w = world.World;
+        w.Creatures[1].Sheet.Stats.SetBase("perception", 2000); // Bo acts first
+        CharacterSheet gik = w.Creatures[2].Sheet;
+        gik.Granted.Add("hex");
+        world.Fight();
+        int hp = gik.Hp;
+        Assert.True(world.TurnTo(1) && world.Use("electric-arc", 2), "Bo casts: " + w.Refusal);
+        Assert.True(world.Said("Gik takes Hex") && world.Said("Electric Arc is lost") && gik.Hp == hp,
+            "The hex comes first and the spell is lost:\n" + string.Join("\n", world.Log.TakeLast(6)));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

@@ -279,6 +279,14 @@ public sealed partial class World
     {
         Spellcasting.SpendCasting(Creatures[caster].Sheet, spell, SpellRules, slot);
         Say($"{Creatures[caster].Sheet.Name} casts {spell.Action.Name}{(spell.Spends.Count == 0 && slot > spell.Level ? $" from a level {slot} slot." : ".")}");
+        // Foes who answer a spell being cast go first (a strike that disrupts, a counterspell);
+        // one that drops the caster or loses it the spell ends it here, the casting spent.
+        SpellCastReactions(caster);
+        if (Creatures[caster].Sheet.Down || Creatures[caster].Sheet.HasFlag(Rules, SpellLostFlag))
+        {
+            Say($"{Creatures[caster].Sheet.Name}'s {spell.Action.Name} is lost.");
+            return;
+        }
         // One spell at a time: a new one that needs concentration ends the old.
         if (spell.Concentration)
         {
