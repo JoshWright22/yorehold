@@ -233,7 +233,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     `attackAbility`; the sheet shows initiative's own skill or ability. A default a system lacks
     (dex, con) now means none instead of refusing the file.
   - Left for R13: the import's own guesses (`BookCast` "dex"/"athletics", `SystemTable`
-    "perception") still name yorehold ids; they map to the system once the import drafts systems.
+	"perception") still name yorehold ids; they map to the system once the import drafts systems.
 - [x] **R2. A system owns its classes, items, creatures, races and feats.** They load from the
   ruleset folder first, the content root after (so today's packages keep loading). Manifests'
   `ruleset` and `requires` are read; a character records its system and is refused, with the
@@ -259,9 +259,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   be replayed. Each step writes a plain line to the log, so a result can be explained.
   - Josh, 10/8: it is all JSON. There is no separate script format: a system is JSON files, a
     procedure is a JSON list of steps (the `effects` lists actions and spells already use), and
-    a formula is a short text value inside the JSON (`"degree": "total >= dc"`).
+	a formula is a short text value inside the JSON (`"degree": "total >= dc"`).
   - Done 10/8: formulas (`rules/core/Formula.cs`) and `checks` in ruleset.json (CONTENT.md,
-    "Checks and formulas"): each roll kind's dice, named outcomes worst to best, the formula that
+	"Checks and formulas"): each roll kind's dice, named outcomes worst to best, the formula that
     picks one, what a save's outcome lets through, and critical damage as doubled dice or a
     formula. Attacks, checks, saves and initiative resolve through it, steps may wait on any
     outcome the system names, and the hit chance is counted from the same data
@@ -279,9 +279,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     and danger by it (`Tactics.ExpectedDamage`, `World.ExpectedDamage`).
   - Done 10/8: simulated fights (`FightSimulation.Forecast`): an encounter played out many
     times by the AI on both sides from seeds, giving the win chance, the chance of losing a hero,
-    deaths and rounds, as one line ("this fight: won 9 in 10, 1 in 5 lose a hero, 3 rounds").
+	deaths and rounds, as one line ("this fight: won 9 in 10, 1 in 5 lose a hero, 3 rounds").
   - Done 10/8: Create's encounter panel plays a saved fight out 20 times in the background
-    ("Forecast", "Play it out").
+	("Forecast", "Play it out").
   - Done 10/8: `docs/RULES_LANGUAGE.md`, the whole language on one page for people and the
     story model: the folder, formulas and their names, dice, every ruleset.json key, effect
     steps, moments, the fixed core and how a draft is checked and measured.
@@ -295,7 +295,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Evaluable: a rules evaluator runs a system without screens: the odds of a check or attack,
     expected damage, and many simulated fights between a party and a group of creatures. The
     adventure builder uses it to set DCs and balance encounters for the party's level in any
-    system, and Create shows the result ("this fight: 1 in 5 parties lose a hero").
+	system, and Create shows the result ("this fight: 1 in 5 parties lose a hero").
   - Shipped systems, the yorehold set first, are rewritten in the language, and their tests
     must still pass, so the language is proved before R3-R8 build on it. An unusual mechanic
     (a dice pool, a card draw, a stress track) is then a new system file, not a game update;
@@ -309,14 +309,14 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   stress and consequences instead of HP).
   - Tracks: a system declares its tracks (5e's HP; Fate's stress boxes and consequence slots;
     PF2e's dying and wounded; mana), each with a max formula, how damage is spread over them,
-    and "down" and "dead" as formulas over them. HP becomes one system's track.
+	and "down" and "dead" as formulas over them. HP becomes one system's track.
     Done 10/8: `tracks` (max formula, damage per point, heals, cleared by the fight's end or a
     rest), damage running through them in order and down when none takes the rest; HP is their
     total. Fate plays stress and consequences. Done 10/8: damage aimed at one track and the `shared`
     ones (Fate Core's physical and mental stress). Done 10/8: `death.dead`, a formula for a blow
     that kills outright (5e and PF2e massive damage).
-    Done 10/8: party cards and the hotbar card draw tracks as marks ("●●○  ●  ●  ○"),
-    the tip names each; logs name the defence ("Defend 1"); `chapters/fate-test` plays Fate.
+	Done 10/8: party cards and the hotbar card draw tracks as marks ("●●○  ●  ●  ○"),
+	the tip names each; logs name the defence ("Defend 1"); `chapters/fate-test` plays Fate.
   - Defences: named defences, each a formula (AC, a Fortitude DC) or a roll (Fate's Defend);
     each roll kind and action says which it is rolled against. AC stops being special.
     Done 10/8: `defences` as formulas, a roll kind's `defence`, an attack step's `against`; the
@@ -363,7 +363,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   effect branches on all four outcomes for attacks, saves and checks. UI: hit chance at the
   cursor shows the system's outcomes (one figure for 5e, four bands for PF2e); the log names them.
   - Done 10/8 (through R2b): degrees, criticals and opposed rolls in data, steps waiting on any
-    outcome, the log naming the outcome; the aim reads "55%, 5% critical" from the system's own
+	outcome, the log naming the outcome; the aim reads "55%, 5% critical" from the system's own
     outcomes.
   - Done 10/8: the place gives conditions for a roll: `unseenAttackerCondition` and
     `unseenTargetCondition` in positioning.json, from light and darkvision; 5e's give advantage
@@ -376,7 +376,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   system's turn; costs read "2 actions", "bonus action" or "reaction" as the system names them.
   - Done 10/8: `freeMove`, `attackPenalty` (a formula from attacks made this turn, used by the
     roll and the hit chance), conditions changing the turn's actions through the `actions` stat,
-    and `"cost": "bonus"` actions that spend the bonus action (the hotbar tip says so).
+	and `"cost": "bonus"` actions that spend the bonus action (the hotbar tip says so).
   - Done 10/8: reaction triggers `hit`, `missed` and `allyHit` (after the attack, no prompt);
     agile and other traits through formulas.
   - Done 10/8: `turnWords`: costs read as the system names them ("2 actions", "free action").
@@ -386,7 +386,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     fight waits on the answer); spells cast as reactions (Shield, slot spent).
   - Done 10/8: reactions taken in the middle of an attack (`beforeHit`) or a casting
     (`spellCast`) can't wait for an answer, so a player holds any of a hero's reactions back
-    ahead of time: Sheet > Features lists them, each "used when it comes up" or "held back"
+	ahead of time: Sheet > Features lists them, each "used when it comes up" or "held back"
     (`HoldReaction`, kept in the save).
   - Done 10/8: a `beforeHit` guard is taken only when the defence it adds would make the roll
     miss (a Shield against a hit by 10 is kept, slot and all).
@@ -395,7 +395,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's
   Features tab; Create's class, feat and creature editors gain "grants".
   - Done 10/8: `"general": false` actions and reactions, granted by class features, feats and
-    creature files (`"actions": [...]`), checked against the ruleset, kept on the sheet.
+	creature files (`"actions": [...]`), checked against the ruleset, kept on the sheet.
   - Done 10/8: triggers (`triggers/`, on hit, miss or crit, with a formula and once a turn),
     granted like actions; Sneak Attack in 5e and PF2e.
   - Done 10/8: triggers on being hit (`hitBy`, landing on the attacker), on a kill and on turn
@@ -434,7 +434,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: camp plays the adventure's system (a chapter naming no ruleset can borrow one),
     and 5e and PF2e have supplies for their night's rest.
   - Done 10/8: a downed hero's card reads the system's track in place of HP ("dying 2/4",
-    "saves 1/3, 2/3", "stable", "taken out"), the death value found from the system's formula;
+	"saves 1/3, 2/3", "stable", "taken out"), the death value found from the system's formula;
     its tip says it in a line.
 - [x] **R8. Character creation from the system.** Its steps (5e: species, background, class,
   scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
@@ -488,7 +488,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     paladin (Lay on Hands, Divine Smite), ranger and warlock (Hunter's Mark and Hex as a spell
     plus a granted trigger), sorcerer; Extra Attack at 5 for the martial ones; Eldritch Blast,
     Produce Flame and Vicious Mockery. Done 10/8: ranged weapons: an attack's target range may be
-    `"weapon"`, an item a `range` (shortbow, longbow, light crossbow; PF2e shortbow and longbow;
+	`"weapon"`, an item a `range` (shortbow, longbow, light crossbow; PF2e shortbow and longbow;
     goblin archers), and an enemy with a bow shoots from where it stands. Doesn't fit yet: long
     range with disadvantage, a ranged attack beside a foe, ammunition, unarmoured defence as a formula of the armour worn, warlock slots back on a short
     rest, Wild Shape, subclasses beyond a single path.
@@ -545,7 +545,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8, first slice: `rulesets/fate-accelerated` (`.dev\make-fate.py`): six approaches as
     the abilities (rating = modifier by formula), 4dF with fail/tie/succeed/style, attacks by
     approach against the defender's Quick, shifts as stress (damage `{max(margin, 1)}`), Create
-    an Advantage for free invokes, fate points spent to Invoke (+2), one "Character" class with
+	an Advantage for free invokes, fate points spent to Invoke (+2), one "Character" class with
     refresh 3, three foes. A fight plays to the end.
   - Engine pieces it needed, now general: `margin` in dice formulas (how far a roll beat its
     DC), attacks that name the ability they use, scores of 0.
@@ -719,9 +719,58 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: hidden rolls stay off the strip: an action's `secret` and anyone not in the party
     whom the party can't see.
   - Done 10/8: the look from the skin (`ui/dice.json`: colours by role or hex, how many at once,
-    size), the rest of a big roll as "+N".
+	size), the rest of a big roll as "+N".
   - Left: sound; a player's own dice set beside the skin's; symbol faces from a system's custom
     dice; rolls made on the sheet.
+  - Josh, 10/9: the dice don't look like they roll across a table. See R19 for the plan.
+
+- [ ] **R19. A fight is shown beat by beat: dice, then the blow, then the numbers.** Josh, 10/9:
+  attack animations play after the dice stop; nothing of the result (log line, floater, HP bar,
+  "goes down") shows until the dice have landed on their faces; attacks of different kinds
+  have their own animation sets. Today the world settles a whole action in one frame and
+  everything appears at once with the dice on top.
+  - Beats (rules, no Godot types). The world already finishes an action before the screen hears
+    of it; it stays that way, so rules, saves, multiplayer and the AI keep their timing. What
+    changes is that one action's events leave the world as a beat: `WorldEventKind.Beat` opens
+    it with the doer, the target(s), the action id and its animation style, and the dice, log,
+    floater and down events inside it belong to steps (roll, then hit or miss, then damage).
+    `World.Presenting` holds the next AI turn and player input while a beat plays (as the AI's
+    own pauses do now), with a timeout so a broken screen can't stall a fight. Fast-forward and
+    "dice off" shorten every beat to the reveal; screenshot runs and the forecast skip beats.
+  - Shown values lag the rules: party cards, the hotbar card, turn order bars and token bars
+    read a "shown HP / shown conditions" the presenter moves forward at each reveal, not the
+    sheet. One small class owns this so no panel reads the sheet's live HP in a fight.
+  - The presenter (src): a queue of beats. Per beat: throw the dice (R17), wait until every die
+    has settled, play the action's animation, and at its impact moment release that step's log
+    lines, floaters and shown-HP changes; a miss plays the miss variant. A Multiattack is one
+    beat per attack; a fireball is one throw, one animation, then all the saves' results.
+  - Dice that roll across a table: a small deterministic tumble written in `rules/` (a rigid
+    polyhedron from `DiceSolids` thrown onto a plane with walls: gravity, bounce, friction and
+    rolling, stepped at a fixed rate from the roll's seed). It is run to the end first, which
+    says which face ends up; then the face labels are assigned so that face carries the rolled
+    number (the die's look is free; only the labels move), and the recorded path is played back.
+    The tray becomes a tilted perspective view of a felt rectangle in the palette (Dusk with an
+    Iron edge, from ui/dice.json), at the bottom middle of the fight, dice thrown in from the
+    side, bouncing off the far wall. Tested in rules: same seed, same path; the face that lands
+    up always shows the rolled number for every shape.
+  - Animation sets are data, like everything else: `animations/<id>.json` in the game, a skin or
+    a system: steps on a short timeline (doer leans or steps toward the target, a projectile
+    with a shape, speed and arc, an impact flash or ring, a shake, the target recoiling or
+    sliding aside for a miss), each with its time and colour role, and a variant for hit, miss
+    and critical. Shipped sets, drawn as shapes in the palette with no art of their own: slash,
+    thrust, bash, claw/bite, arrow, thrown, spell bolt, spell burst (area), cone/breath, touch,
+    heal, buff, debuff. An art pack may give a set sprite frames or a projectile picture.
+  - Which set plays: an action, spell or item may name `"animation"`; otherwise it follows from
+    the data (a weapon's damage type: slashing to slash, piercing to thrust, bludgeoning to
+    bash; a weapon range past one square to arrow; a spell attack to bolt, a spell with an area
+    to burst or cone, a heal to heal, a condition-only spell to buff or debuff). Creatures'
+    natural weapons (bite, claws) name theirs.
+  - Order of work: (1) beats and shown values, with the current dice strip, so results wait for
+    the dice; (2) attack animations from the shipped sets; (3) the table tumble; (4) sound
+    hooks per step (a skin's files), (5) Create can preview an action's animation.
+  - Checks: rules tests for beats (one per action, steps in order, nothing revealed before its
+    step) and the tumble; one screenshot run per screen-changing step, frames picked mid-roll,
+    at impact and after.
 
 - [ ] **R18. A large free asset library for the map maker and portraits.** Josh, 10/8: anything
   the game may ship without asking, with the authors in the credits. Allowed: CC0, public domain,
@@ -1012,12 +1061,12 @@ Josh's Downloads; nothing from it goes into a repo.
   - Needs a decision later: the creature format has no CR, saves, resistances, reactions or
 	legendary actions yet; they are game rules, not import work.
   - Done 10/8: `StatBlockText` reads both layouts (name, size and type, AC, HP, speed,
-    darkvision, the six abilities, resistances/immunities/vulnerabilities as `resist.`/`immune.`/
-    `weak.` stats, CR as level, weapon attacks as natural-weapon items, Multiattack), tolerant of
-    l/I/O slips; the rest stays in the creature's `text`. Reading without a model, every stat
+	darkvision, the six abilities, resistances/immunities/vulnerabilities as `resist.`/`immune.`/
+	`weak.` stats, CR as level, weapon attacks as natural-weapon items, Multiattack), tolerant of
+	l/I/O slips; the rest stays in the creature's `text`. Reading without a model, every stat
     block on a page becomes a creature; built for a system with a `multiattack` action, it gets
     it. Left: saves, skills, senses beyond darkvision, traits, reactions and legendary actions as
-    the system's own; running it over the whole excerpt.
+	the system's own; running it over the whole excerpt.
 - [ ] **S14. Which painting is whose.** A caption naming the creature wins; else the painting goes
   to the stat block or heading on its page it sits nearest; one painting over a family's page
   (Black Dragon Wyrmling, Young, Adult) goes to the one it names and is offered to the rest.
