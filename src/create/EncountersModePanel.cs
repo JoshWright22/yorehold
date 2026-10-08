@@ -42,6 +42,11 @@ public partial class EncountersModePanel : HBoxContainer
     // a fight played out many times, in the background so the screen keeps drawing
     private Task<FightForecast>? _forecast;
     private string _forecastOf = "";
+    // the same, taking foes out until the fight is no longer too hard
+    private Task<(int LeaveOut, FightForecast Forecast)>? _fit;
+    private string _fitOf = "";
+    /// <summary>How many times each try of a fit plays the fight; fewer than a forecast, as it tries several.</summary>
+    private const int FitFights = 8;
 
     /// <summary>How many times Forecast plays a fight.</summary>
     private const int ForecastFights = 20;
@@ -292,6 +297,20 @@ public partial class EncountersModePanel : HBoxContainer
         _props.Dim($"Played out {ForecastFights} times by the AI, with the party the chapter starts with");
         _props.Live(() => ForecastLine(Now().Id));
         _props.Act("Play it out", () => StartForecast(group, Now().Id), () => Now().Creatures.Count > 0 && (_forecast == null || _forecast.IsCompleted));
+        _props.Act("Fit to the party", () => StartFit(group, Now().Id), () => Now().Creatures.Count > 1 && (_fit == null || _fit.IsCompleted));
+        _props.Live(() => FitLine(Now().Id));
+        _props.Act(() => FitDone(Now().Id) is int fewer && fewer > 0 ? $"Take the last {fewer} out" : "Take them out", () =>
+        {
+            // the last ones first, as the fit left them out
+            if (FitDone(Now().Id) is int fewer)
+            {
+                for (int i = 0; i < fewer && Now().Creatures.Count > 1; i++)
+                {
+                    editor.RemoveCreature(group, Now().Creatures.Count - 1);
+                }
+                _fit = null;
+            }
+        }, () => FitDone(Now().Id) is > 0);
         _props.Gap();
 
         _props.Heading("Loot");
@@ -364,6 +383,45 @@ public partial class EncountersModePanel : HBoxContainer
         _forecastOf = id;
         // the rules have no engine types, so a world can be played on another thread
         _forecast = Task.Run(() => FightSimulation.Forecast(seed => World.Load(files, chapter, seed), group, ForecastFights));
+    }
+
+    private void StartFit(int group, string id)
+    {
+        if (!Saved)
+        {
+            _hint = "Save first: the fit plays the saved chapter.";
+            return;
+        }
+        if (_files() is not ContentFiles files || Chapter.Length == 0)
+        {
+            return;
+        }
+        _hint = "";
+        string chapter = Chapter;
+        _fitOf = id;
+        _fit = Task.Run(() => FightSimulation.Fit(seed => World.Load(files, chapter, seed), group, FitFights));
+    }
+
+    // How many foes the finished fit for this group leaves out; null while none is ready.
+    private int? FitDone(string id) => _fit is { IsCompletedSuccessfully: true } && id == _fitOf ? _fit.Result.LeaveOut : null;
+
+    private string FitLine(string id)
+    {
+        if (_fit == null || id != _fitOf)
+        {
+            return "";
+        }
+        if (!_fit.IsCompleted)
+        {
+            return "Fitting: playing it with fewer foes...";
+        }
+        if (_fit.IsFaulted)
+        {
+            return "Could not fit it: " + (_fit.Exception?.InnerException?.Message ?? "unknown");
+        }
+        (int fewer, FightForecast result) = _fit.Result;
+        string with = fewer == 0 ? "It fits as it is" : $"With the last {fewer} out";
+        return result.Verdict() is { Length: > 0 } verdict ? $"{with}: {result.Summary()}\n{verdict}" : $"{with}: {result.Summary()}";
     }
 
     private string ForecastLine(string id)

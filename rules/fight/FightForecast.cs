@@ -76,8 +76,11 @@ public static class FightSimulation
     // Coarser than a screen's frame: the AI's pauses and walks only need to pass, not be seen.
     private const double Frame = 1.0 / 10;
 
-    /// <summary>Plays encounter group fights times, each in a fresh world from load(seed).</summary>
-    public static FightForecast Forecast(Func<ulong, World> load, int group, int fights, ulong firstSeed = 1)
+    /// <summary>
+    /// Plays encounter group fights times, each in a fresh world from load(seed); with leaveOut,
+    /// the group's last that many creatures stand aside, to see the fight without them.
+    /// </summary>
+    public static FightForecast Forecast(Func<ulong, World> load, int group, int fights, ulong firstSeed = 1, int leaveOut = 0)
     {
         int won = 0, lostAHero = 0, dead = 0, unfinished = 0, rounds = 0;
         for (int i = 0; i < fights; i++)
@@ -87,6 +90,11 @@ public static class FightSimulation
             {
                 // no party to play it with, or no such fight: nothing to forecast
                 return new FightForecast(0, 0, 0, 0, 0, 0);
+            }
+            foreach (int aside in Members(w, group).TakeLast(leaveOut))
+            {
+                // a bystander for this run: not on the foes' side, so not in the fight
+                w.Creatures[aside].Team = 2;
             }
             PlayOut(w, group, out bool over);
             if (!over)
@@ -103,6 +111,28 @@ public static class FightSimulation
         int finished = fights - unfinished;
         return new FightForecast(fights, won, lostAHero, dead, finished == 0 ? 0 : (double)rounds / finished, unfinished);
     }
+
+    /// <summary>
+    /// How many of the group's creatures, the last first, to take out so the fight is no longer
+    /// too hard for the party, with the forecast that leaves; it keeps at least one. Too easy is
+    /// left to the writer, who knows what to add.
+    /// </summary>
+    public static (int LeaveOut, FightForecast Forecast) Fit(Func<ulong, World> load, int group, int fights, ulong firstSeed = 1)
+    {
+        int members = Members(load(firstSeed), group).Count;
+        for (int leave = 0; ; leave++)
+        {
+            FightForecast forecast = Forecast(load, group, fights, firstSeed, leave);
+            if (forecast.Fights == 0 || !forecast.Verdict().StartsWith("too hard", StringComparison.Ordinal) || leave >= members - 1)
+            {
+                return (leave, forecast);
+            }
+        }
+    }
+
+    // The group's foes, in the chapter's order.
+    private static List<int> Members(World w, int group) =>
+        Enumerable.Range(0, w.Creatures.Count).Where(i => w.Creatures[i].Group == group && w.Creatures[i].Team == 1).ToList();
 
     /// <summary>One run: the party stood near the group, everyone played by the AI, to the end.</summary>
     public static void PlayOut(World w, int group, out bool over)

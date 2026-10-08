@@ -615,8 +615,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     items and classes.
   - Left: the reading stage (`BookCast`) still
     writes the game's own ids for the builder to fit; stat blocks in the system's own creature
-    format (a Fate target needs its approaches); DCs
-    and encounters set by the forecast.
+    format (a Fate target needs its approaches); DCs set by the system's odds.
+  - Done 10/8: encounters fitted by the forecast: Create > Encounters > Fit to the party plays
+    the fight in the background with the last foes standing aside, one more each try, until it
+    is no longer too hard, and offers to take them out (`FightSimulation.Fit`). Left: running
+    it for every fight of a freshly imported adventure, adding foes to one that is too easy.
 - [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
   with licence, author, links and the no-AI-uploads declaration; credits built from what an
   adventure uses. The site runs the game's checks on each upload and refuses one that wouldn't

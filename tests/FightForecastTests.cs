@@ -23,4 +23,23 @@ public class FightForecastTests
         Assert.StartsWith("too easy", new FightForecast(10, 10, 0, 0, 1.5, 0).Verdict());
         Assert.Equal("", new FightForecast(10, 9, 2, 0, 3, 0).Verdict());
     }
+
+    [Fact]
+    public void AFightTooHardForThePartyIsFittedByTakingFoesOut()
+    {
+        // one hero against three goblin bosses: the fit takes some out, never all
+        using var scratch = new Scratch();
+        scratch.Write("chapters/crowd/chapter.json", """
+            {"id":"crowd","title":"Crowd","map":"map.json","party":[{"name":"Ana","class":"fighter","at":[1,1]}],
+             "encounters":[{"id":"crowd","creatures":[{"creature":"goblin-boss","at":[4,4]},{"creature":"goblin-boss","at":[5,4]},{"creature":"goblin-boss","at":[4,5]}]}]}
+            """);
+        scratch.Write("chapters/crowd/map.json", """
+            {"name":"Room","tiles":{"floor":{"art":"grass"}},"legend":{".":"floor"},"layers":[{"name":"ground","rows":["........","........","........","........","........","........","........","........"]}]}
+            """);
+        ContentFiles files = TestContent.ShippedWith(scratch);
+        World Load(ulong seed) => World.Load(files, "chapters/crowd", seed);
+        (int leaveOut, FightForecast fitted) = FightSimulation.Fit(Load, 0, 2);
+        Assert.InRange(leaveOut, 1, 2);
+        Assert.True(leaveOut == 2 || !fitted.Verdict().StartsWith("too hard"), fitted.Summary());
+    }
 }
