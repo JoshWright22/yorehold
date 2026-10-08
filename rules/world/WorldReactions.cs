@@ -244,6 +244,15 @@ public sealed partial class World
                         continue;
                     }
                     _pendingReaction = new PendingReaction(reactor, attacker, action.Id, definition.Name, false);
+                    if (Options.ReactionPrompts && reactor < HeroCount && !Options.AutoPlay)
+                    {
+                        // a hero's player is asked, as for a move; the fight waits on the answer
+                        ReactionPrompt = new ReactionPrompt
+                        {
+                            Creature = reactor, Mover = attacker, Name = definition.Name, SecondsLeft = definition.PromptSeconds, Id = ++_reactionSequence,
+                        };
+                        return;
+                    }
                     ResolveReaction(true);
                     break;
                 }

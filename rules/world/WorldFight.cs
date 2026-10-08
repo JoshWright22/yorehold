@@ -605,7 +605,7 @@ public sealed partial class World
         {
             return;
         }
-        if (_pendingMovement != null)
+        if (_pendingMovement != null || ReactionPrompt != null)
         {
             ReactionTime(deltaSeconds);
             return;

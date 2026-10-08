@@ -611,6 +611,24 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AHerosAttackReactionIsAskedFor()
+    {
+        // with prompts on, Ana's riposte to a miss waits for her player's answer
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard",
+            ("rulesets/pf2e/reactions/riposte.json", """{"id": "riposte", "name": "Riposte", "trigger": "missed", "action": "strike", "general": false}"""));
+        World w = world.World;
+        w.Options.ReactionPrompts = true;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        ana.Granted.Add("riposte");
+        ana.Stats.SetBase("ac", 1000); // Gik can't hit her
+        w.Creatures[2].Sheet.Stats.SetBase("perception", 2000); // Gik acts first
+        world.Fight();
+        Assert.True(world.TurnTo(2) && world.Use("strike", 0));
+        Assert.True(w.ReactionPrompt is { Name: "Riposte" } && !world.Said("Ana takes Riposte"), "Asked, not taken");
+        Assert.True(world.React(true) && world.Said("Ana takes Riposte") && w.ReactionPrompt == null);
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back
