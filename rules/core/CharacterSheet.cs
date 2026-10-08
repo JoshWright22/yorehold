@@ -253,6 +253,11 @@ public sealed partial class CharacterSheet
         {
             return Level;
         }
+        if (name == "proficiency")
+        {
+            // the bonus by level, as the system counts it
+            return rules.ProficiencyBonus(Level);
+        }
         int dot = name.IndexOf('.');
         if (dot < 0)
         {
@@ -269,6 +274,7 @@ public sealed partial class CharacterSheet
             "mod" => AbilityModifier(rules, of),
             "score" => AbilityScore(of),
             "stat" => Stats.Integer(of),
+            "scale" => Stats.Integer("scale." + of),
             "prof" => ProficiencyModifier(rules, of),
             "trait" => Weapon?.Has(of) == true ? 1 : 0,
             // hands with nothing in them, for a versatile weapon held in both

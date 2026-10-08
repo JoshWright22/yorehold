@@ -31,6 +31,7 @@ public sealed class StatBlock
         float add = 0;
         float multiply = 1;
         float? replaced = null;
+        float? atLeast = null, atMost = null;
         // typed adds: the best bonus and the worst penalty of each type
         Dictionary<string, (float Best, float Worst)>? typed = null;
         foreach (AppliedModifier applied in _modifiers)
@@ -54,6 +55,12 @@ public sealed class StatBlock
             case ModifierOp.Multiply:
                 multiply *= value;
                 break;
+            case ModifierOp.Max:
+                atLeast = MathF.Max(atLeast ?? value, value);
+                break;
+            case ModifierOp.Min:
+                atMost = MathF.Min(atMost ?? value, value);
+                break;
             default:
                 replaced = MathF.Max(replaced ?? value, value);
                 break;
@@ -63,7 +70,10 @@ public sealed class StatBlock
         {
             add += best + worst;
         }
-        return ((replaced ?? Base(stat)) + add) * multiply;
+        float result = ((replaced ?? Base(stat)) + add) * multiply;
+        // floors and ceilings last, on whatever the rest made
+        result = atLeast is float floor ? MathF.Max(result, floor) : result;
+        return atMost is float ceiling ? MathF.Min(result, ceiling) : result;
     }
 
     /// <summary>

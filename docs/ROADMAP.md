@@ -732,10 +732,15 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/9: conditional modifiers: a modifier's `if` formula, read on attack, damage, save and
     check rolls (Archery, Danger Sense on Dexterity saves, Fate's Forceful Blows). Left: the aim's
     odds and the sheet's shown bonus counting them; defences (`ac`) read against an attacker.
+  - Done 10/9: scale values on class rows (`scale`, read as `scale.<id>`; the 5e rogue's sneak
+    attack dice), `max` and `min` modifier ops, items that give actions (`actions`), and saves
+    keeping a modifier's `if` and op. Left: roll tags.
 
 - [ ] **R22. Easy to start making things, above all for people who know Foundry.** Josh, 10/9: notes
   on Foundry's structure so its users find their way here. In `docs/FOUNDRY_NOTES.md` (its "For
   people coming from Foundry" part) and the creator docs:
+  - Done 10/9: the word map (FOUNDRY_NOTES.md, "For people coming from Foundry") and Foundry's
+    `@` paths in formulas and dice (RULES_LANGUAGE.md).
   - A word map: Actor = creature or hero, Item = item, feat, spell or class, Active Effect =
     condition and its modifiers, Rule Element = modifier with `if`, trigger or reaction, Activity
     = action, Advancement = class level rows, compendium pack = content set, `system.json` =

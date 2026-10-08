@@ -44,16 +44,7 @@ public sealed class Item
         var modifiers = new JsonArray();
         foreach (Modifier m in Definition.Modifiers)
         {
-            var entry = new JsonObject
-            {
-                ["stat"] = m.Stat,
-                ["op"] = m.Op switch { ModifierOp.Multiply => "multiply", ModifierOp.Override => "override", _ => "add" },
-                ["value"] = m.Value,
-            };
-            if (m.Type.Length > 0)
-            {
-                entry["type"] = m.Type;
-            }
+            JsonObject entry = ContentParts.ModifierJson(m);
             modifiers.Add(entry);
         }
         var j = new JsonObject

@@ -45,6 +45,8 @@ public class ClassLevel
     public Dictionary<string, string> Ranks { get; init; } = new();
     /// <summary>The kinds of feat the player may pick at this level, one pick each.</summary>
     public List<string> Feats { get; init; } = new();
+    /// <summary>Named numbers the class reaches at this level (rage damage, sneak attack dice), carried up the levels; formulas read scale.&lt;id&gt;.</summary>
+    public Dictionary<string, int> Scale { get; init; } = new();
     public int Skills { get; init; }
     /// <summary>Abilities the player raises at this level, each a different one, by BoostStep (5e's +1 to two, PF2e's four boosts of 2).</summary>
     public int Boosts { get; init; }
@@ -67,7 +69,7 @@ public class ClassLevel
         foreach (ContentNode row in rows.Items())
         {
             row.RequireObject("is an object");
-            row.Only("features", "ranks", "feats", "skills", "slots", "spells", "boosts", "boostStep", "boostsRepeat", "options");
+            row.Only("features", "ranks", "feats", "skills", "slots", "spells", "boosts", "boostStep", "boostsRepeat", "options", "scale");
             var features = new List<ClassFeature>();
             if (row.Get("features") is ContentNode list)
             {
@@ -120,6 +122,7 @@ public class ClassLevel
                 Options = row.Ids("options"),
                 Slots = slots,
                 Spells = row.Int("spells", 0, 0, 1000),
+                Scale = ContentParts.NumbersFrom(row, "scale", -1000, 1000, idKeys: true),
             });
         }
         return levels;

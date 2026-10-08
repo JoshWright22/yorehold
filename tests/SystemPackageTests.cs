@@ -116,6 +116,53 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void FoundrysShapesReadHere()
+    {
+        // a formula or dice copied from a Foundry item
+        Assert.Equal(new[] { "level", "mod.con", "proficiency" }, Formula.Parse("@details.level + @abilities.con.mod + @prof", out _)!.Names.OrderBy(n => n));
+        Assert.Contains("@flags.custom", TestContent.Refused(() => throw new ContentException("f", "", Formula.Parse("@flags.custom", out string why) == null ? why : "")).Message);
+        Assert.True(DiceText.IsValid("1d10 + @abilities.con.mod"));
+        var ash = new CharacterSheet { Name = "Ash" };
+        ash.Stats.SetBase("con", 14);
+        Ruleset rules = RulesTesting.Rules("""{"id": "t", "name": "T", "abilities": [{"id": "con", "name": "Constitution"}]}""");
+        Assert.Equal("1d10+2", DiceText.Fill("1d10 + @abilities.con.mod", name => ash.Named(rules, name)));
+
+        // a class's scale value, as the rogue's sneak attack dice
+        ContentFiles files = TestContent.Shipped();
+        Ruleset dnd = RulesFolder.Load(files, "rulesets/dnd5e").Rules;
+        var compendium = new Compendium();
+        compendium.Load(files, "rulesets/dnd5e", "");
+        compendium.LoadOptions(files, "rulesets/dnd5e");
+        var draft = new CharacterDraft(dnd, compendium);
+        draft.SetName("Rook");
+        draft.SetClass("rogue");
+        CharacterChoices choices = draft.Choices;
+        for (int level = 2; level <= 3; level++)
+        {
+            draft = CharacterDraft.LevelUp(dnd, compendium, choices);
+            choices = draft.Choices;
+        }
+        CharacterSheet rook = CharacterBuild.Build(dnd, compendium, choices)!;
+        Assert.Equal(2, rook.Named(dnd, "scale.sneak_attack"));
+        Assert.Equal(2, Formula.Parse("@scale.rogue.sneak-attack", out _)!.Whole(name => rook.Named(dnd, name)));
+
+        // at least and at most, after everything else
+        ash.Stats.SetBase("speed", 20);
+        ash.Stats.AddModifier(new Modifier("speed", ModifierOp.Max, 30), "boots");
+        ash.Stats.AddModifier(new Modifier("speed", ModifierOp.Add, 5), "haste");
+        Assert.Equal(30, ash.Stats.Integer("speed"));
+        ash.Stats.AddModifier(new Modifier("speed", ModifierOp.Min, 25), "mud");
+        Assert.Equal(25, ash.Stats.Integer("speed"));
+
+        // a situational modifier keeps its "if" through a save
+        ash.Stats.AddModifier(new Modifier("attack", ModifierOp.Add, 2, "", Formula.Parse("ranged", out _)), "archery");
+        CharacterSheet back = CharacterSheet.Read(TestContent.Json(ash.ToJson().ToJsonString()));
+        Assert.Equal(0, back.Stats.Integer("attack"));
+        Assert.Equal(2, back.Situational(rules, "attack", name => name == "ranged" ? 1 : null));
+        Assert.Equal(25, back.Stats.Integer("speed"));
+    }
+
+    [Fact]
     public void RageAndInspirationDoTheirSums()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "bard");

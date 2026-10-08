@@ -11,6 +11,10 @@ public enum ModifierOp
     Add,
     Multiply,
     Override,
+    /// <summary>At least this much (Foundry's "upgrade"): speed never below 30.</summary>
+    Max,
+    /// <summary>At most this much (its "downgrade").</summary>
+    Min,
 }
 
 /// <summary>A change to a stat while something lasts: "ac" add 2, "speed" multiply 0.5.</summary>
@@ -75,6 +79,32 @@ public static class ContentParts
         return new ContentColor(parts[0], parts[1], parts[2], parts.Count == 4 ? parts[3] : (byte)255);
     }
 
+    /// <summary>How a file writes an op: "add", "multiply", "override", "max", "min".</summary>
+    public static string OpName(ModifierOp op) => op switch
+    {
+        ModifierOp.Multiply => "multiply",
+        ModifierOp.Override => "override",
+        ModifierOp.Max => "max",
+        ModifierOp.Min => "min",
+        _ => "add",
+    };
+
+    /// <summary>A modifier as a file or save writes it, its "if" included.</summary>
+    public static System.Text.Json.Nodes.JsonObject ModifierJson(Modifier m)
+    {
+        var entry = new System.Text.Json.Nodes.JsonObject { ["stat"] = m.Stat, ["op"] = OpName(m.Op), ["value"] = m.Value };
+        // only typed and situational ones carry those, so older saves and these read alike
+        if (m.Type.Length > 0)
+        {
+            entry["type"] = m.Type;
+        }
+        if (m.If != null)
+        {
+            entry["if"] = m.If.Text;
+        }
+        return entry;
+    }
+
     public static ModifierOp OpFrom(ContentNode node, string key)
     {
         string op = node.Text(key, "add");
@@ -83,7 +113,9 @@ public static class ContentParts
             "add" => ModifierOp.Add,
             "multiply" => ModifierOp.Multiply,
             "override" => ModifierOp.Override,
-            _ => throw node.Fail(key, "is \"add\", \"multiply\" or \"override\""),
+            "max" => ModifierOp.Max,
+            "min" => ModifierOp.Min,
+            _ => throw node.Fail(key, "is \"add\", \"multiply\", \"override\", \"max\" (at least) or \"min\" (at most)"),
         };
     }
 

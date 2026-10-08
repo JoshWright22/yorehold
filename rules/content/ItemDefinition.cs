@@ -25,6 +25,8 @@ public class ItemDefinition
     /// <summary>Camp supply points each unit is worth; 0 = not food.</summary>
     public int Supplies { get; init; }
     public List<Modifier> Modifiers { get; init; } = new();
+    /// <summary>The ruleset's granted-only actions it gives while worn or held (a weapon's special attack), or carried when it has no slot.</summary>
+    public List<string> Actions { get; init; } = new();
     /// <summary>A weapon's reach in squares: 1 in melee, more for a bow or a thrown spear.</summary>
     public int Range { get; init; } = 1;
     /// <summary>What using it up does, for consumables.</summary>
@@ -76,6 +78,7 @@ public class ItemDefinition
             Magic = node.Bool("magic", false),
             Supplies = node.Int("supplies", 0, 0, 10000),
             Modifiers = ContentParts.ModifiersFrom(node, strict: false),
+            Actions = node.Names("actions"),
             Use = use,
             UseJson = node.Get("use") is ContentNode written ? written.Raw() : "",
         };

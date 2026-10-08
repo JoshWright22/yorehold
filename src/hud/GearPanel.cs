@@ -325,6 +325,8 @@ public sealed class GearPanel
             {
                 ModifierOp.Override => $"{m.Value}",
                 ModifierOp.Multiply => $"x{m.Value}",
+                ModifierOp.Max => $"at least {m.Value}",
+                ModifierOp.Min => $"at most {m.Value}",
                 _ => SheetView.Signed((int)m.Value),
             };
             page.Stat(stat, value);

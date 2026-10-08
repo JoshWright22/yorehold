@@ -20,8 +20,10 @@ public sealed partial class World
         }
         CharacterSheet sheet = Creatures[creature].Sheet;
         IEnumerable<ActionDefinition> spells = sheet.Spells.Select(FindSpell).OfType<SpellDefinition>().Select(s => s.Action);
+        // what its gear gives: equipped, or carried when it is worn nowhere
+        var fromGear = sheet.Inventory.Where(i => i.Equipped || i.Slot.Length == 0).SelectMany(i => i.Definition.Actions).ToHashSet(StringComparer.Ordinal);
         return Chapter.Rules.Actions
-            .Where(a => (a.General || sheet.Granted.Contains(a.Id)) && a.NeedsResources.Keys.All(sheet.Resources.ContainsKey))
+            .Where(a => (a.General || sheet.Granted.Contains(a.Id) || fromGear.Contains(a.Id)) && a.NeedsResources.Keys.All(sheet.Resources.ContainsKey))
             .Concat(spells)
             .OrderBy(a => a.Order)
             .ToList();

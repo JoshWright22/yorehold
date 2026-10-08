@@ -37,5 +37,26 @@ sources ours does, and is written fresh here). R21 in the roadmap carries what w
    (`attack`, `melee`, `spell`, `weapon:longsword`, `trait:agile`) that `if` formulas can test
    is the same idea as their roll options, without a second language.
 
+## For people coming from Foundry
+
+| In Foundry | Here |
+| --- | --- |
+| a game system (`system.json`, its data models) | a rules system: a ruleset folder with `ruleset.json` |
+| a module or compendium pack of items | a content set (`content.json` with `kind` and `ruleset`) |
+| World | an adventure; its Scenes are chapters, each with one map |
+| Actor (character, npc) | a hero (built from choices) or a creature file |
+| Item: weapon, equipment, consumable, loot | an item file |
+| Item: spell | a spell file (an action with `level`, `hands`) |
+| Item: feat, class feature | a feat file, or a feature in a class's level rows |
+| Item: class, subclass, background, race or ancestry | class, option (`optionKinds`), background, race |
+| Advancement (ItemGrant, Trait, ScaleValue, AbilityScoreImprovement, Subclass) | level rows: `features`, `ranks` and proficiencies, `scale`, `boosts`, `options` |
+| Activity (attack, save, damage, heal, utility) | an action's `effects` steps: `roll` (attack, save, check), `damage`, `heal`, `condition` |
+| Active Effect with `changes` | a condition with `modifiers` (`add`, `multiply`, `override`, `max` for upgrade, `min` for downgrade) |
+| Rule element FlatModifier with a predicate | a modifier with `if` |
+| Rule elements that do something on a roll (a damage rider) | a trigger (`on: hit`, `if`) |
+| Reactions | `reactions/` with a trigger moment |
+| Roll data `@abilities.str.mod`, `@details.level`, `@prof`, `@scale.x.y` | the same, or `mod.str`, `level`, `proficiency`, `scale.y` |
+| Journal entries | the chapter's journal |
+
 Not taken: Foundry's document ids and folder records (our file names are the ids), its
 per-document permission data, and its HTML descriptions (ours are plain words).

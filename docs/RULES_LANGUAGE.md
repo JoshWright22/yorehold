@@ -49,6 +49,14 @@ Names every formula about a creature can read (its sheet):
 | `prof.<target>` | Its proficiency bonus with a skill, save, weapon or armour. |
 | `trait.<trait>` | 1 when the weapon in hand has the trait (`trait.finesse`). |
 | `field.<id>` | How many lines of one of the system's fields are written. |
+| `scale.<id>` | A number its class rows set by level (`scale.sneak_attack`; `-` in the id written `_`). |
+| `proficiency` | The proficiency bonus by its level. |
+
+Foundry VTT's spelling works as well, so a formula copied from a Foundry item reads: `@abilities.str.mod`
+(or `@actor.abilities.str.mod`) is `mod.str`, `.value` is `score.str`, `@details.level`, `@actor.level`
+and `@level` are `level`, `@prof` is `proficiency`, `@scale.rogue.sneak-attack` is `scale.sneak_attack`,
+`@attributes.hp.max` is `stat.maxHp`. Dice take them without braces: `1d10 + @abilities.con.mod`. A
+path the game doesn't read is refused with its name.
 
 Each place adds its own names: a roll kind's `degree` reads `total`, `die`, `modifier`, `dc`;
 critical damage reads `dice`, `flat`, `max`; a defence may read `ac`; `damageTaken` reads

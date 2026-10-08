@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Yorehold.Rules;
 
@@ -36,6 +37,51 @@ public sealed class Formula
     }
 
     /// <summary>Null, with why, when the text isn't a formula.</summary>
+    private static readonly Regex FoundryPath = new(@"@([A-Za-z][\w.\-]*)", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Foundry VTT's "@" paths in a formula, as the names this game reads, so a formula copied from
+    /// a Foundry item works: @abilities.str.mod (or @actor.abilities.str.mod) is mod.str, .value is
+    /// score.str, @details.level, @actor.level and @level are level, @prof and
+    /// @attributes.prof are proficiency, @scale.&lt;class&gt;.&lt;id&gt; is scale.&lt;id&gt;. Any other is an
+    /// error that names it.
+    /// </summary>
+    public static string FoundryNames(string text, out string error)
+    {
+        string problem = "";
+        string result = FoundryPath.Replace(text, m =>
+        {
+            string path = m.Groups[1].Value;
+            foreach (string prefix in new[] { "actor.", "system." })
+            {
+                if (path.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    path = path[prefix.Length..];
+                }
+            }
+            string[] parts = path.Split('.');
+            string? ours = parts switch
+            {
+                ["abilities", string ability, "mod"] => "mod." + ability,
+                ["abilities", string ability, "value"] => "score." + ability,
+                ["details", "level"] or ["level"] or ["details", "level", "value"] or ["item", "level"] => "level",
+                ["prof"] or ["attributes", "prof"] => "proficiency",
+                ["attributes", "hp", "max"] => "stat.maxHp",
+                ["attributes", "ac", "value"] => "stat.ac",
+                ["scale", _, string id] => "scale." + id.Replace('-', '_'),
+                ["scale", _, string id, "value"] => "scale." + id.Replace('-', '_'),
+                _ => null,
+            };
+            if (ours == null && problem.Length == 0)
+            {
+                problem = $"a Foundry path this game doesn't read: @{m.Groups[1].Value}";
+            }
+            return ours ?? m.Value;
+        });
+        error = problem;
+        return result;
+    }
+
     public static Formula? Parse(string text, out string error)
     {
         error = "";
@@ -43,6 +89,15 @@ public sealed class Formula
         {
             error = $"is a formula of 1 to {LongestText} characters";
             return null;
+        }
+        // Foundry's spelling of a name ("@abilities.str.mod") reads as ours ("mod.str")
+        if (text.Contains('@'))
+        {
+            text = FoundryNames(text, out error);
+            if (error.Length > 0)
+            {
+                return null;
+            }
         }
         var parser = new Parser(text);
         try

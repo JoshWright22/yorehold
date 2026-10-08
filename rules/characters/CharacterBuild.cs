@@ -204,6 +204,12 @@ public static class CharacterBuild
                 {
                     Grant(feature.Gives, $"build:feature:{definition.Id}:{feature.Id}");
                 }
+                // a scale value holds from its level until a later row of the class changes it
+                foreach (KeyValuePair<string, int> scale in row.Scale)
+                {
+                    // formulas read it as scale.<id> with "-" written "_" ("-" would be a minus)
+                    c.Stats.SetBase("scale." + scale.Key.Replace('-', '_'), scale.Value);
+                }
                 // the system's own picks this level offered (an archetype): what each grants, and its feats
                 foreach (string id in level.Picked("options"))
                 {

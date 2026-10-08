@@ -32,7 +32,10 @@
             "sneak-attack"
           ]
         }
-      ]
+      ],
+      "scale": {
+        "sneak-attack": 1
+      }
     },
     {
       "features": [
@@ -46,14 +49,28 @@
             "cunning-disengage"
           ]
         }
-      ]
+      ],
+      "scale": {
+        "sneak-attack": 1
+      }
     },
-    {},
+    {
+      "scale": {
+        "sneak-attack": 2
+      }
+    },
     {
       "boosts": 2,
       "boostStep": 1,
-      "boostsRepeat": true
+      "boostsRepeat": true,
+      "scale": {
+        "sneak-attack": 2
+      }
     },
-    {}
+    {
+      "scale": {
+        "sneak-attack": 3
+      }
+    }
   ]
 }
