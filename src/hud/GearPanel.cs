@@ -311,7 +311,8 @@ public sealed class GearPanel
         var page = new BookPage().Title(item.Name).Sub(string.Join(", ", what)).Rule();
         if (d.Damage.Length > 0)
         {
-            page.Stat("Damage", $"{d.Damage} ({d.AttackAbility.ToUpperInvariant()})");
+            string ability = d.AttackAbility.Length > 0 ? d.AttackAbility : world.Rules.Roles.AttackAbility;
+            page.Stat("Damage", ability.Length > 0 ? $"{d.Damage} ({ability.ToUpperInvariant()})" : d.Damage);
         }
         foreach (Modifier m in d.Modifiers)
         {

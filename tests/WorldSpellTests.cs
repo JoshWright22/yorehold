@@ -76,7 +76,7 @@ public class WorldSpellTests
         Assert.True(Sheet(w, 2).Spells.Count == 0 && Sheet(w, 0).Resources["slots-1"].Max == 2, "Casters start with their class's spells and slots");
         List<ActionDefinition> has = w.ActionsOf(0);
         Assert.True(ReferenceEquals(w.FindAction("mire"), w.FindSpell("mire")!.Action) && has.Contains(w.FindAction("spark")!)
-            && has[^1].Id == World.EndTurnAction && w.ActionsOf(2).Count + 5 == has.Count, "A caster's spells are listed with its actions");
+            && has[^1].Id == "end-turn" && w.ActionsOf(2).Count + 5 == has.Count, "A caster's spells are listed with its actions");
 
         Sheet(w, 2).Hp = 1;
         Assert.True(!w.Cast(1, "mend", 2) && w.Refusal.Contains("free hand"), "A mace and a shield leave no hand to cast with");
@@ -359,7 +359,7 @@ public class WorldSpellTests
         Sheet(f, 3).Stats.SetBase("dex", 900); // Gik goes right after the wizard
         Assert.True(StartFight(fight));
         Assert.True(f.AddSurface("fire", f.CellOf(3), 0.5f, 3) && f.SurfacesAt(f.CellOf(4)).Count == 0);
-        Assert.True(fight.Use(World.EndTurnAction) && fight.StepUntil(() => fight.Said("Gik is in the fire"), 10),
+        Assert.True(fight.Use("end-turn") && fight.StepUntil(() => fight.Said("Gik is in the fire"), 10),
             "A creature starting its turn in fire burns");
     }
 

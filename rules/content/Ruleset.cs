@@ -58,6 +58,38 @@ public class ScoreMethods
     };
 }
 
+/// <summary>
+/// ruleset.json's "roles": the ids the game's own procedures look for, so a system can name its
+/// abilities, skills, conditions, actions and resources as it likes. The defaults are the yorehold
+/// set's names; an empty one means the system has no such thing.
+/// </summary>
+public class RoleNames
+{
+    /// <summary>Adds to HP per level and to hit dice spent on a rest.</summary>
+    public string HpAbility { get; init; } = "con";
+    /// <summary>For a weapon that names no ability of its own.</summary>
+    public string AttackAbility { get; init; } = "str";
+    /// <summary>What carrying capacity is counted from; empty is the system's first ability.</summary>
+    public string CarryAbility { get; init; } = "";
+    /// <summary>An ability or a skill.</summary>
+    public string Initiative { get; init; } = "dex";
+    /// <summary>Skills or abilities for noticing, sneaking, and picking locks or disarming traps that name none.</summary>
+    public string Perception { get; init; } = "perception";
+    public string Stealth { get; init; } = "stealth";
+    public string Thievery { get; init; } = "dex";
+    public string Hidden { get; init; } = "hidden";
+    public string Downed { get; init; } = "downed";
+    public string Dead { get; init; } = "dead";
+    public string Strike { get; init; } = "strike";
+    public string Stride { get; init; } = "stride";
+    public string EndTurn { get; init; } = "end-turn";
+    public string Interact { get; init; } = "interact";
+    /// <summary>Spell slot resources are this plus the slot's level.</summary>
+    public string SlotPrefix { get; init; } = "slots-";
+    /// <summary>The resource focus spells spend.</summary>
+    public string Focus { get; init; } = "focus";
+}
+
 public record CompanionRules(int Limit = 0, int PartyLimit = 0, int ApprovalMin = -100, int ApprovalMax = 100);
 
 public enum ModifierTable
@@ -84,7 +116,7 @@ public class Ruleset
     public int ScoreMax { get; init; } = 20;
     public int BaseArmorClass { get; init; } = 10;
     public string ArmorClassAbility { get; init; } = "dex";
-    public string InitiativeAbility { get; init; } = "dex";
+    public RoleNames Roles { get; init; } = new();
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -111,7 +143,6 @@ public class Ruleset
     public CompanionRules Companions { get; init; } = new();
     public int DefaultHitDie { get; init; } = 8;
     public Dictionary<string, int> HitDieByClass { get; init; } = new();
-    public string HitDieAbility { get; init; } = "con";
     public ScoreMethods ScoreMethods { get; init; } = new();
 
     public AbilityDefinition? Ability(string id) => Abilities.Find(a => a.Id == id);
@@ -207,6 +238,11 @@ public class Ruleset
         }
         string AbilityOrNone(string key, string fallback)
         {
+            // A system without the default ability ("dex", "con") goes without, rather than failing.
+            if (!node.Has(key) && abilities.All(a => a.Id != fallback))
+            {
+                return "";
+            }
             string value = node.Text(key, fallback);
             if (value.Length > 0 && abilities.All(a => a.Id != value))
             {
@@ -323,7 +359,7 @@ public class Ruleset
             ScoreMax = scoreMax,
             BaseArmorClass = node.Int("baseArmorClass", 10),
             ArmorClassAbility = AbilityOrNone("armorClassAbility", "dex"),
-            InitiativeAbility = AbilityOrNone("initiativeAbility", "dex"),
+            Roles = RolesFrom(node, abilities, skills, AbilityOrNone("initiativeAbility", "dex"), AbilityOrNone("hitDieAbility", "con")),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,
@@ -350,7 +386,6 @@ public class Ruleset
             Companions = CompanionsFrom(node.Get("companions")),
             DefaultHitDie = node.Int("defaultHitDie", 8, 1, 1000),
             HitDieByClass = ContentParts.NumbersFrom(node, "hitDieByClass", 1, 1000, idKeys: false),
-            HitDieAbility = AbilityOrNone("hitDieAbility", "con"),
             ScoreMethods = ScoreMethodsFrom(node.Get("scoreMethods")),
         };
 
@@ -506,6 +541,77 @@ public class Ruleset
             throw node.Fail("the four death conditions are different ones");
         }
         return death;
+    }
+
+    // The older top-level initiativeAbility and hitDieAbility stay as the defaults, so files
+    // written before "roles" keep their meaning.
+    private static RoleNames RolesFrom(ContentNode file, List<AbilityDefinition> abilities, List<SkillDefinition> skills,
+        string initiative, string hpAbility)
+    {
+        // A default the system doesn't have falls back as the code did before roles (perception to
+        // wis, stealth to dex), else to none, so a system with other names still loads.
+        string Known(params string[] ids) =>
+            ids.FirstOrDefault(id => abilities.Any(a => a.Id == id) || skills.Any(s => s.Id == id)) ?? "";
+        var defaults = new RoleNames
+        {
+            HpAbility = hpAbility,
+            AttackAbility = Known("str"),
+            Initiative = initiative,
+            Perception = Known("perception", "wis"),
+            Stealth = Known("stealth", "dex"),
+            Thievery = Known("dex"),
+        };
+        if (file.Get("roles") is not ContentNode node)
+        {
+            return defaults;
+        }
+        node.RequireObject("is an object of role names");
+        node.Only("hpAbility", "attackAbility", "carryAbility", "initiative", "perception", "stealth", "thievery",
+            "hidden", "downed", "dead", "strike", "stride", "endTurn", "interact", "slotPrefix", "focus");
+        string Ability(string key, string fallback)
+        {
+            string value = node.Text(key, fallback, 64);
+            if (value.Length > 0 && abilities.All(a => a.Id != value))
+            {
+                throw node.Fail(key, $"unknown ability \"{value}\"");
+            }
+            return value;
+        }
+        string Check(string key, string fallback)
+        {
+            string value = node.Text(key, fallback, 64);
+            if (value.Length > 0 && abilities.All(a => a.Id != value) && skills.All(s => s.Id != value))
+            {
+                throw node.Fail(key, $"unknown ability or skill \"{value}\"");
+            }
+            return value;
+        }
+        // Conditions and actions may be missing from a system: the game then goes without them.
+        string Name(string key, string fallback) => node.Text(key, fallback, 64);
+        string prefix = Name("slotPrefix", defaults.SlotPrefix);
+        if (prefix.Length == 0)
+        {
+            throw node.Fail("slotPrefix", "is a name of 1 to 60 characters");
+        }
+        return new RoleNames
+        {
+            HpAbility = Ability("hpAbility", defaults.HpAbility),
+            AttackAbility = Ability("attackAbility", defaults.AttackAbility),
+            CarryAbility = Ability("carryAbility", defaults.CarryAbility),
+            Initiative = Check("initiative", defaults.Initiative),
+            Perception = Check("perception", defaults.Perception),
+            Stealth = Check("stealth", defaults.Stealth),
+            Thievery = Check("thievery", defaults.Thievery),
+            Hidden = Name("hidden", defaults.Hidden),
+            Downed = Name("downed", defaults.Downed),
+            Dead = Name("dead", defaults.Dead),
+            Strike = Name("strike", defaults.Strike),
+            Stride = Name("stride", defaults.Stride),
+            EndTurn = Name("endTurn", defaults.EndTurn),
+            Interact = Name("interact", defaults.Interact),
+            SlotPrefix = prefix,
+            Focus = Name("focus", defaults.Focus),
+        };
     }
 
     private static CompanionRules CompanionsFrom(ContentNode? found)

@@ -689,7 +689,7 @@ public partial class PlayHud : Control
                 : why.Length > 0 ? char.ToUpperInvariant(why[0]) + why[1..] + "."
                 : "Can't be used right now.";
         }
-        _endTurn.Disabled = !(mine && world.CanUse(shown, World.EndTurnAction));
+        _endTurn.Disabled = !(mine && world.CanUse(shown, world.EndTurnAction));
     }
 
     private void ShowReaction(World world)

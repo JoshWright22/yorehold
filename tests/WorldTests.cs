@@ -225,7 +225,7 @@ public class WorldTests
         using WorldFixture world = WorldFixture.Small(Yard);
         World w = world.World;
         Assert.True(world.Sneak(true));
-        Assert.True(w.Creatures[0].Sneaking && w.Creatures[1].Sheet.HasCondition("hidden") && w.Creatures[1].Sheet.HasFlag(w.Rules, "hidden") && w.AnySneaking);
+        Assert.True(w.Sneaking(0) && w.Creatures[1].Sheet.HasCondition("hidden") && w.Creatures[1].Sheet.HasFlag(w.Rules, "hidden") && w.AnySneaking);
         world.Step(0.1);
         Assert.Equal(0.5f, w.Tokens.Tokens[0].Pace);
         Assert.True(world.Sneak(false));

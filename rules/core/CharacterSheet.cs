@@ -9,8 +9,11 @@ public sealed class ActiveCondition
     public int Value { get; init; } = 1;
 }
 
-/// <summary>What a sheet attacks with. Nothing held is an unarmed strike: 1 damage, on strength.</summary>
-public record Weapon(string Damage, string AttackAbility = "str", int Hands = 1);
+/// <summary>
+/// What a sheet attacks with. Nothing held is an unarmed strike: 1 damage, on the system's attack
+/// ability, as is a weapon whose ability is empty.
+/// </summary>
+public record Weapon(string Damage, string AttackAbility = "", int Hands = 1);
 
 /// <summary>Where a creature at 0 HP stands with death saves, when the ruleset uses them.</summary>
 public sealed class DeathState
@@ -166,10 +169,11 @@ public sealed partial class CharacterSheet
     /// <summary>Pounds carried, worn or not. Coins weigh nothing.</summary>
     public float CarriedWeight() => Inventory.Sum(i => (float)i.Weight * i.Quantity);
 
-    /// <summary>The first ability (strength) times the ruleset's pounds per point.</summary>
+    /// <summary>The system's carrying ability (else its first) times the ruleset's pounds per point.</summary>
     public float CarryCapacity(Ruleset rules)
     {
-        string strength = rules.Abilities.Count == 0 ? "str" : rules.Abilities[0].Id;
+        string strength = rules.Roles.CarryAbility.Length > 0 ? rules.Roles.CarryAbility
+            : rules.Abilities.Count == 0 ? "" : rules.Abilities[0].Id;
         return AbilityScore(strength) * rules.CarryPerStrength;
     }
 
@@ -253,7 +257,7 @@ public sealed partial class CharacterSheet
 
     public int InitiativeModifier(Ruleset rules)
     {
-        return rules.InitiativeAbility.Length == 0 ? 0 : AbilityModifier(rules, rules.InitiativeAbility);
+        return rules.Roles.Initiative.Length == 0 ? 0 : CheckModifier(rules, rules.Roles.Initiative);
     }
 
     public RollResult RollCheck(Ruleset rules, string abilityOrSkill, Advantage advantage, Rng random)
@@ -266,15 +270,21 @@ public sealed partial class CharacterSheet
         return Dice.RollD20(SaveModifier(rules, ability), advantage, random);
     }
 
+    /// <summary>The weapon's own ability, else the system's attack ability.</summary>
+    public string AttackAbility(Ruleset rules)
+    {
+        return Weapon is { AttackAbility.Length: > 0 } weapon ? weapon.AttackAbility : rules.Roles.AttackAbility;
+    }
+
     public int AttackModifier(Ruleset rules)
     {
-        return AbilityModifier(rules, Weapon?.AttackAbility ?? "str") + ProficiencyModifier(rules, "weapons") + Stats.Integer("attack");
+        return AbilityModifier(rules, AttackAbility(rules)) + ProficiencyModifier(rules, "weapons") + Stats.Integer("attack");
     }
 
     /// <summary>The weapon's dice with the ability and "damage" bonus on the end: "1d8+3".</summary>
     public string DamageDice(Ruleset rules)
     {
-        int bonus = AbilityModifier(rules, Weapon?.AttackAbility ?? "str") + Stats.Integer("damage");
+        int bonus = AbilityModifier(rules, AttackAbility(rules)) + Stats.Integer("damage");
         string dice = Weapon != null && Weapon.Damage.Length > 0 ? Weapon.Damage : "1";
         if (bonus != 0)
         {
@@ -474,7 +484,7 @@ public sealed partial class CharacterSheet
             {
                 // The class's own die comes with characters built from choices (P7).
                 int dice = recovery.Amount > 0 ? recovery.Amount : Math.Max(1, Level);
-                int bonus = rules.HitDieAbility.Length == 0 ? 0 : AbilityModifier(rules, rules.HitDieAbility) * dice;
+                int bonus = rules.Roles.HpAbility.Length == 0 ? 0 : AbilityModifier(rules, rules.Roles.HpAbility) * dice;
                 RollResult roll = Dice.Roll($"{dice}d{rules.DefaultHitDie}{(bonus < 0 ? "" : "+")}{bonus}", random);
                 amount = Math.Max(1, roll.Total); // resting always helps a little
                 break;

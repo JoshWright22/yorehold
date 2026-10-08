@@ -198,7 +198,7 @@ public partial class FightControl : Node
         if (target is int foe && w.Creatures[foe].Team == 1 && w.OrderIndex(foe) != null)
         {
             // a plain click on an enemy strikes it
-            if (w.CanUse(me, World.StrikeAction))
+            if (w.CanUse(me, w.StrikeAction))
             {
                 Aim.Target = foe;
                 Aim.Label = Percent(w.HitChance(me, foe));

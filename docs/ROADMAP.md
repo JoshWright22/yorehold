@@ -223,11 +223,17 @@ classes, items and creatures sit at the content root rather than in their system
 Pathfinder 2e Remaster (ORC); only their open text is used. Each step below also changes the
 screens it touches, so the game shows whatever the system says, and is tried on both systems.
 
-- [ ] **R1. Names the code leans on become the system's.** One `roles` object in `ruleset.json`:
+- [x] **R1. Names the code leans on become the system's.** One `roles` object in `ruleset.json`:
   the HP ability, default attack ability, initiative, perception and stealth skills, the hidden and
   downed conditions, the strike, stride and end-turn actions, the slot prefix and focus pool.
   Every hard-coded "con", "str", "dex", "perception", "hidden", "downed", "focus", "slots-" goes
   through it. UI: the sheet's initiative uses the system's (it reads "dex" today).
+  - Done 10/8: `roles` in ruleset.json (CONTENT.md), with `carryAbility`, `thievery` (locks and
+    traps that name no skill), `dead` and `interact` as well. Weapons that name no ability use
+    `attackAbility`; the sheet shows initiative's own skill or ability. A default a system lacks
+    (dex, con) now means none instead of refusing the file.
+  - Left for R13: the import's own guesses (`BookCast` "dex"/"athletics", `SystemTable`
+    "perception") still name yorehold ids; they map to the system once the import drafts systems.
 - [ ] **R2. A system owns its classes, items, creatures, races and feats.** They load from the
   ruleset folder first, the content root after (so today's packages keep loading). Manifests'
   `ruleset` and `requires` are read; a character records its system and is refused, with the

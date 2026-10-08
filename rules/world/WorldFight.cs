@@ -15,10 +15,11 @@ public sealed class ReactionPrompt
 // Fights: starting and ending them, whose turn it is, ending turns, and the turns the AI plays.
 public sealed partial class World
 {
-    public const string StrikeAction = "strike";
-    public const string StrideAction = "stride";
-    public const string EndTurnAction = "end-turn";
-    public const string InteractAction = "interact";
+    /// <summary>The actions the game itself uses, by the names the ruleset's roles give them.</summary>
+    public string StrikeAction => Rules.Roles.Strike;
+    public string StrideAction => Rules.Roles.Stride;
+    public string EndTurnAction => Rules.Roles.EndTurn;
+    public string InteractAction => Rules.Roles.Interact;
 
     private enum EnemyStep
     {
@@ -593,8 +594,9 @@ public sealed partial class World
     /// Strikes a creature, walking first to the cheapest square in reach of it when it isn't
     /// already. with names the action (Strike unless another one is asked for).
     /// </summary>
-    public bool Attack(int target, string with = StrikeAction)
+    public bool Attack(int target, string? with = null)
     {
+        with ??= StrikeAction;
         Refusal = "";
         if (CurrentCreature is not int me)
         {

@@ -9,7 +9,8 @@ public class ItemDefinition
     /// <summary>Where it is worn or held ("mainHand", "armor"...). Empty = it can only be carried.</summary>
     public string Slot { get; init; } = "";
     public string Damage { get; init; } = "";
-    public string AttackAbility { get; init; } = "str";
+    /// <summary>Empty = the system's attack ability (ruleset roles).</summary>
+    public string AttackAbility { get; init; } = "";
     public int Hands { get; init; } = 1;
     /// <summary>Pounds.</summary>
     public double Weight { get; init; }
@@ -58,7 +59,7 @@ public class ItemDefinition
             Description = node.Text("description", ""),
             Slot = slot,
             Damage = damage,
-            AttackAbility = node.Text("attackAbility", "str"),
+            AttackAbility = node.Text("attackAbility", ""),
             Hands = hands,
             Weight = node.Number("weight", 0, 0),
             Value = node.Int("value", 0),

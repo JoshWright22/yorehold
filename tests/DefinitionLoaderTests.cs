@@ -14,7 +14,7 @@ public class DefinitionLoaderTests
         Assert.Equal(new Modifier("ac", ModifierOp.Add, 2), shield.Modifiers[0]);
 
         ItemDefinition bare = ItemDefinition.Read(TestContent.Json("{\"id\": \"rock\"}"));
-        Assert.Equal(("rock", "", "", "str", 1, 0.0, 0, 1, false, 0), (bare.Name, bare.Slot, bare.Damage, bare.AttackAbility, bare.Hands, bare.Weight, bare.Value, bare.Quantity, bare.Magic, bare.Supplies));
+        Assert.Equal(("rock", "", "", "", 1, 0.0, 0, 1, false, 0), (bare.Name, bare.Slot, bare.Damage, bare.AttackAbility, bare.Hands, bare.Weight, bare.Value, bare.Quantity, bare.Magic, bare.Supplies));
         Assert.Null(bare.Use);
 
         // A consumable's use is an action: its id, name and cost come from the item unless it says.

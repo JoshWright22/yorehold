@@ -58,7 +58,7 @@ public class WorldFightTests
     {
         for (int i = 0; i < 8; i++)
         {
-            if (!world.Use(World.EndTurnAction))
+            if (!world.Use("end-turn"))
             {
                 return false;
             }
@@ -79,7 +79,7 @@ public class WorldFightTests
         CharacterSheet ana = w.Creatures[0].Sheet;
         CharacterSheet bo = w.Creatures[1].Sheet;
         Assert.Equal(11, w.ActionsOf(0).Count);
-        Assert.Equal(World.StrikeAction, w.ActionsOf(0)[0].Id);
+        Assert.Equal("strike", w.ActionsOf(0)[0].Id);
         int ac = ana.ArmorClass(rules);
         Assert.True(world.Use("defend") && ana.ArmorClass(rules) == ac + 2 && w.ActionsLeft == 1, "Defend costs one action and adds two AC");
         Assert.True(world.Use("defend") && ana.ArmorClass(rules) == ac + 2, "Repeated Defend refreshes rather than stacking");
@@ -196,7 +196,7 @@ public class WorldFightTests
         Assert.True(world.TurnTo(2) && world.MoveTo(new Cell(5, 3)) && w.ReactionPrompt != null && w.ReactionPrompt.Creature == 0,
             "An enemy leaving the hero's reach asks before the reaction is taken");
         ulong offer = w.ReactionPrompt!.Id;
-        Assert.False(world.Use(World.EndTurnAction), "Turns and other actions wait for the answer");
+        Assert.False(world.Use("end-turn"), "Turns and other actions wait for the answer");
         Assert.True(world.React(false) && w.ReactionPrompt == null && world.HasReaction(0) && w.CellOf(2) == new Cell(5, 3),
             "Passing lets the move go on and keeps the reaction");
         world.FinishWalk(2);
@@ -241,11 +241,11 @@ public class WorldFightTests
         Assert.True(world.ChooseTurn(1) && world.Use("defend") && world.ChooseTurn(0), "Allies can take their actions in any order");
         Assert.True(w.BudgetOf(0)!.Actions == ana.Actions && w.BudgetOf(0)!.MovementLeft == ana.MovementLeft
             && w.Creatures[0].Sheet.HasCondition("shielded") && w.BudgetOf(1)!.Actions == 1, "Switching keeps both budgets and what began with the turn");
-        Assert.True(world.Use(World.EndTurnAction) && w.CurrentCreature == 1 && !w.CanChooseTurn(0),
+        Assert.True(world.Use("end-turn") && w.CurrentCreature == 1 && !w.CanChooseTurn(0),
             "Ending one member's turn leaves the other, and can't be undone by switching");
-        Assert.True(world.Use(World.EndTurnAction) && w.CurrentCreature == 2 && !w.CanChooseTurn(1), "When every ally is done the next side's block starts");
-        Assert.True(world.ChooseTurn(3) && world.Use(World.EndTurnAction) && w.CurrentCreature == 2, "Enemies share their block the same way");
-        Assert.True(world.Use(World.EndTurnAction) && w.Encounter!.Round == 2 && w.CanChooseTurn(1) && w.BudgetOf(0)!.Actions == 2
+        Assert.True(world.Use("end-turn") && w.CurrentCreature == 2 && !w.CanChooseTurn(1), "When every ally is done the next side's block starts");
+        Assert.True(world.ChooseTurn(3) && world.Use("end-turn") && w.CurrentCreature == 2, "Enemies share their block the same way");
+        Assert.True(world.Use("end-turn") && w.Encounter!.Round == 2 && w.CanChooseTurn(1) && w.BudgetOf(0)!.Actions == 2
             && !w.Creatures[0].Sheet.HasCondition("shielded"), "The next round refreshes the whole block once");
         Assert.True(world.Use("ready") && w.Creatures[0].ReadiedAction == "strike" && w.CurrentCreature == 1 && world.ChooseTurn(1)
             && w.Creatures[0].ReadiedAction == "strike", "Ready outlasts another ally's turn in the same block");
@@ -376,7 +376,7 @@ public class WorldFightTests
         int logAt = world.Log.Count;
         for (int i = 0; i < 4 && world.Log.Count < logAt + 4; i++)
         {
-            world.Use(World.EndTurnAction);
+            world.Use("end-turn");
         }
         Assert.True(world.Said("Bo death save") && (bo.Hp > 0 || bo.Death.Successes + bo.Death.Failures > 0),
             "A downed hero still rolls a death save when its block comes round");
@@ -394,7 +394,7 @@ public class WorldFightTests
         Assert.Contains("victory", world.EventsOf(WorldEventKind.FightOver));
         Assert.True(w.Creatures[2].Sheet.HasCondition("dead") && w.Tokens.Tokens[2].Floor == World.DeadFloor, "The goblin lies dead where it fell");
         Assert.True(w.Flags.Count == 0 || w.ChapterCleared());
-        Assert.False(world.Use(World.EndTurnAction), "Back to exploring: no turns to end");
+        Assert.False(world.Use("end-turn"), "Back to exploring: no turns to end");
         Assert.True(world.Go(0, new Cell(1, 1)), "And the party walks freely again");
     }
 
@@ -419,7 +419,7 @@ public class WorldFightTests
         Assert.True(world.Use("wipe-test") && w.PartyWiped && w.PartyDown && !w.Fighting && !w.InCutscene);
         Assert.Contains("defeat", world.EventsOf(WorldEventKind.FightOver));
         Assert.True(world.Said(w.Chapter.DefeatText));
-        Assert.False(world.Use(World.EndTurnAction));
+        Assert.False(world.Use("end-turn"));
         Assert.False(world.Go(0, new Cell(1, 1)), "Nobody is left to walk");
 
         using WorldFixture scripted = DeathYard("""
@@ -434,14 +434,14 @@ public class WorldFightTests
     {
         using WorldFixture world = WorldFixture.Load("chapters/goblin-keep", 2);
         World w = world.World;
-        Assert.False(world.Use(World.StrikeAction, w.HeroCount), "An attack while exploring is refused");
+        Assert.False(world.Use("strike", w.HeroCount), "An attack while exploring is refused");
         Assert.Equal("Not in a fight.", w.Refusal);
-        Assert.False(world.Use(World.EndTurnAction));
+        Assert.False(world.Use("end-turn"));
         Assert.False(world.MoveTo(new Cell(1, 1)));
         Assert.True(w.CurrentCreature == null && w.ActionsLeft == 0 && w.MovementLeft == 0 && w.UsableActions().Count == 0
-            && w.ReachableCells().Count == 0 && w.ValidTargets(World.StrikeAction).Count == 0);
-        Assert.True(w.FindAction(World.StrikeAction) != null && w.FindAction(World.StrideAction) != null && w.FindAction(World.EndTurnAction) != null
-            && w.ActionsOf(0).Count >= 3 && w.ActionsOf(0)[0].Id == World.StrikeAction, "The ruleset has Strike, Dash and End turn, Strike first on the bar");
+            && w.ReachableCells().Count == 0 && w.ValidTargets("strike").Count == 0);
+        Assert.True(w.FindAction("strike") != null && w.FindAction("stride") != null && w.FindAction("end-turn") != null
+            && w.ActionsOf(0).Count >= 3 && w.ActionsOf(0)[0].Id == "strike", "The ruleset has Strike, Dash and End turn, Strike first on the bar");
     }
 
     [Fact]
@@ -500,7 +500,7 @@ public class WorldFightTests
         {
             return;
         }
-        if (w.CanUse(me, World.StrikeAction) && w.Adjacent(me, target) && world.Use(World.StrikeAction, target))
+        if (w.CanUse(me, "strike") && w.Adjacent(me, target) && world.Use("strike", target))
         {
             return;
         }
@@ -522,7 +522,7 @@ public class WorldFightTests
         {
             return;
         }
-        world.Use(World.EndTurnAction);
+        world.Use("end-turn");
     }
 
     private static readonly Dictionary<string, string> WalledYard = new()
@@ -570,7 +570,7 @@ public class WorldFightTests
             world.Step(1.0 / 60);
             Assert.True(world.Said("strikes from hiding") && world.Said("surprise"));
         }
-        Assert.True(w.Fighting && !w.Creatures[0].Sneaking && !w.Creatures[1].Sheet.HasCondition("hidden"), "The fight ends Hidden for everyone");
+        Assert.True(w.Fighting && !w.Sneaking(0) && !w.Creatures[1].Sheet.HasCondition("hidden"), "The fight ends Hidden for everyone");
         bool done = world.StepUntil(() =>
         {
             PlayParty(world);

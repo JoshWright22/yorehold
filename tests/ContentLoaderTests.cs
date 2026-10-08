@@ -91,6 +91,9 @@ public class ContentLoaderTests
     [InlineData("\"death\": {\"successes\": 0}", "death.successes")]
     [InlineData("\"scoreMethods\": {\"roll\": \"dice\"}", "scoreMethods.roll")]
     [InlineData("\"skills\": [{\"id\": \"lore\", \"name\": \"Lore\", \"ability\": \"int\"}]", "skills[0].ability")]
+    [InlineData("\"roles\": {\"initiative\": \"luck\"}", "roles.initiative")]
+    [InlineData("\"roles\": {\"hpAbility\": \"stealth\"}", "roles.hpAbility")]
+    [InlineData("\"roles\": {\"slotPrefix\": \"\"}", "roles.slotPrefix")]
     public void ABrokenRulesetNamesTheField(string extra, string field)
     {
         string text = SmallRuleset.Trim().TrimEnd('}').Replace("\"skills\"", "\"oldSkills\"") + ", " + extra + "}";
@@ -98,6 +101,33 @@ public class ContentLoaderTests
         Assert.Equal("rulesets/small/ruleset.json", error.File);
         Assert.Equal(field, error.Field);
         Assert.StartsWith($"rulesets/small/ruleset.json: {field}: ", error.Message);
+    }
+
+    [Fact]
+    public void RolesLetASystemNameThingsItsOwnWay()
+    {
+        Ruleset older = Small();
+        Assert.Equal(("con", "str", "dex", "", "stealth", "hidden", "strike", "slots-"),
+            (older.Roles.HpAbility, older.Roles.AttackAbility, older.Roles.Initiative, older.Roles.Perception,
+             older.Roles.Stealth, older.Roles.Hidden, older.Roles.Strike, older.Roles.SlotPrefix));
+
+        // A Pathfinder-like system: initiative is a Perception check, Strike is its own word.
+        Ruleset other = RulesTesting.Rules("""
+            {"id": "other", "name": "Other",
+             "abilities": [{"id": "might", "name": "Might"}, {"id": "wits", "name": "Wits"}],
+             "skills": [{"id": "notice", "name": "Notice", "ability": "wits"}],
+             "roles": {"hpAbility": "might", "attackAbility": "might", "initiative": "notice", "perception": "notice",
+                       "stealth": "", "downed": "dying", "strike": "attack", "slotPrefix": "mana-", "focus": ""}}
+            """);
+        Assert.Equal(("might", "notice", "notice", "", "dying", "attack", "mana-", ""),
+            (other.Roles.HpAbility, other.Roles.Initiative, other.Roles.Perception, other.Roles.Stealth,
+             other.Roles.Downed, other.Roles.Strike, other.Roles.SlotPrefix, other.Roles.Focus));
+
+        var sheet = new CharacterSheet { Name = "Ash" };
+        sheet.Stats.SetBase("might", 10);
+        sheet.Stats.SetBase("wits", 16);
+        Assert.Equal(3, sheet.InitiativeModifier(other));
+        Assert.Equal("might", sheet.AttackAbility(other));
     }
 
     [Fact]

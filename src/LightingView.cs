@@ -140,7 +140,7 @@ public partial class LightingView : Node2D
         {
             Token token = w.Tokens.Tokens[i];
             _carried[i].Position = token.Position.ToGodot();
-            _carried[i].Visible = carries && token.Floor != World.DeadFloor && !w.Creatures[i].Sneaking;
+            _carried[i].Visible = carries && token.Floor != World.DeadFloor && !w.Sneaking(i);
         }
     }
 

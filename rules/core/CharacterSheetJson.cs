@@ -144,7 +144,7 @@ public sealed partial class CharacterSheet
         }
         if (node.Get("weapon") is ContentNode weapon)
         {
-            sheet._weapon = new Weapon(weapon.Text("damage", ""), weapon.Text("attackAbility", "str"), weapon.Int("hands", 1, 0, HandCount));
+            sheet._weapon = new Weapon(weapon.Text("damage", ""), weapon.Text("attackAbility", ""), weapon.Int("hands", 1, 0, HandCount));
         }
         return sheet;
     }

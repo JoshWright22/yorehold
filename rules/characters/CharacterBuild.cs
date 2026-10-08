@@ -264,12 +264,12 @@ public static class CharacterBuild
         }
         foreach (KeyValuePair<int, int> slot in slots.Where(s => s.Value > 0))
         {
-            c.Resources["slots-" + slot.Key] = new Resource(slot.Value, slot.Value);
+            c.Resources[rules.Roles.SlotPrefix + slot.Key] = new Resource(slot.Value, slot.Value);
         }
         AddSpells(c, compendium, choices, classes, slots, spellCountByClass);
 
-        // HP last, so race and feat changes to CON count
-        int con = c.AbilityModifier(rules, "con");
+        // HP last, so race and feat changes to the HP ability (CON) count
+        int con = rules.Roles.HpAbility.Length == 0 ? 0 : c.AbilityModifier(rules, rules.Roles.HpAbility);
         int hp = Math.Max(1, first.HitDie + first.BonusHp + (race?.BonusHp ?? 0) + con);
         for (int i = 1; i < classes.Count; i++)
         {

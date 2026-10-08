@@ -143,8 +143,9 @@ public sealed partial class World
     /// The chance from 0 to 1 that an attack by attacker hits target from where they stand: its
     /// bonus and advantage against the armour class flanking and cover give the target.
     /// </summary>
-    public float HitChance(int attacker, int target, string actionId = StrikeAction)
+    public float HitChance(int attacker, int target, string? actionId = null)
     {
+        actionId ??= StrikeAction;
         if (attacker < 0 || attacker >= Creatures.Count || target < 0 || target >= Creatures.Count)
         {
             return 0;

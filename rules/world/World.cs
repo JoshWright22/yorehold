@@ -54,9 +54,6 @@ public sealed class WorldCreature
     public Concentration Concentration { get; set; } = new();
     /// <summary>A prepared caster may choose its spells: from the start until a fight, then after the rest the rules name.</summary>
     public bool MayPrepare { get; set; } = true;
-
-    /// <summary>A hero moving quietly: slower, lights covered, only noticed inside a vision cone.</summary>
-    public bool Sneaking => Sheet.HasCondition(World.HiddenCondition);
 }
 
 public enum WorldEventKind
@@ -122,10 +119,13 @@ public sealed class WorldOptions
 /// </summary>
 public sealed partial class World
 {
-    /// <summary>The ruleset's conditions the world itself puts on creatures. A ruleset without one still plays.</summary>
-    public const string HiddenCondition = "hidden";
-    public const string DownedCondition = "downed";
-    public const string DeadCondition = "dead";
+    /// <summary>The ruleset's conditions the world itself puts on creatures (its roles). A ruleset without one still plays.</summary>
+    public string HiddenCondition => Rules.Roles.Hidden;
+    public string DownedCondition => Rules.Roles.Downed;
+    public string DeadCondition => Rules.Roles.Dead;
+
+    /// <summary>A hero moving quietly: slower, lights covered, only noticed inside a vision cone.</summary>
+    public bool Sneaking(int creature) => HiddenCondition.Length > 0 && Creatures[creature].Sheet.HasCondition(HiddenCondition);
 
     /// <summary>Token floor for the fallen.</summary>
     public const int DeadFloor = -1;
@@ -428,7 +428,7 @@ public sealed partial class World
         // may move already say so.
         for (int i = 0; i < HeroCount; i++)
         {
-            float pace = !Fighting && Creatures[i].Sneaking ? (float)StealthRules.SneakSpeed : 1.0f;
+            float pace = !Fighting && Sneaking(i) ? (float)StealthRules.SneakSpeed : 1.0f;
             int weighed = Fighting ? 0 : Creatures[i].Sheet.Encumbrance(Rules);
             if (weighed > 0)
             {
@@ -854,7 +854,7 @@ public sealed partial class World
         if (o.ArmedTrap && o.TrapFound)
         {
             int dc = o.Trap!.DisarmDc;
-            int total = Check(CheckWith(o.Trap.DisarmSkill, "dex"), dc, "disarm");
+            int total = Check(CheckWith(o.Trap.DisarmSkill, Rules.Roles.Thievery), dc, "disarm");
             if (total >= dc)
             {
                 Map.Disarm(id);
@@ -877,7 +877,7 @@ public sealed partial class World
             Interaction result = Map.Interact(id, keys);
             if (result == Interaction.Locked && o.Lock != null && o.Lock.Dc > 0)
             {
-                if (Check(CheckWith(o.Lock.Skill, "dex"), o.Lock.Dc, "pick the lock of") >= o.Lock.Dc)
+                if (Check(CheckWith(o.Lock.Skill, Rules.Roles.Thievery), o.Lock.Dc, "pick the lock of") >= o.Lock.Dc)
                 {
                     Map.Unlock(id);
                     result = Map.Interact(id, keys);
@@ -952,7 +952,7 @@ public sealed partial class World
                     continue;
                 }
                 _trapsLookedAt.Add((h, o.Id));
-                string skill = CheckWith(o.Trap!.DetectSkill, "perception");
+                string skill = CheckWith(o.Trap!.DetectSkill, Rules.Roles.Perception);
                 if (Rules.PassiveBase + Creatures[h].Sheet.CheckModifier(Rules, skill) >= o.Trap.DetectDc)
                 {
                     o.TrapFound = true;
@@ -1061,11 +1061,15 @@ public sealed partial class World
         return true;
     }
 
-    public bool AnySneaking => Creatures.Take(HeroCount).Any(c => c.Sneaking && !c.Sheet.Down);
+    public bool AnySneaking => Enumerable.Range(0, HeroCount).Any(h => Sneaking(h) && !Creatures[h].Sheet.Down);
 
     private void SetSneaking(int hero, bool on)
     {
         CharacterSheet sheet = Creatures[hero].Sheet;
+        if (HiddenCondition.Length == 0)
+        {
+            return;
+        }
         if (!on)
         {
             sheet.RemoveCondition(HiddenCondition);
@@ -1083,7 +1087,7 @@ public sealed partial class World
         float radius = (float)Chapter.Map.Lighting.Carried * GameMap.CellSize;
         for (int i = 0; i < HeroCount; i++)
         {
-            if (Tokens.Tokens[i].Floor != DeadFloor && radius > 0 && !Creatures[i].Sneaking)
+            if (Tokens.Tokens[i].Floor != DeadFloor && radius > 0 && !Sneaking(i))
             {
                 carried.Add(new WorldLight(Tokens.Tokens[i].Position, radius));
             }
@@ -1113,7 +1117,7 @@ public sealed partial class World
     public List<Watcher> Watchers()
     {
         Sky sky = Map.SkyAt(CurrentTime());
-        string perception = Rules.Skill("perception") != null ? "perception" : "wis";
+        string perception = Rules.Roles.Perception;
         float perSquare = Math.Max(1, Rules.FeetPerSquare);
         var watching = new List<Watcher>();
         for (int i = HeroCount; i < Creatures.Count; i++)
@@ -1252,7 +1256,7 @@ public sealed partial class World
     private void UpdateStealth()
     {
         List<Watcher> watching = Watchers();
-        string stealth = Rules.Skill("stealth") != null ? "stealth" : "dex";
+        string stealth = Rules.Roles.Stealth;
         int? noticed = null;
         string note = "";
         for (int h = 0; h < HeroCount; h++)
@@ -1269,7 +1273,7 @@ public sealed partial class World
                 from = at;
                 _sneak[h].Reset();
             }
-            if (!Creatures[h].Sneaking)
+            if (!Sneaking(h))
             {
                 for (int w = 0; w < watching.Count && noticed == null; w++)
                 {

@@ -194,8 +194,9 @@ public partial class SheetPanel : PanelContainer
         _hpBar.Value = Math.Max(0, sheet.Hp);
         _hpSub.Text = sheet.TempHp > 0 ? $"+{sheet.TempHp} temporary" : sheet.Down ? "down" : "";
         Vital("Armor class", sheet.ArmorClass(rules).ToString(), "");
-        int initiative = sheet.AbilityModifier(rules, "dex");
-        Vital("Initiative", SheetView.Signed(initiative), "dex");
+        string rolledWith = rules.Roles.Initiative;
+        Vital("Initiative", SheetView.Signed(sheet.InitiativeModifier(rules)),
+            (rules.Skill(rolledWith)?.Name ?? rules.Ability(rolledWith)?.Name ?? rolledWith).ToLowerInvariant());
         Vital("Speed", $"{sheet.SpeedFeet}", "feet");
         Vital("Proficiency", SheetView.Signed(rules.ProficiencyBonus(sheet.Level)), "bonus");
         Vital("Hit die", sheet.HitDie, $"level {sheet.Level}");

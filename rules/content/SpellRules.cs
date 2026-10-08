@@ -88,6 +88,11 @@ public class SpellRules
 
     public void Check(Ruleset rules, string file)
     {
+        // Characters are built with the ruleset's prefix, so the two have to agree.
+        if (SlotPrefix != rules.Roles.SlotPrefix)
+        {
+            throw new ContentException(file, "slotPrefix", $"is \"{SlotPrefix}\" but the ruleset's roles.slotPrefix is \"{rules.Roles.SlotPrefix}\"");
+        }
         if (OnDamage == ConcentrationDamage.Save && rules.Ability(SaveAbility) == null)
         {
             throw new ContentException(file, "concentration.ability", $"unknown ability \"{SaveAbility}\"");

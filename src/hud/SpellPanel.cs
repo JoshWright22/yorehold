@@ -61,7 +61,7 @@ public sealed class SpellPanel
             : spells.Count > 0 ? $"knows {spells.Count} {(spells.Count == 1 ? "spell" : "spells")}" : "";
         _view.SetHead($"{sheet.Name}'s spells", sub);
         _view.SetSources(Enumerable.Range(0, world.HeroCount).Select(i => (i.ToString(), world.Creatures[i].Sheet.Name)).ToList(), hero.ToString());
-        List<ActionDefinition> others = world.ActionsOf(hero).Where(a => world.SpellOf(a) == null && a.Id != World.EndTurnAction).ToList();
+        List<ActionDefinition> others = world.ActionsOf(hero).Where(a => world.SpellOf(a) == null && a.Id != world.EndTurnAction).ToList();
         var tabs = new List<string> { "All" };
         tabs.AddRange(spells.Where(s => s.Spends.Count == 0).Select(s => s.Level).Distinct().Order().Select(LevelTab));
         if (spells.Any(s => s.Spends.Count > 0))
@@ -320,9 +320,11 @@ public sealed class SpellPanel
         {
             parts.Add("Slots " + string.Join("  ", slots));
         }
-        if (sheet.Resources.TryGetValue("focus", out Resource? focus))
+        string focusId = world.Rules.Roles.Focus;
+        if (focusId.Length > 0 && sheet.Resources.TryGetValue(focusId, out Resource? focus))
         {
-            parts.Add($"Focus {focus.Current}/{focus.Max}");
+            string name = char.ToUpperInvariant(focusId[0]) + focusId[1..].Replace('-', ' ');
+            parts.Add($"{name} {focus.Current}/{focus.Max}");
         }
         if (world.SpellRules.Hands == SpellHands.Free)
         {

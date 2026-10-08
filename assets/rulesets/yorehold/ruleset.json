@@ -35,7 +35,13 @@
   },
   "baseArmorClass": 10,
   "armorClassAbility": "dex",
-  "initiativeAbility": "dex",
+  "roles": {
+    "hpAbility": "con", "attackAbility": "str", "initiative": "dex",
+    "perception": "perception", "stealth": "stealth", "thievery": "dex",
+    "hidden": "hidden", "downed": "downed", "dead": "dead",
+    "strike": "strike", "stride": "stride", "endTurn": "end-turn", "interact": "interact",
+    "slotPrefix": "slots-", "focus": "focus"
+  },
   "passiveBase": 10,
   "proficiencyByLevel": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6],
   "proficiencyRanks": [
@@ -78,6 +84,5 @@
   "reviveHp": 1,
   "companions": { "limit": 2, "partyLimit": 6, "approvalMin": -100, "approvalMax": 100 },
   "defaultHitDie": 8,
-  "hitDieAbility": "con",
   "hitDieByClass": { "Barbarian": 12, "Fighter": 10, "Cleric": 8, "Rogue": 8, "Wizard": 6 }
 }

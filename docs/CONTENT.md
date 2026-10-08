@@ -748,7 +748,8 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `skills` | List of `id`, `name` and the `ability` each uses. |
 | `modifierTable` | `d20` ((score - 10) / 2, rounded down) or `classic`. |
 | `scoreMin`, `scoreMax` | Bounds on ability scores. |
-| `baseArmorClass`, `armorClassAbility`, `initiativeAbility` | Unarmoured AC, and the abilities added to AC and initiative (empty = none). |
+| `baseArmorClass`, `armorClassAbility` | Unarmoured AC, and the ability added to AC (empty = none). |
+| `roles` | The ids the game's own procedures use, so a system can name things its own way. `hpAbility` (added to HP per level and per hit die), `attackAbility` (for weapons that name none), `carryAbility` (empty = the first ability), `initiative`, `perception`, `stealth` and `thievery` (an ability or a skill; thievery is for locks and traps that name none), the `hidden`, `downed` and `dead` conditions, the `strike`, `stride`, `endTurn` and `interact` actions, `slotPrefix` (spell slot resources; `spellcasting.json` must agree) and `focus` (the focus resource). Every field is optional; an empty name means the system has none. Without `roles`, the older `initiativeAbility` and `hitDieAbility` still count, and a default the system lacks falls back (perception to `wis`, stealth to `dex`) or to none. |
 | `passiveBase` | A passive score, such as the passive Perception sneaking is rolled against, is this plus the modifier. |
 | `proficiencyByLevel` | Legacy proficiency bonus at each level, level 1 first; used when there are no ranks. |
 | `proficiencyRanks` | Optional list of ranks with unique `id`, display `name`, `bonus` (0 to 100) and `addsLevel`. |
@@ -764,7 +765,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `rests` | Each has `id`, `name`, `perAdventure` (uses, 0 = unlimited), a `recovery` and optional `restores`, the resources it refills (`"slots-*"` for every spell slot). Optional `supplyCost` (supply points it uses up), `campOnly` (only at camp) and `resets` (rest ids whose uses come back). The first is the one R takes. The long rest restores spell slots and is taken at camp for 40 supplies, as often as supplies last, and gives back the 2 short rests; both rests restore `focus`. |
 | `afterVictory`, `reviveAfterVictory` | A `recovery` for the winners of a fight, and the HP downed winners get back up with (0 = they stay down). |
 | `revivePrice`, `reviveHp` | What bringing a dead hero back at camp costs, in copper (0 = it can't be bought; 20000 = 200 gp), and the HP they come back with (0 = full; 1 here). |
-| `defaultHitDie`, `hitDieByClass`, `hitDieAbility` | Sides of the hit die, by class name, and the ability added per die. |
+| `defaultHitDie`, `hitDieByClass` | Sides of the hit die, and by class name. The ability added per die is `roles.hpAbility`. |
 | `conditions` | Optional list of conditions written inline; a ruleset folder keeps them as files instead (see Conditions). |
 
 A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.
