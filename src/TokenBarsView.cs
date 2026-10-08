@@ -19,6 +19,9 @@ public partial class TokenBarsView : Node2D
 
     private World? _world;
     private FightAim? _aim;
+
+    /// <summary>The bars and rings keep what they showed: an action's dice are still rolling.</summary>
+    public bool Hold { get; set; }
     private double _time;
 
     public void Bind(World world, FightAim aim)
@@ -29,6 +32,10 @@ public partial class TokenBarsView : Node2D
 
     public override void _Process(double delta)
     {
+        if (Hold)
+        {
+            return;
+        }
         _time += delta;
         QueueRedraw();
     }

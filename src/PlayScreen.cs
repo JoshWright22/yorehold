@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using Yorehold.Rules;
 
@@ -57,6 +58,10 @@ public partial class PlayScreen : Node2D
     private FogView _fog = null!;
     private FloatersView _floaters = null!;
     private DiceTray _dice = null!;
+    // An action's results (log lines, floating numbers) waiting for its dice to land; while they
+    // wait the world, the panels and the HP bars hold still, so nothing shows before the dice do.
+    private readonly System.Collections.Generic.List<WorldEvent> _held = new();
+    private bool Holding => _held.Count > 0;
     private PlayCamera _camera = null!;
     private Hud _hud = null!;
     private FightControl _fight = null!;
@@ -309,9 +314,15 @@ public partial class PlayScreen : Node2D
         {
             return;
         }
-        // the world waits while the character screens are up
-        _fight.Paused = _characters.IsOpen;
-        if (_characters.IsOpen)
+        // the world waits while the character screens are up, and while thrown dice are still rolling
+        _fight.Paused = _characters.IsOpen || Holding;
+        if (Holding && _dice.Landed)
+        {
+            Release();
+        }
+        _tokenBars.Hold = Holding;
+        _tokens.Hold = Holding;
+        if (_characters.IsOpen || Holding)
         {
             Refresh();
             return;
@@ -798,81 +809,110 @@ public partial class PlayScreen : Node2D
             return;
         }
         var thrown = new System.Collections.Generic.List<DiceFaces.Shown>();
-        foreach (WorldEvent e in _world.TakeEvents())
+        System.Collections.Generic.List<WorldEvent> events = _world.TakeEvents().ToList();
+        // dice to throw: the results of this batch wait for them to land
+        bool hold = App.Settings.Dice > 0 && events.Any(e => e.Kind == WorldEventKind.Dice && e.Roll != null && DiceFaces.Of(e.Roll).Count > 0);
+        foreach (WorldEvent e in events)
         {
-            switch (e.Kind)
+            if (hold && e.Kind is WorldEventKind.Log or WorldEventKind.Floater)
             {
-                case WorldEventKind.Reset:
-                    _hud.ClearLog();
-                    _floaters.Clear();
-                    _pendingUse = null;
-                    _fight.FightEnded();
-                    break;
-                case WorldEventKind.Log:
-                    _hud.AddLog(e.Text);
-                    if (ShotRunner.Running)
-                    {
-                        // a screenshot script is timed by frames, so its log says when each thing happened
-                        GD.Print($"[frame {ShotRunner.Frame}] {e.Text}");
-                    }
-                    break;
-                case WorldEventKind.Floater:
-                {
-                    (Color color, float scale) = FloaterLook(e.Text);
-                    _floaters.Add(e.At.ToGodot(), e.Text, color, scale);
-                    break;
-                }
-                case WorldEventKind.Banner:
-                    _hud.Banner(e.Text, e.Seconds);
-                    break;
-                case WorldEventKind.Dice when e.Roll != null && App.Settings.Dice > 0:
-                    // what one action rolls (an attack and its damage, a Multiattack) is thrown together
-                    thrown.AddRange(DiceFaces.Of(e.Roll));
-                    break;
-                case WorldEventKind.Cutscene:
-                    if (_world.Chapter.Cutscenes.TryGetValue(e.Text, out Cutscene? cutscene))
-                    {
-                        _hud.Panels?.TogglePanel(""); // closes whatever panel was open
-                        _cutscene.Play(cutscene, _camera);
-                    }
-                    else
-                    {
-                        _world.EndCutscene(); // Chapter.Load checks them, so only a broken setup lands here
-                    }
-                    break;
-                case WorldEventKind.Talk:
-                    if (_hud.Panels is PlayHud talking && talking.OpenPanel.Length > 0)
-                    {
-                        talking.TogglePanel(talking.OpenPanel);
-                    }
-                    break;
-                case WorldEventKind.ChapterChanged:
-                    ShowChapter(_world);
-                    break;
-                case WorldEventKind.Resumed:
-                    ShowChapter(_world);
-                    _hud.Banner(e.Text, 2);
-                    _hud.AddLog(e.Text);
-                    _fight.FightEnded();
-                    break;
-                case WorldEventKind.Save:
-                    WriteSave(e.Text); // a screenshot run writes its own under ../.dev
-                    break;
-                case WorldEventKind.Fight:
-                    _pendingUse = null;
-                    break;
-                case WorldEventKind.Turn:
-                    _fight.TurnBegan();
-                    break;
-                case WorldEventKind.FightOver:
-                    _fight.FightEnded();
-                    _camera.Following = true;
-                    break;
+                _held.Add(e);
+                continue;
             }
+            Show(e, thrown);
         }
         if (thrown.Count > 0)
         {
             _dice.Throw(thrown, App.Settings.Dice == 1);
+        }
+        else if (Holding)
+        {
+            // nothing came to throw after all
+            Release();
+        }
+    }
+
+    // The held results, now the dice are down.
+    private void Release()
+    {
+        var unused = new System.Collections.Generic.List<DiceFaces.Shown>();
+        foreach (WorldEvent e in _held.ToList())
+        {
+            Show(e, unused);
+        }
+        _held.Clear();
+    }
+
+    private void Show(WorldEvent e, System.Collections.Generic.List<DiceFaces.Shown> thrown)
+    {
+        switch (e.Kind)
+        {
+            case WorldEventKind.Reset:
+                _hud.ClearLog();
+                _floaters.Clear();
+                _pendingUse = null;
+                _fight.FightEnded();
+                break;
+            case WorldEventKind.Log:
+                _hud.AddLog(e.Text);
+                if (ShotRunner.Running)
+                {
+                    // a screenshot script is timed by frames, so its log says when each thing happened
+                    GD.Print($"[frame {ShotRunner.Frame}] {e.Text}");
+                }
+                break;
+            case WorldEventKind.Floater:
+            {
+                (Color color, float scale) = FloaterLook(e.Text);
+                _floaters.Add(e.At.ToGodot(), e.Text, color, scale);
+                break;
+            }
+            case WorldEventKind.Banner:
+                _hud.Banner(e.Text, e.Seconds);
+                break;
+            case WorldEventKind.Dice when e.Roll != null && App.Settings.Dice > 0:
+                // what one action rolls (an attack and its damage, a Multiattack) is thrown together
+                thrown.AddRange(DiceFaces.Of(e.Roll));
+                break;
+            case WorldEventKind.Cutscene:
+                if (_world.Chapter.Cutscenes.TryGetValue(e.Text, out Cutscene? cutscene))
+                {
+                    _hud.Panels?.TogglePanel(""); // closes whatever panel was open
+                    _cutscene.Play(cutscene, _camera);
+                }
+                else
+                {
+                    _world.EndCutscene(); // Chapter.Load checks them, so only a broken setup lands here
+                }
+                break;
+            case WorldEventKind.Talk:
+                if (_hud.Panels is PlayHud talking && talking.OpenPanel.Length > 0)
+                {
+                    talking.TogglePanel(talking.OpenPanel);
+                }
+                break;
+            case WorldEventKind.ChapterChanged:
+                ShowChapter(_world);
+                break;
+            case WorldEventKind.Resumed:
+                ShowChapter(_world);
+                _hud.Banner(e.Text, 2);
+                _hud.AddLog(e.Text);
+                _fight.FightEnded();
+                break;
+            case WorldEventKind.Save:
+                WriteSave(e.Text); // a screenshot run writes its own under ../.dev
+                break;
+            case WorldEventKind.Fight:
+                _pendingUse = null;
+                break;
+            case WorldEventKind.Turn:
+                _fight.TurnBegan();
+                break;
+            case WorldEventKind.FightOver:
+                _fight.FightEnded();
+                _camera.Following = true;
+                break;
         }
     }
 
@@ -911,7 +951,11 @@ public partial class PlayScreen : Node2D
         if (_hud.Panels != null)
         {
             _hud.Panels.Visible = !_cutscene.Playing; // a cutscene has the whole screen
-            _hud.Panels.Refresh(_world, _fight.Aim);
+            // the panels show what the dice have shown: they keep still until held results come out
+            if (!Holding)
+            {
+                _hud.Panels.Refresh(_world, _fight.Aim);
+            }
         }
     }
 }

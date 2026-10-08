@@ -44,9 +44,12 @@ public partial class TokensView : Node2D
         }
     }
 
+    /// <summary>The tokens keep what they showed (who stands, who fell): an action's dice are still rolling.</summary>
+    public bool Hold { get; set; }
+
     public override void _Process(double delta)
     {
-        if (_world == null)
+        if (_world == null || Hold)
         {
             return;
         }

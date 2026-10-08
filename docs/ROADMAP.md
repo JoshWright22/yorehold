@@ -817,6 +817,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     bash; a weapon range past one square to arrow; a spell attack to bolt, a spell with an area
     to burst or cone, a heal to heal, a condition-only spell to buff or debuff). Creatures'
     natural weapons (bite, claws) name theirs.
+  - Done 10/9 (step 1, on the screen side): a batch of events that throws dice holds its log lines
+    and floating numbers until the dice land; meanwhile the world, the AI, input, the panels,
+    the HP bars and the tokens (who has fallen) keep still. Left for step 2: one beat per attack
+    of a Multiattack, and the attack animation between landing and the numbers.
   - Order of work: (1) beats and shown values, with the current dice strip, so results wait for
     the dice; (2) attack animations from the shipped sets; (3) the table tumble; (4) sound
     hooks per step (a skin's files), (5) Create can preview an action's animation.

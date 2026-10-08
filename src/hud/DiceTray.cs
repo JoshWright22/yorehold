@@ -76,6 +76,9 @@ public partial class DiceTray : SubViewportContainer
         _view.AddChild(_table);
     }
 
+    /// <summary>The last throw has come to rest on its faces (or there is none showing).</summary>
+    public bool Landed => !Visible || _age >= _tumble;
+
     /// <summary>Throws a roll's dice; fast tumbles for half as long. A new throw replaces the last.</summary>
     public void Throw(List<DiceFaces.Shown> dice, bool fast)
     {
