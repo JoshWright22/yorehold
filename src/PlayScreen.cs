@@ -141,6 +141,13 @@ public partial class PlayScreen : Node2D
         }
         Build(_world);
         App.Changed += ApplySettings;
+        // the first adventure starts with the controls card; screenshot and playtest runs keep their screens clear
+        if (!App.Settings.ShownHelp && !ShotRunner.Running && _hud.Panels is PlayHud firstTime)
+        {
+            Callable.From(() => firstTime.ShowHelp(true)).CallDeferred();
+            App.Settings.ShownHelp = true;
+            App.Save();
+        }
         ApplySettings();
         switch (Start)
         {
@@ -367,10 +374,20 @@ public partial class PlayScreen : Node2D
                 break;
             }
         }
+        if (App.Pressed(@event, "help") && _hud.Panels is PlayHud help)
+        {
+            help.ShowHelp(!help.HelpShown);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
         if (key.Keycode == Key.Escape)
         {
-            // Escape closes the open panel first; with nothing to close it is the pause list
-            if (_hud.Panels is PlayHud open && open.OpenPanel.Length > 0)
+            // Escape closes the help card or the open panel first; with nothing to close it is the pause list
+            if (_hud.Panels is PlayHud card && card.HelpShown)
+            {
+                card.ShowHelp(false);
+            }
+            else if (_hud.Panels is PlayHud open && open.OpenPanel.Length > 0)
             {
                 open.TogglePanel(open.OpenPanel);
             }

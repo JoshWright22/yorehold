@@ -218,7 +218,7 @@ public class MenuTests
     public void ShippedKeysCoverThePlayScreen()
     {
         KeyBindings keys = KeyBindings.Read(ContentNode.Read(TestContent.Shipped(), "ui/keys.json"));
-        foreach (string id in new[] { "pan_left", "pan_right", "pan_up", "pan_down", "zoom_in", "zoom_out", "recenter", "sheet", "gear", "spells", "journal", "camp", "end_turn", "save", "load" })
+        foreach (string id in new[] { "pan_left", "pan_right", "pan_up", "pan_down", "zoom_in", "zoom_out", "recenter", "sheet", "gear", "spells", "journal", "camp", "end_turn", "save", "load", "help" })
         {
             Assert.True(keys.Keys(id).Count > 0, $"{id} has a key");
             Assert.True(keys.Action(id)!.Description.Length > 0, $"{id} says what it does");

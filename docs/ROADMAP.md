@@ -532,9 +532,9 @@ reopened (`playtest.ps1 -Problems`).
   - Camp: rows say what each choice does ("heals all HP, at camp only") in place of a kind column.
   - Create: the problems column only shows when there is a problem.
 - [ ] **U13. What the walk-through found that needs more than a fix:**
-  - First steps: nothing says how to play (click to walk, click a door or chest, Space or right
-    click to cancel) unless a chapter's intro says it. A short help card the first time play
-    opens, and on F1, in the controls' own words and keys.
+  - Done 10/7: a "How to play" card the first time play opens (`shownHelp` in settings) and on
+    F1 (`help` in `ui/keys.json`), with the keys bound now; Esc or Got it puts it away. Screenshot
+    and playtest runs don't open it by themselves (`.dev\help-card.png`).
   - The play side menu (8 buttons down the right) moves to small buttons beside the hotbar, as
     BG3 does; Save and Load stay on F5, F9 and the pause menu.
   - Fight: "Alice's turn" sits over the tokens under the turn order; it belongs in the order

@@ -204,6 +204,50 @@ public partial class PlayHud : Control
         _bottom.Visible = false;
     }
 
+    private PanelContainer? _help;
+    private RichTextLabel? _helpText;
+
+    public bool HelpShown => _help?.Visible == true;
+
+    /// <summary>The controls card in the middle of the screen, or away again. Its keys are the ones bound now.</summary>
+    public void ShowHelp(bool show)
+    {
+        if (_help == null)
+        {
+            _help = new PanelContainer { Visible = false, MouseFilter = MouseFilterEnum.Stop };
+            _help.SetAnchorsPreset(LayoutPreset.Center);
+            _help.GrowHorizontal = GrowDirection.Both;
+            _help.GrowVertical = GrowDirection.Both;
+            var rows = new VBoxContainer();
+            rows.AddThemeConstantOverride("separation", 12);
+            _helpText = new RichTextLabel { BbcodeEnabled = true, FitContent = true, CustomMinimumSize = new Vector2(520, 0), ScrollActive = false };
+            var done = new Button { Text = "Got it", ThemeTypeVariation = "MainButton", FocusMode = FocusModeEnum.None, SizeFlagsHorizontal = SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(140, 40) };
+            done.Pressed += () => ShowHelp(false);
+            rows.AddChild(_helpText);
+            rows.AddChild(done);
+            _help.AddChild(rows);
+            AddChild(_help);
+        }
+        if (show)
+        {
+            string Key(string action) => App.KeyHint(action) is { Length: > 0 } key ? key : "no key";
+            _helpText!.Text = new BookPage().Title("How to play").Sub("This card comes back with " + Key("help") + ".").Rule()
+                .Entry("Walk", "Click the ground. The party follows the hero you picked.")
+                .Entry("Pick a hero", "Click their picture on the left, or their token.")
+                .Entry("Doors, chests, people", "Click them to open, look inside or talk.")
+                .Entry("Actions", "The bar at the bottom, or keys 1 to 0. Pick one, then click where it goes. Right click puts it back.")
+                .Entry("Fights", $"Each hero has two actions and a move a turn. {Key("end_turn")} ends the turn.")
+                .Entry("Look around", $"{Key("pan_up")}, {Key("pan_left")}, {Key("pan_down")}, {Key("pan_right")} or the screen's edge; the wheel zooms; {Key("recenter")} goes back to the hero.")
+                .Entry("Panels", $"{Key("sheet")} sheet, {Key("gear")} gear, {Key("spells")} spells, {Key("journal")} journal, {Key("camp")} rest and camp.")
+                .Entry("Saving", $"{Key("save")} saves, {Key("load")} loads, Esc for the menu.")
+                .ToString();
+            // the card is laid out from its text; centre it on what it came to
+            _help.ResetSize();
+            _help.Position = (Size - _help.GetCombinedMinimumSize()) / 2;
+        }
+        _help.Visible = show;
+    }
+
     /// <summary>The menu buttons name the key each one has now, after the settings screen changed them.</summary>
     public void ShowKeys()
     {

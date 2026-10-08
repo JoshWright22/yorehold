@@ -89,8 +89,8 @@ What the port reads so far, and where it differs:
 - `settings.json` in the game's user folder is the player's settings, with the C++ client's field names
   (`zoomToCursor`, `edgeScroll`, `cameraFollows`, `panSpeed` 200 to 3000, `fullscreen`, `lighting`
   `map`/`off`/`mood`/`rules`, `timeOfDay` `map`/`day`/`dusk`/`night`, `sharedFog`, `reactionPrompts`,
-  `lastCreatePackage`, `server` up to 253 characters, `serverKey` and `deviceId` up to 128) and one
-  more, `keys`: action id to key names, only for the actions the player moved off their shipped keys.
+  `lastCreatePackage`, `server` up to 253 characters, `serverKey` and `deviceId` up to 128), `shownHelp`
+  (the controls card was shown on the first adventure; F1 brings it back) and `keys`: action id to key names, only for the actions the player moved off their shipped keys.
   A missing or wrong value keeps its default and never stops the game. Fields this port doesn't use yet
   (`controls`, `playerName`, `joinAddress`, `skin`...) are written back as they were read.
 - Account sync ("Account sync files" below) works as described there, with the port's folders: saves

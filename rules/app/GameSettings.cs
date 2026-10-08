@@ -33,6 +33,8 @@ public sealed class GameSettings
     public bool SharedFog { get; set; } = true;
     /// <summary>A hero's reaction asks first. On unless turned off, as the fight screen was built (the C++ client shipped it off).</summary>
     public bool ReactionPrompts { get; set; } = true;
+    /// <summary>The controls card has been shown once; after that it waits for F1.</summary>
+    public bool ShownHelp { get; set; }
     /// <summary>The package folder Create had open last.</summary>
     public string LastCreatePackage { get; set; } = "";
     /// <summary>The account server, like http://127.0.0.1:7350; "" plays offline.</summary>
@@ -73,6 +75,7 @@ public sealed class GameSettings
         settings.Fullscreen = Bool(j, "fullscreen", settings.Fullscreen);
         settings.SharedFog = Bool(j, "sharedFog", settings.SharedFog);
         settings.ReactionPrompts = Bool(j, "reactionPrompts", settings.ReactionPrompts);
+        settings.ShownHelp = Bool(j, "shownHelp", settings.ShownHelp);
         if (j["panSpeed"] is JsonValue speed && speed.GetValueKind() == JsonValueKind.Number)
         {
             float value = (float)speed.GetValue<double>();
@@ -141,6 +144,7 @@ public sealed class GameSettings
             ["timeOfDay"] = TimeNames[Math.Clamp(TimeOfDay, 0, TimeNames.Length - 1)],
             ["sharedFog"] = SharedFog,
             ["reactionPrompts"] = ReactionPrompts,
+            ["shownHelp"] = ShownHelp,
             ["lastCreatePackage"] = LastCreatePackage,
             ["server"] = Server,
             ["serverKey"] = ServerKey,
