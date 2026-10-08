@@ -132,8 +132,11 @@ public class SystemPackageTests
         CharacterSheet ana = w.Creatures[0].Sheet;
         ana.Death.Wounded = 2;
         Assert.True(w.Rest("refocus") && ana.Death.Wounded == 2, "A short rest leaves the wounds: " + w.Refusal);
-        // the night's rest is taken at camp; the sheet's part of it
-        Assert.True(ana.HealWounds(w.Rules, "rest") && ana.Death.Wounded == 0);
+        // the night's rest is taken at camp, which plays the adventure's system
+        Assert.True(w.MakeCamp() && w.Rules.Id == "pf2e", w.Refusal);
+        ana = w.Creatures[0].Sheet;
+        ana.Inventory.Add(new Item(w.Chapter.Compendium.Item("supplies")!, 4));
+        Assert.True(w.Rest("rest") && ana.Death.Wounded == 0 && world.Said("Ana is no longer wounded."), w.Refusal);
         Assert.False(ana.HealWounds(w.Rules, "rest"));
 
         ContentException error = TestContent.Refused(() => RulesTesting.Rules(

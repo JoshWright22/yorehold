@@ -728,7 +728,7 @@ The game's built-in files carry a test adventure in `adventure.json`: `chapters/
 
 ## Camp, supplies and the stash
 
-Between fights the party can make camp from wherever it is (the Make camp button), unless the chapter's `chapter.json` says `"camp": false`. Camp is a chapter of its own: `camp` in `adventure.json` names the folder (it must load, and can't be one of the adventure's chapters); without it every chapter uses the shared `chapters/camp`, a clearing. A camp chapter needs a `party` list like any chapter but seats as many heroes as come, the extra ones on the first seat's square; they arrive on its `entry` marker if the map has one. Camp is drawn and played like any map, so it can have NPCs and dialogue.
+Between fights the party can make camp from wherever it is (the Make camp button), unless the chapter's `chapter.json` says `"camp": false`. Camp is a chapter of its own: `camp` in `adventure.json` names the folder (it must load, and can't be one of the adventure's chapters); without it every chapter uses the shared `chapters/camp`, a clearing. A camp chapter needs a `party` list like any chapter but seats as many heroes as come, the extra ones on the first seat's square; they arrive on its `entry` marker if the map has one. A camp chapter that names no `ruleset` plays the adventure's system, and party classes that system lacks stand in as its first class, since the real party replaces them. Camp is drawn and played like any map, so it can have NPCs and dialogue.
 
 The chapter the party left is kept as it was: Leave camp puts them back where they stood, with the same doors open, enemies down and chests taken. Heroes, flags, rests taken and the stash go both ways. A save made at camp loads at camp and still knows the way back.
 

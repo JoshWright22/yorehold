@@ -1,0 +1,10 @@
+{
+  "id": "supplies",
+  "name": "Supplies",
+  "description": "Rations, water and fuel for the camp.",
+  "slot": "",
+  "hands": 0,
+  "weight": 1,
+  "value": 40,
+  "supplies": 10
+}

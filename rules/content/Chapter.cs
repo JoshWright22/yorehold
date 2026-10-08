@@ -99,7 +99,11 @@ public class Chapter
     public SortedDictionary<string, Dialogue> Dialogues { get; } = new(StringComparer.Ordinal);
     public SortedDictionary<string, Cutscene> Cutscenes { get; } = new(StringComparer.Ordinal);
 
-    public static Chapter Load(ContentFiles files, string folder)
+    /// <summary>
+    /// Reads a chapter folder. system is the ruleset for a chapter that names none, like camp,
+    /// which plays whatever system the adventure does; null = the game's own.
+    /// </summary>
+    public static Chapter Load(ContentFiles files, string folder, string? system = null)
     {
         if (folder.Length > 0 && !ContentFiles.IsContentPath(folder))
         {
@@ -109,7 +113,8 @@ public class Chapter
         j.RequireObject("a chapter is a JSON object");
         string id = j.At("id").AsId();
 
-        RulesFolder rules = RulesFolder.Load(files, j.Text("ruleset", RulesFolder.Default), folder);
+        bool borrowed = system != null && !j.Has("ruleset");
+        RulesFolder rules = RulesFolder.Load(files, borrowed ? system! : j.Text("ruleset", RulesFolder.Default), folder);
 
         // The system's own definitions first, then shared content, then the chapter's own; each can
         // replace entries of the ones before.
@@ -191,6 +196,11 @@ public class Chapter
             {
                 Image = p.Text("image", ""),
             };
+            if (compendium.Class(member.ClassId) == null && borrowed && compendium.Classes.Count > 0)
+            {
+                // a chapter playing another system's rules stands in the real party; its own are placeholders
+                member = member with { ClassId = compendium.Classes.Keys.First() };
+            }
             if (compendium.Class(member.ClassId) == null)
             {
                 throw p.Fail("class", $"unknown class \"{member.ClassId}\" for {member.Name}");

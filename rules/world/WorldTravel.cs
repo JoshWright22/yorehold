@@ -531,8 +531,10 @@ public sealed partial class World
     // A chapter folder loaded for the party: camp seats as many as come, the extra seats beside the first.
     private Chapter LoadChapterFor(string folder, int heroes)
     {
-        Chapter chapter = Chapter.Load(Files!, folder);
-        if (folder == CampFolder && heroes > 0 && chapter.Party.Count > 0)
+        // camp names no system of its own: it plays the adventure's
+        bool camp = folder == CampFolder;
+        Chapter chapter = Chapter.Load(Files!, folder, camp && Chapter.Rules.Folder.Length > 0 ? Chapter.Rules.Folder : null);
+        if (camp && heroes > 0 && chapter.Party.Count > 0)
         {
             while (chapter.Party.Count > heroes)
             {
