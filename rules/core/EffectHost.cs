@@ -78,6 +78,8 @@ public sealed class EffectEvent
 public sealed class EffectResult
 {
     public List<EffectEvent> Events { get; } = new();
+    /// <summary>From a secret action: its dice aren't shown.</summary>
+    public bool Secret { get; set; }
 }
 
 /// <summary>

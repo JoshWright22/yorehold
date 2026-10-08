@@ -1097,6 +1097,7 @@ What a creature can do on its turn is a file in the ruleset folder, `actions/<id
 | `area` | `shape` `burst`, `cone`, `line` or `square` with `size` in squares (plus `width` for a line, `angle` for a cone). The effect lands on everyone of the target's `side` inside it with a clear line from where it starts; see Spells. |
 | `readies` | Records this action id for a reaction, until the creature's next turn or the fight ends. It must name an existing action that neither readies another nor ends the turn. |
 | `log` | A line for the log when it is done; `{name}` is whoever does it. |
+| `secret` | `true`: its rolls are not thrown on screen (PF2e's secret trait). Rolls by anyone not in the party whom the party can't see are never thrown. |
 | `effects`, `save` | What it does, in the effect steps the framework reads (see FRAMEWORK.md, Effects). Movement left this turn is the resource `movement`. |
 
 Three ids are ones the game itself uses: clicking an enemy uses `strike`, Space uses `end-turn`, and enemies use `stride` to dash. A ruleset may change them but should keep them. A file with a bad field, an unknown condition or a step the effects do not know stops the chapter from loading and is named in the error.

@@ -308,6 +308,7 @@ public sealed partial class World
             };
             _aim = aim;
             result = action.Effect.Run(new WorldEffectHost(this), context);
+            result.Secret = action.Secret;
             if (Fighting && CurrentCreature == me)
             {
                 Encounter!.Current.Budget.Attacks += result.Events.Count(e => e.Kind == EffectEventKind.Attack);
@@ -383,12 +384,17 @@ public sealed partial class World
             if (e.Roll.Dice.Count > 0 && e.Kind is EffectEventKind.Attack or EffectEventKind.Check or EffectEventKind.Save
                 or EffectEventKind.Defence or EffectEventKind.Damage or EffectEventKind.Heal)
             {
-                // the dice as they fell, for the screen to throw before the numbers reach the log
+                // the dice as they fell, for the screen to throw before the numbers reach the log;
+                // not a secret action's, nor those of someone not with the party that it can't see
                 int roller = e.Kind is EffectEventKind.Save or EffectEventKind.Defence ? e.Who : e.By >= 0 ? e.By : e.Who;
-                _events.Add(new WorldEvent(WorldEventKind.Dice, e.Kind.ToString().ToLowerInvariant())
+                bool unseen = roller >= 0 && roller < Creatures.Count && Creatures[roller].Team != 0 && Fog.State(0, 0, CellOf(roller)) != FogState.Visible;
+                if (!result.Secret && !unseen)
                 {
-                    Roll = e.Roll, At = roller >= 0 && roller < Tokens.Tokens.Count ? Tokens.Tokens[roller].Position : Tokens.Tokens[e.Who].Position,
-                });
+                    _events.Add(new WorldEvent(WorldEventKind.Dice, e.Kind.ToString().ToLowerInvariant())
+                    {
+                        Roll = e.Roll, At = roller >= 0 && roller < Tokens.Tokens.Count ? Tokens.Tokens[roller].Position : Tokens.Tokens[e.Who].Position,
+                    });
+                }
             }
             switch (e.Kind)
             {

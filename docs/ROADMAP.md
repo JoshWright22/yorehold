@@ -670,9 +670,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     d4 to d20, d100 as two d10s and Fate dice are built in `rules/` (`DiceSolids`), and
     `DiceTray` throws them in a strip over the fight, up to six at once, the unkept die of
     advantage dimmed, numbers upright. Settings > Dice: off, fast, full.
+  - Done 10/8: hidden rolls stay off the strip: an action's `secret` and anyone not in the party
+    whom the party can't see.
   - Left: the look and sound from the skin and a player's own dice set; symbol faces from a
-    system's custom dice; rolls made on the sheet; hidden rolls kept off the strip; more than six
-    dice shown as a count.
+    system's custom dice; rolls made on the sheet; more than six dice shown as a count.
 
 - [ ] **R18. A large free asset library for the map maker and portraits.** Josh, 10/8: anything
   the game may ship without asking, with the authors in the credits. Allowed: CC0, public domain,

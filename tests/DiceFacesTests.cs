@@ -59,4 +59,25 @@ public class DiceFacesTests
         Assert.NotNull(dice.Roll);
         Assert.NotEmpty(dice.Roll!.Dice);
     }
+
+    [Fact]
+    public void ASecretActionsRollIsNotThrown()
+    {
+        using WorldFixture world = WorldFixture.LoadJson("chapters/secret", new Dictionary<string, string>
+        {
+            ["chapters/secret/chapter.json"] = """
+                {"id":"secret","title":"Secret","map":"map.json","party":[{"name":"Ana","class":"fighter","at":[0,0]}],"encounters":[{"id":"e","creatures":[{"creature":"goblin","name":"Gik","at":[3,3]}]}]}
+                """,
+            ["chapters/secret/map.json"] = """
+                {"name":"Room","tiles":{"floor":{"art":"grass"}},"legend":{".":"floor"},"layers":[{"name":"ground","rows":["....","....","....","...."]}]}
+                """,
+            ["rulesets/yorehold/actions/sense.json"] = """
+                {"id": "sense", "name": "Sense", "secret": true, "target": {"kind": "self"},
+                 "effects": [{"do": "roll", "kind": "check", "ability": "wis", "dc": 10, "steps": [{"do": "heal", "dice": "1", "when": "success"}]}]}
+                """,
+        }, 3);
+        world.Fight();
+        Assert.True(world.TurnTo(0) && world.Use("sense", 0), world.World.Refusal);
+        Assert.DoesNotContain(world.Events, e => e.Kind == WorldEventKind.Dice);
+    }
 }

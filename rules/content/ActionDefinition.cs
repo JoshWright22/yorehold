@@ -34,7 +34,7 @@ public class ActionDefinition
 {
     private static readonly string[] Fields =
     {
-        "id", "name", "description", "order", "cost", "endsTurn", "general", "readies", "requires", "target", "area", "log", "save", "effects",
+        "id", "name", "description", "order", "cost", "endsTurn", "general", "readies", "requires", "target", "area", "log", "save", "effects", "secret",
     };
 
     public string Id { get; init; } = "";
@@ -59,6 +59,8 @@ public class ActionDefinition
     public bool AllowsDowned { get; init; }
     public ActionArea? Area { get; init; }
     public string Log { get; init; } = "";
+    /// <summary>Its rolls are a game master's to know (PF2e's secret trait): they aren't thrown on screen.</summary>
+    public bool Secret { get; init; }
     public Effect Effect { get; init; } = new();
 
     /// <summary>Actions it takes this creature (see CostsHands), never more than a turn has.</summary>
@@ -244,6 +246,7 @@ public class ActionDefinition
             AllowsDowned = allowsDowned,
             Area = area,
             Log = node.Text("log", "", 200),
+            Secret = node.Bool("secret", false),
             Effect = Effect.Read(node.Get("effects"), node.Get("save")),
         };
     }
