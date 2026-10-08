@@ -439,7 +439,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: `boosts` as a score method (PF2e: four boosts of 2 from 10).
   - Done 10/8: ability raises at a level (`boosts` on class rows; 5e's level 4 improvement).
   - Done 10/8: 5e's +2 to one or +1 to two (`boostsRepeat`).
-  - Left: PF2e's level 5 boosts (its
+  - Left: in play, a level gained from experience or a milestone is added with no picks (feats,
+    boosts, options), and nothing offers them afterwards; the level-up screen should open for a
+    level whose row offers picks it hasn't had. PF2e's level 5 boosts (its
     classes stop at 3 for now).
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
