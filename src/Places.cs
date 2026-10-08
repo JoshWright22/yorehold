@@ -79,6 +79,19 @@ public static class Places
         return packs;
     }
 
+    /// <summary>The content sets the player installed (user://sets/&lt;name&gt;), in name order.</summary>
+    public static List<string> SetFolders()
+    {
+        string root = ProjectSettings.GlobalizePath("user://sets");
+        if (!System.IO.Directory.Exists(root))
+        {
+            return new List<string>();
+        }
+        List<string> sets = System.IO.Directory.GetDirectories(root).ToList();
+        sets.Sort(StringComparer.Ordinal);
+        return sets;
+    }
+
     /// <summary>A res://assets/ path as a file System.IO can read, which an export has elsewhere.</summary>
     public static string ContentFile(string resPath)
     {

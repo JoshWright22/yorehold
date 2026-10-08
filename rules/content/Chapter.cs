@@ -124,6 +124,8 @@ public class Chapter
         if (rules.Folder.Length > 0)
         {
             compendium.LoadOptions(files, rules.Folder);
+            // then the content sets for this system the game was given (their feats/, spells/...)
+            compendium.LoadOptions(files, "");
         }
         rules.Check(compendium, folder, files);
 

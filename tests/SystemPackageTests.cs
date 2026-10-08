@@ -559,6 +559,28 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ASetJoinsOnlyItsSystemsGames()
+    {
+        using var feats = new Scratch();
+        feats.Write("content.json", """{"format": "yorehold.content", "version": 1, "id": "more-feats", "kind": "feats", "ruleset": "pf2e"}""");
+        feats.Write("feats/toughness.json", """{"id": "toughness", "name": "Toughness", "kind": "general", "modifiers": [{"stat": "maxHp", "op": "add", "value": 3}]}""");
+        using var other = new Scratch();
+        other.Write("content.json", """{"format": "yorehold.content", "version": 1, "kind": "feats", "ruleset": "dnd5e"}""");
+        var left = new List<string>();
+        Assert.Equal(new[] { feats.Folder }, ContentSets.For(new[] { feats.Folder, other.Folder }, "pf2e", null, left));
+        Assert.Contains(left, why => why.Contains("for dnd5e, not pf2e"));
+        Assert.Empty(ContentSets.For(new[] { feats.Folder }, "pf2e", new HashSet<string> { "more-feats" }, left));
+
+        // laid over the game's content, its feat joins the system's options
+        ContentFiles files = TestContent.Shipped();
+        files.Add(feats.Folder);
+        var compendium = new Compendium();
+        compendium.LoadOptions(files, "rulesets/pf2e");
+        compendium.LoadOptions(files, "");
+        Assert.True(compendium.Feats.ContainsKey("toughness"));
+    }
+
+    [Fact]
     public void AMissCanSetOffAReaction()
     {
         // a riposte: when an attack on it misses, strike back

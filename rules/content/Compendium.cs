@@ -100,30 +100,33 @@ public class Compendium
     /// Reads feats/, races/, backgrounds/ and spells/ of a ruleset folder, then checks what they
     /// name: feats, races, classes, items, and the spells class files list.
     /// </summary>
+    // "rulesets/pf2e" and "feats" is "rulesets/pf2e/feats"; the root ("", where a content set keeps them) is "feats"
+    private static string Under(string folder, string kind) => folder.Length == 0 ? kind : folder + "/" + kind;
+
     public void LoadOptions(ContentFiles files, string folder)
     {
-        foreach (string path in files.List(folder + "/feats"))
+        foreach (string path in files.List(Under(folder, "feats")))
         {
             ContentNode node = ContentNode.Read(files, path);
             FeatDefinition feat = FeatDefinition.Read(node);
             MatchName(node, feat.Id, path);
             Feats[feat.Id] = feat;
         }
-        foreach (string path in files.List(folder + "/races"))
+        foreach (string path in files.List(Under(folder, "races")))
         {
             ContentNode node = ContentNode.Read(files, path);
             RaceDefinition race = RaceDefinition.Read(node);
             MatchName(node, race.Id, path);
             Races[race.Id] = race;
         }
-        foreach (string path in files.List(folder + "/backgrounds"))
+        foreach (string path in files.List(Under(folder, "backgrounds")))
         {
             ContentNode node = ContentNode.Read(files, path);
             BackgroundDefinition background = BackgroundDefinition.Read(node);
             MatchName(node, background.Id, path);
             Backgrounds[background.Id] = background;
         }
-        foreach (string path in files.List(folder + "/spells"))
+        foreach (string path in files.List(Under(folder, "spells")))
         {
             ContentNode node = ContentNode.Read(files, path);
             SpellDefinition spell = SpellDefinition.Read(node);
@@ -135,7 +138,7 @@ public class Compendium
             Spells[spell.Id] = spell;
         }
 
-        foreach (string path in files.List(folder + "/options"))
+        foreach (string path in files.List(Under(folder, "options")))
         {
             ContentNode node = ContentNode.Read(files, path);
             OptionDefinition option = OptionDefinition.Read(node);
