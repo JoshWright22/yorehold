@@ -167,7 +167,8 @@
     { "id": "aspects", "name": "Aspects", "count": 3, "hint": "Something true about them that matters" }
   ],
   "turnOrder": {
-    "roll": false
+    "roll": false,
+    "picked": true
   },
   "defences": [
     { "id": "defend", "name": "Defend", "value": "max(mod.quick, mod.careful)" }

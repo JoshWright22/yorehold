@@ -99,7 +99,7 @@ The turn:
 | --- | --- |
 | `actionsPerTurn`, `bonusActions`, `freeMove`, `strikeCostsHands` | What a turn holds. |
 | `attackPenalty` | A formula from attacks made this turn (PF2e's multiple attack penalty). |
-| `turnOrder` | One initiative order or side by side; rolled or by the modifier alone. |
+| `turnOrder` | One initiative order or side by side; rolled or by the modifier alone; `picked`: whoever acted names who's next. |
 | `sharedTurns` | Members of a side next in order pick who goes. |
 | `turnWords` | What the system calls an action, a bonus action, a reaction, a free action. |
 

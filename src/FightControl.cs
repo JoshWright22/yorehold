@@ -360,6 +360,11 @@ public partial class FightControl : Node
             {
                 Aim.Action = "";
             }
+            else if (Aim.Action.Length == 0 && w.CanPickNext(creature))
+            {
+                // a system where the one acting picks who's next (Fate): a click on someone yet to act
+                w.PickNext(creature);
+            }
             if (Seen(w, creature))
             {
                 Watch = creature; // Home goes to them; the click itself leaves the camera

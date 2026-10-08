@@ -53,6 +53,35 @@ public class EncounterTests
         Assert.Equal("turnOrder.mode", error.Field);
     }
 
+    [Fact]
+    public void WhoeverActedPicksWhoIsNext()
+    {
+        // Fate: by Quick (here dex), then the one acting hands the turn on
+        Ruleset rules = RulesTesting.Rules($$"""
+            {"id":"t","name":"Test",{{Abilities}},"turnOrder":{"roll":false,"picked":true} }
+            """);
+        CharacterSheet[] people = People(4);
+        var fight = new Encounter(rules, 3);
+        fight.Add(people[0], 0);
+        fight.Add(people[1], 1);
+        fight.Add(people[2], 0);
+        fight.Add(people[3], 1);
+        fight.Start();
+        string Order() => string.Join(" ", fight.Order.Select(c => c.Sheet.Name));
+        Assert.Equal("0 1 2 3", Order());
+        // nobody named: an ally of 0's yet to act goes next
+        fight.NextTurn();
+        Assert.Equal("2", fight.Current.Sheet.Name);
+        Assert.Equal("0 2 1 3", Order());
+        // 2 names 3, a foe; someone who has acted can't be named
+        Assert.False(fight.CanPickNext(0));
+        Assert.True(fight.PickNext(3));
+        fight.NextTurn();
+        Assert.Equal("3", fight.Current.Sheet.Name);
+        fight.NextTurn();
+        Assert.Equal("1", fight.Current.Sheet.Name);
+    }
+
     private static CharacterSheet[] People(int count, int hp = 200)
     {
         var people = new CharacterSheet[count];

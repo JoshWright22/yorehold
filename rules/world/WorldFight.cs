@@ -422,6 +422,23 @@ public sealed partial class World
         return true;
     }
 
+    /// <summary>With a picked turn order (Fate): whether the hero acting may hand the next turn to this creature.</summary>
+    public bool CanPickNext(int creature) =>
+        Fighting && CurrentCreature is int now && now < HeroCount && creature != now && OrderIndex(creature) is int index && Encounter!.CanPickNext(index);
+
+    /// <summary>The hero acting names who goes after them.</summary>
+    public bool PickNext(int creature)
+    {
+        Refusal = "";
+        if (!CanPickNext(creature) || !Encounter!.PickNext(OrderIndex(creature)!.Value))
+        {
+            Refusal = "They can't go next.";
+            return false;
+        }
+        SyncLog();
+        return true;
+    }
+
     private void EndCurrentTurn()
     {
         if (CurrentCreature is int current)

@@ -259,6 +259,31 @@ public sealed class Encounter
         return true;
     }
 
+    // whether the one acting has said who goes next this turn
+    private bool _nextPicked;
+
+    /// <summary>With a picked order (Fate): someone yet to act this round may be named to go next.</summary>
+    public bool CanPickNext(int index)
+    {
+        return _rules.TurnOrder.Picked && !_rules.SharedTurns && Started && !Finished && Round > 0
+            && index > _current && index < _order.Count && _order[index].Standing;
+    }
+
+    /// <summary>The one acting names who goes after them: they move up to just after this turn.</summary>
+    public bool PickNext(int index)
+    {
+        if (!CanPickNext(index))
+        {
+            return false;
+        }
+        Combatant next = _order[index];
+        _order.RemoveAt(index);
+        _order.Insert(_current + 1, next);
+        _nextPicked = true;
+        AddLog($"{_order[_current].Sheet.Name} hands the turn to {next.Sheet.Name}");
+        return true;
+    }
+
     /// <summary>
     /// Ends the current turn and skips anyone down, out or surprised. Conditions follow the fight:
     /// they hear turnStart and turnEnd, count down when a round ends, and "cantAct" or "cantMove"
@@ -279,6 +304,20 @@ public sealed class Encounter
         {
             ConditionsEnded(_order[_current].Sheet, _order[_current].Sheet.ConditionEvent(_rules, "turnEnd"));
         }
+        // nobody named: an ally yet to act goes next, so a side's turns run together
+        if (_rules.TurnOrder.Picked && !_nextPicked && Round > 0)
+        {
+            int team = _order[_current].Team;
+            int ally = Enumerable.Range(_current + 1, Math.Max(0, _order.Count - _current - 1))
+                .FirstOrDefault(i => _order[i].Team == team && _order[i].Standing && !_order[i].Surprised, -1);
+            if (ally > _current + 1)
+            {
+                Combatant next = _order[ally];
+                _order.RemoveAt(ally);
+                _order.Insert(_current + 1, next);
+            }
+        }
+        _nextPicked = false;
         // Twice round: a surprised combatant passes once and can then take the next turn that comes.
         for (int tries = 0; tries < _order.Count * 2 + 1; tries++)
         {

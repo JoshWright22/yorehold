@@ -5,6 +5,8 @@ namespace Yorehold.Rules;
 /// order by initiative; "sides" lets one whole side act, then the other, each side in initiative
 /// order (with sharedTurns its members pick who goes). Roll false orders by the initiative
 /// modifier alone, as Fate orders by an approach; First says which side starts in "sides".
+/// Picked (Fate): whoever just acted picks who goes next among those yet to act this round; by
+/// default an ally, so a side's turns run together, and a hero's player may pick anyone.
 /// </summary>
 public sealed class TurnOrder
 {
@@ -14,6 +16,7 @@ public sealed class TurnOrder
     public string Mode { get; init; } = "initiative";
     public bool Roll { get; init; } = true;
     public string First { get; init; } = "initiative";
+    public bool Picked { get; init; }
 
     public bool BySides => Mode == "sides";
 
@@ -23,8 +26,8 @@ public sealed class TurnOrder
         {
             return new TurnOrder();
         }
-        node.RequireObject("is an object: mode, roll, first");
-        node.Only("mode", "roll", "first");
+        node.RequireObject("is an object: mode, roll, first, picked");
+        node.Only("mode", "roll", "first", "picked");
         string mode = node.Text("mode", "initiative", 32);
         if (!Modes.Contains(mode))
         {
@@ -35,6 +38,6 @@ public sealed class TurnOrder
         {
             throw node.Fail("first", $"is {string.Join(", ", Firsts)}");
         }
-        return new TurnOrder { Mode = mode, Roll = node.Bool("roll", true), First = first };
+        return new TurnOrder { Mode = mode, Roll = node.Bool("roll", true), First = first, Picked = node.Bool("picked", false) };
     }
 }
