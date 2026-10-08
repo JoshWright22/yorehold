@@ -57,6 +57,8 @@ public sealed class EffectEvent
     public int Dc { get; init; }
     public bool Success { get; init; }
     public bool Critical { get; init; }
+    /// <summary>A roll: which of the system's outcomes it was ("hit", "criticalFailure").</summary>
+    public string Outcome { get; init; } = "";
     /// <summary>The damage took them to 0.</summary>
     public bool Dropped { get; init; }
     /// <summary>The damage type, condition, resource, flag, ability rolled...</summary>

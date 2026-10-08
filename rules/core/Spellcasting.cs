@@ -112,7 +112,7 @@ public static class Spellcasting
         check.Rolled = true;
         check.Dc = ConcentrationDc(spells, damage);
         check.Roll = caster.RollSave(rules, spells.SaveAbility, Advantage.None, random);
-        check.Kept = check.Roll.Total >= check.Dc;
+        check.Kept = rules.Checks.Passes(CheckRules.Save, check.Roll, check.Dc);
         return check;
     }
 }

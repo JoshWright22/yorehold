@@ -101,7 +101,7 @@ public sealed class Encounter
             return;
         }
         var joining = new Combatant(sheet, team);
-        joining.InitiativeRoll = Dice.RollD20(sheet.InitiativeModifier(_rules), Advantage.None, Random);
+        joining.InitiativeRoll = _rules.Checks.Kind("initiative").Roll(sheet.InitiativeModifier(_rules), Advantage.None, Random);
         joining.Initiative = joining.InitiativeRoll.Total;
         AddLog($"{sheet.Name} joins the fight, initiative {joining.InitiativeRoll.Describe()}");
         // After everyone who rolled at least as high; whoever's turn it is keeps it.
@@ -167,7 +167,7 @@ public sealed class Encounter
         }
         foreach (Combatant c in _order)
         {
-            c.InitiativeRoll = Dice.RollD20(c.Sheet.InitiativeModifier(_rules), Advantage.None, Random);
+            c.InitiativeRoll = _rules.Checks.Kind("initiative").Roll(c.Sheet.InitiativeModifier(_rules), Advantage.None, Random);
             c.Initiative = c.InitiativeRoll.Total;
             AddLog($"{c.Sheet.Name} initiative {c.InitiativeRoll.Describe()}");
         }
@@ -300,11 +300,13 @@ public sealed class Encounter
         CharacterSheet target = _order[targetIndex].Sheet;
         _order[_current].Budget.Actions -= StrikeCost;
 
-        result.AttackRoll = Dice.RollD20(self.AttackModifier(_rules), self.AttackAdvantage(_rules), Random);
+        CheckKind attack = _rules.Checks.Kind(CheckRules.Attack);
+        result.AttackRoll = attack.Roll(self.AttackModifier(_rules), self.AttackAdvantage(_rules), Random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still count for this roll
-        result.Critical = result.AttackRoll.Natural20;
         int ac = target.ArmorClass(_rules);
-        result.Hit = !result.AttackRoll.Natural1 && (result.Critical || result.AttackRoll.Total >= ac);
+        CheckOutcome outcome = attack.Resolve(result.AttackRoll, ac);
+        result.Critical = outcome.Critical;
+        result.Hit = outcome.Passes;
         string line = $"{self.Name} attacks {target.Name} (AC {ac}): {result.AttackRoll.Describe()}";
         if (!result.Hit)
         {

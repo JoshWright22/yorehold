@@ -153,23 +153,17 @@ public sealed partial class World
         ActionDefinition? action = FindAction(actionId);
         CharacterSheet sheet = Creatures[attacker].Sheet;
         int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
-        int bonus = sheet.AttackModifier(Rules);
-        // A 1 always misses and a 20 always hits, whatever the numbers.
-        int faces = 0;
-        for (int face = 1; face <= 20; face++)
-        {
-            if (face == 20 || (face != 1 && face + bonus >= ac))
-            {
-                faces++;
-            }
-        }
-        float one = faces / 20.0f;
-        return sheet.AttackAdvantage(Rules) switch
-        {
-            Advantage.Advantage => 1 - (1 - one) * (1 - one),
-            Advantage.Disadvantage => one * one,
-            _ => one,
-        };
+        // counted from the system's own dice and outcomes, so it is right for any of them
+        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules), ac, sheet.AttackAdvantage(Rules));
+    }
+
+    /// <summary>The same attack as HitChance, as the chance of each of the system's outcomes by id.</summary>
+    public Dictionary<string, double> AttackOdds(int attacker, int target, string? actionId = null)
+    {
+        ActionDefinition? action = FindAction(actionId ?? StrikeAction);
+        CharacterSheet sheet = Creatures[attacker].Sheet;
+        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && action.Range > 1) : Creatures[target].Sheet.ArmorClass(Rules);
+        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules), ac, sheet.AttackAdvantage(Rules));
     }
 
     /// <summary>

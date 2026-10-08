@@ -843,12 +843,19 @@ public sealed partial class World
         string name = Called(o, o.HasDoor ? "the door" : o.Has("lever") ? "the lever" : "it");
         bool used = false;
 
+        RollResult rolled = new();
         int Check(string with, int dc, string what)
         {
             Rng dice = NextRandom(0x0b1ec7UL);
-            RollResult roll = sheet.RollCheck(Rules, with, Advantage.None, dice);
-            Say($"{sheet.Name} tries to {what} {name} ({with} DC {dc}): {roll.Describe()}");
-            return roll.Total;
+            rolled = sheet.RollCheck(Rules, with, Advantage.None, dice);
+            Say($"{sheet.Name} tries to {what} {name} ({with} DC {dc}): {rolled.Describe()}");
+            return rolled.Total;
+        }
+        // read the way the system reads a check, not as a bare total
+        bool Passed(string with, int dc, string what)
+        {
+            Check(with, dc, what);
+            return Rules.Checks.Passes(CheckRules.Check, rolled, dc);
         }
 
         if (o.ArmedTrap && o.TrapFound)
@@ -877,7 +884,7 @@ public sealed partial class World
             Interaction result = Map.Interact(id, keys);
             if (result == Interaction.Locked && o.Lock != null && o.Lock.Dc > 0)
             {
-                if (Check(CheckWith(o.Lock.Skill, Rules.Roles.Thievery), o.Lock.Dc, "pick the lock of") >= o.Lock.Dc)
+                if (Passed(CheckWith(o.Lock.Skill, Rules.Roles.Thievery), o.Lock.Dc, "pick the lock of"))
                 {
                     Map.Unlock(id);
                     result = Map.Interact(id, keys);

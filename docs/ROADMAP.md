@@ -257,6 +257,21 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   repeat a bounded number of times). It has no file, network or engine access, every loop has a
   limit and every roll uses the game's seeded dice, so an uploaded system is safe to run and can
   be replayed. Each step writes a plain line to the log, so a result can be explained.
+  - Josh, 10/8: it is all JSON. There is no separate script format: a system is JSON files, a
+    procedure is a JSON list of steps (the `effects` lists actions and spells already use), and
+    a formula is a short text value inside the JSON (`"degree": "total >= dc"`).
+  - Done 10/8: formulas (`rules/core/Formula.cs`) and `checks` in ruleset.json (CONTENT.md,
+    "Checks and formulas"): each roll kind's dice, named outcomes worst to best, the formula that
+    picks one, what a save's outcome lets through, and critical damage as doubled dice or a
+    formula. Attacks, checks, saves and initiative resolve through it, steps may wait on any
+    outcome the system names, and the hit chance is counted from the same data
+    (`CheckKind.Odds`, the first piece of the evaluator). The yorehold set's own rules are
+    written out in its ruleset.json and every earlier test passes unchanged.
+  - Left: dice beyond keep-highest/lowest (exploding, success counts, custom faces); the
+    formulas for a creature's own numbers (attack bonus, AC, save and skill modifiers are still
+    C#, R6); death saves (R7); a trap's "fumbled by 5" and dialogue checks still read a bare
+    total; expected damage and simulated fights in the evaluator; the fight AI's own odds
+    (`Tactics`, R12).
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The
     import (R13) writes systems in it, and the game checks the draft by loading and running it.

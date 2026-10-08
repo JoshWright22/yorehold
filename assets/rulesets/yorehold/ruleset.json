@@ -42,6 +42,28 @@
     "strike": "strike", "stride": "stride", "endTurn": "end-turn", "interact": "interact",
     "slotPrefix": "slots-", "focus": "focus"
   },
+  "checks": {
+    "criticalDamage": "doubleDice",
+    "attack": {
+      "dice": "1d20", "advantage": "2d20kh1", "disadvantage": "2d20kl1",
+      "outcomes": [
+        { "id": "miss", "name": "Miss" },
+        { "id": "hit", "name": "Hit", "passes": true },
+        { "id": "crit", "name": "Critical hit", "passes": true, "critical": true }
+      ],
+      "degree": "die == 1 ? 0 : die == 20 ? 2 : total >= dc ? 1 : 0"
+    },
+    "check": {
+      "dice": "1d20", "advantage": "2d20kh1", "disadvantage": "2d20kl1",
+      "outcomes": [{ "id": "failure", "name": "Failure" }, { "id": "success", "name": "Success", "passes": true }],
+      "degree": "total >= dc"
+    },
+    "save": {
+      "dice": "1d20", "advantage": "2d20kh1", "disadvantage": "2d20kl1",
+      "outcomes": [{ "id": "saveFailed", "name": "Failed" }, { "id": "saveSucceeded", "name": "Saved", "passes": true, "damage": 0.5 }],
+      "degree": "total >= dc"
+    }
+  },
   "passiveBase": 10,
   "proficiencyByLevel": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6],
   "proficiencyRanks": [

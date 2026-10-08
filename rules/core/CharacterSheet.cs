@@ -262,12 +262,12 @@ public sealed partial class CharacterSheet
 
     public RollResult RollCheck(Ruleset rules, string abilityOrSkill, Advantage advantage, Rng random)
     {
-        return Dice.RollD20(CheckModifier(rules, abilityOrSkill), advantage, random);
+        return rules.Checks.Kind(CheckRules.Check).Roll(CheckModifier(rules, abilityOrSkill), advantage, random);
     }
 
     public RollResult RollSave(Ruleset rules, string ability, Advantage advantage, Rng random)
     {
-        return Dice.RollD20(SaveModifier(rules, ability), advantage, random);
+        return rules.Checks.Kind(CheckRules.Save).Roll(SaveModifier(rules, ability), advantage, random);
     }
 
     /// <summary>The weapon's own ability, else the system's attack ability.</summary>
@@ -615,7 +615,7 @@ public sealed partial class CharacterSheet
                 ended.Add(active.Id);
             }
             else if (definition.SaveAbility.Length > 0 && random != null
-                && RollSave(rules, definition.SaveAbility, Advantage.None, random).Total >= definition.SaveDc)
+                && rules.Checks.Passes(CheckRules.Save, RollSave(rules, definition.SaveAbility, Advantage.None, random), definition.SaveDc))
             {
                 ended.Add(active.Id);
             }

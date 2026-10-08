@@ -359,11 +359,9 @@ public class Effect
         // A check against nobody in particular is the doer's own; everything else is aimed.
         bool ownCheck = kind == EffectKind.Roll && how == "check" && against.Length == 0;
         string target = OneOf(node, "target", ownCheck ? "self" : "target", "self", "target", "area", "allies", "enemies");
+        // Read as a name here; whether it is an event or one of the system's outcomes is checked
+        // against the ruleset (Check), since a system names its own outcomes.
         string when = node.Name("when", "");
-        if (when.Length > 0 && !Results.Contains(when) && !ConditionDefinition.Events.Contains(when))
-        {
-            throw node.Fail("when", $"unknown \"{when}\"");
-        }
         OnSave onSave = OneOf(node, "onSave", "full", "full", "half", "none") switch
         {
             "half" => OnSave.Half,
@@ -456,6 +454,11 @@ public class Effect
             if (step.Against.Length > 0 && !Measurable(step.Against))
             {
                 throw new ContentException(file, at + ".against", $"unknown ability or skill \"{step.Against}\"");
+            }
+            if (step.When.Length > 0 && !Results.Contains(step.When) && !ConditionDefinition.Events.Contains(step.When)
+                && !rules.Checks.HasOutcome(step.When))
+            {
+                throw new ContentException(file, at + ".when", $"unknown \"{step.When}\": not an event or one of this system's outcomes");
             }
             if (step.OnSave != OnSave.Full && !hasSave)
             {

@@ -9,10 +9,12 @@ internal sealed class EffectRun
     // What the rolls made so far in this run say about one creature.
     private sealed class Outcome
     {
-        public bool? Hit;
-        public bool Critical;
-        public bool? Saved;
-        public bool? Passed;
+        public CheckOutcome? Attack;
+        public CheckOutcome? Check;
+        public CheckOutcome? Save;
+
+        public bool Critical => Attack is { Critical: true };
+        public bool? Saved => Save?.Passes;
     }
 
     private readonly Effect _effect;
@@ -84,11 +86,11 @@ internal sealed class EffectRun
         }
         int dc = _effect.Save.CasterDc ? _context.Dc : _effect.Save.Dc;
         RollResult roll = sheet.RollSave(_rules, _effect.Save.Ability, Advantage.None, _random);
-        outcome.Saved = roll.Total >= dc;
+        outcome.Save = _rules.Checks.Kind(CheckRules.Save).Resolve(roll, dc);
         _result.Events.Add(new EffectEvent
         {
             Kind = EffectEventKind.Save, Who = who, By = _context.Self, Roll = roll, Dc = dc,
-            Success = roll.Total >= dc, Id = _effect.Save.Ability,
+            Success = outcome.Save.Passes, Outcome = outcome.Save.Id, Id = _effect.Save.Ability,
         });
     }
 
@@ -99,15 +101,37 @@ internal sealed class EffectRun
         {
             return null;
         }
-        if (when is "success" or "failure")
+        // The words the game has always had mean what they did in any system: a hit is an
+        // attack that passes, success a check that passes.
+        if (when is "hit" or "miss" or "crit")
         {
-            return outcome.Passed == null ? null : outcome.Passed == (when == "success");
+            return outcome.Attack == null ? null
+                : when == "hit" ? outcome.Attack.Passes
+                : when == "miss" ? !outcome.Attack.Passes
+                : outcome.Attack.Critical;
         }
-        if (outcome.Hit == null)
+        if (when is "success" or "failure" && outcome.Check != null)
+        {
+            return outcome.Check.Passes == (when == "success");
+        }
+        // Anything else is one of the system's own outcomes ("criticalFailure"), of whichever roll was made.
+        CheckOutcome?[] made = { outcome.Check, outcome.Attack, outcome.Save };
+        if (made.All(roll => roll == null))
         {
             return null;
         }
-        return when == "hit" ? outcome.Hit : when == "miss" ? !outcome.Hit : outcome.Critical;
+        return made.Any(roll => roll?.Id == when);
+    }
+
+    // A step waiting on one of the save's own outcomes asks for the effect's save, as "saveFailed" does.
+    private bool AsksForSave(string when, Outcome outcome)
+    {
+        if (when is "saveFailed" or "saveSucceeded")
+        {
+            return true;
+        }
+        return _effect.Save.Ability.Length > 0 && outcome.Attack == null && outcome.Check == null
+            && when is not ("hit" or "miss" or "crit") && _rules.Checks.Kind(CheckRules.Save).Outcome(when) != null;
     }
 
     // Whether the step happens to `who`. A save is the business of whoever the step lands on. An
@@ -121,7 +145,7 @@ internal sealed class EffectRun
         }
         Outcome outcome = OutcomeOf(who);
         string when = step.When;
-        if (when is "saveFailed" or "saveSucceeded" || step.OnSave == OnSave.None)
+        if (AsksForSave(when, outcome) || step.OnSave == OnSave.None)
         {
             SaveIfAsked(who, outcome);
         }
@@ -383,14 +407,28 @@ internal sealed class EffectRun
             }
             Outcome outcome = OutcomeOf(actor);
             bool doubled = step.CritDoubles && outcome.Critical;
-            RollResult rolled = doubled ? RollAmount(step, true) : shared ??= RollAmount(step, false);
-            int amount = Math.Max(step.Minimum, rolled.Total);
+            // A critical hit rolls its dice twice, or the system's formula says what it comes to.
+            Formula? critical = _rules.Checks.CriticalDamage;
+            RollResult rolled = doubled ? RollAmount(step, critical == null) : shared ??= RollAmount(step, false);
+            int total = rolled.Total;
+            if (doubled && critical != null)
+            {
+                total = critical.Whole(name => name switch
+                {
+                    "dice" => rolled.Total - rolled.Flat,
+                    "flat" => rolled.Flat,
+                    "max" => rolled.Dice.Where(die => die.Kept).Sum(die => die.Sides),
+                    _ => null,
+                });
+            }
+            int amount = Math.Max(step.Minimum, total);
             if (step.OnSave == OnSave.Half)
             {
+                // the share the save's outcome lets through: half when it holds, in the game's own rules
                 SaveIfAsked(actor, outcome);
-                if (outcome.Saved == true)
+                if (outcome.Save != null && outcome.Save.Damage != 1)
                 {
-                    amount /= 2;
+                    amount = (int)Math.Floor(amount * outcome.Save.Damage);
                 }
             }
             bool wasUp = !sheet.Down;
@@ -447,10 +485,11 @@ internal sealed class EffectRun
         {
             int dc = step.CasterDc ? _context.Dc : step.Dc;
             RollResult roll = subject.RollSave(_rules, step.Ability, Advantage.None, _random);
-            outcome.Saved = roll.Total >= dc;
+            outcome.Save = _rules.Checks.Kind(CheckRules.Save).Resolve(roll, dc);
             _result.Events.Add(new EffectEvent
             {
-                Kind = EffectEventKind.Save, Who = actor, By = _context.Self, Roll = roll, Dc = dc, Success = roll.Total >= dc, Id = step.Ability,
+                Kind = EffectEventKind.Save, Who = actor, By = _context.Self, Roll = roll, Dc = dc,
+                Success = outcome.Save.Passes, Outcome = outcome.Save.Id, Id = step.Ability,
             });
             return true;
         }
@@ -462,25 +501,25 @@ internal sealed class EffectRun
         {
             int dc = step.Against.Length > 0 ? subject.PassiveScore(_rules, step.Against) : step.CasterDc ? _context.Dc : step.Dc;
             RollResult roll = self.RollCheck(_rules, step.Ability, Advantage.None, _random);
-            outcome.Passed = roll.Total >= dc;
+            outcome.Check = _rules.Checks.Kind(CheckRules.Check).Resolve(roll, dc);
             _result.Events.Add(new EffectEvent
             {
-                Kind = EffectEventKind.Check, Who = actor, By = _context.Self, Roll = roll, Dc = dc, Success = roll.Total >= dc, Id = step.Ability,
+                Kind = EffectEventKind.Check, Who = actor, By = _context.Self, Roll = roll, Dc = dc,
+                Success = outcome.Check.Passes, Outcome = outcome.Check.Id, Id = step.Ability,
             });
             return true;
         }
-        // An attack with whatever the doer holds, against armour class. A natural 1 misses, a
-        // natural 20 hits and is a critical hit.
-        RollResult attack = Dice.RollD20(self.AttackModifier(_rules), self.AttackAdvantage(_rules), _random);
+        // An attack with whatever the doer holds, against armour class, read the way the system
+        // reads attacks (the game's own: a natural 1 misses, a natural 20 is a critical hit).
+        CheckKind kind = _rules.Checks.Kind(CheckRules.Attack);
+        RollResult attack = kind.Roll(self.AttackModifier(_rules), self.AttackAdvantage(_rules), _random);
         List<string> afterAttack = self.ConditionEvent(_rules, "attack"); // they still counted for this roll
         int ac = _host.ArmorClass(actor, _context);
-        Degree degree = Checks.DegreeOf(attack, ac);
-        outcome.Critical = degree == Degree.CriticalSuccess;
-        outcome.Hit = Checks.Passed(degree);
+        outcome.Attack = kind.Resolve(attack, ac);
         _result.Events.Add(new EffectEvent
         {
             Kind = EffectEventKind.Attack, Who = actor, By = _context.Self, Roll = attack, Dc = ac,
-            Success = Checks.Passed(degree), Critical = outcome.Critical,
+            Success = outcome.Attack.Passes, Critical = outcome.Critical, Outcome = outcome.Attack.Id,
         });
         Ended(_context.Self, afterAttack);
         return true;

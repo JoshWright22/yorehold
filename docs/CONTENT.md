@@ -753,6 +753,7 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `scoreMin`, `scoreMax` | Bounds on ability scores. |
 | `baseArmorClass`, `armorClassAbility` | Unarmoured AC, and the ability added to AC (empty = none). |
 | `roles` | The ids the game's own procedures use, so a system can name things its own way. `hpAbility` (added to HP per level and per hit die), `attackAbility` (for weapons that name none), `carryAbility` (empty = the first ability), `initiative`, `perception`, `stealth` and `thievery` (an ability or a skill; thievery is for locks and traps that name none), the `hidden`, `downed` and `dead` conditions, the `strike`, `stride`, `endTurn` and `interact` actions, `slotPrefix` (spell slot resources; `spellcasting.json` must agree) and `focus` (the focus resource). Every field is optional; an empty name means the system has none. Without `roles`, the older `initiativeAbility` and `hitDieAbility` still count, and a default the system lacks falls back (perception to `wis`, stealth to `dex`) or to none. |
+| `checks` | How the system's rolls are made and read; see "Checks and formulas" below. Left out, the game's own: a d20, a 1 misses and a 20 is a critical hit, checks and saves pass on the DC or more, critical damage rolls its dice twice. |
 | `passiveBase` | A passive score, such as the passive Perception sneaking is rolled against, is this plus the modifier. |
 | `proficiencyByLevel` | Legacy proficiency bonus at each level, level 1 first; used when there are no ranks. |
 | `proficiencyRanks` | Optional list of ranks with unique `id`, display `name`, `bonus` (0 to 100) and `addsLevel`. |
@@ -770,6 +771,30 @@ The game's rules are a folder, `rulesets/yorehold/`, and every number the rules 
 | `revivePrice`, `reviveHp` | What bringing a dead hero back at camp costs, in copper (0 = it can't be bought; 20000 = 200 gp), and the HP they come back with (0 = full; 1 here). |
 | `defaultHitDie`, `hitDieByClass` | Sides of the hit die, and by class name. The ability added per die is `roles.hpAbility`. |
 | `conditions` | Optional list of conditions written inline; a ruleset folder keeps them as files instead (see Conditions). |
+
+### Checks and formulas
+
+`checks` is an object of roll kinds. The game rolls `attack`, `check`, `save` and `initiative`; a kind the system leaves out resolves like `check`. Each kind has:
+
+- `dice`, `advantage`, `disadvantage`: the dice rolled (`"1d20"`, `"3d6"`, `"2d20kh1"`). Giving only `dice` uses it for all three.
+- `outcomes`: 2 to 12 ways it can come out, worst first. Each has an `id`, a `name` for the log, `passes` (what "hit", "success" and a held save mean to the rest of the game), `critical` (critical damage goes with it) and `damage`, the share of an effect's damage a save with this outcome lets through under `"onSave": "half"` (0.5 by default for a save that passes, else 1; a critical failure can be 2 and a critical success 0).
+- `degree`: a formula giving the outcome's place in the list (0 = the first), from `total`, `die` (the dice without the modifier), `modifier` and `dc`.
+
+`criticalDamage` is `"doubleDice"` (the dice are rolled twice) or a formula from `dice` (what the damage dice came to), `flat` (the rest) and `max` (the most the dice could show): `"(dice + flat) * 2"`, `"max + dice + flat"`.
+
+A step's `when` may name any outcome id of the system besides the game's own words (`hit`, `miss`, `crit`, `success`, `failure`, `saveFailed`, `saveSucceeded`), which keep their meaning everywhere: `hit` is an attack that passes, `crit` one that is critical.
+
+A formula is arithmetic: numbers, the names listed for its place, `+ - * / %`, comparisons, `&& || !`, `a ? b : c`, and `min`, `max`, `floor`, `ceil`, `round`, `abs`, `clamp(value, low, high)`. True is 1 and false 0; a place that needs a whole number rounds down. It can't read files or run for long, so a system from anywhere is safe to load. Four degrees of success, ten over or under moving a step:
+
+```json
+"attack": {
+  "outcomes": [{"id": "criticalFailure"}, {"id": "failure"}, {"id": "success", "passes": true},
+               {"id": "criticalSuccess", "passes": true, "critical": true}],
+  "degree": "clamp((total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (die == 20 ? 1 : 0) - (die == 1 ? 1 : 0), 0, 3)"
+}
+```
+
+The game works the chance of each outcome out from the same data by counting every way the dice can fall, which is where the hit chance on screen comes from.
 
 A `recovery` has `kind` (`none`, `full`, `fraction` of max HP, `flat` HP or `hitDice`), with `fraction` (0 to 1), `amount` (HP, or dice with 0 meaning one per level) and `reviveDowned`. A ruleset that fails its checks stops the chapter from loading and names the file.
 

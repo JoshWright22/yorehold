@@ -232,7 +232,6 @@ public class ContentLoaderTests
     [InlineData("[{\"do\": \"damage\", \"dice\": \"lots\"}]", "[0].dice")]
     [InlineData("[{\"do\": \"damage\", \"dice\": \"1d6\", \"dise\": 2}]", "[0].dise")]
     [InlineData("[{\"do\": \"heal\", \"dice\": \"1d6\", \"onSave\": \"half\"}]", "[0].onSave")]
-    [InlineData("[{\"do\": \"heal\", \"dice\": \"1d6\", \"when\": \"later\"}]", "[0].when")]
     [InlineData("[{\"do\": \"condition\", \"id\": \"prone\", \"duration\": 0}]", "[0].duration")]
     [InlineData("[{\"do\": \"roll\", \"kind\": \"attack\"}]", "[0].steps")]
     [InlineData("[{\"do\": \"roll\", \"kind\": \"attack\", \"dc\": 12, \"steps\": []}]", "[0]")]

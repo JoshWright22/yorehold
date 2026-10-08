@@ -117,6 +117,8 @@ public class Ruleset
     public int BaseArmorClass { get; init; } = 10;
     public string ArmorClassAbility { get; init; } = "dex";
     public RoleNames Roles { get; init; } = new();
+    /// <summary>How attacks, checks and saves are rolled and read.</summary>
+    public CheckRules Checks { get; init; } = new();
     public List<int> ProficiencyByLevel { get; init; } = new();
     public List<ProficiencyRank> ProficiencyRanks { get; init; } = new();
     public string ProficientRank { get; init; } = "";
@@ -360,6 +362,7 @@ public class Ruleset
             BaseArmorClass = node.Int("baseArmorClass", 10),
             ArmorClassAbility = AbilityOrNone("armorClassAbility", "dex"),
             Roles = RolesFrom(node, abilities, skills, AbilityOrNone("initiativeAbility", "dex"), AbilityOrNone("hitDieAbility", "con")),
+            Checks = CheckRules.Read(node.Get("checks")),
             ProficiencyByLevel = WholeList(node, "proficiencyByLevel", int.MinValue, int.MaxValue),
             ProficiencyRanks = ranks,
             ProficientRank = proficientRank,
