@@ -180,7 +180,7 @@ public partial class SheetPanel : PanelContainer
 
         _portrait.Show(sheet.Name, world.Tokens.Tokens[hero].Color.ToGodot(), sheet.Down, Portraits.Of(world, hero), Portraits.FocusOf(world, hero));
         _name.Text = sheet.Name;
-        _who.Text = SheetPage.Who(compendium, sheet, c.Choices);
+        _who.Text = SheetPage.Who(compendium, sheet, c.Choices, rules);
         int xp = c.Choices != null ? Math.Max(c.Choices.Xp, sheet.Xp) : sheet.Xp;
         int next = sheet.Level - 1 < rules.XpForLevel.Count ? rules.XpForLevel[sheet.Level - 1] : 0;
         _xp.Visible = next > 0;

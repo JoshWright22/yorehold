@@ -29,6 +29,9 @@ public sealed class CreationRules
 
     public string NameOf(string part) => Names.GetValueOrDefault(part, part);
 
+    /// <summary>The system asks for a class, so the sheet names it.</summary>
+    public bool AsksClass => StepOf("class") >= 0;
+
     /// <summary>Which step a part is picked in; -1 when the system leaves it out.</summary>
     public int StepOf(string part) => Steps.FindIndex(step => step.Parts.Contains(part));
 
@@ -68,13 +71,11 @@ public sealed class CreationRules
                 }
                 steps.Add(new CreationStep(entry.At("name").AsText(64), parts));
             }
-            // every character has a name and a class, so the build always has something to build
-            foreach (string needed in new[] { "name", "class" })
+            // every character has a name; a system that never asks for a class builds on its first
+            // one, unseen (Fate has a single "character" class)
+            if (!seen.Contains("name"))
             {
-                if (!seen.Contains(needed))
-                {
-                    throw list.Fail($"a step has to pick the \"{needed}\"");
-                }
+                throw list.Fail("a step has to pick the \"name\"");
             }
         }
         var names = new Dictionary<string, string>(defaults.Names, StringComparer.Ordinal);

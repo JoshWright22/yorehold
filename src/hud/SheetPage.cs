@@ -13,7 +13,7 @@ public static class SheetPage
 {
     public static string Build(Ruleset rules, Compendium compendium, CharacterSheet sheet, CharacterChoices? choices, bool carrying = true)
     {
-        var page = new BookPage().Title(sheet.Name.Trim().Length == 0 ? "New character" : sheet.Name).Sub(Who(compendium, sheet, choices)).Rule();
+        var page = new BookPage().Title(sheet.Name.Trim().Length == 0 ? "New character" : sheet.Name).Sub(Who(compendium, sheet, choices, rules)).Rule();
         SheetLayout layout = rules.Sheet;
         // the system says which parts there are and in what order; a rule closes the top block and the scores
         bool ruled = false;
@@ -110,9 +110,10 @@ public static class SheetPage
     }
 
     /// <summary>"Level 1 Human Fighter, Soldier".</summary>
-    public static string Who(Compendium compendium, CharacterSheet sheet, CharacterChoices? choices)
+    public static string Who(Compendium compendium, CharacterSheet sheet, CharacterChoices? choices, Ruleset? rules = null)
     {
-        string who = $"Level {sheet.Level}";
+        // a system without levels or classes doesn't name them (Fate)
+        string who = rules?.Advancement == "none" ? "" : $"Level {sheet.Level}";
         if (sheet.Ancestry.Length > 0)
         {
             who += " " + sheet.Ancestry;
@@ -123,10 +124,11 @@ public static class SheetPage
         {
             who += $" ({string.Join(", ", picked)})";
         }
-        if (sheet.ClassName.Length > 0)
+        if (sheet.ClassName.Length > 0 && rules?.Creation.AsksClass != false)
         {
             who += " " + sheet.ClassName;
         }
+        who = who.Trim();
         if (choices != null && compendium.Backgrounds.TryGetValue(choices.Background, out BackgroundDefinition? background))
         {
             who += ", " + background.Name;

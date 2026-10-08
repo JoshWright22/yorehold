@@ -193,13 +193,11 @@
         "parts": [
           "name",
           "fields",
-          "class",
           "scores"
         ]
       }
     ],
     "names": {
-      "class": "Concept",
       "scores": "Approaches"
     },
     "scoreMethods": [

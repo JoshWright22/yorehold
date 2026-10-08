@@ -64,6 +64,8 @@ public class SystemPackageTests
         (Ruleset fate, Compendium fateCompendium) = Load("rulesets/fate-accelerated");
         var draft = new CharacterDraft(fate, fateCompendium);
         Assert.Single(draft.Steps);
+        Assert.True(!fate.Creation.AsksClass && pf2eAsks(), "Fate never asks for a class; it builds on its one");
+        bool pf2eAsks() => RulesFolder.Load(files, "rulesets/pf2e").Rules.Creation.AsksClass;
         draft.SetName("Zed");
         Assert.True(draft.Finished(), "A Fate character is a name and approaches: " + draft.StepProblem(0) + draft.Problem);
 
