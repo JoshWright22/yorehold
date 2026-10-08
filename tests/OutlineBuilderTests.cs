@@ -25,6 +25,7 @@ public class OutlineBuilderTests
     [Theory]
     [InlineData("rulesets/dnd5e", "dnd5e")]
     [InlineData("rulesets/pf2e", "pf2e")]
+    [InlineData("rulesets/fate-accelerated", "fate-accelerated")]
     public void TheSampleBuildsForAnotherSystem(string system, string id)
     {
         using var scratch = new Scratch();

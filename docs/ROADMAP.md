@@ -522,7 +522,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     it notices with, heroes take its plainest class, the game's own items and creatures take
     the system's of the same name or are left out, NPCs with no creature stand as a bystander
     written into the package, and the report says each. The sample adventure builds and plays
-    under 5e and PF2e.
+    under 5e, PF2e and Fate.
   - Left: the system picker in Create's import screen; the reading stage (`BookCast`) still
     writes the game's own ids for the builder to fit; stat blocks in the system's own creature
     format (a Fate target needs its approaches); the story model given the system's lists; DCs
