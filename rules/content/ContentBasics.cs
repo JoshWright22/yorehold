@@ -18,7 +18,11 @@ public enum ModifierOp
 /// A change to a stat. Adds with the same Type don't stack: only the biggest bonus and the
 /// biggest penalty of each type count ("item", "status", "circumstance"); untyped ones all add.
 /// </summary>
-public record Modifier(string Stat, ModifierOp Op, double Value, string Type = "");
+/// <remarks>
+/// With If, it is situational: it counts only on a roll whose context makes the formula true (a
+/// ranged attack, a Dexterity save), never in the sheet's standing numbers.
+/// </remarks>
+public record Modifier(string Stat, ModifierOp Op, double Value, string Type = "", Formula? If = null);
 
 public static class ContentIds
 {
@@ -101,11 +105,16 @@ public static class ContentParts
             entry.RequireObject("is an object with a stat and a value");
             if (strict)
             {
-                entry.Only("stat", "op", "value", "type");
+                entry.Only("stat", "op", "value", "type", "if");
             }
             // Stats are camelCase ("maxHp"), so they are names and not ids.
             string stat = entry.At("stat").AsName();
-            list.Add(new Modifier(stat, OpFrom(entry, "op"), entry.At("value").AsNumber(), entry.Text("type", "", 64)));
+            Formula? when = null;
+            if (entry.Get("if") is ContentNode condition)
+            {
+                when = Formula.Parse(condition.AsText(2000), out string error) ?? throw condition.Fail(error);
+            }
+            list.Add(new Modifier(stat, OpFrom(entry, "op"), entry.At("value").AsNumber(), entry.Text("type", "", 64), when));
         }
         return list;
     }

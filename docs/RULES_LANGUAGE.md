@@ -25,6 +25,7 @@ and says what was expected ("checks.attack.defence: unknown defence \"will\"").
 | `reactions/` | Off-turn answers: a trigger moment and the action it runs. |
 | `triggers/` | Effects that go off by themselves for whoever is granted them. |
 | `conditions/` | States with flags, modifiers, events that end them, saves. |
+| (any `modifiers`) | `stat`, `op`, `value`, `type`, and `if`: a formula that makes it count only on the rolls it holds for (`ranged`, `save.dex`, `trait.agile`, `targetFlag.undead`). |
 | `surfaces/` | Ground that does something to whoever stands in it. |
 | `spells/` and `spellcasting.json` | Actions with a level and a cost in slots or resources. |
 | `classes/`, `races/`, `backgrounds/`, `feats/`, `options/` | What characters are built from. |

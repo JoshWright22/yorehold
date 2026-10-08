@@ -388,10 +388,23 @@ public sealed partial class CharacterSheet
         return (rules.Roles.Initiative.Length == 0 ? 0 : CheckModifier(rules, rules.Roles.Initiative)) + Stats.Integer("initiative");
     }
 
-    public RollResult RollCheck(Ruleset rules, string abilityOrSkill, Advantage advantage, Rng random)
+    public RollResult RollCheck(Ruleset rules, string abilityOrSkill, Advantage advantage, Rng random, Func<string, double?>? context = null)
     {
-        // asked for none: whatever its conditions give its checks
-        return rules.Checks.Kind(CheckRules.Check).Roll(CheckModifier(rules, abilityOrSkill), advantage == Advantage.None ? CheckAdvantage(rules) : advantage, random);
+        // asked for none: whatever its conditions give its checks; situational adds on "checks" for this one
+        int situational = Situational(rules, "checks", name => name == "check." + abilityOrSkill ? 1 : context?.Invoke(name));
+        return rules.Checks.Kind(CheckRules.Check).Roll(CheckModifier(rules, abilityOrSkill) + situational,
+            advantage == Advantage.None ? CheckAdvantage(rules) : advantage, random);
+    }
+
+    /// <summary>
+    /// The situational adds to a stat (modifiers with an "if") that hold on one roll. Their
+    /// formulas read context first (what the roll is: "save.dex", "trait.ranged"), then the
+    /// sheet's own names and flag.&lt;flag&gt;.
+    /// </summary>
+    public int Situational(Ruleset rules, string stat, Func<string, double?>? context = null)
+    {
+        return (int)MathF.Floor(Stats.Situational(stat, name => context?.Invoke(name)
+            ?? (name.StartsWith("flag.", StringComparison.Ordinal) ? (HasFlag(rules, name[5..]) ? 1 : 0) : Named(rules, name) ?? 0)));
     }
 
     /// <summary>What its conditions do to its checks: advantage, disadvantage, or neither when both or none.</summary>
@@ -407,9 +420,10 @@ public sealed partial class CharacterSheet
         return advantage == disadvantage ? Advantage.None : advantage ? Advantage.Advantage : Advantage.Disadvantage;
     }
 
-    public RollResult RollSave(Ruleset rules, string ability, Advantage advantage, Rng random)
+    public RollResult RollSave(Ruleset rules, string ability, Advantage advantage, Rng random, Func<string, double?>? context = null)
     {
-        return rules.Checks.Kind(CheckRules.Save).Roll(SaveModifier(rules, ability), advantage, random);
+        int situational = Situational(rules, "saves", name => name == "save." + ability ? 1 : context?.Invoke(name));
+        return rules.Checks.Kind(CheckRules.Save).Roll(SaveModifier(rules, ability) + situational, advantage, random);
     }
 
     /// <summary>The weapon's own ability, else the system's attack ability.</summary>

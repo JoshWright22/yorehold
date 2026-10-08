@@ -50,11 +50,12 @@
         {
           "id": "danger-sense",
           "name": "Danger Sense",
-          "description": "Quick to see a blow or a blast coming: +1 to every save.",
+          "description": "Quick to see a trap or a blast coming: +2 to Dexterity saves (advantage in the book).",
           "modifiers": [
             {
               "stat": "saves",
-              "value": 1
+              "value": 2,
+              "if": "save.dex"
             }
           ]
         }

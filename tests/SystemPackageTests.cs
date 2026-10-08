@@ -95,6 +95,27 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AModifierCanHoldOnlySometimes()
+    {
+        // Archery: +2 on a ranged attack, nothing in melee or in the sheet's standing number
+        Ruleset rules = RulesTesting.Rules("""{"id": "t", "name": "T", "abilities": [{"id": "dex", "name": "Dexterity"}]}""");
+        var sheet = new CharacterSheet { Name = "Ash" };
+        sheet.Stats.AddModifier(new Modifier("attack", ModifierOp.Add, 2, "", Formula.Parse("ranged", out _)), "archery");
+        sheet.Stats.AddModifier(new Modifier("saves", ModifierOp.Add, 2, "", Formula.Parse("save.dex", out _)), "danger-sense");
+        Assert.Equal(0, sheet.Stats.Integer("attack"));
+        Assert.Equal(2, sheet.Situational(rules, "attack", name => name == "ranged" ? 1 : null));
+        Assert.Equal(0, sheet.Situational(rules, "attack", name => name == "ranged" ? 0 : null));
+        Assert.Equal(2, sheet.Situational(rules, "saves", name => name == "save.dex" ? 1 : null));
+        Assert.Equal(0, sheet.Situational(rules, "saves", name => name == "save.dex" ? 0 : null));
+        // and the shipped fighting style reads that way
+        ContentFiles files = TestContent.Shipped();
+        var compendium = new Compendium();
+        compendium.Load(files, "rulesets/dnd5e", "");
+        compendium.LoadOptions(files, "rulesets/dnd5e");
+        Assert.NotNull(compendium.Feats["archery"].Gives.Modifiers[0].If);
+    }
+
+    [Fact]
     public void RageAndInspirationDoTheirSums()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "bard");

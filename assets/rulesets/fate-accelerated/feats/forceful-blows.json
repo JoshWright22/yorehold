@@ -1,0 +1,13 @@
+{
+  "id": "forceful-blows",
+  "name": "Forceful Blows",
+  "description": "Because I hit first and hard, I get +2 when I attack Forcefully.",
+  "kind": "stunt",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "value": 2,
+      "if": "ability.forceful"
+    }
+  ]
+}

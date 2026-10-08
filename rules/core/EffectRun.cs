@@ -194,7 +194,7 @@ internal sealed class EffectRun
         CharacterSheet? self = _host.Sheet(_context.Self);
         string text = step.Amount switch
         {
-            "weapon" => self?.DamageDice(_rules) ?? "0",
+            "weapon" => self == null ? "0" : WithBonus(self.DamageDice(_rules), self.Situational(_rules, "damage", AttackContext(step, who >= 0 ? _host.Sheet(who) : null))),
             "speed" => (self?.SpeedSquares(_rules) ?? 0).ToString(),
             // formulas in braces read the doer's sheet: "2d8+{mod.wis}"
             _ => DiceText.Fill(step.Amount, name => name == "margin" ? margin ?? 0 : self?.Named(_rules, name)),
@@ -586,6 +586,30 @@ internal sealed class EffectRun
         }
     }
 
+    // What an attack's situational modifiers can ask: the weapon's traits, whether it is ranged or
+    // a spell, the ability it is made with, and the target's flags.
+    private Func<string, double?> AttackContext(EffectStep step, CharacterSheet? target)
+    {
+        CharacterSheet? self = _host.Sheet(_context.Self);
+        string ability = step.Ability == "caster" ? "caster" : step.Ability.Length > 0 ? step.Ability : self?.AttackAbility(_rules) ?? "";
+        bool spell = step.Ability == "caster";
+        bool ranged = spell || (self?.WeaponItem?.Definition.Range ?? 1) > 1;
+        return name => name switch
+        {
+            "ranged" => ranged ? 1 : 0,
+            "melee" => ranged ? 0 : 1,
+            "spell" => spell ? 1 : 0,
+            _ when name == "ability." + ability => 1,
+            _ when name.StartsWith("ability.", StringComparison.Ordinal) => 0,
+            _ when name.StartsWith("trait.", StringComparison.Ordinal) => !spell && self?.Weapon?.Has(name[6..]) == true ? 1 : 0,
+            _ when name.StartsWith("targetFlag.", StringComparison.Ordinal) => target?.HasFlag(_rules, name[11..]) == true ? 1 : 0,
+            _ => null,
+        };
+    }
+
+    // "1d8+3" with a situational bonus on the end: "1d8+5"; nothing added when it is 0.
+    private static string WithBonus(string dice, int bonus) => bonus == 0 ? dice : dice + (bonus > 0 ? "+" : "") + bonus;
+
     // Makes the step's roll about `actor` and records how it went. False if it could not be made.
     private bool RollFor(EffectStep step, int actor)
     {
@@ -648,6 +672,7 @@ internal sealed class EffectRun
         int bonus = step.Ability == "caster" ? self.SpellAttackModifier(_rules)
             : step.Ability.Length > 0 ? self.AttackModifier(_rules, step.Ability)
             : self.AttackModifier(_rules);
+        bonus += self.Situational(_rules, "attack", AttackContext(step, subject));
         Advantage advantage = self.AttackAdvantage(_rules, subject, _host.PlaceConditions(_context.Self, actor), _host.Distance(_context.Self, actor));
         outcome.Advantage = advantage == Advantage.Advantage;
         RollResult attack = kind.Roll(bonus + penalty, advantage, _random);

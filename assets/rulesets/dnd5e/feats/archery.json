@@ -1,0 +1,13 @@
+{
+  "id": "archery",
+  "name": "Archery",
+  "description": "+2 to attack rolls with ranged weapons.",
+  "kind": "fighting-style",
+  "modifiers": [
+    {
+      "stat": "attack",
+      "value": 2,
+      "if": "ranged && !spell"
+    }
+  ]
+}

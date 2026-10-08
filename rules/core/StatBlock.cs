@@ -36,7 +36,7 @@ public sealed class StatBlock
         foreach (AppliedModifier applied in _modifiers)
         {
             Modifier modifier = applied.Modifier;
-            if (modifier.Stat != stat)
+            if (modifier.Stat != stat || modifier.If != null)
             {
                 continue;
             }
@@ -64,6 +64,40 @@ public sealed class StatBlock
             add += best + worst;
         }
         return ((replaced ?? Base(stat)) + add) * multiply;
+    }
+
+    /// <summary>
+    /// What the situational adds to a stat (those with an "if") make on one roll: each whose
+    /// formula holds for names counts, typed ones the best bonus and worst penalty of each type.
+    /// </summary>
+    public float Situational(string stat, Func<string, double?> names)
+    {
+        float add = 0;
+        Dictionary<string, (float Best, float Worst)>? typed = null;
+        foreach (AppliedModifier applied in _modifiers)
+        {
+            Modifier modifier = applied.Modifier;
+            if (modifier.Stat != stat || modifier.If == null || modifier.Op != ModifierOp.Add || modifier.If.Evaluate(names) == 0)
+            {
+                continue;
+            }
+            float value = (float)modifier.Value;
+            if (modifier.Type.Length > 0)
+            {
+                typed ??= new Dictionary<string, (float, float)>(StringComparer.Ordinal);
+                (float best, float worst) = typed.GetValueOrDefault(modifier.Type);
+                typed[modifier.Type] = (MathF.Max(best, value), MathF.Min(worst, value));
+            }
+            else
+            {
+                add += value;
+            }
+        }
+        foreach ((float best, float worst) in typed?.Values ?? Enumerable.Empty<(float, float)>())
+        {
+            add += best + worst;
+        }
+        return add;
     }
 
     /// <summary>Rounded down, with a hair of slack so 14.9999 from a multiply still reads 15.</summary>
