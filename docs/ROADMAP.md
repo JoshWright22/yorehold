@@ -642,6 +642,13 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   player's own dice set chosen in Settings. Rolls are shown in a strip over the fight or the
   sheet and then leave the numbers in the log. Settings: off, fast, or full; with many rolls at
   once (a fireball's saves) they throw together. Hidden rolls (an enemy's stealth) aren't shown.
+  - Done 10/8: each roll's dice reach the screen with the face rolled (`DiceFaces`), the solids
+    d4 to d20, d100 as two d10s and Fate dice are built in `rules/` (`DiceSolids`), and
+    `DiceTray` throws them in a strip over the fight, up to six at once, the unkept die of
+    advantage dimmed, numbers upright. Settings > Dice: off, fast, full.
+  - Left: the look and sound from the skin and a player's own dice set; symbol faces from a
+    system's custom dice; rolls made on the sheet; hidden rolls kept off the strip; more than six
+    dice shown as a count.
 
 - [ ] **R18. A large free asset library for the map maker and portraits.** Josh, 10/8: anything
   the game may ship without asking, with the authors in the credits. Allowed: CC0, public domain,

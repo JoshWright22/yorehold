@@ -17,6 +17,7 @@ public sealed class SettingsPanel
 {
     public static readonly string[] LightingWords = { "As the map says", "Off", "Mood", "Rules" };
     private static readonly string[] TimeWords = { "As the map says", "Day", "Dusk", "Night" };
+    private static readonly string[] DiceWords = { "Off", "Fast", "Full" };
     private static readonly string[] Groups = { "Display", "Gameplay", "Camera", "Controls", "Account" };
 
     // Escape, Enter and the digits always do the same thing (back, confirm, replies and hotbar slots)
@@ -38,6 +39,8 @@ public sealed class SettingsPanel
         new("skin", "Skin", "Display", "A look from the skins folder: its colours, faces and frames. Takes hold when the game starts again.",
             s => s.Skin.Length == 0 ? "Game's own" : s.Skin, new[] { "Game's own", "Next skin" },
             (s, i) => s.Skin = i == 0 ? "" : NextSkin(s.Skin)),
+        new("dice", "Dice", "Display", "Rolls thrown as dice over the screen before the numbers reach the log: off, fast or full.",
+            s => DiceWords[Math.Clamp(s.Dice, 0, 2)], DiceWords, (s, i) => s.Dice = i),
         new("timeOfDay", "Time of day", "Display", "Outdoor maps by day, at dusk or at night. Underground maps stay as they are.",
             s => TimeWords[Math.Clamp(s.TimeOfDay, 0, 3)], TimeWords, (s, i) => s.TimeOfDay = i),
         new("sharedFog", "Shared party view", "Gameplay", "The map shows what anyone in the party sees, or only the selected hero.",

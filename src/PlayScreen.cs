@@ -56,6 +56,7 @@ public partial class PlayScreen : Node2D
     private TextureRect _shading = null!;
     private FogView _fog = null!;
     private FloatersView _floaters = null!;
+    private DiceTray _dice = null!;
     private PlayCamera _camera = null!;
     private Hud _hud = null!;
     private FightControl _fight = null!;
@@ -85,6 +86,14 @@ public partial class PlayScreen : Node2D
         _floaters = GetNode<FloatersView>("Overlay/Floaters");
         _camera = GetNode<PlayCamera>("Camera");
         _hud = GetNode<Hud>("Hud");
+        // the dice strip, over the map at the top, under the panels
+        _dice = new DiceTray { Name = "Dice" };
+        _hud.AddChild(_dice);
+        _dice.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
+        _dice.OffsetLeft = -380;
+        _dice.OffsetRight = 380;
+        _dice.OffsetTop = 110;
+        _dice.OffsetBottom = 270;
         _fight = GetNode<FightControl>("Fight");
         _fightGround = GetNode<FightGroundView>("Overlay/FightGround");
         _tokenBars = GetNode<TokenBarsView>("Overlay/TokenBars");
@@ -788,6 +797,7 @@ public partial class PlayScreen : Node2D
         {
             return;
         }
+        var thrown = new System.Collections.Generic.List<DiceFaces.Shown>();
         foreach (WorldEvent e in _world.TakeEvents())
         {
             switch (e.Kind)
@@ -814,6 +824,10 @@ public partial class PlayScreen : Node2D
                 }
                 case WorldEventKind.Banner:
                     _hud.Banner(e.Text, e.Seconds);
+                    break;
+                case WorldEventKind.Dice when e.Roll != null && App.Settings.Dice > 0:
+                    // what one action rolls (an attack and its damage, a Multiattack) is thrown together
+                    thrown.AddRange(DiceFaces.Of(e.Roll));
                     break;
                 case WorldEventKind.Cutscene:
                     if (_world.Chapter.Cutscenes.TryGetValue(e.Text, out Cutscene? cutscene))
@@ -855,6 +869,10 @@ public partial class PlayScreen : Node2D
                     _camera.Following = true;
                     break;
             }
+        }
+        if (thrown.Count > 0)
+        {
+            _dice.Throw(thrown, App.Settings.Dice == 1);
         }
     }
 

@@ -47,6 +47,8 @@ public sealed class GameSettings
     public string StoryModelName { get; set; } = "";
     /// <summary>The skin folder's name under the user folder's skins/, laid over the game's look; "" = the game's own.</summary>
     public string Skin { get; set; } = "";
+    /// <summary>Rolls thrown as 3D dice: 0 off, 1 fast, 2 full.</summary>
+    public int Dice { get; set; } = 2;
     /// <summary>Key bindings that differ from the shipped ones: action id to key names.</summary>
     public Dictionary<string, List<string>> Keys { get; } = new();
 
@@ -93,6 +95,7 @@ public sealed class GameSettings
         settings.StoryModel = Clip(Text(j, "storyModel", ""), 253);
         settings.StoryModelName = Clip(Text(j, "storyModelName", ""), 128);
         settings.Skin = Clip(Text(j, "skin", ""), 128);
+        settings.Dice = j["dice"] is JsonValue dice && dice.TryGetValue(out int shown) ? Math.Clamp(shown, 0, 2) : settings.Dice;
         if (j["keys"] is JsonObject keys)
         {
             foreach (KeyValuePair<string, JsonNode?> binding in keys)
@@ -155,6 +158,7 @@ public sealed class GameSettings
             ["storyModel"] = StoryModel,
             ["storyModelName"] = StoryModelName,
             ["skin"] = Skin,
+            ["dice"] = Dice,
         };
         var keys = new JsonObject();
         foreach (KeyValuePair<string, List<string>> binding in Keys.OrderBy(k => k.Key, StringComparer.Ordinal))
@@ -191,7 +195,7 @@ public sealed class GameSettings
     private static readonly string[] Known =
     {
         "zoomToCursor", "edgeScroll", "cameraFollows", "panSpeed", "fullscreen", "lighting", "timeOfDay", "sharedFog",
-        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName", "skin",
+        "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName", "skin", "dice",
     };
 
     private static string Clip(string text, int longest) => text.Length > longest ? text[..longest] : text;
