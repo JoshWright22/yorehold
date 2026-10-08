@@ -363,8 +363,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     four classes to level 3, five spells, three ancestries, four creatures. A fight plays to
     the end. The ORC notice is in the credits.
   - Done 10/8: weapons carry a `damageType`, so resistances meet Strikes in both systems.
-  - Doesn't fit yet: Sudden Charge and other actions that move and strike (a step that moves
-    toward the target);
+  - Done 10/8: Sudden Charge (`approach` moves and attacks with `reach`).
+  - Doesn't fit yet:
     monsters use the PC proficiency maths plus a flat `attack` stat;
     backstabber, deadly and versatile traits do nothing yet; hidden is plain disadvantage, not
     a DC 11 flat check; heightening cantrips by rank is written per spell as a formula.

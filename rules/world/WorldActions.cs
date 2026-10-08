@@ -524,8 +524,17 @@ public sealed partial class World
 
         // A push or pull in a straight line, stopping at walls and anyone in the way. Being moved
         // like this sets off no reactions.
+        public override bool InReach(int who, int target, int reach)
+        {
+            return reach <= 1 ? _world.Adjacent(who, target) : _world.Grid.Distance(_world.CellOf(who), _world.CellOf(target)) <= reach + 0.01f;
+        }
+
         public override bool Move(int who, string how, int squares, EffectContext context)
         {
+            if (how == "approach")
+            {
+                return Approach(context.Self, who, squares);
+            }
             if (Sheet(who) == null || Sheet(context.Self) == null || (how != "push" && how != "pull") || who == context.Self)
             {
                 return false;
@@ -552,6 +561,51 @@ public sealed partial class World
                 token.Position = _world.Grid.Center(at);
                 token.Path.Clear();
                 Sheet(who)!.ConditionEvent(_world.Rules, "move");
+            }
+            return moved;
+        }
+
+        // The mover steps toward the target a square at a time, the nearest free square each time,
+        // until it stands beside it or runs out of squares.
+        private bool Approach(int mover, int target, int squares)
+        {
+            if (Sheet(mover) == null || Sheet(target) == null || mover == target)
+            {
+                return false;
+            }
+            Cell at = _world.CellOf(mover);
+            Cell goal = _world.CellOf(target);
+            bool moved = false;
+            for (int i = 0; i < squares && Math.Max(Math.Abs(at.X - goal.X), Math.Abs(at.Y - goal.Y)) > 1; i++)
+            {
+                Cell? best = null;
+                float bestDistance = _world.Grid.Distance(at, goal);
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        var to = new Cell(at.X + dx, at.Y + dy);
+                        float distance = _world.Grid.Distance(to, goal);
+                        if ((dx != 0 || dy != 0) && distance < bestDistance && _world.Walkable(to) && !_world.Occupied(to, mover))
+                        {
+                            best = to;
+                            bestDistance = distance;
+                        }
+                    }
+                }
+                if (best is not Cell next)
+                {
+                    break;
+                }
+                at = next;
+                moved = true;
+            }
+            if (moved)
+            {
+                Token token = _world.Tokens.Tokens[mover];
+                token.Position = _world.Grid.Center(at);
+                token.Path.Clear();
+                Sheet(mover)!.ConditionEvent(_world.Rules, "move");
             }
             return moved;
         }

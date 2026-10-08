@@ -37,6 +37,14 @@
           "actions": [
             "reactive-strike"
           ]
+        },
+        {
+          "id": "sudden-charge",
+          "name": "Sudden Charge",
+          "description": "Close the gap and Strike for two actions.",
+          "actions": [
+            "sudden-charge"
+          ]
         }
       ]
     },

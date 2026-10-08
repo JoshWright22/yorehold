@@ -127,6 +127,8 @@ public abstract class EffectHost
     }
 
     public virtual bool Move(int who, string how, int squares, EffectContext context) => false;
+    /// <summary>Whether target stands within reach squares of who, for attacks that need it.</summary>
+    public virtual bool InReach(int who, int target, int reach) => true;
     public virtual bool Summon(string creature, int count, int rounds, EffectContext context) => false;
     public virtual bool Light(int who, float radius, int rounds, EffectContext context) => false;
     public virtual bool Surface(string id, float size, int rounds, EffectContext context) => false;

@@ -581,6 +581,11 @@ internal sealed class EffectRun
         }
         // An attack with whatever the doer holds, against armour class, read the way the system
         // reads attacks (the game's own: a natural 1 misses, a natural 20 is a critical hit).
+        if (step.Reach > 0 && !_host.InReach(_context.Self, actor, step.Reach))
+        {
+            // a charge that didn't get there: no attack
+            return false;
+        }
         CheckKind kind = _rules.Checks.Kind(CheckRules.Attack);
         // each attack after the first in a turn takes the ruleset's penalty, this effect's own included
         int attacksSoFar = _context.AttacksMade + _result.Events.Count(e => e.Kind == EffectEventKind.Attack);

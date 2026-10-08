@@ -49,6 +49,18 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void SuddenChargeMovesThenStrikes()
+    {
+        using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");
+        World w = world.World;
+        w.Creatures[0].Sheet.Stats.SetBase("perception", 2000); // acts first
+        world.Fight();
+        Assert.True(world.TurnTo(0));
+        Assert.False(w.Adjacent(0, 3));
+        Assert.True(world.Use("sudden-charge", 3) && w.Adjacent(0, 3) && world.Said("Ana attacks Rak"), "It closes in, then Strikes");
+    }
+
+    [Fact]
     public void Pathfinder2ePlaysAFight()
     {
         using WorldFixture world = Yard("rulesets/pf2e", "fighter", "wizard");

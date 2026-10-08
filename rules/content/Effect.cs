@@ -73,6 +73,8 @@ public class EffectStep
     public int Dc { get; init; } = 10;
     public bool CasterDc { get; init; }
     public string Against { get; init; } = "";
+    /// <summary>An attack that needs the target this close (squares) when it is rolled; 0 = wherever it is.</summary>
+    public int Reach { get; init; }
     public List<EffectStep> Steps { get; init; } = new();
     public List<EffectOption> Options { get; init; } = new();
 }
@@ -235,6 +237,7 @@ public class Effect
         int dc = 10;
         bool casterDc = false;
         string against = "";
+        int reach = 0;
         var options = new List<EffectOption>();
         string[] own;
 
@@ -267,7 +270,8 @@ public class Effect
             break;
         case EffectKind.Move:
             own = new[] { "how", "distance" };
-            how = OneOf(node, "how", null, "push", "pull", "teleport");
+            // approach: the doer walks up to the target, stopping beside it
+            how = OneOf(node, "how", null, "push", "pull", "teleport", "approach");
             amount = Amount(node, "distance", new[] { "speed" }, "1");
             break;
         case EffectKind.Resource:
@@ -299,7 +303,8 @@ public class Effect
             remove = node.Bool("remove", false);
             break;
         case EffectKind.Roll:
-            own = new[] { "kind", "ability", "dc", "against", "steps" };
+            own = new[] { "kind", "ability", "dc", "against", "steps", "reach" };
+            reach = node.Int("reach", 0, 0, 100);
             how = OneOf(node, "kind", null, "attack", "check", "save");
             if (how == "attack")
             {
@@ -422,6 +427,7 @@ public class Effect
             Dc = dc,
             CasterDc = casterDc,
             Against = against,
+            Reach = reach,
             Steps = node.Get("steps") is ContentNode steps ? ReadSteps(steps, depth + 1) : new List<EffectStep>(),
             Options = options,
         };

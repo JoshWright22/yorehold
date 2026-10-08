@@ -1,0 +1,34 @@
+{
+  "id": "sudden-charge",
+  "name": "Sudden Charge",
+  "description": "Two actions: Stride twice toward a foe, then Strike it if you reached it.",
+  "order": 15,
+  "cost": 2,
+  "general": false,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 10
+  },
+  "log": "{name} charges.",
+  "effects": [
+    {
+      "do": "move",
+      "how": "approach",
+      "distance": "{2 * floor(stat.speed / 5)}"
+    },
+    {
+      "do": "roll",
+      "kind": "attack",
+      "reach": 1,
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weapon",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}
