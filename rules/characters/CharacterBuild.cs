@@ -189,7 +189,7 @@ public static class CharacterBuild
             if (row != null)
             {
                 // the abilities this level raises, each a different one, no higher than the system's top score
-                foreach (string ability in level.Picked("boosts").Distinct().Take(row.Boosts))
+                foreach (string ability in (row.BoostsRepeat ? level.Picked("boosts") : level.Picked("boosts").Distinct()).Take(row.Boosts))
                 {
                     if (rules.Ability(ability) == null)
                     {

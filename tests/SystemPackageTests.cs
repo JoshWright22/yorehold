@@ -626,9 +626,14 @@ public class SystemPackageTests
         int str = CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str");
         draft.ToggleBoost("str");
         draft.ToggleBoost("con");
-        draft.ToggleBoost("dex"); // a third is one too many
+        draft.ToggleBoost("dex"); // a third is one too many: it takes back any on dex, none here
         Assert.Equal(new[] { "str", "con" }, draft.Choices.Levels[^1].Picked("boosts"));
         Assert.Equal(str + 1, CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str"));
+        // or +2 to one: the same ability twice
+        draft.ToggleBoost("con");
+        draft.ToggleBoost("str");
+        Assert.Equal(new[] { "str", "str" }, draft.Choices.Levels[^1].Picked("boosts"));
+        Assert.Equal(str + 2, CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore("str"));
     }
 
     [Fact]

@@ -367,9 +367,15 @@ public sealed class CharacterDraft
             return;
         }
         List<string> boosts = Current.Picks.TryGetValue("boosts", out List<string>? list) ? list : Current.Picks["boosts"] = new List<string>();
-        if (!boosts.Remove(ability) && boosts.Count < LevelBoosts().Count)
+        bool repeat = Row()?.BoostsRepeat == true;
+        if (boosts.Count < LevelBoosts().Count && (repeat || !boosts.Contains(ability)))
         {
+            // another one, on the same ability too where the table allows (5e's +2 to one)
             boosts.Add(ability);
+        }
+        else
+        {
+            boosts.RemoveAll(b => b == ability);
         }
         if (boosts.Count == 0)
         {

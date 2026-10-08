@@ -41,7 +41,8 @@
         "2": 3
       },
       "boosts": 2,
-      "boostStep": 1
+      "boostStep": 1,
+      "boostsRepeat": true
     },
     {
       "slots": {

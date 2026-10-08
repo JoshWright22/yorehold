@@ -730,8 +730,10 @@ public partial class CharacterScreen : CanvasLayer
         if (boosts > 0)
         {
             // the level's raises: each a different ability, by the class table's step
-            Heading(_body, $"{_rules.Creation.NameOf("scores")}: raise {boosts} by {step} each");
             List<string> raised = d.Picked("boosts");
+            // the picks named, so the same one twice (+2 to one) shows
+            string taken = raised.Count == 0 ? "" : ": " + string.Join(", ", raised.Select(id => _rules.Ability(id)?.Name ?? id));
+            Heading(_body, $"{_rules.Creation.NameOf("scores")}: raise {boosts} by {step} each{taken}");
             Grid(_rules.Abilities.Select(a => a.Id).ToList(), id => _rules.Ability(id)?.Name ?? id, raised.Contains, 3, d.ToggleBoost);
         }
         if (d.SkillPicks() == 0 && d.FeatKinds().Count == 0 && boosts == 0)
