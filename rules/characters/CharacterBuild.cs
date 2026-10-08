@@ -126,6 +126,7 @@ public static class CharacterBuild
                 c.Stats.AddModifier(modifier, source);
             }
             c.Proficiencies.UnionWith(gives.Proficiencies);
+            c.Granted.UnionWith(gives.Actions);
             Raise(gives.Ranks);
             foreach (KeyValuePair<string, int> resource in gives.Resources)
             {

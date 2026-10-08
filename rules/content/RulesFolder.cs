@@ -92,9 +92,26 @@ public class RulesFolder
     public void Check(Compendium compendium, string chapterFolder, ContentFiles files)
     {
         string FileOf(string kind, string id) => compendium.PathOf(kind, id);
+        // what classes, feats and creatures grant has to be one of the ruleset's actions or reactions
+        void Granted(IEnumerable<string> ids, string file)
+        {
+            foreach (string id in ids.Where(id => Action(id) == null && Reactions.All(r => r.Id != id)))
+            {
+                throw new ContentException(file, "actions", $"no action or reaction \"{id}\" in the ruleset");
+            }
+        }
         foreach (ClassDefinition definition in compendium.Classes.Values)
         {
             ClassDefinition.CheckRanks(Rules, definition.ProficiencyRanks, definition.DcAbility, FileOf("classes", definition.Id));
+            Granted(definition.Levels.SelectMany(level => level.Features).SelectMany(feature => feature.Gives.Actions), FileOf("classes", definition.Id));
+        }
+        foreach (FeatDefinition feat in compendium.Feats.Values)
+        {
+            Granted(feat.Gives.Actions, $"{Folder}/feats/{feat.Id}.json");
+        }
+        foreach (CreatureDefinition creature in compendium.Creatures.Values)
+        {
+            Granted(creature.Actions, FileOf("creatures", creature.Id));
         }
         foreach (CreatureDefinition creature in compendium.Creatures.Values)
         {

@@ -102,6 +102,8 @@ public sealed partial class CharacterSheet
 
     /// <summary>Spell ids it can cast, in the order they are listed; the prepared ones are among them.</summary>
     public List<string> Spells { get; } = new();
+    /// <summary>Actions and reactions its class, feats or creature file grant beyond the ones everyone has.</summary>
+    public SortedSet<string> Granted { get; } = new(StringComparer.Ordinal);
     /// <summary>Spell ids a prepared caster may prepare; empty for anyone else.</summary>
     public List<string> Preparable { get; } = new();
     public int PrepareLimit { get; set; }

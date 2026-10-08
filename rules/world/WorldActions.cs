@@ -21,7 +21,7 @@ public sealed partial class World
         CharacterSheet sheet = Creatures[creature].Sheet;
         IEnumerable<ActionDefinition> spells = sheet.Spells.Select(FindSpell).OfType<SpellDefinition>().Select(s => s.Action);
         return Chapter.Rules.Actions
-            .Where(a => a.General && a.NeedsResources.Keys.All(sheet.Resources.ContainsKey))
+            .Where(a => (a.General || sheet.Granted.Contains(a.Id)) && a.NeedsResources.Keys.All(sheet.Resources.ContainsKey))
             .Concat(spells)
             .OrderBy(a => a.Order)
             .ToList();

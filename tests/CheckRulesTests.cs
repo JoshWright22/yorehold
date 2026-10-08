@@ -54,6 +54,18 @@ public class CheckRulesTests
     }
 
     [Fact]
+    public void GrantedActionsBelongToWhoeverIsGrantedThem()
+    {
+        using WorldFixture world = WorldCharacterTests.Yard();
+        World w = world.World;
+        Assert.DoesNotContain(w.ActionsOf(0), a => a.Id == "surge");
+        w.Chapter.Rules.Actions.Add(ActionDefinition.Read(TestContent.Json("""{"id": "surge", "name": "Surge", "general": false}""")));
+        w.Creatures[0].Sheet.Granted.Add("surge");
+        Assert.Contains(w.ActionsOf(0), a => a.Id == "surge");
+        Assert.DoesNotContain(w.ActionsOf(1), a => a.Id == "surge");
+    }
+
+    [Fact]
     public void DyingCanBeATrack()
     {
         // Dying 1 (2 on a critical) plus wounded; a hit while down adds 1; dead at 4.

@@ -69,6 +69,7 @@ public sealed partial class CharacterSheet
                 ["stable"] = Death.Stable, ["dead"] = Death.Dead, ["dying"] = Death.Dying, ["wounded"] = Death.Wounded,
             },
             ["spells"] = Strings(Spells),
+            ["granted"] = Strings(Granted),
             ["preparable"] = Strings(Preparable),
             ["prepareLimit"] = PrepareLimit,
             ["prepared"] = Strings(Prepared),
@@ -139,6 +140,7 @@ public sealed partial class CharacterSheet
             sheet.Death.Wounded = death.Int("wounded", 0, 0, 100);
         }
         sheet.Spells.AddRange(node.Texts("spells"));
+        sheet.Granted.UnionWith(node.Texts("granted"));
         sheet.Preparable.AddRange(node.Texts("preparable"));
         sheet.Prepared.AddRange(node.Texts("prepared"));
         foreach (ContentNode item in node.Get("inventory")?.Items() ?? Array.Empty<ContentNode>())

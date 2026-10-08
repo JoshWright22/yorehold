@@ -31,7 +31,7 @@ public class FeatDefinition
     public static FeatDefinition Read(ContentNode node)
     {
         node.RequireObject("a feat is a JSON object");
-        node.Only("id", "name", "description", "kind", "repeatable", "requires", "modifiers", "proficiencies", "ranks", "resources");
+        node.Only("id", "name", "description", "kind", "repeatable", "requires", "modifiers", "proficiencies", "ranks", "resources", "actions");
         string id = node.At("id").AsId();
         string kind = node.Text("kind", "general", 64);
         if (!Kinds.Contains(kind))

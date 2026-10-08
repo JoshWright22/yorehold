@@ -15,6 +15,8 @@ public class ReactionDefinition
     /// <summary>The action it runs. Empty when Readied: then it runs what the creature recorded.</summary>
     public string Action { get; init; } = "";
     public bool Readied { get; init; }
+    /// <summary>True: anyone may take it. False: only those a class, feat or creature file grants it.</summary>
+    public bool General { get; init; } = true;
     public int Order { get; init; }
     public double PromptSeconds { get; init; } = 2;
 
@@ -28,7 +30,7 @@ public class ReactionDefinition
     public static ReactionDefinition Read(ContentNode node)
     {
         node.RequireObject("a reaction is a JSON object");
-        node.Only("id", "name", "trigger", "action", "readied", "order", "promptSeconds");
+        node.Only("id", "name", "trigger", "action", "readied", "order", "promptSeconds", "general");
         string id = node.At("id").AsName();
         ReactionTrigger trigger = node.Name("trigger", "") switch
         {
@@ -49,6 +51,7 @@ public class ReactionDefinition
             Trigger = trigger,
             Action = action,
             Readied = readied,
+            General = node.Bool("general", true),
             Order = node.Int("order", 0, -100000, 100000),
             PromptSeconds = node.Number("promptSeconds", 2, 0.1, 30),
         };

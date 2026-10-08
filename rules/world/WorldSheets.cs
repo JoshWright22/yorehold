@@ -48,6 +48,7 @@ public static class WorldSheets
             sheet.Resources[resource.Key] = resource.Value;
         }
         sheet.Spells.AddRange(definition.Spells.Where(compendium.Spells.ContainsKey));
+        sheet.Granted.UnionWith(definition.Actions);
         // Its gear is worn as the heroes' is, but the stat block's AC is already final: armour
         // overriding "ac" would count twice, so what it wears on top of that is left off.
         CharacterBuild.GiveItems(sheet, compendium, definition.Items);

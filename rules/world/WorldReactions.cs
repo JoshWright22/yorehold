@@ -128,7 +128,7 @@ public sealed partial class World
                 }
                 foreach (ReactionDefinition definition in Chapter.Rules.Reactions)
                 {
-                    if (definition.Trigger != phase)
+                    if (definition.Trigger != phase || (!definition.General && !Creatures[reactor].Sheet.Granted.Contains(definition.Id)))
                     {
                         continue;
                     }

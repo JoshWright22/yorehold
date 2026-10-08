@@ -11,6 +11,8 @@ public class Grants
     public Dictionary<string, string> Ranks { get; init; } = new();
     /// <summary>Added to these maximums.</summary>
     public Dictionary<string, int> Resources { get; init; } = new();
+    /// <summary>Actions and reactions of the ruleset that only those granted them have ("general": false).</summary>
+    public List<string> Actions { get; init; } = new();
 
     public static Grants Read(ContentNode node)
     {
@@ -20,6 +22,7 @@ public class Grants
             Proficiencies = node.Ids("proficiencies").Distinct().ToList(),
             Ranks = ContentParts.NamesFrom(node, "ranks", ids: true),
             Resources = ContentParts.NumbersFrom(node, "resources", 1, 1000, idKeys: true),
+            Actions = node.Names("actions").Distinct().ToList(),
         };
     }
 }
@@ -65,7 +68,7 @@ public class ClassLevel
                 foreach (ContentNode f in list.Items())
                 {
                     f.RequireObject("is an object with an id");
-                    f.Only("id", "name", "description", "modifiers", "proficiencies", "ranks", "resources");
+                    f.Only("id", "name", "description", "modifiers", "proficiencies", "ranks", "resources", "actions");
                     string id = f.At("id").AsId();
                     features.Add(new ClassFeature
                     {

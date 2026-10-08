@@ -305,6 +305,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   actions, reactions, passive modifiers and triggered effects, not only numbers; feat kinds come
   from the system. Creatures get a list of strikes and abilities of their own. UI: the sheet's
   Features tab; Create's class, feat and creature editors gain "grants".
+  - Done 10/8: `"general": false` actions and reactions, granted by class features, feats and
+    creature files (`"actions": [...]`), checked against the ruleset, kept on the sheet.
+  - Left: triggered effects (on hit, at turn start) as grants; feat kinds from the system; the
+    Features tab and Create's "grants" fields.
 - [ ] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's
