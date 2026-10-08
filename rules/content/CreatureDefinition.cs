@@ -20,6 +20,8 @@ public class CreatureDefinition
     public int Speed { get; init; } = 30;
     public int Darkvision { get; init; }
     public Dictionary<string, int> Abilities { get; init; } = new();
+    /// <summary>Any other numbers on its sheet: resistances ("resist.fire"), weaknesses, immunities, a system's own.</summary>
+    public Dictionary<string, int> Stats { get; init; } = new();
     public List<string> Proficiencies { get; init; } = new();
     public Dictionary<string, string> ProficiencyRanks { get; init; } = new();
     public string DcAbility { get; init; } = "";
@@ -64,6 +66,7 @@ public class CreatureDefinition
             Speed = node.Int("speed", 30, 0, 1000),
             Darkvision = node.Int("darkvision", 0, 0, 10000),
             Abilities = ContentParts.NumbersFrom(node, "abilities", int.MinValue, int.MaxValue, idKeys: false),
+            Stats = ContentParts.NumbersFrom(node, "stats", -100000, 100000, idKeys: false),
             Proficiencies = node.Texts("proficiencies").Distinct().ToList(),
             ProficiencyRanks = ContentParts.NamesFrom(node, "proficiencyRanks", ids: false),
             DcAbility = node.Text("dcAbility", "", 64),

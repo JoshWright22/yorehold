@@ -100,8 +100,14 @@ public abstract class EffectHost
     /// <summary>Takes damage of a type off someone and returns what was dealt. A game with resistances overrides it.</summary>
     public virtual int Damage(int who, int amount, string type, EffectContext context)
     {
-        Sheet(who)?.TakeDamage(amount, context.Rules, context.CriticalDamage);
-        return amount;
+        CharacterSheet? sheet = Sheet(who);
+        if (sheet == null)
+        {
+            return 0;
+        }
+        int dealt = sheet.DamageAfterDefences(context.Rules, amount, type);
+        sheet.TakeDamage(dealt, context.Rules, context.CriticalDamage);
+        return dealt;
     }
 
     /// <summary>Spends (negative) or restores a resource. False if the sheet has none by that name.</summary>

@@ -16,6 +16,22 @@ public class CheckRulesTests
     }
 
     [Fact]
+    public void SavesAndDefencesAreTheSystems()
+    {
+        Ruleset rules = RulesTesting.Rules("""
+            {"id": "t", "name": "T", "abilities": [{"id": "con", "name": "Constitution"}],
+             "saves": [{"id": "fortitude", "name": "Fortitude", "ability": "con"}],
+             "formulas": {"damageTaken": "immune ? 0 : floor(amount * (resist > 0 ? 0.5 : 1)) * (weak > 0 ? 2 : 1)"}}
+            """);
+        var sheet = new CharacterSheet { Name = "Ash" };
+        sheet.Stats.SetBase("con", 14);
+        sheet.Stats.SetBase("resist.fire", 1);
+        sheet.Stats.SetBase("weak.cold", 1);
+        Assert.Equal((2, true, 5, 20, 7), (sheet.SaveModifier(rules, "fortitude"), rules.IsSave("fortitude"),
+            sheet.DamageAfterDefences(rules, 10, "fire"), sheet.DamageAfterDefences(rules, 10, "cold"), sheet.DamageAfterDefences(rules, 7, "acid")));
+    }
+
+    [Fact]
     public void DyingCanBeATrack()
     {
         // Dying 1 (2 on a critical) plus wounded; a hit while down adds 1; dead at 4.

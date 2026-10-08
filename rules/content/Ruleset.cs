@@ -4,6 +4,9 @@ public record AbilityDefinition(string Id, string Name);
 
 public record SkillDefinition(string Id, string Name, string Ability);
 
+/// <summary>A save of its own (Fortitude, Reflex, Will), rolled with an ability.</summary>
+public record SaveDefinition(string Id, string Name, string Ability);
+
 public record ProficiencyRank(string Id, string Name, int Bonus, bool AddsLevel);
 
 public enum RecoveryKind
@@ -126,6 +129,8 @@ public class Ruleset
     public string Name { get; init; } = "";
     public List<AbilityDefinition> Abilities { get; init; } = new();
     public List<SkillDefinition> Skills { get; init; } = new();
+    /// <summary>Saves of their own; empty = every ability is a save.</summary>
+    public List<SaveDefinition> Saves { get; init; } = new();
     /// <summary>Filled from the file's own list and then from the folder's conditions/ files.</summary>
     public List<ConditionDefinition> Conditions { get; } = new();
     public List<SurfaceDefinition> Surfaces { get; } = new();
@@ -173,6 +178,9 @@ public class Ruleset
 
     public AbilityDefinition? Ability(string id) => Abilities.Find(a => a.Id == id);
     public SkillDefinition? Skill(string id) => Skills.Find(s => s.Id == id);
+    public SaveDefinition? SaveOf(string id) => Saves.Find(s => s.Id == id);
+    /// <summary>What a save may name: one of the system's saves, or an ability.</summary>
+    public bool IsSave(string id) => SaveOf(id) != null || Ability(id) != null;
     public ConditionDefinition? Condition(string id) => Conditions.Find(c => c.Id == id);
     public SurfaceDefinition? Surface(string id) => Surfaces.Find(s => s.Id == id);
     public RestDefinition? Rest(string id) => Rests.Find(r => r.Id == id);
@@ -296,6 +304,21 @@ public class Ruleset
             skills.Add(skill);
         }
 
+        var saves = new List<SaveDefinition>();
+        foreach (ContentNode entry in node.Get("saves")?.Items() ?? Array.Empty<ContentNode>())
+        {
+            var save = new SaveDefinition(entry.At("id").AsName(), entry.Text("name", "", 64), entry.At("ability").AsText());
+            if (saves.Any(s => s.Id == save.Id) || abilities.Any(a => a.Id == save.Id))
+            {
+                throw entry.Fail("id", "save ids are different from each other and from the abilities");
+            }
+            if (abilities.All(a => a.Id != save.Ability))
+            {
+                throw entry.Fail("ability", $"unknown ability \"{save.Ability}\"");
+            }
+            saves.Add(save);
+        }
+
         var ranks = new List<ProficiencyRank>();
         if (node.Get("proficiencyRanks") is ContentNode rankList)
         {
@@ -384,6 +407,7 @@ public class Ruleset
             Name = node.At("name").AsText(),
             Abilities = abilities,
             Skills = skills,
+            Saves = saves,
             ModifierTable = table,
             ScoreMin = scoreMin,
             ScoreMax = scoreMax,
@@ -464,7 +488,7 @@ public class Ruleset
             {
                 throw node.Fail("id", $"\"{surface.Id}\" doesn't match the file name");
             }
-            if (surface.SaveAbility.Length > 0 && Ability(surface.SaveAbility) == null)
+            if (surface.SaveAbility.Length > 0 && !IsSave(surface.SaveAbility))
             {
                 throw node.Fail("save.ability", $"unknown ability \"{surface.SaveAbility}\"");
             }
@@ -503,7 +527,7 @@ public class Ruleset
         foreach (ConditionDefinition condition in Conditions)
         {
             string file = where.EndsWith(".json", StringComparison.Ordinal) ? where : $"{where}/{condition.Id}.json";
-            if (condition.SaveAbility.Length > 0 && Ability(condition.SaveAbility) == null)
+            if (condition.SaveAbility.Length > 0 && !IsSave(condition.SaveAbility))
             {
                 throw new ContentException(file, "save.ability", $"unknown ability \"{condition.SaveAbility}\"");
             }

@@ -24,6 +24,10 @@ public static class WorldSheets
         {
             sheet.Stats.SetBase(score.Key, score.Value);
         }
+        foreach (KeyValuePair<string, int> stat in definition.Stats)
+        {
+            sheet.Stats.SetBase(stat.Key, stat.Value);
+        }
         sheet.Stats.SetBase("speed", definition.Speed);
         sheet.Stats.SetBase("darkvision", definition.Darkvision);
         sheet.Stats.SetBase("maxHp", definition.Hp);

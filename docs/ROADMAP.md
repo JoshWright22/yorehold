@@ -309,6 +309,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and
   weaknesses by damage type, weapon traits (finesse, reach, ranged, agile, versatile), armour's
   Dex cap. UI: the sheet's layout (vitals, saves, defences) is a list the system gives.
+  - Done 10/8: `saves` as their own list (Fortitude, Reflex, Will with their abilities);
+    resistances, weaknesses and immunities as `resist.<type>`/`weak.<type>`/`immune.<type>`
+    stats through a `damageTaken` formula; creatures' `stats`. A Dex cap is a formula already
+    (`armorClass`: `min(mod.dex, stat.dexCap)`).
+  - Left: typed bonuses (only the best of a type counts), weapon traits, and the sheet layout
+    from the system.
 - [ ] **R7. Level-up HP and dying in data.** HP growth by formula, and a death mode: death saves
   (5e) or dying and wounded values with a recovery check (PF2e). UI: a downed hero's card shows
   the system's track.

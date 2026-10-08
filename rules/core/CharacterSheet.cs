@@ -294,9 +294,10 @@ public sealed partial class CharacterSheet
         return Counted(rules, "check", ability + proficiency, ("ability", ability), ("proficiency", proficiency));
     }
 
+    /// <summary>A save by the system's save id (rolled with its ability) or by an ability.</summary>
     public int SaveModifier(Ruleset rules, string ability)
     {
-        int modifier = AbilityModifier(rules, ability);
+        int modifier = AbilityModifier(rules, rules.SaveOf(ability)?.Ability ?? ability);
         int proficiency = ProficiencyModifier(rules, ability);
         return Counted(rules, "save", modifier + proficiency, ("ability", modifier), ("proficiency", proficiency));
     }
@@ -400,6 +401,30 @@ public sealed partial class CharacterSheet
     public int StrikeCost(Ruleset rules)
     {
         return rules.StrikeCostsHands && Weapon != null ? Math.Clamp(Weapon.Hands, 1, Math.Max(1, rules.ActionsPerTurn)) : 1;
+    }
+
+    /// <summary>
+    /// Damage of a type after resistances, weaknesses and immunities: the sheet's "resist.&lt;type&gt;",
+    /// "weak.&lt;type&gt;" and "immune.&lt;type&gt;" stats (and the ".all" ones), through the system's
+    /// damageTaken formula, by default amount less resistance plus weakness, nothing when immune.
+    /// </summary>
+    public int DamageAfterDefences(Ruleset rules, int amount, string type)
+    {
+        if (type.Length == 0 || amount <= 0)
+        {
+            return amount;
+        }
+        int resist = Stats.Integer("resist." + type) + Stats.Integer("resist.all");
+        int weak = Stats.Integer("weak." + type) + Stats.Integer("weak.all");
+        int immune = Stats.Integer("immune." + type) + Stats.Integer("immune.all") > 0 ? 1 : 0;
+        if (rules.Formulas.Of("damageTaken") is Formula own)
+        {
+            return Math.Max(0, own.Whole(name => name switch
+            {
+                "amount" => amount, "resist" => resist, "weak" => weak, "immune" => immune, _ => null,
+            }));
+        }
+        return immune > 0 ? 0 : Math.Max(0, amount - resist + weak);
     }
 
     /// <summary>Damage with the ruleset's death rules: a hit on someone already down costs death saves.</summary>

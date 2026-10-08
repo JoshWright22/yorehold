@@ -26,6 +26,8 @@ public sealed class SheetFormulas
         // HP: the first level from the class's hit die, the race's and class's bonus HP and the HP ability; each level after
         ["hpFirstLevel"] = new[] { "hitDie", "bonus", "ability" },
         ["hpPerLevel"] = new[] { "hitDie", "ability" },
+        // damage of a type after the creature's "resist.<type>", "weak.<type>" and "immune.<type>" stats
+        ["damageTaken"] = new[] { "amount", "resist", "weak", "immune" },
     };
 
     private static readonly string[] Prefixes = { "mod.", "score.", "stat.", "prof." };

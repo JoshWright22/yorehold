@@ -141,7 +141,7 @@ public class Effect
     public void Check(Ruleset rules, string file, string path = "")
     {
         string prefix = path.Length == 0 ? "" : path + ".";
-        if (Save.Ability.Length > 0 && rules.Ability(Save.Ability) == null)
+        if (Save.Ability.Length > 0 && !rules.IsSave(Save.Ability))
         {
             throw new ContentException(file, prefix + "save.ability", $"unknown ability \"{Save.Ability}\"");
         }
@@ -443,7 +443,7 @@ public class Effect
             {
                 throw new ContentException(file, at + ".id", $"unknown condition \"{step.Id}\"");
             }
-            if (step.Kind == EffectKind.Roll && step.How == "save" && rules.Ability(step.Ability) == null)
+            if (step.Kind == EffectKind.Roll && step.How == "save" && !rules.IsSave(step.Ability))
             {
                 throw new ContentException(file, at + ".ability", $"unknown ability \"{step.Ability}\"");
             }

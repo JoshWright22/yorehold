@@ -810,6 +810,9 @@ A formula is arithmetic: numbers, the names listed for its place, `+ - * / %`, c
 | `passive` | `base`, `modifier` | `base + modifier` |
 | `hpFirstLevel` | `hitDie`, `bonus` (the race's and class's bonus HP), `ability` (`roles.hpAbility`'s modifier) | `hitDie + bonus + ability` |
 | `hpPerLevel` | `hitDie`, `ability` | `floor(hitDie / 2) + 1 + ability` |
+| `damageTaken` | `amount`, `resist`, `weak`, `immune` (the creature's `resist.<type>`, `weak.<type>`, `immune.<type>` stats plus the `.all` ones) | `immune ? 0 : max(0, amount - resist + weak)` |
+
+`saves` (beside `abilities`) lists saves of their own, each an `id`, `name` and the `ability` it rolls with (`{"id": "fortitude", "name": "Fortitude", "ability": "con"}`); anywhere a save is named, one of these or an ability will do. Proficiency in a save is by its id. A creature file's `stats` sets any other number on its sheet: `"stats": {"resist.fire": 5, "weak.cold": 5, "immune.poison": 1}`; items and conditions change them with modifiers like any stat.
 
 ```json
 "formulas": {

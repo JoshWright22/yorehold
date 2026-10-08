@@ -93,7 +93,7 @@ public class SpellRules
         {
             throw new ContentException(file, "slotPrefix", $"is \"{SlotPrefix}\" but the ruleset's roles.slotPrefix is \"{rules.Roles.SlotPrefix}\"");
         }
-        if (OnDamage == ConcentrationDamage.Save && rules.Ability(SaveAbility) == null)
+        if (OnDamage == ConcentrationDamage.Save && !rules.IsSave(SaveAbility))
         {
             throw new ContentException(file, "concentration.ability", $"unknown ability \"{SaveAbility}\"");
         }
