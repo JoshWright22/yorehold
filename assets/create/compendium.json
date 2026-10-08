@@ -142,7 +142,25 @@
         { "key": "ranks", "type": "json" },
         { "key": "resources", "type": "json" },
         { "key": "modifiers", "type": "json" },
-        { "key": "actions", "type": "list", "optionsFrom": "grants", "help": "the system's actions, reactions and triggers it grants" }
+        { "key": "actions", "type": "list", "optionsFrom": "grants", "help": "the system's actions, reactions and triggers it grants" },
+        { "key": "spells", "type": "list", "optionsFrom": "spells", "help": "spells it knows from this: cantrips at will, others with a slot" }
+      ]
+    },
+    {
+      "id": "option", "label": "Options", "folder": "options", "ruleset": true, "reader": "option",
+      "fields": [
+        { "key": "name", "required": true, "default": "New option" },
+        { "key": "description" },
+        { "key": "kind", "type": "choice", "optionsFrom": "optionKinds", "required": true, "default": "heritage", "help": "the system's kind of pick: a heritage, a subclass" },
+        { "key": "races", "type": "list", "optionsFrom": "races", "help": "who may take it; anyone when empty" },
+        { "key": "classes", "type": "list", "optionsFrom": "classes", "help": "who may take it; anyone when empty" },
+        { "key": "feats", "type": "list", "optionsFrom": "feats" },
+        { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
+        { "key": "ranks", "type": "json" },
+        { "key": "resources", "type": "json" },
+        { "key": "modifiers", "type": "json" },
+        { "key": "actions", "type": "list", "optionsFrom": "grants", "help": "the system's actions, reactions and triggers it grants" },
+        { "key": "spells", "type": "list", "optionsFrom": "spells", "help": "spells it knows from this" }
       ]
     }
   ]

@@ -407,6 +407,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     system without levels shows no hit die or proficiency.
   - Done 10/8: Create's creature and feat forms have an "actions" list from the system's actions,
     reactions and triggers, and a feat's kind is picked from the system's feat kinds.
+  - Done 10/8: Create's compendium has an Options form (a system's heritages and subclasses:
+    kind, who may take them, grants) and feats list the spells they grant.
   - Left: grants on class features inside the levels table (edited as JSON there).
 - [x] **R6. Defences in data.** Saves as their own list (5e: six abilities; PF2e: Fortitude,
   Reflex, Will), typed bonuses where only the best of a type counts, resistances, immunities and

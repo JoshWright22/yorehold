@@ -355,6 +355,9 @@ public sealed class CompendiumEditor
                 case "feat":
                     FeatDefinition.Read(node);
                     break;
+                case "option":
+                    OptionDefinition.Read(node);
+                    break;
                 case "ai":
                     // a profile may start from any other: the built-in ones stand in for those in
                     // files, since only the shape of this one is being checked

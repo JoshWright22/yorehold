@@ -119,7 +119,10 @@ public sealed partial class CreatePackage
             options["skills"] = rules.Skills.Select(s => s.Id).ToList();
             // what a feat's kind can be: the system's own
             options["featKinds"] = rules.FeatKinds.Select(k => k.Id).ToList();
+            // what an option's kind can be: the system's own (a heritage, a subclass)
+            options["optionKinds"] = rules.OptionKinds.Select(k => k.Id).ToList();
         }
+        options.TryAdd("optionKinds", new List<string>());
         options.TryAdd("featKinds", FeatDefinition.Kinds.ToList());
         // what a class feature, feat or creature can grant: the system's actions, reactions and triggers
         string system = rulesets.FirstOrDefault() ?? RulesFolder.Default;

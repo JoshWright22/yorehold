@@ -120,7 +120,7 @@ public class CompendiumEditorTests
     {
         var history = new History();
         var editor = new CompendiumEditor(history);
-        Assert.True(editor.SetKinds(Forms(), out string error) && editor.Kinds.Count == 9 && editor.KindOf("item") != null && editor.KindOf("spell")!.Ruleset,
+        Assert.True(editor.SetKinds(Forms(), out string error) && editor.Kinds.Count == 10 && editor.KindOf("item") != null && editor.KindOf("spell")!.Ruleset,
             "The game's forms file lists every kind: " + error);
         Assert.True(!editor.SetKinds("""{"kinds": [{"id": "item", "folder": "items", "fields": [{"key": "name", "type": "colour"}]}]}""", out error) && error.Contains("colour"),
             "A forms file with an unknown field type is refused, saying which");
