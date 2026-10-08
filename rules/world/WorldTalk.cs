@@ -108,7 +108,7 @@ public sealed partial class World
         {
             Rng dice = NextRandom(0x7a1cUL);
             return sheet.RollCheck(Rules, skill, Advantage.None, dice);
-        });
+        }, (roll, dc) => Rules.Checks.Passes(CheckRules.Check, roll, dc));
         if (result == null)
         {
             return false;

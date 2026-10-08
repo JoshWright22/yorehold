@@ -862,13 +862,15 @@ public sealed partial class World
         {
             int dc = o.Trap!.DisarmDc;
             int total = Check(CheckWith(o.Trap.DisarmSkill, Rules.Roles.Thievery), dc, "disarm");
-            if (total >= dc)
+            CheckKind kind = Rules.Checks.Kind(CheckRules.Check);
+            CheckOutcome outcome = kind.Resolve(rolled, dc);
+            if (outcome.Passes)
             {
                 Map.Disarm(id);
                 Say($"{sheet.Name} disarms {name}.");
                 used = true;
             }
-            else if (total <= dc - 5)
+            else if (Rules.TrapFumble.Evaluate(n => n == "margin" ? total - dc : n == "outcome" ? kind.Outcomes.IndexOf(outcome) : null) != 0)
             {
                 SpringTrap(id, hero); // fumbled it
             }

@@ -162,6 +162,7 @@
   },
   "passiveBase": 0,
   "baseDc": 0,
+  "trapFumble": "margin <= -3",
   "death": {
     "enabled": false
   },

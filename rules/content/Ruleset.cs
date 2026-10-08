@@ -160,6 +160,8 @@ public class Ruleset
     public bool FreeMove { get; init; } = true;
     /// <summary>Added to each attack after the first in a turn, from "attacks" (made so far this turn). Null = none.</summary>
     public Formula? AttackPenalty { get; init; }
+    /// <summary>A failed disarm springs the trap when this holds, from "margin" (total less DC) and "outcome" (its place, 0 = worst).</summary>
+    public Formula TrapFumble { get; init; } = Formula.Parse("margin <= -5", out _)!;
     public bool StrikeCostsHands { get; init; }
     public bool SharedTurns { get; init; }
     public int FeetPerSquare { get; init; } = 5;
@@ -430,6 +432,7 @@ public class Ruleset
             BonusActions = node.Bool("bonusActions", true),
             FreeMove = node.Bool("freeMove", true),
             AttackPenalty = node.Get("attackPenalty") is ContentNode penalty ? FormulaOf(penalty, "attacks", "trait.*") : null,
+            TrapFumble = node.Get("trapFumble") is ContentNode fumble ? FormulaOf(fumble, "margin", "outcome") : Formula.Parse("margin <= -5", out _)!,
             StrikeCostsHands = node.Bool("strikeCostsHands", false),
             SharedTurns = node.Bool("sharedTurns", false),
             FeetPerSquare = node.Int("feetPerSquare", 5, 1),

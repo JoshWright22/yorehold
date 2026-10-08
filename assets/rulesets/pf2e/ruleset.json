@@ -353,6 +353,7 @@
   "strikeCostsHands": false,
   "sharedTurns": false,
   "attackPenalty": "attacks == 0 ? 0 : (trait.agile ? -4 : -5) * min(attacks, 2)",
+  "trapFumble": "outcome == 0",
   "feetPerSquare": 5,
   "carryPerStrength": 15,
   "magicItemLimit": 10,

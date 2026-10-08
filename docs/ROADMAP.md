@@ -272,7 +272,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: exploding dice, success counts and Fate dice ("1d6!", "6d6s5", "4dF").
   - Done 10/8: the fight AI scores attacks with the system's own odds (`Tactics.HitChance`).
   - Done 10/8: opposed rolls (`"opposed": true` on a roll kind).
-  - Left: a trap's "fumbled by 5" and dialogue checks still read a bare total;
+  - Done 10/8: traps, locks and dialogue checks pass by the system's check outcomes; the
+    fumble is the `trapFumble` formula.
+  - Left:
     triggered effects; expected damage and simulated fights in the evaluator; the schema and
     reference for the story model.
   - Readable by the AI: the language has a schema and a reference written for people and for

@@ -37,7 +37,8 @@ public sealed class DialogueSession
     /// Picks a reply. A hidden or unknown one, or a check with no roller, changes nothing and gives
     /// null. The roll happens before any flag changes.
     /// </summary>
-    public DialogueResult? Choose(string id, Func<string, RollResult>? rollCheck = null)
+    /// <summary>passes reads a check against its difficulty the way the rules system does; left out, the total reaching it passes.</summary>
+    public DialogueResult? Choose(string id, Func<string, RollResult>? rollCheck = null, Func<RollResult, int, bool>? passes = null)
     {
         DialogueNode? node = Current;
         DialogueChoice? choice = node?.Choices.Find(c => c.Id == id);
@@ -55,7 +56,7 @@ public sealed class DialogueSession
                 return null;
             }
             roll = rollCheck(choice.Check.Skill);
-            passed = roll.Total >= choice.Check.Difficulty;
+            passed = passes?.Invoke(roll, choice.Check.Difficulty) ?? roll.Total >= choice.Check.Difficulty;
             to = passed ? choice.Check.Success : choice.Check.Failure;
         }
         string from = _current;
