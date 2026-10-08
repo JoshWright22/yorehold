@@ -1,0 +1,33 @@
+{
+  "id": "shatter",
+  "name": "Shatter",
+  "description": "A ringing burst 10 feet across: 3d8 thunder, half on a Constitution save.",
+  "level": 2,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 12
+  },
+  "area": {
+    "shape": "burst",
+    "size": 2
+  },
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "3d8",
+      "type": "thunder",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 2,
+        "dice": "1d8"
+      }
+    }
+  ]
+}

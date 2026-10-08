@@ -1,0 +1,12 @@
+{
+  "id": "commanded",
+  "name": "Commanded",
+  "description": "Obeying a one-word command: it does nothing else on its next turn.",
+  "flags": [
+    "cantAct"
+  ],
+  "duration": 1,
+  "ends": [
+    "turnEnd"
+  ]
+}

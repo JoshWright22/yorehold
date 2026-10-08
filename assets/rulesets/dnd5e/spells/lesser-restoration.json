@@ -1,0 +1,40 @@
+{
+  "id": "lesser-restoration",
+  "name": "Lesser Restoration",
+  "description": "A touch ends one of blinded, deafened, paralyzed or poisoned on a creature.",
+  "level": 2,
+  "hands": 1,
+  "cost": "bonus",
+  "target": {
+    "kind": "creature",
+    "side": "ally",
+    "range": 1
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "blinded",
+      "remove": true
+    },
+    {
+      "do": "condition",
+      "id": "deafened",
+      "remove": true
+    },
+    {
+      "do": "condition",
+      "id": "paralyzed",
+      "remove": true
+    },
+    {
+      "do": "condition",
+      "id": "held",
+      "remove": true
+    },
+    {
+      "do": "condition",
+      "id": "poisoned",
+      "remove": true
+    }
+  ]
+}

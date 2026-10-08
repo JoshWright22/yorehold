@@ -1,0 +1,33 @@
+{
+  "id": "lightning-bolt",
+  "name": "Lightning Bolt",
+  "description": "A line 100 feet long: 8d6 lightning, half on a Dexterity save.",
+  "level": 3,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 20
+  },
+  "area": {
+    "shape": "line",
+    "size": 20
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "8d6",
+      "type": "lightning",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 3,
+        "dice": "1d6"
+      }
+    }
+  ]
+}

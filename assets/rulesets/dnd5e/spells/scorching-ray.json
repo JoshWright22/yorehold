@@ -1,0 +1,33 @@
+{
+  "id": "scorching-ray",
+  "name": "Scorching Ray",
+  "description": "Three rays of fire, each its own ranged spell attack for 2d6.",
+  "level": 2,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 24
+  },
+  "effects": [
+    {
+      "do": "repeat",
+      "times": "3",
+      "steps": [
+        {
+          "do": "roll",
+          "kind": "attack",
+          "ability": "caster",
+          "steps": [
+            {
+              "do": "damage",
+              "dice": "2d6",
+              "type": "fire",
+              "when": "hit"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

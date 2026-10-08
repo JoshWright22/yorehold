@@ -367,6 +367,42 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void FireballAndCounterspellIn5e()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet, gik = w.Creatures[2].Sheet, rak = w.Creatures[3].Sheet;
+        bo.Stats.SetBase("dex", 2000); // Bo acts first
+        bo.Spells.Add("fireball");
+        bo.Resources["slots-3"] = new Resource(2, 2);
+        world.Put(2, new Cell(5, 4));
+        world.Fight();
+        Assert.True(world.TurnTo(1));
+        (int gikHp, int rakHp) = (gik.Hp, rak.Hp);
+        // the two goblins stand together, away from the party: one burst reaches both
+        Assert.True(world.Use("fireball", null, new Cell(5, 5)), w.Refusal);
+        Assert.True(gik.Hp < gikHp && rak.Hp < rakHp, "8d6, half on a save, on both");
+        Assert.Equal(1, bo.Resources["slots-3"].Current);
+    }
+
+    [Fact]
+    public void ACounterspellLosesTheSpell()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet bo = w.Creatures[1].Sheet, gik = w.Creatures[2].Sheet;
+        bo.Stats.SetBase("dex", 2000);
+        bo.Stats.SetBase("con", -2000); // the save fails
+        gik.Spells.Add("counterspell");
+        gik.Resources["slots-3"] = new Resource(1, 1);
+        world.Fight();
+        int hp = gik.Hp;
+        Assert.True(world.TurnTo(1) && world.Use("fire-bolt", 2), "Bo casts: " + w.Refusal);
+        Assert.True(world.Said("Gik takes Counterspell") && world.Said("Fire Bolt is lost") && gik.Hp == hp && gik.Resources["slots-3"].Current == 0,
+            string.Join("\n", world.Log.TakeLast(6)));
+    }
+
+    [Fact]
     public void DisengagingKeepsOpportunityAttacksOff()
     {
         bool Provokes(bool disengage)

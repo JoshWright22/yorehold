@@ -1,0 +1,16 @@
+{
+  "id": "held",
+  "name": "Held",
+  "description": "Paralyzed by Hold Person: can't move or act, attacks against it have advantage and a hit from within 5 feet is a critical hit. A Wisdom save at the end of each of its turns ends it.",
+  "flags": [
+    "paralyzed",
+    "cantAct",
+    "cantMove"
+  ],
+  "attackersAdvantage": true,
+  "hitsAreCritical": true,
+  "save": {
+    "ability": "wis",
+    "dc": 13
+  }
+}

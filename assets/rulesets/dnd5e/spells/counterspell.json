@@ -1,0 +1,24 @@
+{
+  "id": "counterspell",
+  "name": "Counterspell",
+  "description": "Cast as a reaction when a creature within 60 feet casts a spell: on a failed Constitution save its spell is lost.",
+  "level": 3,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "countered",
+      "duration": 1,
+      "onSave": "none"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "inflict-wounds",
+  "name": "Inflict Wounds",
+  "description": "A touch of rot: 2d10 necrotic, half on a Constitution save.",
+  "level": 1,
+  "hands": 1,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 1
+  },
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "2d10",
+      "type": "necrotic",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d10"
+      }
+    }
+  ]
+}

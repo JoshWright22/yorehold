@@ -1,0 +1,33 @@
+{
+  "id": "fireball",
+  "name": "Fireball",
+  "description": "A streak that bursts 20 feet across: 8d6 fire, half on a Dexterity save.",
+  "level": 3,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "any",
+    "range": 30
+  },
+  "area": {
+    "shape": "burst",
+    "size": 4
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "8d6",
+      "type": "fire",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 3,
+        "dice": "1d6"
+      }
+    }
+  ]
+}

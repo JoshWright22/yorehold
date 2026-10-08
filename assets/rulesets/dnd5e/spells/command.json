@@ -1,0 +1,24 @@
+{
+  "id": "command",
+  "name": "Command",
+  "description": "One word a creature must obey: on a failed Wisdom save it loses its next turn.",
+  "level": 1,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "commanded",
+      "duration": 1,
+      "onSave": "none"
+    }
+  ]
+}

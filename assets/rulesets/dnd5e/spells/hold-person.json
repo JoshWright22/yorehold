@@ -1,0 +1,25 @@
+{
+  "id": "hold-person",
+  "name": "Hold Person",
+  "description": "A humanoid is paralyzed on a failed Wisdom save while you concentrate; it saves again at the end of each of its turns.",
+  "level": 2,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "held",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

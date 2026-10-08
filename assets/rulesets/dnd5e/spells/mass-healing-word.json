@@ -1,0 +1,28 @@
+{
+  "id": "mass-healing-word",
+  "name": "Mass Healing Word",
+  "description": "Words that reach everyone near a point, as a bonus action: 2d4 + your spellcasting modifier each.",
+  "level": 3,
+  "hands": 0,
+  "cost": "bonus",
+  "target": {
+    "kind": "point",
+    "side": "ally",
+    "range": 12
+  },
+  "area": {
+    "shape": "burst",
+    "size": 6
+  },
+  "effects": [
+    {
+      "do": "heal",
+      "dice": "2d4+{mod.caster}",
+      "scale": {
+        "by": "slot",
+        "from": 3,
+        "dice": "1d4"
+      }
+    }
+  ]
+}

@@ -22,18 +22,20 @@
       "slots": {
         "1": 2
       },
-      "spells": 3
+      "spells": 4
     },
     {
       "slots": {
         "1": 3
-      }
+      },
+      "spells": 5
     },
     {
       "slots": {
         "1": 4,
         "2": 2
-      }
+      },
+      "spells": 6
     },
     {
       "slots": {
@@ -42,14 +44,16 @@
       },
       "boosts": 2,
       "boostStep": 1,
-      "boostsRepeat": true
+      "boostsRepeat": true,
+      "spells": 7
     },
     {
       "slots": {
         "1": 4,
         "2": 3,
         "3": 2
-      }
+      },
+      "spells": 9
     }
   ],
   "casting": "prepared",
@@ -62,6 +66,16 @@
       "shield",
       "burning-hands",
       "thunderwave"
+    ],
+    "2": [
+      "scorching-ray",
+      "shatter",
+      "hold-person"
+    ],
+    "3": [
+      "fireball",
+      "lightning-bolt",
+      "counterspell"
     ]
   }
 }

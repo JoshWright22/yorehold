@@ -1,0 +1,7 @@
+{
+  "id": "counterspell",
+  "name": "Counterspell",
+  "trigger": "spellCast",
+  "spell": "counterspell",
+  "order": 30
+}
