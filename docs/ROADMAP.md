@@ -597,6 +597,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Skins share and sell like any package (R14, R15); a publisher's system can ship its own look.
   - UI: Settings > Display > Skin with a preview; Create gains a skin editor (colours, fonts,
 	edges, with the screens shown live beside it).
+  - Done 10/8: the screens' colours are read from `ui/colors.json` at start (`UiColors`,
+    `Palette.Load`): a file laid on top (an art pack now, a skin later) recolours every screen
+    drawn in code; a role it leaves out keeps the game's own.
+  - Left: hud-theme.tres built from the same file; fonts, edges, corners and icons; skins as
+    packages picked in Settings; the stylesheet and layout files.
 - [ ] **R17. 3D dice.** Josh, 10/8: dice render in 3D when rolled, like Foundry's Dice So Nice. The
   result comes first from the game's seeded dice (R2b), so rolls stay fair and replayable; the
   physics throw is then played with the die turned so the rolled face lands up. Dice shapes come

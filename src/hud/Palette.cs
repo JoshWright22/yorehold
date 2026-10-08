@@ -13,38 +13,38 @@ namespace Yorehold;
 public static class Palette
 {
     // greys, black to white
-    public static readonly Color Night = Color.Color8(0x17, 0x17, 0x17);
-    public static readonly Color Ink = Color.Color8(0x1e, 0x1e, 0x1e);
-    public static readonly Color Dusk = Color.Color8(0x26, 0x26, 0x26);
-    public static readonly Color Iron = Color.Color8(0x3a, 0x3a, 0x3a);
-    public static readonly Color Slate = Color.Color8(0x5c, 0x5c, 0x5c);
-    public static readonly Color Smoke = Color.Color8(0x7d, 0x7d, 0x7d);
-    public static readonly Color Ash = Color.Color8(0xb4, 0xb4, 0xb4);
-    public static readonly Color Sand = Color.Color8(0xe9, 0xe9, 0xe9);
-    public static readonly Color Bone = Color.Color8(0xf7, 0xf7, 0xf7);
+    public static Color Night { get; private set; } = Color.Color8(0x17, 0x17, 0x17);
+    public static Color Ink { get; private set; } = Color.Color8(0x1e, 0x1e, 0x1e);
+    public static Color Dusk { get; private set; } = Color.Color8(0x26, 0x26, 0x26);
+    public static Color Iron { get; private set; } = Color.Color8(0x3a, 0x3a, 0x3a);
+    public static Color Slate { get; private set; } = Color.Color8(0x5c, 0x5c, 0x5c);
+    public static Color Smoke { get; private set; } = Color.Color8(0x7d, 0x7d, 0x7d);
+    public static Color Ash { get; private set; } = Color.Color8(0xb4, 0xb4, 0xb4);
+    public static Color Sand { get; private set; } = Color.Color8(0xe9, 0xe9, 0xe9);
+    public static Color Bone { get; private set; } = Color.Color8(0xf7, 0xf7, 0xf7);
     // gold: the main action, what is picked
-    public static readonly Color Straw = Color.Color8(0xed, 0xe1, 0x9e);
-    public static readonly Color Amber = Color.Color8(0xc9, 0xb8, 0x66);
-    public static readonly Color Leather = Color.Color8(0x8a, 0x7f, 0x45);
-    public static readonly Color Sage = Straw;
+    public static Color Straw { get; private set; } = Color.Color8(0xed, 0xe1, 0x9e);
+    public static Color Amber { get; private set; } = Color.Color8(0xc9, 0xb8, 0x66);
+    public static Color Leather { get; private set; } = Color.Color8(0x8a, 0x7f, 0x45);
+    public static Color Sage => Straw;
     // red: danger, enemies, damage
-    public static readonly Color Red = Color.Color8(0xe0, 0x67, 0x5e);
-    public static readonly Color Rose = Color.Color8(0xe0, 0x8a, 0x82);
-    public static readonly Color Rust = Color.Color8(0x8c, 0x3a, 0x34);
-    public static readonly Color Mauve = Color.Color8(0x5a, 0x24, 0x20);
-    public static readonly Color Orchid = Red;
-    public static readonly Color Plum = Rust;
-    public static readonly Color Shade = Mauve;
+    public static Color Red { get; private set; } = Color.Color8(0xe0, 0x67, 0x5e);
+    public static Color Rose { get; private set; } = Color.Color8(0xe0, 0x8a, 0x82);
+    public static Color Rust { get; private set; } = Color.Color8(0x8c, 0x3a, 0x34);
+    public static Color Mauve { get; private set; } = Color.Color8(0x5a, 0x24, 0x20);
+    public static Color Orchid => Red;
+    public static Color Plum => Rust;
+    public static Color Shade => Mauve;
     // blue: information, allies, healing
-    public static readonly Color Sky = Color.Color8(0x68, 0xc2, 0xd3);
-    public static readonly Color Mint = Color.Color8(0xa9, 0xdd, 0xe6);
-    public static readonly Color Blue = Color.Color8(0x3f, 0x8a, 0x99);
-    public static readonly Color Indigo = Color.Color8(0x2a, 0x55, 0x60);
-    public static readonly Color Moss = Color.Color8(0x1b, 0x34, 0x39);
-    public static readonly Color Leaf = Sky;
-    public static readonly Color Lime = Mint;
-    public static readonly Color Olive = Blue;
-    public static readonly Color Teal = Indigo;
+    public static Color Sky { get; private set; } = Color.Color8(0x68, 0xc2, 0xd3);
+    public static Color Mint { get; private set; } = Color.Color8(0xa9, 0xdd, 0xe6);
+    public static Color Blue { get; private set; } = Color.Color8(0x3f, 0x8a, 0x99);
+    public static Color Indigo { get; private set; } = Color.Color8(0x2a, 0x55, 0x60);
+    public static Color Moss { get; private set; } = Color.Color8(0x1b, 0x34, 0x39);
+    public static Color Leaf => Sky;
+    public static Color Lime => Mint;
+    public static Color Olive => Blue;
+    public static Color Teal => Indigo;
 
     // Apollo (AdamCYounis, 46 colours): what the map's art and content colours are snapped to
     private static readonly Color[] All =
@@ -64,6 +64,47 @@ public static class Palette
         Color.Color8(0xcf, 0x57, 0x3c), Color.Color8(0xa2, 0x3e, 0x8c), Color.Color8(0x09, 0x0a, 0x14),
         Color.Color8(0x10, 0x14, 0x1f), Color.Color8(0x20, 0x2e, 0x37),
     };
+
+    /// <summary>
+    /// Takes the screens' colours from ui/colors.json (a skin's when one is laid on top): each role
+    /// it names replaces the game's own; one it leaves out stays. Call before anything is drawn.
+    /// </summary>
+    public static void Load(Rules.ContentFiles files)
+    {
+        Rules.UiColors colors;
+        try
+        {
+            colors = Rules.UiColors.Read(Rules.ContentNode.Read(files, Rules.UiColors.File));
+        }
+        catch (Rules.ContentException error)
+        {
+            GD.PushWarning($"The screens' colours can't be read, so they are the game's own: {error.Message}");
+            return;
+        }
+        Color Role(string role, Color own) =>
+            colors.Roles.TryGetValue(role, out (byte R, byte G, byte B) c) ? Color.Color8(c.R, c.G, c.B) : own;
+        Night = Role("greys.bg-deep", Night);
+        Ink = Role("greys.bg", Ink);
+        Dusk = Role("greys.panel", Dusk);
+        Iron = Role("greys.line", Iron);
+        Slate = Role("greys.soft", Slate);
+        Smoke = Role("greys.faint", Smoke);
+        Ash = Role("greys.muted", Ash);
+        Sand = Role("greys.paper-2", Sand);
+        Bone = Role("greys.paper", Bone);
+        Straw = Role("gold.main", Straw);
+        Amber = Role("gold.mid", Amber);
+        Leather = Role("gold.dark", Leather);
+        Red = Role("red.main", Red);
+        Rose = Role("red.light", Rose);
+        Rust = Role("red.dark", Rust);
+        Mauve = Role("red.deep", Mauve);
+        Sky = Role("blue.main", Sky);
+        Mint = Role("blue.light", Mint);
+        Blue = Role("blue.mid", Blue);
+        Indigo = Role("blue.dark", Indigo);
+        Moss = Role("blue.deep", Moss);
+    }
 
     /// <summary>The palette colour closest to any colour, for content colours drawn on a panel.</summary>
     public static Color Nearest(Color color)
