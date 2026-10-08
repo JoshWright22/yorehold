@@ -82,6 +82,8 @@ public enum WorldEventKind
     Save,
     /// <summary>A save was loaded; Text is the chapter's resume line.</summary>
     Resumed,
+    /// <summary>Dice were thrown: Roll has them as they fell, Text says what for (attack, save, damage...), At where.</summary>
+    Dice,
 }
 
 /// <summary>A library character taking a seat in place of the chapter's ready-made hero.</summary>
@@ -93,6 +95,8 @@ public sealed record WorldEvent(WorldEventKind Kind, string Text = "")
     public Vector2 At { get; init; }
     public double Seconds { get; init; }
     public int Group { get; init; } = -1;
+    /// <summary>The dice, for Dice.</summary>
+    public RollResult? Roll { get; init; }
 }
 
 /// <summary>Player choices that change what the rules see.</summary>

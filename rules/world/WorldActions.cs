@@ -380,6 +380,16 @@ public sealed partial class World
             {
                 continue;
             }
+            if (e.Roll.Dice.Count > 0 && e.Kind is EffectEventKind.Attack or EffectEventKind.Check or EffectEventKind.Save
+                or EffectEventKind.Defence or EffectEventKind.Damage or EffectEventKind.Heal)
+            {
+                // the dice as they fell, for the screen to throw before the numbers reach the log
+                int roller = e.Kind is EffectEventKind.Save or EffectEventKind.Defence ? e.Who : e.By >= 0 ? e.By : e.Who;
+                _events.Add(new WorldEvent(WorldEventKind.Dice, e.Kind.ToString().ToLowerInvariant())
+                {
+                    Roll = e.Roll, At = roller >= 0 && roller < Tokens.Tokens.Count ? Tokens.Tokens[roller].Position : Tokens.Tokens[e.Who].Position,
+                });
+            }
             switch (e.Kind)
             {
                 case EffectEventKind.Attack:

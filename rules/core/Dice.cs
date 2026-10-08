@@ -26,7 +26,7 @@ public static class Dice
                     face = random.Range(1, term.Sides);
                     value += face;
                 }
-                result.Dice.Add(new DieRoll(term.Sides, value));
+                result.Dice.Add(new DieRoll(term.Sides, value, true, term.Fudge));
             }
 
             if (term.KeepHighest != 0 || term.KeepLowest != 0)
