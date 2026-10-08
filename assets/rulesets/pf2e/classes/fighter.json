@@ -49,6 +49,34 @@
       ]
     },
     {},
-    {}
+    {
+      "skills": 1,
+      "ranks": {
+        "will": "expert"
+      },
+      "features": [
+        {
+          "id": "bravery",
+          "name": "Bravery",
+          "description": "Will saves become expert; fear has a harder time holding you."
+        }
+      ]
+    },
+    {},
+    {
+      "boosts": 4,
+      "boostStep": 2,
+      "skills": 1,
+      "ranks": {
+        "weapons": "master"
+      },
+      "features": [
+        {
+          "id": "fighter-weapon-mastery",
+          "name": "Fighter Weapon Mastery",
+          "description": "Master with your weapons."
+        }
+      ]
+    }
   ]
 }

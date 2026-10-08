@@ -669,6 +669,36 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void Level5BoostsFourAttributesInPf2e()
+    {
+        ContentFiles files = TestContent.Shipped();
+        Ruleset rules = RulesFolder.Load(files, "rulesets/pf2e").Rules;
+        var compendium = new Compendium();
+        compendium.Load(files, "rulesets/pf2e", "");
+        compendium.LoadOptions(files, "rulesets/pf2e");
+        var draft = new CharacterDraft(rules, compendium);
+        draft.SetName("Ana");
+        CharacterChoices choices = draft.Choices;
+        for (int level = 2; level <= 5; level++)
+        {
+            draft = CharacterDraft.LevelUp(rules, compendium, choices);
+            choices = draft.Choices;
+        }
+        Assert.Equal((4, 2), draft.LevelBoosts());
+        string[] four = rules.Abilities.Take(4).Select(a => a.Id).ToArray();
+        int before = CharacterBuild.Build(rules, compendium, draft.Choices, out string problem)?.AbilityScore(four[0]) ?? throw new Xunit.Sdk.XunitException(problem);
+        foreach (string ability in four)
+        {
+            draft.ToggleBoost(ability);
+        }
+        // each a different one: pressing the first again takes it back
+        Assert.Equal(four, draft.Choices.Levels[^1].Picked("boosts"));
+        Assert.Equal(before + 2, CharacterBuild.Build(rules, compendium, draft.Choices)!.AbilityScore(four[0]));
+        draft.ToggleBoost(four[0]);
+        Assert.Equal(3, draft.Choices.Levels[^1].Picked("boosts").Count);
+    }
+
+    [Fact]
     public void AHerosAttackReactionIsAskedFor()
     {
         // with prompts on, Ana's riposte to a miss waits for her player's answer

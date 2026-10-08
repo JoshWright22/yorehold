@@ -41,7 +41,42 @@
         }
       ]
     },
-    {},
-    {}
+    {
+      "skills": 1
+    },
+    {
+      "skills": 1,
+      "features": [
+        {
+          "id": "deny-advantage",
+          "name": "Deny Advantage",
+          "description": "Hard to catch off guard: +1 AC.",
+          "modifiers": [
+            {
+              "stat": "ac",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "skills": 1
+    },
+    {
+      "boosts": 4,
+      "boostStep": 2,
+      "skills": 1,
+      "ranks": {
+        "weapons": "expert"
+      },
+      "features": [
+        {
+          "id": "weapon-tricks",
+          "name": "Weapon Tricks",
+          "description": "Expert with your weapons; Sneak Attack deals 2d6."
+        }
+      ]
+    }
   ]
 }

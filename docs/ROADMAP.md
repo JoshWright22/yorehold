@@ -366,7 +366,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: the place gives conditions for a roll: `unseenAttackerCondition` and
     `unseenTargetCondition` in positioning.json, from light and darkvision; 5e's give advantage
     and disadvantage. Left: high ground (maps have no height yet).
-- [ ] **R4. The turn in data.** Action kinds per system (5e: action, bonus action, reaction,
+- [x] **R4. The turn in data.** Action kinds per system (5e: action, bonus action, reaction,
   movement; PF2e: three actions, a reaction, free actions), a switch for the free move, attacks
   counted for a multiple attack penalty and `agile`, conditions that add or take actions
   (slowed, stunned, quickened), reaction triggers beyond leaving and entering reach (hit, missed,
@@ -432,7 +432,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: a downed hero's card reads the system's track in place of HP ("dying 2/4",
     "saves 1/3, 2/3", "stable", "taken out"), the death value found from the system's formula;
     its tip says it in a line.
-- [ ] **R8. Character creation from the system.** Its steps (5e: species, background, class,
+- [x] **R8. Character creation from the system.** Its steps (5e: species, background, class,
   scores; PF2e: ancestry, heritage, background, class, boosts), score methods and level-up
   choices. UI: the creation screen lists the system's steps.
   - Done 10/8: `creation` in ruleset.json: the steps, which parts each picks, what the parts are
@@ -445,8 +445,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: 5e's +2 to one or +1 to two (`boostsRepeat`).
   - Done 10/8: a level gained in play with no picks (from experience or a milestone) is offered
     in Characters as Level up, which fills that level's picks without adding one (`FillLevel`).
-  - Left: PF2e's level 5 boosts (its
-    classes stop at 3 for now).
+  - Done 10/8: PF2e's classes to level 5: four boosts at 5, saves and weapons rising in rank
+    (Bravery, Weapon Mastery, Reflex and Perception Expertise), a skill trained at 3 and 5,
+    third-rank slots. Left: a boost past 18 counting half, class and skill feats (the set has
+    no feat files yet).
 - [ ] **R9. D&D 5e (SRD 5.2) as a package.** Everything the SRD has that the steps above allow;
   what doesn't fit goes back as a step. Today's "yorehold" set stays as Yorehold's own system.
   - Done 10/8, first slice: `rulesets/dnd5e` (written by `.dev\make-dnd5e.py`): the six

@@ -41,7 +41,44 @@
       "slots": {
         "1": 3,
         "2": 2
+      },
+      "skills": 1,
+      "ranks": {
+        "fortitude": "expert"
+      },
+      "features": [
+        {
+          "id": "second-doctrine",
+          "name": "Second Doctrine",
+          "description": "Fortitude saves become expert."
+        }
+      ]
+    },
+    {
+      "slots": {
+        "1": 3,
+        "2": 3
       }
+    },
+    {
+      "boosts": 4,
+      "boostStep": 2,
+      "slots": {
+        "1": 3,
+        "2": 3,
+        "3": 2
+      },
+      "skills": 1,
+      "ranks": {
+        "perception": "expert"
+      },
+      "features": [
+        {
+          "id": "perception-expertise",
+          "name": "Perception Expertise",
+          "description": "Perception becomes expert."
+        }
+      ]
     }
   ],
   "casting": "prepared",
