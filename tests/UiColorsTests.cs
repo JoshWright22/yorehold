@@ -41,7 +41,7 @@ public class UiColorsTests
     public void TheScreensFacesAreData()
     {
         UiFonts shipped = UiFonts.Read(ContentNode.Read(TestContent.Shipped(), UiFonts.File));
-        Assert.Equal("Inter Tight", shipped.Faces["sans"][0]);
+        Assert.Equal("ui/fonts/SourceSans3-Regular.ttf", shipped.Faces["sans"][0]);
         Assert.Equal(3, shipped.Faces.Count);
         UiFonts skin = UiFonts.Read(TestContent.Json("""{"format": "yorehold.fonts", "version": 1, "book": ["Georgia", "serif"]}"""));
         Assert.Equal(new[] { "book" }, skin.Faces.Keys);

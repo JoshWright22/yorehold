@@ -131,7 +131,8 @@ public static class Palette
     /// </summary>
     public static void LoadFonts(Rules.ContentFiles files)
     {
-        if (!files.Exists(Rules.UiFonts.File))
+        // A headless run draws nothing, and its text server can't size some system fonts: it keeps the theme's own.
+        if (!files.Exists(Rules.UiFonts.File) || DisplayServer.GetName() == "headless")
         {
             return;
         }
@@ -145,8 +146,8 @@ public static class Palette
             GD.PushWarning($"The screens' fonts can't be read, so they are the game's own: {error.Message}");
             return;
         }
-        // a role may start with a font file the skin brings; the system names after it are its fallbacks
-        var brought = new System.Collections.Generic.Dictionary<string, FontFile>();
+        // a role may start with a font file (the game's own, or one a skin brings); the system names after it are its fallbacks
+        var brought = new System.Collections.Generic.Dictionary<string, string>();
         foreach ((string role, System.Collections.Generic.List<string> names) in fonts.Faces)
         {
             string? path = names.FirstOrDefault(Rules.UiFonts.IsFile);
@@ -159,12 +160,51 @@ public static class Palette
                 GD.PushWarning($"{Rules.UiFonts.File}: {role} names {path}, which isn't there; the system fonts listed stand in");
                 continue;
             }
-            brought[role] = new FontFile { Data = files.ReadBytes(path) };
+            brought[role] = path;
+        }
+        // The game's own files are fonts the engine imported (res://assets/...); a skin's are read
+        // from disk. Weights and slants come from the files beside the regular one.
+        var loaded = new System.Collections.Generic.Dictionary<string, FontFile?>();
+        FontFile? Load(string path)
+        {
+            if (loaded.TryGetValue(path, out FontFile? known))
+            {
+                return known;
+            }
+            FontFile? file = null;
+            if (ResourceLoader.Exists("res://assets/" + path))
+            {
+                file = GD.Load<FontFile>("res://assets/" + path);
+            }
+            else if (files.FullPath(path) is string full && System.IO.File.Exists(full))
+            {
+                file = new FontFile();
+                if (file.LoadDynamicFont(full) != Error.Ok)
+                {
+                    file = null;
+                }
+            }
+            loaded[path] = file;
+            return file;
+        }
+        Font? Face(string regular, SystemFont like)
+        {
+            bool italic = like.FontItalic;
+            string[] endings = italic ? new[] { "-It", "-Italic" } : like.FontWeight >= 700 ? new[] { "-Bold", "-Semibold", "-SemiBold" }
+                : like.FontWeight >= 600 ? new[] { "-Semibold", "-SemiBold", "-Bold" } : System.Array.Empty<string>();
+            foreach (string ending in endings)
+            {
+                if (regular.Contains("-Regular", System.StringComparison.Ordinal) && Load(regular.Replace("-Regular", ending)) is FontFile own)
+                {
+                    return own;
+                }
+            }
+            return Load(regular);
         }
         Theme theme = GD.Load<Theme>("res://scenes/hud/hud-theme.tres");
         var swapped = new System.Collections.Generic.Dictionary<SystemFont, Font>();
-        // The font a role's system font becomes: the same font with the role's names, or the file
-        // the skin brought (made bold the way the system font was).
+        // The font a role's system font becomes: the same font with the role's names, or the role's
+        // file in the weight the system font asked for.
         Font? Swap(SystemFont font)
         {
             if (swapped.TryGetValue(font, out Font? done))
@@ -181,16 +221,14 @@ public static class Palette
                 {
                     continue;
                 }
-                font.FontNames = names.Where(n => !Rules.UiFonts.IsFile(n)).DefaultIfEmpty(first).ToArray();
                 Font result = font;
-                if (brought.TryGetValue(role, out FontFile? file))
+                if (brought.TryGetValue(role, out string? path) && Face(path, font) is Font file)
                 {
-                    result = new FontVariation
-                    {
-                        BaseFont = file,
-                        VariationEmbolden = font.FontWeight >= 600 ? 0.6f : 0,
-                        Fallbacks = new Godot.Collections.Array<Font> { font },
-                    };
+                    result = file;
+                }
+                else
+                {
+                    font.FontNames = names.Where(n => !Rules.UiFonts.IsFile(n)).DefaultIfEmpty(first).ToArray();
                 }
                 swapped[font] = result;
                 return result;

@@ -2,7 +2,23 @@
   "format": "yorehold.fonts",
   "version": 1,
   "about": "The faces the screens use, by role, each a list of system fonts tried in order. A skin's own file replaces the roles it names. sans: headings and buttons; book: entry text; mono: numbers.",
-  "sans": ["Inter Tight", "Inter", "Segoe UI", "Roboto", "sans-serif"],
-  "book": ["Arial", "Helvetica", "Roboto", "sans-serif"],
-  "mono": ["JetBrains Mono", "Cascadia Mono", "Consolas", "Courier New", "monospace"]
+  "sans": [
+    "ui/fonts/SourceSans3-Regular.ttf",
+    "Source Sans 3",
+    "Arial",
+    "sans-serif"
+  ],
+  "book": [
+    "ui/fonts/SourceSans3-Regular.ttf",
+    "Source Sans 3",
+    "Arial",
+    "sans-serif"
+  ],
+  "mono": [
+    "ui/fonts/JetBrainsMono-Regular.ttf",
+    "JetBrains Mono",
+    "Cascadia Mono",
+    "Consolas",
+    "monospace"
+  ]
 }

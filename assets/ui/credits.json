@@ -34,6 +34,20 @@
       "by": "Evil Hat Productions, LLC",
       "licence": "CC BY 3.0",
       "text": "This work is based on Fate Accelerated Edition (found at https://www.faterpg.com/), products of Evil Hat Productions, LLC, developed, authored, and edited by Clark Valentine, Leonard Balsera, Fred Hicks, Mike Olson, and Amanda Valentine, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (https://creativecommons.org/licenses/by/3.0/)."
+    },
+    {
+      "name": "Source Sans 3",
+      "kind": "Font",
+      "by": "Adobe",
+      "licence": "OFL 1.1",
+      "text": "The face of the screens' words. Licensed under the SIL Open Font License 1.1 (assets/ui/fonts/SourceSans3-OFL.txt)."
+    },
+    {
+      "name": "JetBrains Mono",
+      "kind": "Font",
+      "by": "The JetBrains Mono Project Authors",
+      "licence": "OFL 1.1",
+      "text": "The face of numbers, dice and times. Licensed under the SIL Open Font License 1.1 (assets/ui/fonts/JetBrainsMono-OFL.txt)."
     }
   ]
 }

@@ -36,7 +36,9 @@ Read from the game and shared pages (counts of use in brackets). They replace th
      new: greys to the design's, gold to amber `#e8b33a`, red `#ff5c5c`, blue `#6ca6ff`; the
      darkest red and blue shades, which the design doesn't draw, are darkened from its mains).
      Corners were already 2 px.
-   - Blocked 10/9: the fonts. Font files loaded at run time (`FontFile.LoadDynamicFont` or
+   - Done 10/9, second try: the fonts, shipped as engine-imported resources under `assets/ui/fonts/`
+     (`.import` beside each; the game loads them through Godot; a skin's own still loads from disk).
+   - Was blocked 10/9: the fonts. Font files loaded at run time (`FontFile.LoadDynamicFont` or
      from bytes) render, but every one makes the text server log "Parameter fd is null" on
      ascent, descent and spacing, which fails the check; three ways tried, reverted. Next try:
      ship the files as Godot-imported resources (`res://` .ttf with .import, loaded with
