@@ -28,6 +28,16 @@ public class UiColorsTests
     }
 
     [Fact]
+    public void TheScreensMoveAsTheMotionFileSays()
+    {
+        UiMotion shipped = UiMotion.Read(ContentNode.Read(TestContent.Shipped(), UiMotion.File));
+        Assert.True(shipped.PanelSeconds > 0 && shipped.ChatSeconds > 0 && shipped.BarSeconds > 0, "The game's panels, chat and bars move");
+        UiMotion skin = UiMotion.Read(TestContent.Json("""{"format": "yorehold.motion", "version": 1, "panelSeconds": 0}"""));
+        Assert.True(skin.PanelSeconds == 0 && skin.ChatSeconds == new UiMotion().ChatSeconds, "A skin changes only what it names");
+        Assert.Equal("barSeconds", TestContent.Refused(() => UiMotion.Read(TestContent.Json("""{"format": "yorehold.motion", "version": 1, "barSeconds": 60}"""))).Field);
+    }
+
+    [Fact]
     public void TheScreensShapesAreData()
     {
         UiShapes shipped = UiShapes.Read(ContentNode.Read(TestContent.Shipped(), UiShapes.File));

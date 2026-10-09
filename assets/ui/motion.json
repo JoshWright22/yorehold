@@ -1,0 +1,10 @@
+{
+  "format": "yorehold.motion",
+  "version": 1,
+  "about": "How the screens move: panels slide up into place, the chat column slides in and out, HP bars run down, the turn banner slides. Seconds and pixels; Options > Display > Less motion makes every one a cut.",
+  "panelSeconds": 0.14,
+  "panelDistance": 12,
+  "chatSeconds": 0.15,
+  "barSeconds": 0.4,
+  "bannerSeconds": 0.2
+}

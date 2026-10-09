@@ -41,6 +41,8 @@ public sealed class SettingsPanel
             (s, i) => s.Skin = i == 0 ? "" : NextSkin(s.Skin)),
         new("dice", "Dice", "Display", "Rolls thrown as dice over the screen before the numbers reach the log: off, fast or full.",
             s => DiceWords[Math.Clamp(s.Dice, 0, 2)], DiceWords, (s, i) => s.Dice = i),
+        new("lessMotion", "Less motion", "Display", "Panels, the chat and HP bars cut straight to where they go instead of sliding.",
+            s => OnOff(s.LessMotion), new[] { "On", "Off" }, (s, i) => s.LessMotion = i == 0),
         new("timeOfDay", "Time of day", "Display", "Outdoor maps by day, at dusk or at night. Underground maps stay as they are.",
             s => TimeWords[Math.Clamp(s.TimeOfDay, 0, 3)], TimeWords, (s, i) => s.TimeOfDay = i),
         new("sharedFog", "Shared party view", "Gameplay", "The map shows what anyone in the party sees, or only the selected hero.",

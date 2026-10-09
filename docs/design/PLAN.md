@@ -52,6 +52,7 @@ Read from the game and shared pages (counts of use in brackets). They replace th
 3. UI motion, from one data file (`ui/motion.json`: durations and easings by name) shared with
    R19's beats: panels slide, the chat column pushes in and out, the turn banner, HP bars run
    down, the dice throw. A Settings switch for less motion.
+   Done 10/9: `ui/motion.json` (panels slide up into place, the chat slides, party HP bars run down), Options > Display > Less motion. Left: the turn banner's slide.
 4. Editor screens, the same way: toolbar and breadcrumb, map, encounters, dialogue, cutscene,
    story graph, compendium, import from a book, build conflict, publish.
 5. Website (`yorehold-web`): header, footer and each page, matched in its own repo.

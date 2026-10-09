@@ -365,6 +365,11 @@ public partial class PlayHud : Control
         GetNode<Button>("Reaction/Rows/Buttons/Pass").Pressed += () => ReactionAnswered?.Invoke(false);
         _top.Visible = false;
         _bottom.Visible = false;
+        // the panels slide up into place as they open (ui/motion.json)
+        foreach (Control panel in new Control[] { _spellsView, _journalView, _campView, _sheet, _gearView, _partyGear, _trade, _talkColumn })
+        {
+            Motion.SlideInWhenShown(panel);
+        }
     }
 
     private PanelContainer? _help;

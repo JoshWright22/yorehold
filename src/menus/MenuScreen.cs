@@ -111,6 +111,10 @@ public partial class MenuScreen : CanvasLayer
         _credits = new CreditsPanel(GetNode<DataPanel>("Credits"));
         _adventures = new AdventuresPanel(GetNode<DataPanel>("Adventures"));
         _pages = new Control[] { GetNode<Control>("Load"), GetNode<Control>("Credits"), GetNode<Control>("Adventures") };
+        foreach (Control page in _pages.Append(GetNode<Control>("Settings")))
+        {
+            Motion.SlideInWhenShown(page);
+        }
         _adventures.View.ClosePressed += Back;
         _adventures.StartPressed += package => Ordered?.Invoke(MenuOrder.NewAdventure, package);
         _adventures.CoverPicked += (files, cover) => _banner.Pin(files, cover);

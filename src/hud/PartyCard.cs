@@ -15,6 +15,18 @@ public partial class PartyCard : TipButton
     private Label _line = null!;
     private Label _turnWord = null!;
     private bool? _low;
+    private double _hpTarget;
+    private bool _hpFresh = true;
+    private int _hpOf = -1;
+
+    public override void _Process(double delta)
+    {
+        base._Process(delta);
+        if (!Mathf.IsEqualApprox(_hp.Value, _hpTarget))
+        {
+            _hp.Value = Motion.Toward(_hp.Value, _hpTarget, _hp.MaxValue, delta);
+        }
+    }
     private ProgressBar _hp = null!;
     private Label _hpText = null!;
     private HBoxContainer _conditions = null!;
@@ -58,7 +70,14 @@ public partial class PartyCard : TipButton
         _portrait.Show(sheet.Name, token.Color.ToGodot(), sheet.Down, Portraits.Of(world, creature), Portraits.FocusOf(world, creature));
         _name.Text = sheet.Name;
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
-        _hp.Value = Mathf.Max(0, sheet.Hp);
+        // the bar runs down to a new value rather than jumping (ui/motion.json)
+        _hpTarget = Mathf.Max(0, sheet.Hp);
+        if (_hpFresh || Creature != _hpOf)
+        {
+            _hp.Value = _hpTarget;
+            _hpFresh = false;
+            _hpOf = Creature;
+        }
         // down, the card shows the system's own track (death saves, a dying value) in place of HP
         (string downed, string downedLine) = sheet.DownedText(world.Rules);
         _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)}/{sheet.MaxHp}";

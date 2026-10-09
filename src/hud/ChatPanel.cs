@@ -19,7 +19,6 @@ public partial class ChatPanel : CanvasLayer
     // where the put-away tab hangs on the edge
     private const float TabTop = 96;
     private const float TabHeight = 136;
-    private const double SlideSeconds = 0.15;
 
     /// <summary>The one chat column, for the play screen to show its log in.</summary>
     public static ChatPanel? Current { get; private set; }
@@ -281,7 +280,7 @@ public partial class ChatPanel : CanvasLayer
         Open = open;
         _slide?.Kill();
         _slide = CreateTween();
-        _slide.TweenProperty(_frame, "offset_left", Open ? -(Width + TabWidth) : -TabWidth, SlideSeconds)
+        _slide.TweenProperty(_frame, "offset_left", Open ? -(Width + TabWidth) : -TabWidth, System.Math.Max(0.001, Motion.Seconds(Motion.Look.ChatSeconds)))
             .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
         _tab.Visible = !Open;
         if (Open && focus)
