@@ -91,6 +91,7 @@ public partial class PlayHud : Control
     private DataPanel _gearView = null!;
     private Button _gearButton = null!;
     private GearPanel _gear = null!;
+    private PartyGearView _partyGear = null!;
     private DataPanel _spellsView = null!;
     private Button _spellsButton = null!;
     private SpellPanel _spells = null!;
@@ -134,6 +135,7 @@ public partial class PlayHud : Control
         _top.OffsetLeft = -200 - right / 2;
         _top.OffsetRight = 200 - right / 2;
         _openDice.OffsetRight = -right - 80;
+        _partyGear.OffsetRight = -right;
         // over the map only: an open panel (the gear, the spells) covers it
         _openDice.Visible = _bottom.Visible && OpenPanel.Length == 0;
     }
@@ -303,6 +305,13 @@ public partial class PlayHud : Control
         _gear = new GearPanel(_gearView);
         _gear.Ordered += order => ItemOrdered?.Invoke(order);
         _gearView.ClosePressed += () => OpenPanel = "";
+        // the pack is the party's inventory screen; a chest or shop beside the hero keeps the table
+        _partyGear = new PartyGearView { Name = "PartyGear", Visible = false };
+        AddChild(_partyGear);
+        _partyGear.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _partyGear.Ordered += order => ItemOrdered?.Invoke(order);
+        _partyGear.Closed += () => OpenPanel = "";
+        _partyGear.TabPicked += tab => OpenPanel = tab;
         _spellsView = GetNode<DataPanel>("Spells");
         _spellsButton = GetNode<Button>("Bottom/Row/Menu/Spells");
         _spells = new SpellPanel(_spellsView);
@@ -417,6 +426,7 @@ public partial class PlayHud : Control
     public void GearRefused(string why)
     {
         _gear.Refused(why);
+        _partyGear.Say(why);
     }
 
     /// <summary>Says under the spell panel's entry why the world said no.</summary>
@@ -629,7 +639,13 @@ public partial class PlayHud : Control
             _sheet.Refresh(world, hero);
         }
         _gearButton.SetPressedNoSignal(OpenPanel == "Gear");
-        _gearView.Visible = OpenPanel == "Gear" && hero < world.HeroCount;
+        bool pack = _gear.Source == GearPanel.Pack;
+        _partyGear.Visible = OpenPanel == "Gear" && pack && hero < world.HeroCount;
+        if (_partyGear.Visible)
+        {
+            _partyGear.Refresh(world, hero);
+        }
+        _gearView.Visible = OpenPanel == "Gear" && !pack && hero < world.HeroCount;
         if (_gearView.Visible)
         {
             _gear.Refresh(world, hero);
