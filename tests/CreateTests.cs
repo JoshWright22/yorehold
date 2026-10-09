@@ -272,6 +272,22 @@ public class CreateTests
         Assert.True(package.PlayFiles().Exists("content.json"), "The game's content is still under both");
     }
 
+    [Theory]
+    [InlineData("rulesets/yorehold")]
+    [InlineData("rulesets/dnd5e")]
+    [InlineData("rulesets/pf2e")]
+    [InlineData("rulesets/fate-accelerated")]
+    public void ANewAdventureComesWithExamplesToCopy(string system)
+    {
+        using var scratch = new Scratch();
+        var package = new CreatePackage(TestContent.AssetsFolder());
+        Assert.True(package.New(Path.Combine(scratch.Folder, "create"), system), package.Status);
+        string[] examples = Directory.GetFiles(package.PackagePath, "example-*.json", SearchOption.AllDirectories);
+        Assert.True(examples.Length >= 1, "Something of the system's own to copy: an item, a spell, a creature as it has them");
+        package.CheckFiles();
+        Assert.True(package.Problems().All(p => !p.Error), string.Join("; ", package.Problems().Select(p => p.Message)));
+    }
+
     [Fact]
     public void PackagesAreMadeOpenedAndSaved()
     {

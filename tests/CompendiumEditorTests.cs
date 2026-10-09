@@ -217,7 +217,8 @@ public class CompendiumEditorTests
         var package = new CreatePackage(TestContent.AssetsFolder());
         Assert.True(package.New(Path.Combine(scratch.Folder, "create")), package.Status);
         CompendiumEditor? editor = package.CompendiumEditor();
-        Assert.True(editor != null && editor.Entries.Count == 0, "A new package has no definitions of its own: " + package.CompendiumError);
+        Assert.True(editor != null && editor.Entries.All(e => e.Id.StartsWith("example-", StringComparison.Ordinal)),
+            "A new package has no definitions of its own but the examples to copy: " + package.CompendiumError);
         Assert.True(package.CompendiumFolders["item"] == "items" && !package.CompendiumFolders.ContainsKey("spell"),
             "Items go at the root; spells need a ruleset folder the new package doesn't have");
         Dictionary<string, List<string>> options = editor!.Options();
@@ -242,7 +243,7 @@ public class CompendiumEditorTests
         // opened again, it is read from the folder
         package.Open(package.PackagePath);
         editor = package.CompendiumEditor();
-        Assert.True(editor != null && editor.Of("item").Count == 1 && editor.Changed().Count == 0, "Reopened, the saved item is there and unchanged");
+        Assert.True(editor != null && editor.Of("item").Count(i => !editor.Entries[i].Id.StartsWith("example-", StringComparison.Ordinal)) == 1 && editor.Changed().Count == 0, "Reopened, the saved item is there and unchanged");
 
         // the game's own content opens with nothing wrong and nothing to rewrite
         package.Open(TestContent.AssetsFolder());

@@ -39,6 +39,9 @@ sources ours does, and is written fresh here). R21 in the roadmap carries what w
 
 ## For people coming from Foundry
 
+Start with FIRST_ADVENTURE.md: New adventure to a played fight, and the example files a new
+adventure comes with.
+
 | In Foundry | Here |
 | --- | --- |
 | a game system (`system.json`, its data models) | a rules system: a ruleset folder with `ruleset.json` |

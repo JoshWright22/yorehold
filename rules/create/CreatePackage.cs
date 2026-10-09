@@ -200,6 +200,7 @@ public sealed partial class CreatePackage
             WriteFile(System.IO.Path.Combine(folder, "content.json"), CreateJson.Write(manifest));
             WriteFile(System.IO.Path.Combine(folder, chapter, "chapter.json"), CreateJson.Write(chapterFile));
             WriteFile(System.IO.Path.Combine(folder, chapter, "map.json"), CreateJson.Write(map));
+            WriteStarters(game, system, folder);
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
@@ -208,6 +209,33 @@ public sealed partial class CreatePackage
         }
         Open(folder);
         return IsOpen;
+    }
+
+    // Examples to copy beside the new adventure: one of the system's own items and creatures,
+    // renamed "example-<id>", so a creator has a file that loads as written to change and to copy
+    // (docs/FIRST_ADVENTURE.md walks through them). Spells, races and feats belong to a ruleset
+    // folder, which a new package doesn't have, so they have none here.
+    private static void WriteStarters(ContentFiles game, string system, string folder)
+    {
+        foreach ((string kind, string[] liked) in new[]
+        {
+            ("items", new[] { "longsword", "shortsword", "dagger" }),
+            ("creatures", new[] { "goblin", "wolf", "bandit" }),
+        })
+        {
+            List<string> found = game.List(system + "/" + kind);
+            string? pick = liked.Select(id => $"{system}/{kind}/{id}.json").FirstOrDefault(found.Contains) ?? found.FirstOrDefault();
+            if (pick == null || JsonNode.Parse(game.ReadText(pick)) is not JsonObject entry || entry["id"]?.GetValue<string>() is not string id)
+            {
+                continue;
+            }
+            entry["id"] = "example-" + id;
+            if (entry["name"]?.GetValue<string>() is string name)
+            {
+                entry["name"] = name + " (example)";
+            }
+            WriteFile(System.IO.Path.Combine(folder, kind, $"example-{id}.json"), CreateJson.Write(entry));
+        }
     }
 
     /// <summary>The rules systems the game has, as (ruleset folder, name): what a new adventure can play.</summary>
