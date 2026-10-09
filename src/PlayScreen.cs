@@ -41,6 +41,27 @@ public partial class PlayScreen : Node2D
 
     /// <summary>Escape with nothing else to close: Main opens the pause list.</summary>
     public event System.Action? PauseAsked;
+    /// <summary>A short line across the screen, as a save says "Saved".</summary>
+    public void Notice(string text) => _hud.Banner(text, 1.5);
+
+    /// <summary>The content files are to be read again, carrying on from where the party is (Snapshot).</summary>
+    public event System.Action? ReloadAsked;
+
+    /// <summary>
+    /// Where the party is, written to a scratch save (not the autosave), for playing on with the
+    /// content read again: a creator's change to an item, a spell or a map shows without a restart.
+    /// Null when the world can't be saved now (a fight, a conversation).
+    /// </summary>
+    public string? Snapshot()
+    {
+        if (_world == null || !_world.CanSave)
+        {
+            return null;
+        }
+        string path = ProjectSettings.GlobalizePath("user://reload.json");
+        World.SaveFile.WriteFile(path, System.Text.Json.Nodes.JsonNode.Parse(_world.StateJson().ToJsonString())!);
+        return path;
+    }
     /// <summary>The title's character screens were closed without starting.</summary>
     public event System.Action? TitleAsked;
     /// <summary>Why the chapter didn't load; empty when it did.</summary>
@@ -470,6 +491,7 @@ public partial class PlayScreen : Node2D
     private static readonly (string Action, string Menu)[] PanelKeys =
     {
         ("sheet", "Sheet"), ("gear", "Gear"), ("spells", "Spells"), ("journal", "Journal"), ("camp", "Camp"), ("save", "Save"), ("load", "Load"),
+        ("reload", "Reload"),
     };
 
     private void Menu(string name)
@@ -500,6 +522,16 @@ public partial class PlayScreen : Node2D
                 return;
             case "Load":
                 LoadSave();
+                return;
+            case "Reload":
+                if (_world.CanSave)
+                {
+                    ReloadAsked?.Invoke();
+                }
+                else
+                {
+                    _hud.AddLog("Content is read again between fights, with nothing else going on.");
+                }
                 return;
         }
         _hud.Panels?.TogglePanel(name);

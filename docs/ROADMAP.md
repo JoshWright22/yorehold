@@ -781,6 +781,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - A starter package per system (one class, one spell, one creature, one item, one map, one
     chapter) to copy, a "your first adventure" page, and examples on every field in CONTENT.md.
   - Reload while the game runs: content files changed on disk show on the next turn in Test play.
+    Done 10/9: Reload content (F6, or the pause menu) between fights: the party's place is
+    written to a scratch save and loaded into a fresh game with every file read again.
 
 - [ ] **R23. A 3D map beside the 2D one** (Josh, 10/9: long after the 2D game ships). Nothing to
   build now; what keeps it open: the rules know only the grid (R2c), never pixels; maps keep their

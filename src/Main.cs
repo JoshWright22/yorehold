@@ -127,7 +127,24 @@ public partial class Main : Node
             case MenuOrder.Exit:
                 GetTree().Quit();
                 break;
+            case MenuOrder.ReloadContent:
+                ReloadContent();
+                break;
         }
+    }
+
+    // The content read again from disk, the party where it was: the scratch save is loaded into a
+    // fresh play screen, so every changed file counts.
+    private void ReloadContent()
+    {
+        if (_play?.Snapshot() is not string path)
+        {
+            _menus.Say("Content is read again between fights, with nothing else going on.");
+            return;
+        }
+        string package = _play.Package;
+        Play(PlayScreen.StartKind.Continue, path, package);
+        _play?.Notice("Content read again.");
     }
 
     private void Play(PlayScreen.StartKind kind, string save, string package = "")
@@ -159,6 +176,8 @@ public partial class Main : Node
             }
         }
         _play.PauseAsked += () => _menus.Open(MenuScreen.Page.Pause);
+        // deferred for the same reason as the title: the play screen asks, and is replaced
+        _play.ReloadAsked += () => Callable.From(ReloadContent).CallDeferred();
         // deferred: it is asked from inside the play screen, which this frees
         _play.TitleAsked += () => Callable.From(() => ToTitle("")).CallDeferred();
         AddChild(_play);

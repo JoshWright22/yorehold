@@ -18,6 +18,7 @@ public enum MenuOrder
     Resume,
     QuitToTitle,
     Exit,
+    ReloadContent,
 }
 
 /// <summary>
@@ -374,6 +375,8 @@ public partial class MenuScreen : CanvasLayer
             _list.Add(new Entry("resume", "Resume", "Esc", true, ""));
             _list.Add(new Entry("settings", "Options", "", true, ""));
             _list.Add(new Entry("load", "Load", Count(_saves.Count, "save"), _saves.Count > 0, "There is no save yet."));
+            _list.Add(new Entry("reload", "Reload content", App.KeyHint("reload"), Playing?.Invoke()?.CanSave == true,
+                "Content is read again between fights, with nothing else going on."));
             _list.Add(new Entry("quit", "Save and quit", "to main menu", true, ""));
             return;
         }
@@ -517,6 +520,7 @@ public partial class MenuScreen : CanvasLayer
             case "create": Ordered?.Invoke(MenuOrder.Create, ""); break;
             case "resume": Ordered?.Invoke(MenuOrder.Resume, ""); break;
             case "quit": Ordered?.Invoke(MenuOrder.QuitToTitle, ""); break;
+            case "reload": Ordered?.Invoke(MenuOrder.ReloadContent, ""); break;
             case "exit": Ordered?.Invoke(MenuOrder.Exit, ""); break;
             case "load": Open(Page.Load); break;
             case "settings": Open(Page.Settings); break;
