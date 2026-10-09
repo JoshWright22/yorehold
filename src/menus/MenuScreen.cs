@@ -110,6 +110,7 @@ public partial class MenuScreen : CanvasLayer
         _settings = new SettingsPanel(GetNode<Control>("Settings"));
         _credits = new CreditsPanel(GetNode<DataPanel>("Credits"));
         _adventures = new AdventuresPanel(GetNode<DataPanel>("Adventures"));
+        _pages = new Control[] { GetNode<Control>("Load"), GetNode<Control>("Credits"), GetNode<Control>("Adventures") };
         _adventures.View.ClosePressed += Back;
         _adventures.StartPressed += package => Ordered?.Invoke(MenuOrder.NewAdventure, package);
         _adventures.CoverPicked += (files, cover) => _banner.Pin(files, cover);
@@ -178,8 +179,25 @@ public partial class MenuScreen : CanvasLayer
         _notice.Text = notice;
     }
 
+    private Control[] _pages = System.Array.Empty<Control>();
+
+    // The pages leave the chat column its room when it is out: the options page ends at it, the
+    // book-like pages centre on what is left.
+    private void MakeRoom()
+    {
+        float room = ChatPanel.Current?.Open == true ? ChatPanel.Width : 0;
+        _settings.View.OffsetRight = -room;
+        float half = Mathf.Min(480, (GetViewport().GetVisibleRect().Size.X - room) / 2 - 16);
+        foreach (Control page in _pages)
+        {
+            page.OffsetLeft = -half - room / 2;
+            page.OffsetRight = half - room / 2;
+        }
+    }
+
     public override void _Process(double delta)
     {
+        MakeRoom();
         // a save may have arrived from another device, or been finished there
         if (App.Sync.LocalChanges != _syncChangesSeen)
         {
