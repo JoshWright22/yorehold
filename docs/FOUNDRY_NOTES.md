@@ -76,6 +76,8 @@ package as one change Undo takes back (`rules/import/FoundryImport.cs`):
 | pf2e npc | a creature: level, HP, AC, speed, scores from modifiers, its strikes as items, its printed attack bonus kept as a flat `attack` stat |
 | pf2e weapon, armour, spell | an item or spell the same way |
 | a feat (either) | a feat; pf2e FlatModifier rule elements as modifiers (fortitude, reflex, will and skill checks with an `if`) |
+| dnd5e ring, cloak or other worn equipment | an item in the slot its name suggests (ring, neck, cloak, head, hands, feet), else carried with a log line |
+| Active Effects on an item or feat | modifiers, for changes of a plain amount to AC, initiative, walking speed, max HP, darkvision, saves and checks (all, one ability's saves, one skill's checks), spell DC, attack and damage; Foundry's modes as add, multiply, min, max, override. Disabled effects and ones not passed to the wearer are skipped; formulas and other paths are named in the log |
 | dnd5e class | a class: hit die, casting ability, first-level saves, armour and weapons from its Trait advancements (not the multiclass copy), skill picks as a count, and a level row each for its ItemGrant features, ScaleValues (`scale.<id>`; dice count their dice) and Ability Score Improvements. A feat it grants that is in the same export becomes that feature, with its name and words, instead of a feat. Spell slots, subclasses and skill lists are named in the log |
 
 Everything else (loot, journal entries, other rule elements, predicates, activities on feats)

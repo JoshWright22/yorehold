@@ -77,6 +77,34 @@ public class FoundryImportTests
     private static ContentNode Node(FoundryImport import, string path) => ContentNode.Parse(path, import.Files[path].ToJsonString());
 
     [Fact]
+    public void ActiveEffectsBecomeModifiers()
+    {
+        const string json = """
+            [
+              {"name": "Ring of Warding", "type": "equipment", "system": {"armor": {"value": null}},
+               "effects": [{"name": "Warding", "transfer": true, "changes": [
+                 {"key": "system.attributes.ac.bonus", "mode": 2, "value": "+1"},
+                 {"key": "system.abilities.dex.bonuses.save", "mode": 2, "value": "1"},
+                 {"key": "system.attributes.movement.walk", "mode": 4, "value": "40"},
+                 {"key": "system.traits.dr.value", "mode": 0, "value": "fire"}]}]},
+              {"name": "Quiet Feet", "type": "feat", "system": {},
+               "effects": [{"name": "Hush", "changes": [{"key": "system.skills.ste.bonuses.check", "mode": 2, "value": "2"}]},
+                           {"name": "Off", "disabled": true, "changes": [{"key": "system.attributes.ac.bonus", "mode": 2, "value": "5"}]}]}
+            ]
+            """;
+        FoundryImport import = FoundryImport.Read(json);
+        FeatDefinition feet = FeatDefinition.Read(Node(import, "feats/quiet-feet.json"));
+        Modifier hush = Assert.Single(feet.Gives.Modifiers);
+        Assert.Equal(("checks", 2.0), (hush.Stat, hush.Value));
+        Assert.NotNull(hush.If);
+        ItemDefinition ring = ItemDefinition.Read(Node(import, "items/ring-of-warding.json"));
+        Assert.Equal("ring", ring.Slot);
+        Assert.Equal(new[] { ("ac", ModifierOp.Add, 1.0), ("saves", ModifierOp.Add, 1.0), ("speed", ModifierOp.Max, 40.0) },
+            ring.Modifiers.Select(m => (m.Stat, m.Op, m.Value)));
+        Assert.Contains(import.Report, line => line.Contains("system.traits.dr.value"));
+    }
+
+    [Fact]
     public void A5eClassBecomesAClassWithItsLevelRows()
     {
         // made-up class: two features granted by id, one in the export and one not

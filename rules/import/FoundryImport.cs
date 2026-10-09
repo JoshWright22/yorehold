@@ -19,6 +19,8 @@ public sealed class FoundryImport
     // every document in the export by its Foundry id, and the ids a class grants as features
     private readonly Dictionary<string, JsonObject> _documents = new(StringComparer.Ordinal);
     private readonly HashSet<string> _granted = new(StringComparer.Ordinal);
+    // the files written for the document being read, in order
+    private readonly List<string> _written = new();
 
     /// <summary>Reads exported JSON: one document or a list. Unknown kinds are reported, not refused.</summary>
     public static FoundryImport Read(string json)
@@ -74,6 +76,30 @@ public sealed class FoundryImport
         string type = Text(document["type"]);
         JsonObject system = document["system"] as JsonObject ?? new JsonObject();
         bool pf2e = system["traits"] is JsonObject || system["damageRolls"] != null || system["rules"] is JsonArray;
+        _written.Clear();
+        AddKind(document, name, type, system, pf2e);
+        // its Active Effects as modifiers, on the file written for it (an actor's is written last, after its gear)
+        if (document["effects"] is JsonArray { Count: > 0 } effects && _written.LastOrDefault() is string path)
+        {
+            List<JsonObject> modifiers = EffectModifiers(name, effects);
+            if (modifiers.Count > 0 && (path.StartsWith("items/", StringComparison.Ordinal) || path.StartsWith("feats/", StringComparison.Ordinal)))
+            {
+                var list = Files[path]["modifiers"] as JsonArray ?? new JsonArray();
+                foreach (JsonObject modifier in modifiers)
+                {
+                    list.Add(modifier);
+                }
+                Files[path]["modifiers"] = list;
+            }
+            else if (modifiers.Count > 0)
+            {
+                Report.Add($"{name}: its effects' modifiers have no place on a {path[..path.IndexOf('/')]} file; left out");
+            }
+        }
+    }
+
+    private void AddKind(JsonObject document, string name, string type, JsonObject system, bool pf2e)
+    {
         switch (type)
         {
             case "weapon" when !pf2e:
@@ -92,6 +118,9 @@ public sealed class FoundryImport
                 {
                     Write("items", armour);
                 }
+                break;
+            case "equipment" when !pf2e:
+                Write("items", Dnd5eWorn(name, system));
                 break;
             case "spell":
                 Write("spells", pf2e ? Pf2eSpell(name, system) : Dnd5eSpell(name, system));
@@ -167,6 +196,35 @@ public sealed class FoundryImport
         if (traits.Any(t => Text(t) == "versatile"))
         {
             Report.Add($"{name}: its two-handed damage is the system's versatile rule here, not the file's die");
+        }
+        return item;
+    }
+
+    // where a worn thing goes, by the word for it in its name
+    private static readonly (string Slot, string[] Words)[] WornWords =
+    {
+        ("ring", new[] { "ring" }),
+        ("neck", new[] { "amulet", "necklace", "periapt", "medallion", "pendant", "brooch" }),
+        ("cloak", new[] { "cloak", "cape", "mantle", "robe" }),
+        ("head", new[] { "helm", "hat", "circlet", "headband", "crown", "cap", "goggles", "eyes" }),
+        ("hands", new[] { "gloves", "gauntlets", "bracers" }),
+        ("feet", new[] { "boots", "slippers", "shoes" }),
+    };
+
+    /// <summary>A dnd5e ring, cloak or other worn thing (equipment that isn't armour): in the slot its name suggests, its effects added by the caller.</summary>
+    private JsonObject Dnd5eWorn(string name, JsonObject system)
+    {
+        var item = Base(name, system);
+        string kind = Text(system["type"]?["value"]);
+        string[] words = Regex.Split(name.ToLowerInvariant(), "[^a-z]+");
+        string slot = kind == "ring" ? "ring" : WornWords.FirstOrDefault(w => w.Words.Any(words.Contains)).Slot ?? "";
+        if (slot.Length > 0)
+        {
+            item["slot"] = slot;
+        }
+        else
+        {
+            Report.Add($"{name}: no slot could be told from its name; it is carried, and its effects count once a slot is set");
         }
         return item;
     }
@@ -678,6 +736,76 @@ public sealed class FoundryImport
     }
 
     // A pf2e selector as the stat it changes here, with the "if" that narrows it.
+    /// <summary>
+    /// Active Effects that change a number by a plain amount (a ring's +1 to AC and saves, boots'
+    /// speed) as modifiers. Foundry's modes: 1 multiply, 2 add, 3 at most, 4 at least, 5 override;
+    /// custom changes, formulas and paths with no stat here are named in the report.
+    /// </summary>
+    private List<JsonObject> EffectModifiers(string owner, JsonArray effects)
+    {
+        var modifiers = new List<JsonObject>();
+        foreach (JsonObject effect in effects.OfType<JsonObject>())
+        {
+            if (effect["disabled"]?.GetValueKind() == System.Text.Json.JsonValueKind.True)
+            {
+                continue;
+            }
+            // an effect not passed to the wearer (Foundry's transfer false) works only when used
+            if (effect["transfer"]?.GetValueKind() == System.Text.Json.JsonValueKind.False)
+            {
+                Report.Add($"{owner}: effect {Text(effect["name"] ?? effect["label"])} applies when used, not while carried; left out");
+                continue;
+            }
+            foreach (JsonObject change in (effect["changes"] as JsonArray ?? new JsonArray()).OfType<JsonObject>())
+            {
+                string key = Text(change["key"]);
+                string op = (Int(change["mode"]) ?? 2) switch { 1 => "multiply", 2 => "add", 3 => "min", 4 => "max", 5 => "override", _ => "" };
+                (string Stat, string? If)? target = EffectStat(key);
+                if (op.Length == 0 || target == null || Number(change["value"]) is not double value)
+                {
+                    Report.Add($"{owner}: effect change {key} = {Text(change["value"])} has no place here yet; left out");
+                    continue;
+                }
+                var modifier = new JsonObject { ["stat"] = target.Value.Stat, ["value"] = value % 1 == 0 ? (int)value : value };
+                if (op != "add")
+                {
+                    modifier["op"] = op;
+                }
+                if (target.Value.If != null)
+                {
+                    modifier["if"] = target.Value.If;
+                }
+                if (key.Split('.') is [_, "bonuses", "mwak" or "rwak" or "msak" or "rsak", _])
+                {
+                    Report.Add($"{owner}: {key} counts on every attack here, not only that kind");
+                }
+                modifiers.Add(modifier);
+            }
+        }
+        return modifiers;
+    }
+
+    // dnd5e data paths to the stats and roll filters modifiers use here
+    private static (string Stat, string? If)? EffectStat(string key)
+    {
+        string[] part = key.Split('.');
+        return key switch
+        {
+            "system.attributes.ac.bonus" => ("ac", null),
+            "system.attributes.init.bonus" => ("initiative", null),
+            "system.attributes.movement.walk" => ("speed", null),
+            "system.attributes.hp.bonuses.overall" => ("maxHp", null),
+            "system.attributes.senses.darkvision" or "system.attributes.senses.ranges.darkvision" => ("darkvision", null),
+            "system.bonuses.abilities.save" => ("saves", null),
+            "system.bonuses.abilities.check" => ("checks", null),
+            "system.bonuses.spell.dc" => ("dc", null),
+            _ when part.Length == 4 && part[1] == "bonuses" && part[2] is "mwak" or "rwak" or "msak" or "rsak" && part[3] is "attack" or "damage" => (part[3], null),
+            _ when part.Length == 5 && part[1] == "abilities" && part[3] == "bonuses" && part[4] == "save" => ("saves", "save." + part[2]),
+            _ when part.Length == 5 && part[1] == "skills" && part[3] == "bonuses" && part[4] == "check" => ("checks", "check." + Dnd5eSkills.GetValueOrDefault(part[2], part[2])),
+            _ => null,
+        };
+    }
+
     private static (string Stat, string? If)? Selector(string selector) => selector switch
     {
         "attack" or "attack-roll" or "strike-attack-roll" => ("attack", null),
@@ -749,6 +877,7 @@ public sealed class FoundryImport
         if (!Files.ContainsKey(path))
         {
             Files[path] = entry;
+            _written.Add(path);
         }
     }
 
