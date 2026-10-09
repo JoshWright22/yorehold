@@ -13,6 +13,9 @@
 #   .\check.ps1 -Playtest fight   sets up that test from playtest\queue.json off screen like
 #                            playtest.ps1 would, playtest window and all, and saves
 #                            ..\.dev\playtest-fight.png a second and a half after its setup ends
+#   .\check.ps1 -Package <folder>  builds, then checks that package's files as Create does (each file
+#                            played over the game's content) and prints every problem with its file;
+#                            exit 1 when any is an error. No unit tests.
 #   .\check.ps1 -Bench ..\.dev\import-bench   builds, then runs every book in that folder's books\
 #                            through every version of the import in its bench.json, scores each
 #                            and prints the scores beside the run before (runs\<label>\report.txt).
@@ -30,7 +33,8 @@ param(
     [string]$Playtest,
     [string]$Import,
     [string]$Bench,
-    [string]$Label
+    [string]$Label,
+    [string]$Package
 )
 
 # The screenshot runs to make: the one -Shot asks for, or one per playtest (-Playtest all for every one).
@@ -79,6 +83,22 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host 'build ok'
 if ($NoTest) { Write-Host 'ALL OK'; exit 0 }
+
+if ($Package) {
+    # A creator's package checked as the game reads it, file and field named.
+    if (-not (Test-Path $Package)) { Write-Host "FAIL: no folder $Package"; exit 2 }
+    $packageFolder = (Resolve-Path $Package).Path
+    $packageLog = Join-Path $dev 'godot-package.log'
+    $job = Start-Job { param($g, $p, $f) & $g --headless --path $p --quit-after 600 -- --check-package $f 2>&1; $LASTEXITCODE } -ArgumentList $godot, $root, $packageFolder
+    if (-not (Wait-Job $job -Timeout 180)) { Stop-Job $job; Write-Host 'FAIL: the package check timed out'; exit 1 }
+    $out = @(Receive-Job $job)
+    Remove-Job $job
+    $code = $out[-1]
+    $out[0..($out.Count - 2)] | ForEach-Object { "$_" } | Out-File $packageLog -Encoding utf8
+    Select-String -Path $packageLog -Pattern '^(error|look): |^package ok|errors$' | ForEach-Object { $_.Line }
+    if ($code -ne 0) { Write-Host 'FAIL: package'; exit 1 }
+    Write-Host 'ALL OK'; exit 0
+}
 
 if ($Bench) {
     # The import's comparison run and nothing else: no unit tests, no start of the game.

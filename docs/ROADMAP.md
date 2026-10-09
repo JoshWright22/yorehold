@@ -778,6 +778,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - JSON schemas for every file kind (`docs/schemas/*.json`), so VS Code and other editors check
     and complete as people type; the game's own checker as one command (`check.ps1 -Package
     <folder>`) that names the file and field, and Create showing the same.
+    Done 10/9: `check.ps1 -Package <folder>` runs Create's own checks headless (each file played
+    over the game's content), one line per problem with its file and field; exit 1 on an error.
   - A starter package per system (one class, one spell, one creature, one item, one map, one
     chapter) to copy, a "your first adventure" page, and examples on every field in CONTENT.md.
   - Reload while the game runs: content files changed on disk show on the next turn in Test play.

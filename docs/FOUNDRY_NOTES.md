@@ -83,7 +83,7 @@ is named in the log and left out, so nothing goes missing quietly.
 feat, option, race, background, trigger, reaction, class). VS Code uses them in this repo through
 `.vscode/settings.json`; for a package folder of your own, copy `docs/schemas/vscode-settings.json`
 into its `.vscode/settings.json` with the paths pointed at the schemas. The editor then completes
-field names and flags mistakes as you type; the game's own check stays the last word. The system file itself has one too (`ruleset.schema.json`, for any `ruleset.json`), its keys described as in RULES_LANGUAGE.md. While playing, F6 (Reload content, also on the pause menu) reads every file again and carries on where the party is, so a change made in the editor shows at once, between fights.
+field names and flags mistakes as you type; the game's own check stays the last word. The system file itself has one too (`ruleset.schema.json`, for any `ruleset.json`), its keys described as in RULES_LANGUAGE.md. While playing, F6 (Reload content, also on the pause menu) reads every file again and carries on where the party is, so a change made in the editor shows at once, between fights. To check a whole package as the game reads it: `check.ps1 -Package <folder>` prints every problem with its file and field (`items/rusty-sword.json: range: is a whole number from 1 to 1000`).
 
 Not taken: Foundry's document ids and folder records (our file names are the ids), its
 per-document permission data, and its HTML descriptions (ours are plain words).

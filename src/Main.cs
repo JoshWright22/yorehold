@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace Yorehold;
@@ -32,6 +34,12 @@ public partial class Main : Node
         string[] args = OS.GetCmdlineUserArgs();
         for (int i = 0; i + 1 < args.Length; i++)
         {
+            if (args[i] == "--check-package")
+            {
+                // check.ps1 -Package: the package's files checked as Create checks them, then quit
+                CheckPackage(args[i + 1]);
+                return;
+            }
             if (args[i] == "--screen")
             {
                 screen = args[i + 1];
@@ -145,6 +153,29 @@ public partial class Main : Node
         string package = _play.Package;
         Play(PlayScreen.StartKind.Continue, path, package);
         _play?.Notice("Content read again.");
+    }
+
+    // Every problem Create would list for a package, one line each with its file, and an exit code
+    // that says whether any is an error: 0 none, 1 errors, 2 not a package.
+    private void CheckPackage(string folder)
+    {
+        var package = new Rules.CreatePackage(Places.GameContent());
+        package.Open(folder);
+        if (package.Manifest == null)
+        {
+            GD.Print("error: " + package.Status);
+            GetTree().Quit(2);
+            return;
+        }
+        package.CheckFiles();
+        List<Rules.CreateProblem> problems = package.Problems();
+        foreach (Rules.CreateProblem problem in problems)
+        {
+            GD.Print($"{(problem.Error ? "error" : "look")}: {problem.Path}: {problem.Message}");
+        }
+        int errors = problems.Count(p => p.Error);
+        GD.Print(errors == 0 ? $"package ok ({problems.Count} to look at)" : $"{errors} errors");
+        GetTree().Quit(errors == 0 ? 0 : 1);
     }
 
     private void Play(PlayScreen.StartKind kind, string save, string package = "")
