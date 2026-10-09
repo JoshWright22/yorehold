@@ -308,7 +308,7 @@ public partial class EncountersModePanel : HBoxContainer
 
         _props.Heading("Forecast");
         _props.Dim($"Played out {ForecastFights} times by the AI, with the party the chapter starts with, at its level or another");
-        Stepper(() => _level == 0 ? "Party at the chapter's level" : $"Party at level {_level}", step =>
+        Stepper(() => _level == 0 ? "Chapter's level" : $"Party level {_level}", step =>
         {
             _level = Math.Clamp(_level + step, 0, 20);
         });
