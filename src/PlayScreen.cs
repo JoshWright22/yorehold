@@ -374,6 +374,18 @@ public partial class PlayScreen : Node2D
         Refresh();
     }
 
+    // T trades with the merchant being talked to. It is read before the chat's own T (which comes
+    // ahead of the play screen's other keys), so in a conversation with a merchant it trades.
+    public override void _ShortcutInput(InputEvent @event)
+    {
+        if (_world?.Talk != null && !_characters.IsOpen && !_cutscene.Playing && @event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.T }
+            && _world.TalkingWith >= 0 && _world.Creatures[_world.TalkingWith].Npc >= 0 && _world.CanTrade(_world.LeaderIndex(), _world.Creatures[_world.TalkingWith].Npc))
+        {
+            Trade();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (_world == null || _characters.IsOpen || _cutscene.Playing || @event is not InputEventKey { Pressed: true, Echo: false } key)
@@ -393,11 +405,7 @@ public partial class PlayScreen : Node2D
                 _world.EndTalk();
                 GetViewport().SetInputAsHandled();
             }
-            else if (key.Keycode == Key.T)
-            {
-                Trade();
-                GetViewport().SetInputAsHandled();
-            }
+
             return;
         }
         string? panel = null;

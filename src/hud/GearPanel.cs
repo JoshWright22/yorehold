@@ -412,6 +412,9 @@ public sealed class GearPanel
         return $"{sheet.Name}: {Coins.Text(sheet.Coins)}   {weight}   Hands {sheet.HandsInUse()} of {CharacterSheet.HandCount}{magic}";
     }
 
+    /// <summary>The kind an item is filed under on a shelf: Weapons, Armour, Usable or Other.</summary>
+    public static string KindTag(Item item) => Kind(item) switch { "Weapon" => "Weapons", "Armour" or "Shield" => "Armour", "Consumable" => "Usable", _ => "Other" };
+
     private static HashSet<string> TagsOf(Item item)
     {
         var tags = new HashSet<string> { Kind(item) switch { "Weapon" => "Weapons", "Armour" or "Shield" => "Armour", "Consumable" => "Usable", _ => "Other" } };

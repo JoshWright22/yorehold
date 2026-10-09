@@ -92,6 +92,7 @@ public partial class PlayHud : Control
     private Button _gearButton = null!;
     private GearPanel _gear = null!;
     private PartyGearView _partyGear = null!;
+    private TradeView _trade = null!;
     private DataPanel _spellsView = null!;
     private Button _spellsButton = null!;
     private SpellPanel _spells = null!;
@@ -136,6 +137,7 @@ public partial class PlayHud : Control
         _top.OffsetRight = 200 - right / 2;
         _openDice.OffsetRight = -right - 80;
         _partyGear.OffsetRight = -right;
+        _trade.OffsetRight = -right;
         // over the map only: an open panel (the gear, the spells) covers it
         _openDice.Visible = _bottom.Visible && OpenPanel.Length == 0;
     }
@@ -312,6 +314,11 @@ public partial class PlayHud : Control
         _partyGear.Ordered += order => ItemOrdered?.Invoke(order);
         _partyGear.Closed += () => OpenPanel = "";
         _partyGear.TabPicked += tab => OpenPanel = tab;
+        _trade = new TradeView { Name = "Trade", Visible = false };
+        AddChild(_trade);
+        _trade.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _trade.Ordered += order => ItemOrdered?.Invoke(order);
+        _trade.Closed += () => OpenPanel = "";
         _spellsView = GetNode<DataPanel>("Spells");
         _spellsButton = GetNode<Button>("Bottom/Row/Menu/Spells");
         _spells = new SpellPanel(_spellsView);
@@ -420,6 +427,7 @@ public partial class PlayHud : Control
         OpenPanel = "Gear";
         _gear.Source = source;
         _gearView.Reset();
+        _trade.Open(source);
     }
 
     /// <summary>Says under the gear panel's entry why the world said no.</summary>
@@ -427,6 +435,7 @@ public partial class PlayHud : Control
     {
         _gear.Refused(why);
         _partyGear.Say(why);
+        _trade.Say(why);
     }
 
     /// <summary>Says under the spell panel's entry why the world said no.</summary>
@@ -645,11 +654,17 @@ public partial class PlayHud : Control
         {
             _partyGear.Refresh(world, hero);
         }
-        _gearView.Visible = OpenPanel == "Gear" && !pack && hero < world.HeroCount;
-        if (_gearView.Visible)
+        // a chest or shop the hero has walked away from (or a fight has started beside) closes
+        if (OpenPanel == "Gear" && !pack && hero < world.HeroCount && !TradeView.Reachable(world, hero, _gear.Source))
         {
-            _gear.Refresh(world, hero);
+            OpenPanel = "";
         }
+        _trade.Visible = OpenPanel == "Gear" && !pack && hero < world.HeroCount;
+        if (_trade.Visible)
+        {
+            _trade.Refresh(world, hero);
+        }
+        _gearView.Visible = false;
         _journalButton.SetPressedNoSignal(OpenPanel == "Journal");
         _journalView.Visible = OpenPanel == "Journal";
         if (_journalView.Visible)

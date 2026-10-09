@@ -4,25 +4,39 @@ using Yorehold.Rules;
 
 namespace Yorehold;
 
-/// <summary>One square of the party inventory: a slot on a hero's doll or a place in their bag, empty or holding an item.</summary>
+/// <summary>What a screen of gear cells hears from them: a drop, a pick and a double-click.</summary>
+public interface IGearCells
+{
+    /// <summary>An item dragged from one place ("h0" a hero's, "stock" a chest's or shop's) onto another, a slot on a hero's doll or not.</summary>
+    void Moved(string from, int item, string to, string toSlot);
+    /// <summary>One click on an item.</summary>
+    void Picked(string from, int item);
+    /// <summary>A double-click on an item.</summary>
+    void Opened(string from, int item);
+}
+
+/// <summary>One square of gear: a slot on a hero's doll, a place in a bag or a shop's shelf, empty or holding an item.</summary>
 public partial class GearCell : Control
 {
     private const string Drag = "gear:";
-    private readonly PartyGearView _view;
-    private readonly int _hero;
+    private readonly IGearCells _owner;
+    private readonly string _place;
     private readonly string _slot;
     private readonly int _item;
     private readonly ActionIcon _icon = new() { MouseFilter = MouseFilterEnum.Ignore };
     private readonly Label _count = new() { ThemeTypeVariation = "NumberLabel", MouseFilter = MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right };
+    private Label? _price;
     private bool _dim;
+    private bool _picked;
 
-    public GearCell(PartyGearView view, int hero, string slot, int item)
+    /// <summary>place: "h0" for a hero's gear, "stock" for a chest's or shop's; slot: the doll slot, "" in a bag; item: its index, -1 for empty.</summary>
+    public GearCell(IGearCells owner, string place, string slot, int item, float size = 40)
     {
-        _view = view;
-        _hero = hero;
+        _owner = owner;
+        _place = place;
         _slot = slot;
         _item = item;
-        CustomMinimumSize = new Vector2(40, 40);
+        CustomMinimumSize = new Vector2(size, size);
         MouseFilter = MouseFilterEnum.Stop;
         AddChild(_icon);
         _icon.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -31,11 +45,11 @@ public partial class GearCell : Control
         _count.AddThemeFontSizeOverride("font_size", 11);
         _count.AddThemeColorOverride("font_color", Palette.Bone);
         AddChild(_count);
-        _count.SetAnchorsAndOffsetsPreset(LayoutPreset.BottomRight);
+        _count.SetAnchorsAndOffsetsPreset(LayoutPreset.TopRight);
         _count.OffsetLeft = -24;
-        _count.OffsetTop = -16;
+        _count.OffsetTop = 1;
         _count.OffsetRight = -3;
-        _count.OffsetBottom = 0;
+        _count.OffsetBottom = 16;
     }
 
     /// <summary>An item in it: its picture or first letter, how many when more than one; dim when a search leaves it out.</summary>
@@ -46,6 +60,30 @@ public partial class GearCell : Control
         _count.Text = item.Quantity > 1 ? item.Quantity.ToString() : "";
         _dim = !matches;
         TooltipText = item.Name + (item.Equipped ? " (worn)" : "");
+        QueueRedraw();
+    }
+
+    /// <summary>A price under the picture (a shop's shelf), in red when the buyer can't pay it.</summary>
+    public void Price(string text, bool tooDear)
+    {
+        if (_price == null)
+        {
+            _price = new Label { ThemeTypeVariation = "NumberLabel", MouseFilter = MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Center };
+            _price.AddThemeFontSizeOverride("font_size", 11);
+            AddChild(_price);
+            _price.SetAnchorsAndOffsetsPreset(LayoutPreset.BottomWide);
+            _price.OffsetTop = -17;
+            _price.OffsetBottom = -2;
+            _icon.OffsetBottom = -18;
+        }
+        _price.Text = text;
+        _price.AddThemeColorOverride("font_color", tooDear ? Palette.Red : Palette.Ash);
+    }
+
+    /// <summary>The item shown on the page beside the grid: outlined in amber.</summary>
+    public void Pick(bool picked)
+    {
+        _picked = picked;
         QueueRedraw();
     }
 
@@ -61,16 +99,24 @@ public partial class GearCell : Control
     {
         bool full = _item >= 0;
         DrawRect(new Rect2(Vector2.Zero, Size), full && !_dim ? Palette.Dusk : Palette.Night);
-        DrawRect(new Rect2(Vector2.Zero, Size), full && !_dim ? Palette.Slate : Palette.Iron, false, 1);
+        DrawRect(new Rect2(Vector2.Zero, Size), _picked ? Palette.Straw : full && !_dim ? Palette.Slate : Palette.Iron, false, 1);
     }
 
     public override void _GuiInput(InputEvent @event)
     {
-        if (_item >= 0 && @event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true, DoubleClick: true })
+        if (_item < 0 || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } press)
         {
-            _view.Pressed(_hero, _item);
-            AcceptEvent();
+            return;
         }
+        if (press.DoubleClick)
+        {
+            _owner.Opened(_place, _item);
+        }
+        else
+        {
+            _owner.Picked(_place, _item);
+        }
+        AcceptEvent();
     }
 
     public override Variant _GetDragData(Vector2 atPosition)
@@ -82,7 +128,7 @@ public partial class GearCell : Control
         var ghost = new ActionIcon { Size = new Vector2(28, 28), MouseFilter = MouseFilterEnum.Ignore };
         ghost.Show(TooltipText.Length > 0 ? TooltipText[..1] : "?", null);
         SetDragPreview(ghost);
-        return $"{Drag}{_hero}:{_item}";
+        return $"{Drag}{_place}:{_item}";
     }
 
     public override bool _CanDropData(Vector2 atPosition, Variant data) =>
@@ -91,9 +137,9 @@ public partial class GearCell : Control
     public override void _DropData(Vector2 atPosition, Variant data)
     {
         string[] parts = data.AsString()[Drag.Length..].Split(':');
-        if (parts.Length == 2 && int.TryParse(parts[0], out int hero) && int.TryParse(parts[1], out int item))
+        if (parts.Length == 2 && int.TryParse(parts[1], out int item))
         {
-            _view.Dropped(hero, item, _hero, _slot);
+            _owner.Moved(parts[0], item, _place, _slot);
         }
     }
 }
