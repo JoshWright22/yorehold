@@ -75,7 +75,7 @@ public sealed class MapEditor
     /// <summary>Moves or sizes the trace picture; a drag of steps merges into one undo step.</summary>
     public bool SetTrace(MapTrace trace, string mergeKey = "")
     {
-        if (!_loaded || _trace == null || trace == _trace || trace.Width < 1 || trace.Height < 1 || trace.Width > 4 * MaxSide || trace.Height > 4 * MaxSide)
+        if (!_loaded || trace == _trace || trace.Width < 1 || trace.Height < 1 || trace.Width > 4 * MaxSide || trace.Height > 4 * MaxSide)
         {
             return false;
         }
@@ -466,6 +466,42 @@ public sealed class MapEditor
             }
         }
         return AddLayer("walls", floor);
+    }
+
+    /// <summary>
+    /// A Foundry scene laid over this map: sized to it, its walls painted as wall squares on the
+    /// ground floor's wall layer, its lights added, the party's start where its first token stood
+    /// and its background as the picture to trace. Each part is its own undo step.
+    /// </summary>
+    public void ApplyScene(FoundryScene scene)
+    {
+        if (!_loaded)
+        {
+            return;
+        }
+        Resize(scene.Width, scene.Height);
+        int layer = WallLayer(0);
+        int wall = WallTile();
+        if (wall > 0)
+        {
+            foreach (Cell at in scene.Walls)
+            {
+                Paint(layer, at, wall);
+            }
+            EndStroke();
+        }
+        foreach (EditorLight light in scene.Lights)
+        {
+            AddLight(light);
+        }
+        if (scene.Start is Cell start)
+        {
+            SetMarker("partyStart", start);
+        }
+        if (scene.Trace is MapTrace trace)
+        {
+            SetTrace(trace);
+        }
     }
 
     /// <summary>The first tile type that blocks sight, or 0.</summary>

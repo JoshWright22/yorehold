@@ -775,6 +775,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - An importer for Foundry exports a creator owns (an Item or Actor exported as JSON from their
     own world, dnd5e or pf2e shape) into this system's files, with a report of what didn't fit:
     the fastest way to bring homebrew across.
+    Done 10/9: scenes too (Map > From Foundry scene...): size, walls as wall squares, lights,
+    the party's start and the background to trace; doors and tokens counted in the log.
   - JSON schemas for every file kind (`docs/schemas/*.json`), so VS Code and other editors check
     and complete as people type; the game's own checker as one command (`check.ps1 -Package
     <folder>`) that names the file and field, and Create showing the same.

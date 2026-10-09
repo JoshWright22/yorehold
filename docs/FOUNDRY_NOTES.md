@@ -80,6 +80,14 @@ package as one change Undo takes back (`rules/import/FoundryImport.cs`):
 Everything else (loot, journal entries, other rule elements, predicates, activities on feats)
 is named in the log and left out, so nothing goes missing quietly.
 
+A scene comes in through Create > Map > From Foundry scene... (right-click a scene > Export Data):
+the map takes the scene's size in squares (its grid size and padding counted), each wall is drawn
+as wall squares along its length, lights keep their reach (dim, in the scene's distance per square)
+and colour, the first token's square becomes the party's start, and the background becomes the
+picture to trace over once it is copied into the package's `pictures/` (`rules/import/FoundryScene.cs`).
+Doors, tokens and notes are counted in the log: doors and creatures are placed here in Map and
+Encounters.
+
 ## Writing files by hand
 
 `docs/schemas/` has a JSON schema per kind of file (item, creature, action, spell, condition,

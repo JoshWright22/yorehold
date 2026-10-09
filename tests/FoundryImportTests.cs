@@ -75,4 +75,37 @@ public class FoundryImportTests
     }
 
     private static ContentNode Node(FoundryImport import, string path) => ContentNode.Parse(path, import.Files[path].ToJsonString());
+
+    [Fact]
+    public void AFoundrySceneBecomesAMapOnTheGrid()
+    {
+        // 10 x 8 squares of 100 px with Foundry's quarter padding: the map starts at (300, 200)
+        const string json = """
+            {"name": "Crypt", "width": 1000, "height": 800, "padding": 0.25, "grid": {"size": 100, "distance": 5},
+             "background": {"src": "worlds/mine/maps/crypt.webp"},
+             "walls": [{"c": [300, 250, 800, 250]}, {"c": [550, 300, 550, 600], "door": 1}],
+             "lights": [{"x": 550, "y": 650, "config": {"dim": 20, "bright": 10, "color": "#ff8800"}}],
+             "tokens": [{"x": 400, "y": 500}, {"x": 900, "y": 500}]}
+            """;
+        FoundryScene scene = FoundryScene.Read(json, out string why)!;
+        Assert.True(scene != null, why);
+        Assert.Equal((10, 8), (scene.Width, scene.Height));
+        // the wall along y = 250 crosses squares 0 to 5 of row 0
+        Assert.True(Enumerable.Range(0, 6).All(x => scene.Walls.Contains(new Cell(x, 0))) && !scene.Walls.Contains(new Cell(0, 1)), string.Join(" ", scene.Walls));
+        Assert.Single(scene.Lights);
+        Assert.Equal(4, scene.Lights[0].Radius, 3);
+        Assert.Equal(new Cell(1, 3), scene.Start);
+        Assert.Equal("pictures/crypt.webp", scene.Trace!.Path);
+        Assert.Contains(scene.Report, line => line.Contains("1 doors left open"));
+        Assert.Null(FoundryScene.Read("""{"name": "Sword", "type": "weapon"}""", out string notScene));
+        Assert.Contains("not a Foundry scene", notScene);
+
+        var editor = new MapEditor(new History());
+        Assert.True(editor.Load(MapEditor.BlankMap("x", 4, 4), out string error), error);
+        editor.ApplyScene(scene);
+        GameMap map = editor.Map();
+        Assert.Equal((10, 8), (map.Width, map.Height));
+        Assert.False(map.Walkable(new Cell(2, 0)));
+        Assert.Equal(new Cell(1, 3), map.Markers["partyStart"]);
+    }
 }

@@ -225,11 +225,52 @@ public partial class MapModePanel : HBoxContainer
             _view.QueueRedraw();
         }, null, "ChipButton");
         _tools.Act("Fit map", _view.Fit);
+        // a scene from the creator's own Foundry world, onto this map
+        _tools.Act("From Foundry scene...", PickFoundryScene);
         _tools.Gap();
         _tools.Live(() => _editor == null ? "" : $"{_editor.Width} x {_editor.Height} cells");
         _tools.Live(() => _view.Hover is Cell at ? $"at {at.X}, {at.Y}" : "");
         _tools.Gap();
         _tools.Dim("Left: use\nRight: remove\nMiddle: move\nWheel: zoom");
+    }
+
+    private void PickFoundryScene()
+    {
+        var dialog = new FileDialog
+        {
+            FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, UseNativeDialog = true,
+            Filters = new[] { "*.json ; Foundry scene export" }, Title = "A Foundry VTT scene",
+        };
+        dialog.FileSelected += path =>
+        {
+            ImportScene(System.IO.File.ReadAllText(path));
+            dialog.QueueFree();
+        };
+        dialog.Canceled += dialog.QueueFree;
+        AddChild(dialog);
+        dialog.PopupCentered(new Vector2I(900, 600));
+    }
+
+    // The scene's size, walls, lights, start and background laid over this chapter's map; what
+    // has no place here goes to the log, and Undo takes it back a part at a time.
+    private void ImportScene(string json)
+    {
+        if (_editor == null)
+        {
+            return;
+        }
+        if (FoundryScene.Read(json, out string why) is not FoundryScene scene)
+        {
+            _hint = why;
+            return;
+        }
+        _editor.ApplyScene(scene);
+        foreach (string line in scene.Report)
+        {
+            GD.Print("Foundry scene: " + line);
+        }
+        _hint = scene.Report[0] + (scene.Report.Count > 1 ? $"; {scene.Report.Count - 1} more notes in the log" : "") + ".";
+        _view.Fit();
     }
 
     private void BuildProps()
