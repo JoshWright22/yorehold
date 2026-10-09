@@ -30,11 +30,11 @@
         {
           "id": "unarmored-defense",
           "name": "Unarmored Defense",
-          "description": "+3 AC without armour.",
+          "description": "Without armour or a shield, AC is 10 + Dexterity + Wisdom modifiers.",
           "modifiers": [
             {
-              "stat": "ac",
-              "value": 3
+              "stat": "unarmoredWis",
+              "value": 1
             }
           ]
         }

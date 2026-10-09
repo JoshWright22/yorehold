@@ -30,7 +30,7 @@ public sealed class SheetFormulas
         ["damageTaken"] = new[] { "amount", "resist", "weak", "immune" },
     };
 
-    private static readonly string[] Prefixes = { "mod.", "score.", "stat.", "prof.", "trait." };
+    private static readonly string[] Prefixes = { "mod.", "score.", "stat.", "prof.", "trait.", "worn.", "scale.", "field.", "hands." };
 
     private readonly Dictionary<string, Formula> _formulas = new(StringComparer.Ordinal);
 
@@ -58,7 +58,7 @@ public sealed class SheetFormulas
                 if (!known)
                 {
                     throw member.Value.Fail($"unknown name \"{name}\"; it can use {string.Join(", ", names)}"
-                        + (aboutACreature ? ", level, mod.<ability>, score.<ability>, stat.<name>, prof.<target>, trait.<weapon trait>" : ""));
+                        + (aboutACreature ? ", level, mod.<ability>, score.<ability>, stat.<name>, prof.<target>, trait.<weapon trait>, worn.<slot>" : ""));
                 }
             }
             formulas._formulas[member.Key] = formula;

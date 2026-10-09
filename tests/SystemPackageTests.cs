@@ -475,6 +475,27 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void UnarmouredDefenceCountsOnlyWithoutArmour()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "monk");
+        World w = world.World;
+        Ruleset rules = w.Rules;
+        CharacterSheet barbarian = w.Creatures[0].Sheet;
+        CharacterSheet monk = w.Creatures[1].Sheet;
+        int Mod(CharacterSheet c, string ability) => c.AbilityModifier(rules, ability);
+        Assert.Equal(10 + Mod(barbarian, "dex") + Mod(barbarian, "con"), barbarian.ArmorClass(rules));
+        Assert.Equal(10 + Mod(monk, "dex") + Mod(monk, "wis"), monk.ArmorClass(rules));
+        // armour on: its own AC, the unarmoured bonus gone
+        barbarian.Inventory.Add(new Item(w.Chapter.Compendium.Item("leather")!));
+        Assert.True(barbarian.Equip(barbarian.Inventory.Count - 1));
+        Assert.Equal(11 + Mod(barbarian, "dex"), barbarian.ArmorClass(rules));
+        // a shield takes the monk's Wisdom away and adds its own
+        monk.Inventory.Add(new Item(w.Chapter.Compendium.Item("shield")!));
+        Assert.True(monk.Equip(monk.Inventory.Count - 1));
+        Assert.Equal(12 + Mod(monk, "dex"), monk.ArmorClass(rules));
+    }
+
+    [Fact]
     public void ShotsPastRangeOrWithAFoeBesideAreHarder()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");

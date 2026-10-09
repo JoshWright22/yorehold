@@ -48,6 +48,7 @@ Names every formula about a creature can read (its sheet):
 | `stat.<name>` | Any number on the sheet: `stat.ac`, `stat.maxHp`, `stat.resist.fire`, numbers a creature file sets in `stats`. |
 | `prof.<target>` | Its proficiency bonus with a skill, save, weapon or armour. |
 | `trait.<trait>` | 1 when the weapon in hand has the trait (`trait.finesse`). |
+| `worn.<slot>` | 1 while something is worn or held in that slot (`worn.armor`, `worn.offHand`): 5e's unarmoured defence reads it. |
 | `field.<id>` | How many lines of one of the system's fields are written. |
 | `scale.<id>` | A number its class rows set by level (`scale.sneak_attack`; `-` in the id written `_`). |
 | `proficiency` | The proficiency bonus by its level. |

@@ -279,6 +279,8 @@ public sealed partial class CharacterSheet
             "trait" => Weapon?.Has(of) == true ? 1 : 0,
             // hands with nothing in them, for a versatile weapon held in both
             "hands" => of == "free" ? FreeHands : null,
+            // 1 while something is worn or held in that slot (worn.armor, worn.offHand): unarmoured defence reads it
+            "worn" => Inventory.Any(i => i.Equipped && i.Slot == of) ? 1 : 0,
             // how many of a field's lines are written: aspects to invoke
             "field" => Fields.TryGetValue(of, out List<string>? lines) ? lines.Count(l => l.Trim().Length > 0) : 0,
             _ => null,
@@ -320,6 +322,10 @@ public sealed partial class CharacterSheet
                 // "proficiency" itself can't ask for another proficiency: it would never end
                 "prof" => formula == "proficiency" ? null : ProficiencyModifier(rules, of),
                 "trait" => Weapon?.Has(of) == true ? 1 : 0,
+                "worn" => Inventory.Any(i => i.Equipped && i.Slot == of) ? 1 : 0,
+                "scale" => Stats.Integer("scale." + of),
+                "field" => Fields.TryGetValue(of, out List<string>? lines) ? lines.Count(l => l.Trim().Length > 0) : 0,
+                "hands" => of == "free" ? FreeHands : null,
                 _ => null,
             };
         });

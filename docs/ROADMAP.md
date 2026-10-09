@@ -497,8 +497,10 @@ screens it touches, so the game shows whatever the system says, and is tried on 
 	`"weapon"`, an item a `range` (shortbow, longbow, light crossbow; PF2e shortbow and longbow;
     goblin archers), and an enemy with a bow shoots from where it stands. Done 10/9: long range
     (an item's `longRange`) and a shot with a foe beside, each a place condition with
-    disadvantage. Doesn't fit yet: ammunition, unarmoured defence as a formula of the armour
-    worn, warlock slots back on a short rest, Wild Shape, subclasses beyond a single path.
+    disadvantage. Done 10/9: Unarmored Defense as the AC formula reading `worn.armor` and
+    `worn.offHand` (barbarian 10 + Dex + Con, shield allowed; monk 10 + Dex + Wis, no shield);
+    the barbarian starts without armour. Doesn't fit yet: ammunition, warlock slots back on a
+    short rest, Wild Shape, subclasses beyond a single path.
   - Done 10/8: origins: nine species (traits as "species" feats: Breath Weapon, Draconic and
     Dwarven Resilience, Adrenaline Rush, Infernal Legacy), the four SRD backgrounds with their
     origin feats (Alert, Magic Initiate, Savage Attacker, Skilled), two fighting styles. Feats,
