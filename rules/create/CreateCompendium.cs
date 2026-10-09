@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Yorehold.Rules;
 
 /// <summary>Compendium mode's part of the open package: one editor over every definition file, read the first time it is asked for.</summary>
@@ -152,6 +154,27 @@ public sealed partial class CreatePackage
         editor.SetOptions(options);
         _compendium = editor;
         return _compendium;
+    }
+
+    /// <summary>
+    /// One of the game's own entries of a kind, by id, as it is on disk: from the system the
+    /// package plays first, then the game's root folder for the kind. Null when there is none.
+    /// </summary>
+    public JsonObject? GameEntry(string kindId, string id)
+    {
+        if (_compendium?.KindOf(kindId) is not Yorehold.Rules.CompendiumEditor.Kind kind || !Yorehold.Rules.CompendiumEditor.ValidId(id))
+        {
+            return null;
+        }
+        var game = new ContentFiles(_gameAssets);
+        foreach (string folder in new[] { SystemFolder + "/" + kind.Form.Folder, RulesFolder.Default + "/" + kind.Form.Folder, kind.Form.Folder })
+        {
+            if (ReadObject(game, $"{folder}/{id}.json") is JsonObject found)
+            {
+                return found;
+            }
+        }
+        return null;
     }
 
     private void CloseCompendium()

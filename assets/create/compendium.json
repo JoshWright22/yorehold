@@ -26,11 +26,11 @@
         { "key": "name", "required": true, "default": "New creature" },
         { "key": "description" },
         { "key": "level", "type": "integer", "min": 0, "max": 30, "default": 1 },
-        { "key": "hp", "type": "integer", "min": 1, "default": 7 },
-        { "key": "armorClass", "type": "integer", "min": 0, "default": 12 },
+        { "key": "hp", "type": "integer", "min": 1, "default": 7, "label": "hit points" },
+        { "key": "armorClass", "type": "integer", "min": 0, "default": 12, "label": "armour class" },
         { "key": "speed", "type": "integer", "min": 0, "help": "feet" },
         { "key": "darkvision", "type": "integer", "min": 0, "help": "feet" },
-        { "key": "dcAbility", "type": "choice", "optionsFrom": "abilities" },
+        { "key": "dcAbility", "type": "choice", "optionsFrom": "abilities", "label": "DC ability" },
         { "key": "abilities", "type": "json", "help": "fixed scores: {\"dex\": 14}; the rest are rolled" },
         { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
         { "key": "proficiencyRanks", "type": "json" },
@@ -39,7 +39,7 @@
         { "key": "actions", "type": "list", "optionsFrom": "grants", "help": "the system's actions, reactions and triggers it has beyond everyone's" },
         { "key": "loot", "type": "json", "help": "a loot table: {\"coins\": \"2d6\"}" },
         { "key": "token", "type": "json", "help": "{\"color\": [r, g, b], \"size\": 0.4}" },
-        { "key": "ai", "type": "choice", "optionsFrom": "ai", "default": "cunning", "help": "a profile's name" }
+        { "key": "ai", "type": "choice", "optionsFrom": "ai", "default": "cunning", "help": "a profile's name", "label": "behaviour" }
       ]
     },
     {

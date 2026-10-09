@@ -135,9 +135,14 @@ What the port reads so far, and where it differs:
 - Dialogue mode ("Writing dialogue in Create") works as described. New conversation is the button
   for New, and Skill check is a toggle rather than a tick box.
 - Compendium mode ("Editing definitions in Create") reads the same `create/compendium.json` with the
-  same rules. Its list is a data panel: a tab per kind (and All), search, chips for changed entries,
-  ones with errors and a chapter's own, and columns that sort. The picked entry's form is where the
-  book page would be, with New id, Add and Copy under it. A flag is a yes toggle with Clear beside it.
+  same rules. The kinds are tabs over the list; under the search box, MADE FOR THIS ADVENTURE lists
+  the package's own of that kind (with its level, "changed" or its errors) and USED FROM ELSEWHERE
+  the game's own it has no copy of, each to look at and "Copy into this adventure" as one undoable
+  change. New makes one, named by what is typed in the search box when that can be an id. The form
+  sets short fields side by side (whole numbers with - and +, choices with < and >, a flag as a yes
+  toggle with Clear), and lists, JSON and the description the whole width under them; a field's
+  `label` names it, else its key in plain words. HOW PLAYERS SEE IT on the right is the entry as a
+  book page: name, kind and type line, its numbers, its scores, its description.
 - Cutscene mode ("Making cutscenes in Create") works as described. New cutscene is the button for New,
   and "The next step waits for it" is a toggle. The preview draws the fade in palette ink with the
   file's alpha, the way play does, whatever colour the file names.
