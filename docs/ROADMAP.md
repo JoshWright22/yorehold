@@ -625,6 +625,21 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: the AI's walk: a cell past its move costs it a Stride (or Dash), and short of its
     target with actions left it thinks again, so a PF2e creature strides twice and strikes, or
     strides three times, rather than stopping after one.
+- [ ] **R12b. Create makes and tests systems, not only content inside them.** Josh, 10/9: "we
+  should be designing a system to create systems rather than designing the whole thing with
+  inference". A system is ruleset.json and its folders, written by hand so far; content inside
+  the shipped ones was being added from memory of the rules. Instead Create gets a System mode:
+  - New system: blank (abilities, one check kind, HP) or a copy of a shipped one to change.
+  - Forms over ruleset.json by section (abilities and skills, check kinds with their dice,
+    outcomes and degree formula, defences, tracks, turn order and action economy, sheet
+    formulas, rests), checked by the game's own reader as they are typed, undo like the rest.
+  - A test bench beside the forms, from R2b's evaluator, so a rule is judged by playing it, not
+    by reading it: the odds of each outcome for a modifier against a DC (a table across both),
+    expected damage of an attack, and a duel of two sample creatures played out many times.
+  - R13's rulebook draft lands here for the writer to check, and content in a system is then
+    made in Compendium against the system's own forms.
+  Shipped systems' content is added from their real sources (SRD files, an import), not typed
+  from memory; hand-written additions stop.
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each
