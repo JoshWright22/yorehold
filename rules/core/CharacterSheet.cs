@@ -427,6 +427,30 @@ public sealed partial class CharacterSheet
             ?? (name.StartsWith("flag.", StringComparison.Ordinal) ? (HasFlag(rules, name[5..]) ? 1 : 0) : Named(rules, name) ?? 0)));
     }
 
+    /// <summary>
+    /// What an attack's situational modifiers can ask about it: whether it is ranged, melee or a
+    /// spell, the ability it is made with, the weapon's traits and the target's flags. The roll,
+    /// the aim's odds and the AI all read the same names. ability is the attack step's own
+    /// ("caster" for a spell attack; "" for the weapon's).
+    /// </summary>
+    public static Func<string, double?> AttackSituation(Ruleset rules, CharacterSheet? self, string ability, CharacterSheet? target)
+    {
+        bool spell = ability == "caster";
+        string with = spell ? "caster" : ability.Length > 0 ? ability : self?.AttackAbility(rules) ?? "";
+        bool ranged = spell || (self?.WeaponItem?.Definition.Range ?? 1) > 1;
+        return name => name switch
+        {
+            "ranged" => ranged ? 1 : 0,
+            "melee" => ranged ? 0 : 1,
+            "spell" => spell ? 1 : 0,
+            _ when name == "ability." + with => 1,
+            _ when name.StartsWith("ability.", StringComparison.Ordinal) => 0,
+            _ when name.StartsWith("trait.", StringComparison.Ordinal) => !spell && self?.Weapon?.Has(name[6..]) == true ? 1 : 0,
+            _ when name.StartsWith("targetFlag.", StringComparison.Ordinal) => target?.HasFlag(rules, name[11..]) == true ? 1 : 0,
+            _ => null,
+        };
+    }
+
     /// <summary>What its conditions do to its checks: advantage, disadvantage, or neither when both or none.</summary>
     public Advantage CheckAdvantage(Ruleset rules)
     {

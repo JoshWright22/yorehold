@@ -164,6 +164,24 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void TheAimCountsModifiersThatHoldForThisAttack()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        float hit = w.HitChance(0, 2);
+        double damage = w.ExpectedDamage(0, 2);
+        // only for a ranged attack: Ana's sword swing is as it was
+        ana.Stats.AddModifier(new Modifier("attack", ModifierOp.Add, 4, "", Formula.Parse("ranged", out _)), "test-ranged");
+        Assert.Equal(hit, w.HitChance(0, 2));
+        // for a melee one, as the roll will count it
+        ana.Stats.AddModifier(new Modifier("attack", ModifierOp.Add, 4, "", Formula.Parse("melee", out _)), "test-melee");
+        ana.Stats.AddModifier(new Modifier("damage", ModifierOp.Add, 3, "", Formula.Parse("melee", out _)), "test-melee");
+        Assert.True(w.HitChance(0, 2) > hit);
+        Assert.True(w.ExpectedDamage(0, 2) > damage + 1);
+    }
+
+    [Fact]
     public void RageAndInspirationDoTheirSums()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "bard");

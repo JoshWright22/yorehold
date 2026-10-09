@@ -187,6 +187,8 @@ public sealed partial class World
         int bonus = step?.Ability == "caster" ? sheet.SpellAttackModifier(Rules)
             : step?.Ability is { Length: > 0 } ability ? sheet.AttackModifier(Rules, ability)
             : sheet.AttackModifier(Rules);
+        // its modifiers with an "if" (Archery on ranged attacks), as the roll will count them
+        bonus += sheet.Situational(Rules, "attack", CharacterSheet.AttackSituation(Rules, sheet, step?.Ability ?? "", Creatures[target].Sheet));
         return (bonus, ac);
     }
 
@@ -232,6 +234,14 @@ public sealed partial class World
             || DiceExpression.Parse(Creatures[attacker].Sheet.DamageDice(Rules)) is not DiceExpression damage)
         {
             return 0;
+        }
+        // damage modifiers with an "if" (Dueling on a one-handed melee weapon) count as the blow will
+        CharacterSheet sheet = Creatures[attacker].Sheet;
+        EffectStep? step = FindAction(actionId ?? StrikeAction) is ActionDefinition action ? AttackStep(action.Effect.Steps) : null;
+        int extra = sheet.Situational(Rules, "damage", CharacterSheet.AttackSituation(Rules, sheet, step?.Ability ?? "", Creatures[target].Sheet));
+        if (extra != 0)
+        {
+            damage.Terms.Add(new DiceTerm(Math.Abs(extra), 0, 0, 0, extra < 0 ? -1 : 1));
         }
         return Rules.Checks.Kind(CheckRules.Attack).ExpectedDamage(AttackOdds(attacker, target, actionId), damage, Rules.Checks.CriticalDamage);
     }

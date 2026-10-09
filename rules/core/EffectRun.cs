@@ -614,24 +614,8 @@ internal sealed class EffectRun
 
     // What an attack's situational modifiers can ask: the weapon's traits, whether it is ranged or
     // a spell, the ability it is made with, and the target's flags.
-    private Func<string, double?> AttackContext(EffectStep step, CharacterSheet? target)
-    {
-        CharacterSheet? self = _host.Sheet(_context.Self);
-        string ability = step.Ability == "caster" ? "caster" : step.Ability.Length > 0 ? step.Ability : self?.AttackAbility(_rules) ?? "";
-        bool spell = step.Ability == "caster";
-        bool ranged = spell || (self?.WeaponItem?.Definition.Range ?? 1) > 1;
-        return name => name switch
-        {
-            "ranged" => ranged ? 1 : 0,
-            "melee" => ranged ? 0 : 1,
-            "spell" => spell ? 1 : 0,
-            _ when name == "ability." + ability => 1,
-            _ when name.StartsWith("ability.", StringComparison.Ordinal) => 0,
-            _ when name.StartsWith("trait.", StringComparison.Ordinal) => !spell && self?.Weapon?.Has(name[6..]) == true ? 1 : 0,
-            _ when name.StartsWith("targetFlag.", StringComparison.Ordinal) => target?.HasFlag(_rules, name[11..]) == true ? 1 : 0,
-            _ => null,
-        };
-    }
+    private Func<string, double?> AttackContext(EffectStep step, CharacterSheet? target) =>
+        CharacterSheet.AttackSituation(_rules, _host.Sheet(_context.Self), step.Ability, target);
 
     // "1d8+3" with a situational bonus on the end: "1d8+5"; nothing added when it is 0.
     private static string WithBonus(string dice, int bonus) => bonus == 0 ? dice : dice + (bonus > 0 ? "+" : "") + bonus;
