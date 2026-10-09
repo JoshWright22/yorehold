@@ -57,6 +57,13 @@ public partial class Hud : CanvasLayer
 
     public override void _Process(double delta)
     {
+        // with the chat column out, the top of the screen centres on the map beside it
+        float room = ChatPanel.Current?.Open == true ? ChatPanel.Width : 0;
+        _panels?.MakeRoom(room);
+        if (_banner != null)
+        {
+            _banner.OffsetRight = -room;
+        }
         if (_banner == null || !_banner.Visible)
         {
             return;

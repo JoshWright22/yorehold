@@ -123,6 +123,18 @@ public partial class PlayHud : Control
 
     public LogPanel Log => _log;
 
+    /// <summary>Centres the turn order on the screen less this much on the right (the chat column).</summary>
+    public void MakeRoom(float right)
+    {
+        _top.OffsetLeft = -200 - right / 2;
+        _top.OffsetRight = 200 - right / 2;
+    }
+
+    public override void _ExitTree()
+    {
+        ChatPanel.Current?.ShowLog(null);
+    }
+
     public override void _Ready()
     {
         _party = GetNode<VBoxContainer>("Party");
@@ -144,6 +156,8 @@ public partial class PlayHud : Control
         _slots = GetNode<GridContainer>("Bottom/Row/Hotbar/Slots");
         _endTurn = GetNode<Button>("Bottom/Row/EndTurn");
         _log = GetNode<LogPanel>("Log");
+        // the log reads in the chat column's Combat log tab, as the design has it
+        ChatPanel.Current?.ShowLog(_log);
         _reaction = GetNode<Control>("Reaction");
         _reactionTitle = GetNode<Label>("Reaction/Rows/Title");
         _reactionText = GetNode<Label>("Reaction/Rows/Text");
@@ -430,7 +444,7 @@ public partial class PlayHud : Control
         // like a visual novel, the conversation has the screen: the party and the log step back
         _party.Visible = node == null;
         GetNode<Control>("PartyHead").Visible = node == null;
-        _log.Visible = node == null;
+        _log.Visible = node == null && ChatPanel.Current == null;
         if (talk == null || node == null)
         {
             _talkShown = "";

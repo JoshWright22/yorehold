@@ -6,118 +6,231 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The chat, on the right edge of every screen (Josh, 10/7): a narrow tab with the unread count
-/// while it is put away, and a column of rooms (Global on the title; a party's room joins it in an
-/// online game) when it is pulled out. The tab, T, or Escape in the box slide it out and back. It
-/// is one layer over the menus and the game, so the same rooms carry on from screen to screen.
+/// The chat, a column down the right edge of every screen (Josh, 10/7; the design draws it open):
+/// tabs along its top (the play screen's Combat log, a party's room in an online game, Global), the
+/// lines, and a box with Send at its foot. Put away, it leaves a narrow tab with the unread count.
+/// The tab, the arrow, T, or Escape in the box slide it out and back. It is one layer over the menus
+/// and the game, so the same rooms carry on from screen to screen.
 /// </summary>
 public partial class ChatPanel : CanvasLayer
 {
     public const float Width = 320;
-    public const float TabWidth = 26;
-    public const float Top = 70;
-    public const float Bottom = 200;
+    public const float TabWidth = 32;
+    // where the put-away tab hangs on the edge
+    private const float TabTop = 96;
+    private const float TabHeight = 136;
     private const double SlideSeconds = 0.15;
 
+    /// <summary>The one chat column, for the play screen to show its log in.</summary>
+    public static ChatPanel? Current { get; private set; }
+
     private readonly List<ChatRoom> _rooms = new();
+    // the picked tab: -1 the combat log, else a room
     private int _room;
     private int _shownChanges = -1;
-    private int _shownRoom = -1;
+    private int _shownRoom = -2;
+    private LogPanel? _log;
 
     private Control _frame = null!;
     private Button _tab = null!;
     private HBoxContainer _roomTabs = null!;
     private RichTextLabel _lines = null!;
+    private RichTextLabel _logLines = null!;
     private LineEdit _box = null!;
+    private Button _send = null!;
     private Label _closed = null!;
     private Tween? _slide;
 
     /// <summary>Pulled out.</summary>
-    public bool Open { get; private set; }
+    public bool Open { get; private set; } = true;
     /// <summary>The box has the keys: nothing else on screen should read them as shortcuts.</summary>
     public bool Typing => _box.HasFocus();
 
     public override void _Ready()
     {
+        Current = this;
         Layer = 20;
         _frame = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
         _frame.SetAnchorsPreset(Control.LayoutPreset.RightWide);
-        _frame.OffsetTop = Top;
-        _frame.OffsetBottom = -Bottom;
         AddChild(_frame);
 
-        _tab = new Button { Text = "C\nH\nA\nT", FocusMode = Control.FocusModeEnum.None, ClipText = true };
+        _tab = new Button { Text = "<\n\nC\nH\nA\nT", FocusMode = Control.FocusModeEnum.None, ClipText = true, ThemeTypeVariation = "MainButton" };
         _tab.AddThemeFontSizeOverride("font_size", 12);
         _tab.AddThemeStyleboxOverride("normal", Box(Palette.Ink, Palette.Iron));
         _tab.AddThemeStyleboxOverride("hover", Box(Palette.Dusk, Palette.Slate));
         _tab.AddThemeStyleboxOverride("pressed", Box(Palette.Dusk, Palette.Straw));
+        _tab.AddThemeColorOverride("font_hover_color", Palette.Bone);
         _tab.Pressed += Toggle;
         _tab.TooltipText = "Chat (" + App.KeyHint("chat") + ")";
         _frame.AddChild(_tab);
 
         var body = new PanelContainer();
-        body.AddThemeStyleboxOverride("panel", Box(Palette.Ink, Palette.Iron, 10));
-        body.Position = new Vector2(TabWidth - 1, 0);
+        body.AddThemeStyleboxOverride("panel", Column());
+        body.Position = new Vector2(TabWidth, 0);
         body.Size = new Vector2(Width, 10);
         _frame.AddChild(body);
         var rows = new VBoxContainer();
-        rows.AddThemeConstantOverride("separation", 6);
+        rows.AddThemeConstantOverride("separation", 0);
         body.AddChild(rows);
 
-        var head = new HBoxContainer();
-        head.AddChild(new Label { Text = "CHAT", ThemeTypeVariation = "CapsLabel", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
-        _roomTabs = new HBoxContainer();
-        _roomTabs.AddThemeConstantOverride("separation", 2);
+        // the tabs, underlined in amber when picked, and the arrow that puts the column away
+        var head = new HBoxContainer { CustomMinimumSize = new Vector2(0, 44) };
+        head.AddThemeConstantOverride("separation", 0);
+        _roomTabs = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _roomTabs.AddThemeConstantOverride("separation", 4);
+        head.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
         head.AddChild(_roomTabs);
-        var hide = new Button { Text = "Hide", FocusMode = Control.FocusModeEnum.None, ThemeTypeVariation = "TabButton" };
+        var hide = new Button { Text = ">", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(32, 32),
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Put the chat away" };
+        hide.AddThemeStyleboxOverride("normal", Box(Palette.Ink, Palette.Iron));
+        hide.AddThemeStyleboxOverride("hover", Box(Palette.Dusk, Palette.Slate));
+        hide.AddThemeStyleboxOverride("pressed", Box(Palette.Dusk, Palette.Slate));
         hide.Pressed += Toggle;
         head.AddChild(hide);
+        head.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
         rows.AddChild(head);
+        rows.AddChild(new ColorRect { Color = Palette.Iron, CustomMinimumSize = new Vector2(0, 1), MouseFilter = Control.MouseFilterEnum.Ignore });
 
-        _lines = new RichTextLabel
+        var lines = new MarginContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        foreach (string side in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
         {
-            BbcodeEnabled = true,
-            ScrollFollowing = true,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SelectionEnabled = true,
-        };
-        _lines.AddThemeFontSizeOverride("normal_font_size", 14);
-        _lines.AddThemeColorOverride("default_color", Palette.Sand);
-        rows.AddChild(_lines);
+            lines.AddThemeConstantOverride(side, 12);
+        }
+        rows.AddChild(lines);
+        _lines = Lines();
+        lines.AddChild(_lines);
+        _logLines = Lines();
+        _logLines.Visible = false;
+        lines.AddChild(_logLines);
 
+        rows.AddChild(new ColorRect { Color = Palette.Iron, CustomMinimumSize = new Vector2(0, 1), MouseFilter = Control.MouseFilterEnum.Ignore });
+        var foot = new MarginContainer();
+        foreach (string side in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
+        {
+            foot.AddThemeConstantOverride(side, 8);
+        }
+        rows.AddChild(foot);
+        var footRows = new VBoxContainer();
+        footRows.AddThemeConstantOverride("separation", 4);
+        foot.AddChild(footRows);
         _closed = new Label { ThemeTypeVariation = "DimLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        rows.AddChild(_closed);
-        _box = new LineEdit { PlaceholderText = "Say something", MaxLength = ChatRoom.Longest, ClearButtonEnabled = false };
+        // the layer sits outside the screens' theme, so the dim line says its own size and colour
+        _closed.AddThemeFontSizeOverride("font_size", 12);
+        _closed.AddThemeColorOverride("font_color", Palette.Ash);
+        footRows.AddChild(_closed);
+        var send = new HBoxContainer();
+        send.AddThemeConstantOverride("separation", 4);
+        footRows.AddChild(send);
+        _box = new LineEdit { MaxLength = ChatRoom.Longest, ClearButtonEnabled = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            CustomMinimumSize = new Vector2(0, 34) };
+        _box.AddThemeFontSizeOverride("font_size", 13);
         _box.TextSubmitted += Send;
-        rows.AddChild(_box);
+        send.AddChild(_box);
+        _send = new Button { Text = "Send", FocusMode = Control.FocusModeEnum.None, ThemeTypeVariation = "MainButton", CustomMinimumSize = new Vector2(56, 34) };
+        _send.AddThemeStyleboxOverride("normal", Box(Palette.Ink, Palette.Slate, 8));
+        _send.AddThemeStyleboxOverride("hover", Box(Palette.Dusk, Palette.Ash, 8));
+        _send.AddThemeStyleboxOverride("pressed", Box(Palette.Dusk, Palette.Ash, 8));
+        _send.AddThemeStyleboxOverride("disabled", Box(Palette.Ink, Palette.Iron, 8));
+        _send.AddThemeColorOverride("font_color", Palette.Bone);
+        _send.AddThemeColorOverride("font_hover_color", Palette.Bone);
+        _send.AddThemeColorOverride("font_disabled_color", Palette.Slate);
+        _send.AddThemeFontSizeOverride("font_size", 14);
+        _send.Pressed += () => Send(_box.Text);
+        send.AddChild(_send);
 
         _frame.Resized += Lay;
         Lay();
         Rooms(new ChatRoom("global", "Global", App.Online));
     }
 
-    /// <summary>The rooms to show: Global, and a party's room in an online game. The first is picked.</summary>
+    public override void _ExitTree()
+    {
+        if (Current == this)
+        {
+            Current = null;
+        }
+    }
+
+    private static RichTextLabel Lines()
+    {
+        var lines = new RichTextLabel
+        {
+            BbcodeEnabled = true,
+            ScrollFollowing = true,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SelectionEnabled = true,
+        };
+        lines.AddThemeFontSizeOverride("normal_font_size", 13);
+        lines.AddThemeColorOverride("default_color", Palette.Sand);
+        return lines;
+    }
+
+    /// <summary>The rooms to show: Global, and a party's room in an online game. The first is picked, unless the log is.</summary>
     public void Rooms(params ChatRoom[] rooms)
     {
         _rooms.Clear();
         _rooms.AddRange(rooms);
-        _room = 0;
-        _shownRoom = -1;
+        _room = _log != null ? -1 : 0;
+        _shownRoom = -2;
+        MakeTabs();
+    }
+
+    /// <summary>The play screen's log as the chat's first tab (picked when it comes), or null to take it away.</summary>
+    public void ShowLog(LogPanel? log)
+    {
+        if (_log != null)
+        {
+            _log.Mirror = null;
+        }
+        _log = log;
+        _logLines.Clear();
+        if (log != null)
+        {
+            log.Mirror = _logLines;
+        }
+        _room = log != null ? -1 : Mathf.Clamp(_room, 0, Mathf.Max(0, _rooms.Count - 1));
+        _shownRoom = -2;
+        MakeTabs();
+    }
+
+    private void MakeTabs()
+    {
         foreach (Node old in _roomTabs.GetChildren())
         {
+            _roomTabs.RemoveChild(old);
             old.QueueFree();
         }
-        if (_rooms.Count < 2)
+        if (_log != null)
         {
-            return; // one room needs no tabs
+            _roomTabs.AddChild(TabFor("Combat log", -1));
         }
         for (int i = 0; i < _rooms.Count; i++)
         {
-            int index = i;
-            var tab = new Button { Text = _rooms[i].Title, ToggleMode = true, ThemeTypeVariation = "TabButton", FocusMode = Control.FocusModeEnum.None };
-            tab.Pressed += () => _room = index;
-            _roomTabs.AddChild(tab);
+            _roomTabs.AddChild(TabFor(_rooms[i].Title, i));
         }
+    }
+
+    // a tab: its name, bold in white with an amber underline when picked, grey otherwise
+    private Button TabFor(string title, int index)
+    {
+        var tab = new Button { Text = title, ToggleMode = true, FocusMode = Control.FocusModeEnum.None, ThemeTypeVariation = "MainButton",
+            SizeFlagsVertical = Control.SizeFlags.Fill };
+        var off = new StyleBoxFlat { BgColor = Palette.Ink };
+        off.SetContentMarginAll(8);
+        var on = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Straw, BorderWidthBottom = 2 };
+        on.SetContentMarginAll(8);
+        tab.AddThemeStyleboxOverride("normal", off);
+        tab.AddThemeStyleboxOverride("hover", off);
+        tab.AddThemeStyleboxOverride("pressed", on);
+        tab.AddThemeStyleboxOverride("hover_pressed", on);
+        tab.AddThemeColorOverride("font_color", Palette.Ash);
+        tab.AddThemeColorOverride("font_hover_color", Palette.Bone);
+        tab.AddThemeColorOverride("font_pressed_color", Palette.Bone);
+        tab.AddThemeColorOverride("font_hover_pressed_color", Palette.Bone);
+        tab.AddThemeFontSizeOverride("font_size", 14);
+        tab.SetMeta("room", index);
+        tab.Pressed += () => _room = index;
+        return tab;
     }
 
     public void Toggle()
@@ -125,8 +238,9 @@ public partial class ChatPanel : CanvasLayer
         Open = !Open;
         _slide?.Kill();
         _slide = CreateTween();
-        _slide.TweenProperty(_frame, "offset_left", Open ? -(Width + TabWidth - 1) : -TabWidth, SlideSeconds)
+        _slide.TweenProperty(_frame, "offset_left", Open ? -(Width + TabWidth) : -TabWidth, SlideSeconds)
             .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+        _tab.Visible = !Open;
         if (Open)
         {
             _box.GrabFocus();
@@ -148,7 +262,7 @@ public partial class ChatPanel : CanvasLayer
 
     public override void _Input(InputEvent @event)
     {
-        // Escape in the box puts the chat away, before a menu reads it as Back
+        // Escape in the box leaves it (and puts the chat away), before a menu reads it as Back
         if (Typing && @event is InputEventKey { Pressed: true, Keycode: Key.Escape })
         {
             Toggle();
@@ -166,24 +280,35 @@ public partial class ChatPanel : CanvasLayer
         {
             return;
         }
-        ChatRoom room = _rooms[_room];
+        if (_room < 0 && _log == null || _room >= _rooms.Count)
+        {
+            _room = 0;
+        }
+        bool log = _room < 0;
+        ChatRoom? room = log ? null : _rooms[_room];
         if (Open)
         {
-            room.Seen();
+            room?.Seen();
         }
         int unread = _rooms.Sum(r => r.Unread);
-        _tab.Text = unread > 0 ? $"{unread}\n\nC\nH\nA\nT" : "C\nH\nA\nT";
-        _tab.AddThemeColorOverride("font_color", unread > 0 ? Palette.Straw : Palette.Ash);
-        for (int i = 0; i < _roomTabs.GetChildCount(); i++)
+        _tab.Text = unread > 0 ? $"<\n\n{unread}\n\nC\nH\nA\nT" : "<\n\nC\nH\nA\nT";
+        _tab.AddThemeColorOverride("font_color", unread > 0 ? Palette.Blue : Palette.Bone);
+        foreach (Button tab in _roomTabs.GetChildren().OfType<Button>())
         {
-            var tab = _roomTabs.GetChild<Button>(i);
-            tab.SetPressedNoSignal(i == _room);
-            tab.Text = _rooms[i].Title + (_rooms[i].Unread > 0 ? $" {_rooms[i].Unread}" : "");
+            int index = (int)tab.GetMeta("room");
+            tab.SetPressedNoSignal(index == _room);
+            tab.Text = index < 0 ? "Combat log" : _rooms[index].Title + (_rooms[index].Unread > 0 ? $"  {_rooms[index].Unread}" : "");
         }
-        _closed.Text = room.Closed;
-        _closed.Visible = room.Closed.Length > 0;
-        _box.Editable = room.Closed.Length == 0;
-        if (room.Changes != _shownChanges || _room != _shownRoom)
+        _lines.Visible = !log;
+        _logLines.Visible = log;
+        // the log is the game's own lines: it can be read, not written to
+        string closed = log ? "" : room!.Closed;
+        _closed.Text = closed;
+        _closed.Visible = closed.Length > 0;
+        _box.Editable = !log && closed.Length == 0;
+        _send.Disabled = !_box.Editable;
+        _box.PlaceholderText = log ? "The combat log is read-only" : $"Message {room!.Title.ToLowerInvariant()} chat";
+        if (room != null && (room.Changes != _shownChanges || _room != _shownRoom))
         {
             _shownChanges = room.Changes;
             _shownRoom = _room;
@@ -207,7 +332,7 @@ public partial class ChatPanel : CanvasLayer
 
     private void Send(string text)
     {
-        if (_rooms.Count == 0)
+        if (_room < 0 || _room >= _rooms.Count || !_box.Editable)
         {
             return;
         }
@@ -221,19 +346,23 @@ public partial class ChatPanel : CanvasLayer
         }
     }
 
-    // the tab stays on the edge; the column lies past it, off screen until pulled out
+    // the tab stays on the edge; the column lies past it, pulled out or off screen
     private void Lay()
     {
         float height = _frame.Size.Y;
-        _tab.Position = Vector2.Zero;
-        _tab.Size = new Vector2(TabWidth, Mathf.Min(140, height));
+        _tab.Position = new Vector2(0, TabTop);
+        _tab.Size = new Vector2(TabWidth, Mathf.Min(TabHeight, height));
         var body = _frame.GetChild<Control>(1);
         body.Size = new Vector2(Width, height);
         if (_slide == null)
         {
-            _frame.OffsetLeft = -TabWidth;
+            _frame.OffsetLeft = Open ? -(Width + TabWidth) : -TabWidth;
+            _tab.Visible = !Open;
         }
     }
+
+    // the column: the panel colour with a 1 px line down its left side
+    private static StyleBoxFlat Column() => new() { BgColor = Palette.Ink, BorderColor = Palette.Iron, BorderWidthLeft = 1 };
 
     private static StyleBoxFlat Box(Color fill, Color line, float margin = 4)
     {

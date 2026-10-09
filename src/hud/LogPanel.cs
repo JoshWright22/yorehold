@@ -26,6 +26,27 @@ public partial class LogPanel : PanelContainer
 
     public bool Folded => _folded;
 
+    private RichTextLabel? _mirror;
+
+    /// <summary>A second place the lines are written (the chat column's Combat log tab), given all kept lines when set.</summary>
+    public RichTextLabel? Mirror
+    {
+        get => _mirror;
+        set
+        {
+            _mirror = value;
+            if (value == null)
+            {
+                return;
+            }
+            value.Clear();
+            foreach (string kept in _lines)
+            {
+                Write(value, kept);
+            }
+        }
+    }
+
     public override void _Ready()
     {
         _header = GetNode<Button>("Rows/Header");
@@ -63,6 +84,7 @@ public partial class LogPanel : PanelContainer
     {
         _lines.Clear();
         _text.Clear();
+        _mirror?.Clear();
         Fit();
     }
 
@@ -73,21 +95,26 @@ public partial class LogPanel : PanelContainer
         if (_lines.Count > KeptLines)
         {
             _lines.RemoveRange(0, KeptLines / 4);
+            Mirror = _mirror;
             _text.Clear();
             foreach (string kept in _lines)
             {
-                Write(kept);
+                Write(_text, kept);
             }
             return;
         }
-        Write(line);
+        Write(_text, line);
+        if (_mirror != null)
+        {
+            Write(_mirror, line);
+        }
     }
 
-    private void Write(string line)
+    private void Write(RichTextLabel text, string line)
     {
-        if (_text.GetParsedText().Length > 0)
+        if (text.GetParsedText().Length > 0)
         {
-            _text.Newline();
+            text.Newline();
         }
         // tinted by the words the rules' own lines use; a line worded another way just stays plain
         Color? color = line.Contains("goes down") ? DownColor
@@ -97,22 +124,22 @@ public partial class LogPanel : PanelContainer
             : null;
         if (color is Color tint)
         {
-            _text.PushColor(tint);
+            text.PushColor(tint);
         }
         // the dice working ("1d20+1: [19] + 1 = ") in faint ink, so "Alice initiative 20" reads first
         int at = 0;
         foreach (System.Text.RegularExpressions.Match working in DiceWorking().Matches(line))
         {
-            _text.AddText(line[at..working.Index]);
-            _text.PushColor(MissColor);
-            _text.AddText(working.Value);
-            _text.Pop();
+            text.AddText(line[at..working.Index]);
+            text.PushColor(MissColor);
+            text.AddText(working.Value);
+            text.Pop();
             at = working.Index + working.Length;
         }
-        _text.AddText(line[at..]);
+        text.AddText(line[at..]);
         if (color != null)
         {
-            _text.Pop();
+            text.Pop();
         }
     }
 

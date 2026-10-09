@@ -63,19 +63,19 @@ Status: not started, in progress, matches, differs (with why).
 | Page | Picture | Game screen or file | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Game flow | `game/00-flow.png` | screen order | not started | Lobby between the menu and play is new |
-| Main menu | `game/01-main-menu.png` | `src/menus/MenuScreen.cs` | done but the chat | 384 px band, spaced wordmark and tagline, amber Play, keys P/E/O/Alt F4 (pressable), version and sign-in at the foot, art card only without art; the docked chat column comes with the play screen's chat |
+| Main menu | `game/01-main-menu.png` | `src/menus/MenuScreen.cs` | matches | 384 px band, spaced wordmark and tagline, amber Play, keys P/E/O/Alt F4 (pressable), version and sign-in at the foot, art card only without art; the docked chat column comes with the play screen's chat |
 | Lobby | `game/02-lobby.png` | new screen | not started | seats, ready, invite |
 | Character creation | `game/03-character-creation.png` | `src/characters/CharacterScreen.cs` | not started | 8 steps |
 | Portrait crop | `game/04-portrait-crop.png` | new screen | not started | one 3:4 crop |
 | Options | `game/05-options.png` | `src/menus/SettingsPanel.cs` | matches | bar with search and Close, groups left with counts, rows divided by 1 px lines, choices outlined in amber, Reset to defaults per group; the design's resolution, interface size and frame limit rows are not settings yet |
-| Play screen | `game/06-play.png` | `src/hud/PlayHud.cs`, `PlayScreen.cs` | in progress | done: party list (name, class line, thin HP bar, TURN), turn order (ROUND n and whose turn, squares underlined white or red), one bottom panel (who, AC, HP, action boxes, move, slots under ACTIONS, menu, End turn). Left: weapon chips, chat column with Party, Combat log and Global tabs, dice buttons on the map, the hover card |
+| Play screen | `game/06-play.png` | `src/hud/PlayHud.cs`, `PlayScreen.cs` | in progress | done: party list (name, class line, thin HP bar, TURN), turn order (ROUND n and whose turn, squares underlined white or red), one bottom panel (who, AC, HP, action boxes, move, slots under ACTIONS, menu, End turn). Chat column with Combat log and Global tabs done (Party joins online). Left: weapon chips, dice buttons on the map, the hover card |
 | Party inventory | `game/07-party-inventory.png` | `src/hud/GearPanel.cs` | not started | drag and drop |
 | Chest or shop | `game/08-chest-or-shop.png` | containers and merchants | not started | drag to buy, sell, take |
 | Spellbook | `game/09-spellbook.png` | `src/hud/SpellPanel.cs` | not started | drag to the hotbar |
 | Conversation | `game/10-conversation.png` | talk panel | not started | |
 | Pause | `game/11-pause.png` | `src/menus/MenuScreen.cs` (pause page) | matches but the online note | adventure, chapter and round under PAUSED; Options; Save and quit to main menu; last saved at the foot; the online-game note waits for online play |
 | Wordmark | `parts/00-wordmark.png`, `01-wordmark-small.png` | title band | not started | |
-| Chat closed and open | `parts/02-chat-closed.png`, `03-chat-open.png` | `src/hud/ChatPanel.cs` | not started | |
+| Chat closed and open | `parts/02-chat-closed.png`, `03-chat-open.png` | `src/hud/ChatPanel.cs` | matches | full-height column, open by default; tabs underlined in amber; > puts it away to a tab with < and the unread count; box with Send |
 | Editor toolbar | `parts/06-editor-toolbar.png` | `src/create/CreateScreen.cs` | not started | breadcrumb, mode tabs, Test play, Publish |
 | Editor flow | `editor/00-flow.png` | Create's screens | not started | |
 | Create pipeline | `editor/01-create-pipeline.png` | import and build | not started | |
