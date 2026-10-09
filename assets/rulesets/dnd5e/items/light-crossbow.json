@@ -8,5 +8,6 @@
   "hands": 2,
   "range": 16,
   "weight": 5,
-  "damageType": "piercing"
+  "damageType": "piercing",
+  "longRange": 64
 }

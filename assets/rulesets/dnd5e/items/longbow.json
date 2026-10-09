@@ -11,5 +11,6 @@
   "traits": [
     "heavy"
   ],
-  "damageType": "piercing"
+  "damageType": "piercing",
+  "longRange": 120
 }

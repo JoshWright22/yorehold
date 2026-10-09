@@ -1,0 +1,6 @@
+{
+  "id": "long-range",
+  "name": "Long range",
+  "description": "The target is past the weapon's range, out to its long range: the attack has disadvantage. Given by the place for one roll.",
+  "disadvantageOnAttacks": true
+}

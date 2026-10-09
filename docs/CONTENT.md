@@ -1143,7 +1143,7 @@ The place can give an attacker a condition for one roll, as flanking does the ta
 beyond the target's darkvision) and `unseenTargetCondition` when it can't see its target. The
 conditions say what that means (5e: `unseen-attacker` with `advantageOnAttacks`,
 `unseen-target` with `disadvantageOnAttacks`). They count only under the rules lighting mode,
-for the roll and the hit chance shown, and never stay on the sheet.
+for the roll and the hit chance shown, and never stay on the sheet. Two more come from the distance: `longRangeCondition` for a shot past the weapon's `range` out to its `longRange` (an item's farthest reach, squares), and `rangedNearFoeCondition` for a shot (the target farther than the weapon reaches in melee: one square, two with the `reach` trait) made with a foe standing beside the attacker. 5e's are `long-range` and `foe-beside`, each with `disadvantageOnAttacks`; its shortbow and light crossbow reach 16 squares and 64 at long range, the longbow 30 and 120.
 
 The HUD marks visible flanked creatures and previews cover against the selected ranged action.
 The **Flanking/cover** test scene gives the first hero a ranged test Strike: the enemy is

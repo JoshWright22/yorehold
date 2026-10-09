@@ -7,5 +7,7 @@
   "creaturesProvideCover": true,
   "coverAgainstMelee": false,
   "unseenAttackerCondition": "unseen-attacker",
-  "unseenTargetCondition": "unseen-target"
+  "unseenTargetCondition": "unseen-target",
+  "longRangeCondition": "long-range",
+  "rangedNearFoeCondition": "foe-beside"
 }

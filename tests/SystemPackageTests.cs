@@ -59,7 +59,8 @@ public class SystemPackageTests
         world.Put(3, new Cell(6, 6));
         world.Fight();
         ActionDefinition attack = w.FindAction("attack")!;
-        Assert.Equal(16, w.RangeOf(bow, attack));
+        // its farthest shot: 80 ft, and 320 at long range
+        Assert.Equal(64, w.RangeOf(bow, attack));
         Assert.Equal(1, w.RangeOf(0, attack));
         Assert.True(world.StepUntil(() => world.Said("Rak attacks"), 10), string.Join("\n", world.Log.TakeLast(6)));
         Assert.Equal(new Cell(6, 6), w.CellOf(bow));
@@ -471,6 +472,31 @@ public class SystemPackageTests
         Assert.Equal(2, ana.Level);
         ContentException error = TestContent.Refused(() => RulesTesting.Rules("""{"id": "x", "name": "X", "abilities": [{"id": "str", "name": "S"}], "advancement": "luck"}"""));
         Assert.Equal("advancement", error.Field);
+    }
+
+    [Fact]
+    public void ShotsPastRangeOrWithAFoeBesideAreHarder()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        // a bow that reaches two squares, and six at long range
+        var bow = new Item(new ItemDefinition { Id = "test-bow", Name = "Test bow", Slot = "mainHand", Damage = "1d6", Range = 2, LongRange = 6 });
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        ana.Inventory.Add(bow);
+        Assert.True(ana.Equip(ana.Inventory.Count - 1));
+        world.Put(0, new Cell(1, 1));
+        world.Put(1, new Cell(1, 6));
+        world.Put(2, new Cell(5, 1));
+        world.Put(3, new Cell(7, 6));
+        world.Fight();
+        Assert.Contains("long-range", w.PlaceConditions(0, 2));
+        Assert.DoesNotContain("foe-beside", w.PlaceConditions(0, 2));
+        Assert.Equal(6, w.RangeOf(0, w.FindAction(w.StrikeAction)!));
+        // a foe steps beside her: shooting past it is harder, hitting the one beside is not a shot
+        world.Put(3, new Cell(2, 1));
+        Assert.Contains("foe-beside", w.PlaceConditions(0, 2));
+        Assert.DoesNotContain("foe-beside", w.PlaceConditions(0, 3));
+        Assert.DoesNotContain("long-range", w.PlaceConditions(0, 3));
     }
 
     [Fact]

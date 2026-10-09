@@ -150,7 +150,7 @@ public sealed partial class World
     /// <summary>How far an action reaches for this creature: its own range, or the weapon in hand's for one that says "weapon".</summary>
     public int RangeOf(int creature, ActionDefinition action) =>
         action.WeaponRange && creature >= 0 && creature < Creatures.Count && Creatures[creature].Sheet.WeaponItem is Item weapon
-            ? Math.Max(1, weapon.Definition.Range) : action.Range;
+            ? Math.Max(1, Math.Max(weapon.Definition.Range, weapon.Definition.LongRange)) : action.Range;
 
     /// <summary>
     /// The chance from 0 to 1 that an attack by attacker hits target from where they stand: its

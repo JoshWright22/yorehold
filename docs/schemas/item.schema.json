@@ -49,6 +49,10 @@
       "type": "integer",
       "description": "squares a weapon reaches; 1 by default"
     },
+    "longRange": {
+      "type": "integer",
+      "description": "squares it can still shoot past range, at the system's longRangeCondition"
+    },
     "weight": {
       "type": "number"
     },

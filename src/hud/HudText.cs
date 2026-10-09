@@ -101,7 +101,11 @@ public static class HudText
             }
             // an attack with the weapon in hand reaches as far as that weapon does
             int reach = who >= 0 ? world.RangeOf(who, action) : action.Range;
-            range = reach <= 1 ? $"Reach, {side}" : $"{reach * world.Rules.FeetPerSquare} ft, {side}";
+            int feet = world.Rules.FeetPerSquare;
+            // a weapon with a long range reads as its normal and its long, "80/320 ft"
+            ItemDefinition? weapon = who >= 0 && action.WeaponRange ? world.Creatures[who].Sheet.WeaponItem?.Definition : null;
+            string far = weapon != null && weapon.LongRange > weapon.Range ? $"{weapon.Range * feet}/{weapon.LongRange * feet} ft" : $"{reach * feet} ft";
+            range = reach <= 1 ? $"Reach, {side}" : $"{far}, {side}";
         }
         return $"Cost: {price}\nRange: {range}";
     }

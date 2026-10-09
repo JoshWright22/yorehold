@@ -88,7 +88,7 @@ KINDS = {
     "item": schema("A Yorehold item (items/<id>.json)", {
         "id": ID, "name": TEXT, "description": TEXT, "slot": {"enum": ["", "mainHand", "offHand", "armor", "ring"]},
         "hands": INT, "damage": DICE, "damageType": TEXT, "attackAbility": TEXT, "traits": TEXTS,
-        "range": dict(INT, description="squares a weapon reaches; 1 by default"), "weight": NUM, "value": dict(INT, description="copper"),
+        "range": dict(INT, description="squares a weapon reaches; 1 by default"), "longRange": dict(INT, description="squares it can still shoot past range, at the system's longRangeCondition"), "weight": NUM, "value": dict(INT, description="copper"),
         "quantity": INT, "magic": BOOL, "supplies": INT, "modifiers": MODIFIERS,
         "actions": dict(TEXTS, description="granted-only actions it gives while worn or held"),
         "use": {"type": "object", "description": "what using it up does: an action's fields"},

@@ -64,7 +64,36 @@ public sealed partial class World
         {
             place.Add(rules.UnseenTargetCondition);
         }
+        // a shot: the target farther off than a melee weapon reaches (a reach weapon two squares)
+        Item? weapon = Creatures[attacker].Sheet.WeaponItem;
+        float apart = Grid.Distance(CellOf(attacker), CellOf(target));
+        float reach = weapon?.Definition.Traits.Contains("reach") == true ? 2 : 1;
+        bool ranged = apart > reach + 0.01f;
+        if (ranged && rules.LongRangeCondition.Length > 0 && weapon != null && weapon.Definition.LongRange > weapon.Definition.Range
+            && apart > weapon.Definition.Range + 0.01f)
+        {
+            place.Add(rules.LongRangeCondition);
+        }
+        if (ranged && rules.RangedNearFoeCondition.Length > 0 && FoeBeside(attacker))
+        {
+            place.Add(rules.RangedNearFoeCondition);
+        }
         return place;
+    }
+
+    // Someone hostile and on their feet in a square next to the creature, in the fight.
+    private bool FoeBeside(int creature)
+    {
+        Cell at = CellOf(creature);
+        for (int i = 0; i < Creatures.Count; i++)
+        {
+            if (i != creature && Creatures[i].Team != Creatures[creature].Team && !Creatures[i].Sheet.Down && !Creatures[i].Sheet.Death.Dead
+                && OrderIndex(i) is int index && !Encounter!.Order[index].Out && Grid.Distance(at, CellOf(i)) <= 1.01f)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Whether viewer can make seen out: it stands in light, or within viewer's darkvision.

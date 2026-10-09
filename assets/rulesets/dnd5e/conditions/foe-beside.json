@@ -1,0 +1,6 @@
+{
+  "id": "foe-beside",
+  "name": "Foe beside",
+  "description": "A ranged attack made with a foe right beside the attacker has disadvantage. Given by the place for one roll.",
+  "disadvantageOnAttacks": true
+}

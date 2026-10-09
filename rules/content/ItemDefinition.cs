@@ -29,6 +29,8 @@ public class ItemDefinition
     public List<string> Actions { get; init; } = new();
     /// <summary>A weapon's reach in squares: 1 in melee, more for a bow or a thrown spear.</summary>
     public int Range { get; init; } = 1;
+    /// <summary>How far past Range it can still shoot, squares, at the system's longRangeCondition; 0 for no farther.</summary>
+    public int LongRange { get; init; }
     /// <summary>The animation set its attacks play (ui/animations/&lt;id&gt;.json); empty: one picked from it.</summary>
     public string Animation { get; init; } = "";
     /// <summary>What using it up does, for consumables.</summary>
@@ -74,6 +76,7 @@ public class ItemDefinition
             DamageType = node.Text("damageType", "", 64),
             Hands = hands,
             Range = node.Int("range", 1, 1, 1000),
+            LongRange = node.Int("longRange", 0, 0, 1000),
             Weight = node.Number("weight", 0, 0),
             Value = node.Int("value", 0),
             Quantity = node.Int("quantity", 1, 0),

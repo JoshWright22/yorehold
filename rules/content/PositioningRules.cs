@@ -14,12 +14,16 @@ public class PositioningRules
     public string UnseenAttackerCondition { get; init; } = "";
     /// <summary>A condition the attacker has for the roll when it can't see its target.</summary>
     public string UnseenTargetCondition { get; init; } = "";
+    /// <summary>A condition for a shot past the weapon's range, out to its longRange (5e: disadvantage).</summary>
+    public string LongRangeCondition { get; init; } = "";
+    /// <summary>A condition for a ranged attack made with a foe beside the attacker (5e: disadvantage).</summary>
+    public string RangedNearFoeCondition { get; init; } = "";
 
     public static PositioningRules Read(ContentNode node)
     {
         node.RequireObject("positioning rules are a JSON object");
         node.Only("enabled", "flankingCondition", "flankingReach", "halfCoverArmorClass", "threeQuartersCoverArmorClass",
-            "creaturesProvideCover", "coverAgainstMelee", "unseenAttackerCondition", "unseenTargetCondition");
+            "creaturesProvideCover", "coverAgainstMelee", "unseenAttackerCondition", "unseenTargetCondition", "longRangeCondition", "rangedNearFoeCondition");
         double reach = node.Number("flankingReach", 1, 0, 100);
         if (reach <= 0)
         {
@@ -43,6 +47,8 @@ public class PositioningRules
             CoverAgainstMelee = node.Bool("coverAgainstMelee", false),
             UnseenAttackerCondition = node.Text("unseenAttackerCondition", "", 64),
             UnseenTargetCondition = node.Text("unseenTargetCondition", "", 64),
+            LongRangeCondition = node.Text("longRangeCondition", "", 64),
+            RangedNearFoeCondition = node.Text("rangedNearFoeCondition", "", 64),
         };
     }
 
@@ -66,6 +72,7 @@ public class PositioningRules
         foreach ((string field, string id) in new[]
         {
             ("flankingCondition", FlankingCondition), ("unseenAttackerCondition", UnseenAttackerCondition), ("unseenTargetCondition", UnseenTargetCondition),
+            ("longRangeCondition", LongRangeCondition), ("rangedNearFoeCondition", RangedNearFoeCondition),
         })
         {
             if (id.Length > 0 && rules.Condition(id) == null)
