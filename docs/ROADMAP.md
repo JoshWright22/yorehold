@@ -723,7 +723,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/9: sound (R19 step 4, `ui/sounds.json`); rolls made on the sheet (a skill row, an
     ability's modifier or its save rolls the system's check dice with the hero's modifier for
     everyone to see); d4 to d20 buttons over the map.
-  - Left: a player's own dice set beside the skin's; symbol faces from a system's custom dice.
+  - Done 10/9: a player's own dice set (`user://dice/<name>.json`, Options > Display > Dice set).
+  - Left: symbol faces from a system's custom dice.
   - Josh, 10/9: the dice don't look like they roll across a table. See R19 for the plan.
 
 - [ ] **R21. What Foundry VTT's systems teach the rules language.** Josh, 10/9: Foundry's dnd5e

@@ -31,17 +31,30 @@ public partial class DiceTray : SubViewportContainer
 
     public static void Load(ContentFiles files)
     {
-        if (!files.Exists(UiDice.File))
+        Look = new UiDice();
+        if (files.Exists(UiDice.File))
         {
-            return;
+            try
+            {
+                Look = UiDice.Read(ContentNode.Read(files, UiDice.File));
+            }
+            catch (ContentException error)
+            {
+                GD.PushWarning($"The dice's look can't be read, so it is the game's own: {error.Message}");
+            }
         }
-        try
+        // the player's own set, picked in Options, over the skin's
+        if (Places.DiceSetFile(App.Settings.DiceSet) is { Length: > 0 } set)
         {
-            Look = UiDice.Read(ContentNode.Read(files, UiDice.File));
-        }
-        catch (ContentException error)
-        {
-            GD.PushWarning($"The dice's look can't be read, so it is the game's own: {error.Message}");
+            try
+            {
+                var own = new ContentFiles(System.IO.Path.GetDirectoryName(set)!);
+                Look = UiDice.Read(ContentNode.Read(own, System.IO.Path.GetFileName(set)));
+            }
+            catch (ContentException error)
+            {
+                GD.PushWarning($"The dice set {App.Settings.DiceSet} can't be read, so the skin's dice are used: {error.Message}");
+            }
         }
     }
 

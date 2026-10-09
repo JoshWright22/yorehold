@@ -1345,4 +1345,6 @@ A save's `choices` list holds one character file per hero, in party order: name,
 
 `ui/motion.json` (`"format": "yorehold.motion"`, `"version": 1`) says how the screens move: `panelSeconds` and `panelDistance` (an opening panel slides up this far into place), `chatSeconds` (the chat column sliding in and out), `barSeconds` (an HP bar running down across its whole length) and `bannerSeconds`. Every move is a slide, never a fade. A skin's file changes only what it names; Options > Display > Less motion makes every move a cut.
 
+A player's own dice sets are files in `user://dice/` (`<name>.json`, each written like `ui/dice.json`); Options > Display > Dice set picks one, and it is used over the skin's dice.
+
 `ui/sounds.json` (`"format": "yorehold.sounds"`, `"version": 1`) names a sound file for each moment under `sounds`: `dice.throw`, `dice.land`, `fight.start`, `fight.won`, `fight.lost`, `turn`, and per animation set `<set>.hit`, `<set>.miss`, `<set>.critical` (a set without its own falls back to plain `hit`, `miss`, `critical`). Files are `.ogg`, `.wav` or `.mp3` paths in the content, a skin or an art pack; `""` is silence, and so is a file that isn't there. `volume` adds decibels to every sound. The game ships no sound files; Options > Display > Sound sets quiet, medium, loud or off. Sounds made with generators are not allowed in packs.

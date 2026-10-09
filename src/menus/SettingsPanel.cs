@@ -42,6 +42,9 @@ public sealed class SettingsPanel
             (s, i) => s.Skin = i == 0 ? "" : NextSkin(s.Skin)),
         new("dice", "Dice", "Display", "Rolls thrown as dice over the screen before the numbers reach the log: off, fast or full.",
             s => DiceWords[Math.Clamp(s.Dice, 0, 2)], DiceWords, (s, i) => s.Dice = i),
+        new("diceSet", "Dice set", "Display", "Your own dice: a dice file (like ui/dice.json) in the dice folder, over the skin's dice.",
+            s => s.DiceSet.Length == 0 ? "Skin's own" : s.DiceSet, new[] { "Skin's own", "Next set" },
+            (s, i) => s.DiceSet = i == 0 ? "" : NextDiceSet(s.DiceSet)),
         new("sound", "Sound", "Display", "How loud the dice, blows and fights are. The game brings no sounds itself: a skin or an art pack with sounds does.",
             s => SoundWords[Math.Clamp(s.Sound, 0, 3)], SoundWords, (s, i) => s.Sound = i),
         new("lessMotion", "Less motion", "Display", "Panels, the chat and HP bars cut straight to where they go instead of sliding.",
@@ -127,6 +130,13 @@ public sealed class SettingsPanel
             }
         }
         return system;
+    }
+
+    // the player's dice set after this one, round again to the first
+    private static string NextDiceSet(string now)
+    {
+        List<string> sets = Places.DiceSetNames();
+        return sets.Count == 0 ? "" : sets[(sets.IndexOf(now) + 1) % sets.Count];
     }
 
     // the installed skin after this one, round again to the first; none installed keeps the game's own
@@ -318,7 +328,7 @@ public sealed class SettingsPanel
     {
         "Controls" => App.Keys.Actions.Count,
         "Account" => 1,
-        "Content" => 4 + ContentSets.List(Places.SetFolders()).Count,
+        "Content" => 5 + ContentSets.List(Places.SetFolders()).Count,
         _ => 0,
     };
 
@@ -426,6 +436,13 @@ public sealed class SettingsPanel
             HBoxContainer row = Row("Skins", skins.Count == 0 ? "None installed. A skin is a folder in skins: its colours, fonts, faces and frames."
                 : $"{string.Join(", ", skins)}. Pick one under Display > Skin.", false);
             Choice(row, "Open folder", false, () => OpenFolder("user://skins"));
+        }
+        if (Wanted("Content", "dice sets library look"))
+        {
+            List<string> diceSets = Places.DiceSetNames();
+            HBoxContainer row = Row("Dice sets", diceSets.Count == 0 ? "None yet. A dice set is a file in dice: a ui/dice.json of your own (colours, size, how many)."
+                : $"{string.Join(", ", diceSets)}. Pick one under Display > Dice set.", false);
+            Choice(row, "Open folder", false, () => OpenFolder("user://dice"));
         }
         if (Wanted("Content", "art packs pictures library"))
         {
@@ -569,6 +586,15 @@ public sealed class SettingsPanel
         }
         setting.Set(App.Settings, option);
         App.Save();
+        if (setting.Id == "diceSet")
+        {
+            // the dice look is read again at once, so the next throw shows it
+            DiceTray.Load(App.Content());
+            if (Places.DiceSetNames().Count == 0 && option == 1)
+            {
+                _said.Text = "No dice sets yet: put a dice file in the dice folder (Open folder under Content).";
+            }
+        }
     }
 
     /// <summary>The key pressed while Change was waiting.</summary>

@@ -92,6 +92,26 @@ public static class Places
         return skins;
     }
 
+    /// <summary>The player's own dice sets, user://dice/&lt;name&gt;.json (each a ui/dice.json), by name.</summary>
+    public static List<string> DiceSetNames()
+    {
+        string root = ProjectSettings.GlobalizePath("user://dice");
+        if (!System.IO.Directory.Exists(root))
+        {
+            return new List<string>();
+        }
+        List<string> sets = System.IO.Directory.GetFiles(root, "*.json").Select(System.IO.Path.GetFileNameWithoutExtension).OfType<string>().ToList();
+        sets.Sort(StringComparer.Ordinal);
+        return sets;
+    }
+
+    /// <summary>A dice set's file, or "" when there is none by that name.</summary>
+    public static string DiceSetFile(string name)
+    {
+        string file = ProjectSettings.GlobalizePath("user://dice/" + name + ".json");
+        return name.Length > 0 && !name.Contains('/') && !name.Contains('\\') && !name.Contains("..") && System.IO.File.Exists(file) ? file : "";
+    }
+
     /// <summary>A skin's folder, or "" when there is no skin by that name.</summary>
     public static string SkinFolder(string name)
     {
