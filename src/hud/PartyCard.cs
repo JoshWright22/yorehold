@@ -64,6 +64,9 @@ public partial class PartyCard : TipButton
         _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)}/{sheet.MaxHp}";
         // a hero at a quarter of their HP or less shows it in red
         _low = ShowLow(_hp, _hpText, sheet, _low);
+        // down, the death saves take the bar's place
+        _hp.SelfModulate = downed.Length > 0 ? Colors.Transparent : Colors.White;
+        _hpText.AddThemeFontSizeOverride("font_size", downed.Length > 0 ? 11 : 13);
         // what the system calls them: class and level where it has classes, else their ancestry
         _line.Text = sheet.ClassName.Length > 0 ? $"{sheet.ClassName}, level {sheet.Level}" : sheet.Ancestry;
         _turn.Visible = marked;

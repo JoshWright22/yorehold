@@ -126,8 +126,11 @@ public partial class PlayHud : Control
     public LogPanel Log => _log;
 
     /// <summary>Centres the turn order on the screen less this much on the right (the chat column).</summary>
+    private float _rightRoom;
+
     public void MakeRoom(float right)
     {
+        _rightRoom = right;
         _top.OffsetLeft = -200 - right / 2;
         _top.OffsetRight = 200 - right / 2;
         _openDice.OffsetRight = -right - 80;
@@ -421,18 +424,121 @@ public partial class PlayHud : Control
         ShowTalk(world);
         ShowPanels(world, shown, aim.HeroTurn);
 
-        _cursor.Visible = aim.Label.Length > 0;
+        bool card = ShowFoeCard(world, aim);
+        // the card says the chance to hit itself; a refusal still shows at the pointer
+        _cursor.Visible = aim.Label.Length > 0 && !(card && !aim.LabelBad && aim.Action.Length == 0);
         if (_cursor.Visible)
         {
             _cursor.Text = aim.Label;
             _cursor.Modulate = aim.LabelBad ? Palette.Rose : Palette.Bone;
             _cursor.Size = Vector2.Zero;
             // kept on screen: a long refusal near the right edge would run off it
-            Vector2 room = GetViewportRect().Size - _cursor.GetCombinedMinimumSize() - new Vector2(6, 6);
+            Vector2 room = GetViewportRect().Size - _cursor.GetCombinedMinimumSize() - new Vector2(6 + _rightRoom, 6);
             Vector2 at = aim.LabelAt + new Vector2(20, 14);
             _cursor.Position = new Vector2(Mathf.Clamp(at.X, 6, Mathf.Max(6, room.X)), Mathf.Clamp(at.Y, 6, Mathf.Max(6, room.Y)));
         }
         ShowTip();
+    }
+
+    private PanelContainer? _foeCard;
+    private Label _foeName = null!;
+    private Label _foeSide = null!;
+    private ColorRect _foeLine = null!;
+    private GridContainer _foeRows = null!;
+
+    // The card beside a creature under the pointer in a fight: its name and side, its health and
+    // defence, and the chance to hit it for the hero whose turn it is.
+    private bool ShowFoeCard(World world, FightAim aim)
+    {
+        _foeCard ??= MakeFoeCard();
+        if (!_fighting || aim.Hovered is not int who || who < 0 || who >= world.Creatures.Count || who < world.HeroCount)
+        {
+            _foeCard.Visible = false;
+            return false;
+        }
+        WorldCreature creature = world.Creatures[who];
+        CharacterSheet sheet = creature.Sheet;
+        bool foe = creature.Team != 0;
+        _foeName.Text = sheet.Name;
+        _foeSide.Text = foe ? "ENEMY" : "ALLY";
+        Color side = foe ? Palette.Red : Palette.Bone;
+        _foeSide.AddThemeColorOverride("font_color", side);
+        _foeLine.Color = side;
+        var rows = new List<(string Name, string Value, Color Tint)>();
+        Ruleset rules = world.Rules;
+        rows.Add((sheet.Tracks.Count > 0 ? "Stress" : rules.Sheet.NameOf("hp"),
+            sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Math.Max(0, sheet.Hp)} / {sheet.MaxHp}", Palette.Bone));
+        string defence = rules.Checks.Kind(CheckRules.Attack).DefenceId;
+        rows.Add((rules.DefenceName(defence), sheet.Defence(rules, defence).ToString(), Palette.Bone));
+        if (foe && aim.HeroTurn && world.CurrentCreature is int me)
+        {
+            float chance = world.HitChance(me, who, aim.Action.Length > 0 ? aim.Action : null);
+            rows.Add(("Chance to hit", $"{Mathf.RoundToInt(chance * 100)}%", Palette.Straw));
+        }
+        while (_foeRows.GetChildCount() < rows.Count * 2)
+        {
+            var name = new Label { ThemeTypeVariation = "DimLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            name.AddThemeFontSizeOverride("font_size", 12);
+            var value = new Label { ThemeTypeVariation = "NumberLabel", HorizontalAlignment = HorizontalAlignment.Right };
+            value.AddThemeFontSizeOverride("font_size", 13);
+            _foeRows.AddChild(name);
+            _foeRows.AddChild(value);
+        }
+        for (int i = 0; i < _foeRows.GetChildCount() / 2; i++)
+        {
+            var name = _foeRows.GetChild<Label>(i * 2);
+            var value = _foeRows.GetChild<Label>(i * 2 + 1);
+            name.Visible = value.Visible = i < rows.Count;
+            if (i < rows.Count)
+            {
+                name.Text = rows[i].Name;
+                value.Text = rows[i].Value;
+                value.AddThemeColorOverride("font_color", rows[i].Tint);
+            }
+        }
+        _foeCard.Visible = true;
+        _foeCard.Size = Vector2.Zero;
+        // up and to the right of the pointer, kept on screen
+        Vector2 size = _foeCard.GetCombinedMinimumSize();
+        Vector2 at = aim.LabelAt + new Vector2(28, -size.Y - 12);
+        // the chat column covers the right; a card that would go under it flips to the pointer's left
+        Vector2 view = GetViewportRect().Size - new Vector2(_rightRoom, 0);
+        if (at.X + size.X > view.X - 6)
+        {
+            at.X = aim.LabelAt.X - 28 - size.X;
+        }
+        _foeCard.Position = new Vector2(Mathf.Clamp(at.X, 6, Mathf.Max(6, view.X - size.X - 6)), Mathf.Clamp(at.Y, 6, Mathf.Max(6, view.Y - size.Y - 6)));
+        return true;
+    }
+
+    private PanelContainer MakeFoeCard()
+    {
+        var box = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Slate, ShadowColor = Palette.Night, ShadowSize = 0, ShadowOffset = new Vector2(3, 3) };
+        box.SetBorderWidthAll(1);
+        box.SetContentMarginAll(12);
+        var card = new PanelContainer { MouseFilter = MouseFilterEnum.Ignore, ZIndex = 10, Visible = false };
+        card.AddThemeStyleboxOverride("panel", box);
+        var rows = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(160, 0) };
+        rows.AddThemeConstantOverride("separation", 4);
+        card.AddChild(rows);
+        var head = new HBoxContainer();
+        _foeName = new Label { ThemeTypeVariation = "TitleLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _foeName.AddThemeFontSizeOverride("font_size", 14);
+        _foeName.AddThemeColorOverride("font_color", Palette.Bone);
+        _foeSide = new Label { ThemeTypeVariation = "CapsLabel", VerticalAlignment = VerticalAlignment.Center };
+        _foeSide.AddThemeFontSizeOverride("font_size", 10);
+        head.AddChild(_foeName);
+        head.AddChild(new Control { CustomMinimumSize = new Vector2(16, 0) });
+        head.AddChild(_foeSide);
+        rows.AddChild(head);
+        _foeLine = new ColorRect { CustomMinimumSize = new Vector2(0, 2), MouseFilter = MouseFilterEnum.Ignore };
+        rows.AddChild(_foeLine);
+        _foeRows = new GridContainer { Columns = 2, MouseFilter = MouseFilterEnum.Ignore };
+        _foeRows.AddThemeConstantOverride("h_separation", 24);
+        _foeRows.AddThemeConstantOverride("v_separation", 0);
+        rows.AddChild(_foeRows);
+        AddChild(card);
+        return card;
     }
 
     // The hero a panel shows is the one whose turn it is, or the selected one between fights.

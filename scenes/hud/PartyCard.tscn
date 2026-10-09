@@ -76,7 +76,7 @@ show_percentage = false
 
 [node name="Text" type="Label" parent="Hp"]
 layout_mode = 0
-offset_left = 82.0
+offset_left = 0.0
 offset_top = -9.0
 offset_right = 136.0
 offset_bottom = 13.0

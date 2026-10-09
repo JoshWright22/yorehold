@@ -159,6 +159,7 @@ public partial class FightControl : Node
         Aim.Hover = cell;
         Aim.LabelAt = _touch ? _camera.WorldToScreen(w.Grid.Center(cell).ToGodot()) : _pointer;
         int? target = CreatureAt(w, cell);
+        Aim.Hovered = target;
 
         if (action != null && action.Target == ActionTarget.Point)
         {
