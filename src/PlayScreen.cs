@@ -278,6 +278,7 @@ public partial class PlayScreen : Node2D
             _hud.Panels.CampOrdered += Order;
             _hud.Panels.ReplyPressed += index => _world?.Reply(index, _world.LeaderIndex());
             _hud.Panels.DieRolled += (sides, who) => _world?.RollInOpen(who, sides);
+            _hud.Panels.CheckRolled += (who, what) => _world?.RollCheckInOpen(who, what);
             _hud.Panels.BackPressed += () => _world?.ReturnFromWipe();
             _hud.Panels.TradePressed += Trade;
             _hud.Panels.HotbarChanged += edit =>

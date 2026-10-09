@@ -233,6 +233,32 @@ public sealed partial class World
         _events.Add(new WorldEvent(WorldEventKind.Log, line));
     }
 
+    /// <summary>
+    /// A check a hero's player rolls from the sheet, for everyone to see: a skill by its id, an
+    /// ability by its id, or a save as "save:" and the ability. The system's own check dice with
+    /// the hero's modifier, thrown, then said in the log. Null when there is no such thing to roll.
+    /// </summary>
+    public RollResult? RollCheckInOpen(int who, string what)
+    {
+        if (who < 0 || who >= Creatures.Count)
+        {
+            return null;
+        }
+        CharacterSheet sheet = Creatures[who].Sheet;
+        bool save = what.StartsWith("save:", StringComparison.Ordinal);
+        string id = save ? what[5..] : what;
+        string? name = Rules.Skill(id)?.Name ?? Rules.Abilities.Find(a => a.Id == id)?.Name;
+        if (name == null)
+        {
+            return null;
+        }
+        int modifier = save ? sheet.SaveModifier(Rules, id) : sheet.CheckModifier(Rules, id);
+        RollResult roll = Rules.Checks.Kind(save ? CheckRules.Save : CheckRules.Check).Roll(modifier, Advantage.None, NextRandom(0x5ee7c0deUL));
+        _events.Add(new WorldEvent(WorldEventKind.Dice, "open") { Roll = roll, Who = who });
+        Say($"{sheet.Name} rolls {name}{(save ? " save" : "")}: {roll.Describe()}");
+        return roll;
+    }
+
     /// <summary>A die rolled for everyone to see (the play screen's d4 to d20 buttons): thrown, then said in the log.</summary>
     public RollResult RollInOpen(int who, int sides)
     {

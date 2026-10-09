@@ -20,6 +20,24 @@ public partial class SheetPanel : PanelContainer
     /// <summary>A hero's name in the head was pressed.</summary>
     public event Action<int>? HeroPicked;
     public event Action? ClosePressed;
+    /// <summary>A roll asked for from the sheet: the hero, and a skill id, an ability id or "save:" and an ability.</summary>
+    public event Action<int, string>? RollAsked;
+
+    // A label that rolls when clicked, the pointer showing it can be.
+    private void Rolls(Control control, string what, string tip)
+    {
+        control.MouseFilter = MouseFilterEnum.Stop;
+        control.MouseDefaultCursorShape = CursorShape.PointingHand;
+        control.TooltipText = tip;
+        control.GuiInput += input =>
+        {
+            if (input is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
+            {
+                RollAsked?.Invoke(_hero, what);
+                control.AcceptEvent();
+            }
+        };
+    }
     /// <summary>A reaction on the Features page was pressed: hold it back (true) or let it go.</summary>
     public event Action<int, string, bool>? ReactionHeld;
 
@@ -255,10 +273,11 @@ public partial class SheetPanel : PanelContainer
     {
         var parts = rules.Abilities.Select(a =>
         {
+            string id = a.Id;
             int modifier = sheet.AbilityModifier(rules, a.Id);
             bool trained = SheetPage.Trained(rules, sheet, a.Id);
             int save = modifier + (trained ? sheet.ProficiencyModifier(rules, a.Id) : 0);
-            return (a.Name, Modifier: SheetView.Signed(modifier), Score: sheet.AbilityScore(a.Id).ToString(), Save: (trained ? "● " : "") + "save " + SheetView.Signed(save), trained);
+            return (a.Name, Id: id, Modifier: SheetView.Signed(modifier), Score: sheet.AbilityScore(a.Id).ToString(), Save: (trained ? "● " : "") + "save " + SheetView.Signed(save), trained);
         }).ToList();
         string signature = string.Join("|", parts.Select(p => $"{p.Name}{p.Modifier}{p.Score}{p.Save}"));
         if (signature == _abilitiesShown)
@@ -271,12 +290,15 @@ public partial class SheetPanel : PanelContainer
         {
             VBoxContainer box = Box(_abilities, part.Name, 0);
             box.GetParent<Control>().SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            Big(box, 30).Text = part.Modifier;
+            Label big = Big(box, 30);
+            big.Text = part.Modifier;
+            Rolls(big, part.Id, $"Roll {part.Name} for everyone to see");
             var score = Small(box);
             score.Text = part.Score;
             score.ThemeTypeVariation = "NumberLabel";
             var save = Small(box);
             save.Text = part.Save;
+            Rolls(save, "save:" + part.Id, $"Roll a {part.Name} save for everyone to see");
             if (part.trained)
             {
                 save.AddThemeColorOverride("font_color", Palette.Straw);
@@ -292,7 +314,7 @@ public partial class SheetPanel : PanelContainer
             bool trained = SheetPage.Trained(rules, sheet, s.Id);
             string rank = sheet.ProficiencyRank(rules, s.Id);
             rank = rank.Length == 0 ? "" : rules.ProficiencyRanks.Find(r => r.Id == rank)?.Name ?? rank;
-            return (s.Name, Ability: s.Ability.ToUpperInvariant(), Bonus: SheetView.Signed(sheet.CheckModifier(rules, s.Id)), trained, rank);
+            return (s.Name, s.Id, Ability: s.Ability.ToUpperInvariant(), Bonus: SheetView.Signed(sheet.CheckModifier(rules, s.Id)), trained, rank);
         }).ToList();
         string signature = string.Join("|", parts.Select(p => $"{p.Name}{p.Bonus}{p.trained}{p.rank}"));
         if (signature == _skillsShown)
@@ -304,7 +326,9 @@ public partial class SheetPanel : PanelContainer
         _skills.AddChild(new Label { Text = "SKILLS", ThemeTypeVariation = "CapsLabel" });
         foreach (var part in parts)
         {
-            var row = new HBoxContainer { CustomMinimumSize = new Vector2(0, 22), TooltipText = part.rank };
+            var row = new HBoxContainer { CustomMinimumSize = new Vector2(0, 22) };
+            // the whole row rolls the skill, for everyone to see
+            Rolls(row, part.Id, (part.rank.Length > 0 ? part.rank + ". " : "") + $"Click to roll {part.Name}");
             row.AddThemeConstantOverride("separation", 6);
             var mark = new Label { Text = part.trained ? "●" : "○", ThemeTypeVariation = part.trained ? "CellLabel" : "DimLabel", CustomMinimumSize = new Vector2(12, 0) };
             if (part.trained)

@@ -172,4 +172,20 @@ public class DiceFacesTests
         Assert.True(attacks.Count >= 2 && attacks[0] < firstLine && firstLine < attacks[1],
             "The first attack's line comes after its dice and before the second attack's, so the screen can show one beat per attack");
     }
+
+    [Fact]
+    public void ACheckRolledFromTheSheetUsesTheHerosModifier()
+    {
+        using WorldFixture world = WorldFixture.Load("chapters/dnd5e-test", 2);
+        World w = world.World;
+        CharacterSheet ana = w.Creatures[0].Sheet;
+        RollResult roll = w.RollCheckInOpen(0, "athletics")!;
+        Assert.Equal(roll.Dice.Sum(d => d.Kept ? d.Value : 0) + ana.CheckModifier(w.Rules, "athletics"), roll.Total);
+        Assert.True(world.Said($"Ana rolls Athletics: "), "The roll is said in the log by its skill's name");
+        RollResult save = w.RollCheckInOpen(0, "save:str")!;
+        Assert.Equal(save.Dice.Sum(d => d.Kept ? d.Value : 0) + ana.SaveModifier(w.Rules, "str"), save.Total);
+        Assert.Null(w.RollCheckInOpen(0, "juggling"));
+        Assert.True(world.Said("Ana rolls Strength save: "));
+        Assert.Equal(2, world.Events.Count(e => e.Kind == WorldEventKind.Dice && e.Text == "open"));
+    }
 }

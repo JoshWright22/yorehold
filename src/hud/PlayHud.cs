@@ -31,6 +31,8 @@ public partial class PlayHud : Control
     public event Action? EndTurnPressed;
     /// <summary>A die to roll in the open: its sides, and the hero shown on the bar.</summary>
     public event Action<int, int>? DieRolled;
+    /// <summary>A check rolled from the sheet: the hero and what (a skill, an ability, "save:" and an ability).</summary>
+    public event Action<int, string>? CheckRolled;
     /// <summary>A party card or a card in the turn order.</summary>
     public event Action<int>? CreaturePressed;
     /// <summary>True for use it, false for pass.</summary>
@@ -316,6 +318,7 @@ public partial class PlayHud : Control
         _sheet = GetNode<SheetPanel>("Sheet");
         _sheet.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _sheet.ClosePressed += () => OpenPanel = "";
+        _sheet.RollAsked += (hero, what) => CheckRolled?.Invoke(hero, what);
         _sheet.ReactionHeld += (hero, id, held) => ReactionHeld?.Invoke(hero, id, held);
         _sheetButton = GetNode<Button>("Bottom/Row/Menu/Sheet");
         _gearView = GetNode<DataPanel>("Gear");
