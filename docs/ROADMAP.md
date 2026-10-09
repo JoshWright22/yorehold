@@ -642,7 +642,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   from memory; hand-written additions stop.
   Done 10/9: System mode (sections as JSON checked by the reader, undo, blank or copy, save as the
   package's own), the bench's odds table, damage on average and duel (hero of a class against
-  creatures). Left: forms per field instead of JSON, R13's draft landing here.
+  creatures), plain values as fields. Left: forms for lists and tables (abilities, check kinds)
+  instead of JSON, R13's draft landing here.
 - [ ] **R13. Rulebooks become systems.** The import takes a rulebook PDF as well as an adventure:
   it drafts a system package (abilities, skills, conditions, actions, spells, classes, feats,
   creatures, the check and turn tables from R3-R4) in the vocabulary, quoting the page for each

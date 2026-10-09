@@ -83,11 +83,11 @@ public sealed class SystemEditor
         return true;
     }
 
-    /// <summary>The section's keys as one JSON object, the way the box shows it.</summary>
-    public string SectionText(string id)
+    /// <summary>The section's keys as one JSON object, the way the box shows it; with fieldsApart, less the ones that are fields.</summary>
+    public string SectionText(string id, bool fieldsApart = false)
     {
         var part = new JsonObject();
-        foreach (string key in KeysOf(id))
+        foreach (string key in BoxKeys(id, fieldsApart))
         {
             if (_value[key] is JsonNode node)
             {
@@ -108,22 +108,69 @@ public sealed class SystemEditor
         return _sections.Find(s => s.Id == id)?.Keys ?? new List<string>();
     }
 
+    /// <summary>The section's keys set to one plain value (a number, words, yes or no): each is a field of its own.</summary>
+    public List<string> FieldKeys(string id) => KeysOf(id).Where(key => _value[key] is JsonValue).ToList();
+
+    private List<string> BoxKeys(string id, bool fieldsApart)
+    {
+        List<string> fields = fieldsApart ? FieldKeys(id) : new List<string>();
+        return KeysOf(id).Where(key => !fields.Contains(key)).ToList();
+    }
+
+    /// <summary>A field's value as typed: a number, words, or true and false.</summary>
+    public string FieldText(string key) => _value[key] is JsonValue value
+        ? value.GetValueKind() == JsonValueKind.String ? value.GetValue<string>() : value.ToJsonString()
+        : "";
+
+    /// <summary>
+    /// A field typed anew, kept to the kind of value it holds (a number stays a number). Taken
+    /// only if the whole ruleset then reads; otherwise false and why.
+    /// </summary>
+    public bool SetField(string key, string text, out string error)
+    {
+        if (_value[key] is not JsonValue now)
+        {
+            error = key + " is not a field";
+            return false;
+        }
+        JsonNode? value = now.GetValueKind() switch
+        {
+            JsonValueKind.String => JsonValue.Create(text),
+            JsonValueKind.True or JsonValueKind.False => text.Trim() is "true" or "false" ? JsonValue.Create(text.Trim() == "true") : null,
+            _ => long.TryParse(text.Trim(), out long whole) ? JsonValue.Create(whole)
+                : double.TryParse(text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double part) ? JsonValue.Create(part) : null,
+        };
+        if (value == null)
+        {
+            error = now.GetValueKind() is JsonValueKind.True or JsonValueKind.False ? $"{key} is true or false" : $"{key} is a number";
+            return false;
+        }
+        var next = new JsonObject();
+        foreach ((string k, JsonNode? node) in _value)
+        {
+            next[k] = k == key ? value : node?.DeepClone();
+        }
+        return Replace(next, "Change " + key, "system-field:" + key, out error);
+    }
+
     /// <summary>
     /// The section typed anew. Taken only if it is a JSON object of the section's keys and the
-    /// whole ruleset then reads; otherwise false and why, and nothing changes.
+    /// whole ruleset then reads; otherwise false and why, and nothing changes. With fieldsApart
+    /// the text holds the keys that aren't fields, and the fields stay as they are.
     /// </summary>
-    public bool SetSection(string id, string text, out string error)
+    public bool SetSection(string id, string text, out string error, bool fieldsApart = false)
     {
         if (Parse(text) is not JsonObject part)
         {
             error = "not a JSON object yet";
             return false;
         }
-        List<string> keys = KeysOf(id);
-        string? stray = part.Select(p => p.Key).FirstOrDefault(key => id == Other ? _sections.Any(s => s.Keys.Contains(key)) : !keys.Contains(key));
+        List<string> keys = BoxKeys(id, fieldsApart);
+        List<string> fields = fieldsApart ? FieldKeys(id) : new List<string>();
+        string? stray = part.Select(p => p.Key).FirstOrDefault(key => fields.Contains(key) || (id == Other ? _sections.Any(s => s.Keys.Contains(key)) : !KeysOf(id).Contains(key)));
         if (stray != null)
         {
-            error = $"{stray} belongs in {_sections.Find(s => s.Keys.Contains(stray))?.Name ?? "Other"}";
+            error = fields.Contains(stray) ? $"{stray} is a field above" : $"{stray} belongs in {_sections.Find(s => s.Keys.Contains(stray))?.Name ?? "Other"}";
             return false;
         }
         // the keys stay where they were in the file; new ones go at the end

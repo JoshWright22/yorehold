@@ -47,6 +47,29 @@ public class SystemEditorTests
     }
 
     [Fact]
+    public void PlainValuesAreFieldsKeptToTheirKind()
+    {
+        var history = new History();
+        SystemEditor editor = Opened(history);
+        Assert.Contains("baseDc", editor.FieldKeys("checks"));
+        Assert.DoesNotContain("checks", editor.FieldKeys("checks"));
+        Assert.DoesNotContain("baseDc", editor.SectionText("checks", true));
+
+        Assert.False(editor.SetField("baseDc", "twelve", out string error));
+        Assert.Contains("number", error);
+        Assert.True(editor.SetField("baseDc", "12", out error), error);
+        Assert.Equal(12, editor.Rules.BaseDc);
+        Assert.True(editor.SetField("bonusActions", "false", out error), error);
+        Assert.False(editor.Rules.BonusActions);
+
+        // the box without the fields leaves them as they are
+        Assert.True(editor.SetSection("checks", editor.SectionText("checks", true), out error, true), error);
+        Assert.Equal(12, editor.Rules.BaseDc);
+        Assert.False(editor.SetSection("checks", "{ \"baseDc\": 3 }", out error, true));
+        Assert.Contains("field", error);
+    }
+
+    [Fact]
     public void TheBlankSystemReads()
     {
         SystemEditor editor = Opened(new History());

@@ -26,6 +26,7 @@ public partial class SystemModePanel : HBoxContainer
     private ToolColumn _sections = null!;
     private Label _title = null!;
     private TextEdit _text = null!;
+    private GridContainer _fields = null!;
     private Label _said = null!;
     private ToolColumn _bench = null!;
     private Label _error = null!;
@@ -59,10 +60,14 @@ public partial class SystemModePanel : HBoxContainer
         middle.AddChild(_title);
         middle.AddChild(new Label
         {
-            Text = "The section's keys as JSON. Each change is taken once the game reads the whole system; until then it says why not.",
+            Text = "Plain values are fields; lists and tables are JSON under them. A change is taken once the game reads the whole system; until then it says why not.",
             ThemeTypeVariation = "DimLabel",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         });
+        _fields = new GridContainer { Columns = 4 };
+        _fields.AddThemeConstantOverride("h_separation", 8);
+        _fields.AddThemeConstantOverride("v_separation", 3);
+        middle.AddChild(_fields);
         _text = new TextEdit { SizeFlagsVertical = SizeFlags.ExpandFill, WrapMode = TextEdit.LineWrappingMode.None };
         _text.AddThemeFontOverride("font", GetThemeFont("font", "NumberLabel"));
         _text.AddThemeFontSizeOverride("font_size", 13);
@@ -89,6 +94,7 @@ public partial class SystemModePanel : HBoxContainer
             _editor = editor;
             _changesSeen = -1;
             _duel = null;
+            Said(editor == null ? "" : "Reads.", true);
             _sections.Invalidate();
             _bench.Invalidate();
         }
@@ -111,7 +117,7 @@ public partial class SystemModePanel : HBoxContainer
         }
         BuildSections(editor, package);
         // an undo, a copy or a blank start puts the file's own text back in the box
-        if (_changesSeen != package.History.Changes && !_text.HasFocus())
+        if (_changesSeen != package.History.Changes && !_text.HasFocus() && !_fields.GetChildren().Any(c => c is Control field && field.HasFocus()))
         {
             _changesSeen = package.History.Changes;
             ShowSection(editor);
@@ -155,15 +161,67 @@ public partial class SystemModePanel : HBoxContainer
         _section = id;
         _package?.History.BreakMerge();
         ShowSection(editor);
+        Said("Reads.", true);
     }
 
     private void ShowSection(SystemEditor editor)
     {
         _title.Text = editor.NameOf(_section).ToUpperInvariant();
-        _shownText = editor.SectionText(_section);
+        _shownText = editor.SectionText(_section, true);
         _text.Text = _shownText;
-        _said.Text = "Reads.";
-        _said.AddThemeColorOverride("font_color", Palette.Leaf);
+        foreach (Node old in _fields.GetChildren())
+        {
+            _fields.RemoveChild(old);
+            old.QueueFree();
+        }
+        foreach (string key in editor.FieldKeys(_section))
+        {
+            _fields.AddChild(new Label { Text = PlainWords(key), ThemeTypeVariation = "DimLabel", CustomMinimumSize = new Vector2(150, 0) });
+            string now = editor.FieldText(key);
+            if (now is "true" or "false")
+            {
+                var toggle = new Button { Text = now == "true" ? "yes" : "no", ToggleMode = true, ButtonPressed = now == "true", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(120, 26) };
+                toggle.Toggled += on => FieldTyped(key, on ? "true" : "false");
+                _fields.AddChild(toggle);
+                continue;
+            }
+            var box = new LineEdit { Text = now, CustomMinimumSize = new Vector2(120, 26), SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            box.TextChanged += text => FieldTyped(key, text);
+            box.TextSubmitted += _ => box.ReleaseFocus();
+            box.FocusExited += () =>
+            {
+                _package?.History.BreakMerge();
+                box.Text = _editor?.FieldText(key) ?? box.Text;
+            };
+            _fields.AddChild(box);
+        }
+    }
+
+    // "baseArmorClass" reads "base armor class"
+    private static string PlainWords(string key) =>
+        string.Concat(key.Select((c, i) => char.IsUpper(c) && i > 0 ? " " + char.ToLowerInvariant(c) : c.ToString()));
+
+    private void Said(string text, bool good)
+    {
+        _said.Text = text;
+        _said.AddThemeColorOverride("font_color", good ? Palette.Leaf : Palette.Red);
+    }
+
+    private void FieldTyped(string key, string text)
+    {
+        if (_editor == null)
+        {
+            return;
+        }
+        if (_editor.SetField(key, text, out string error))
+        {
+            _changesSeen = _package?.History.Changes ?? -1;
+            Said("Reads.", true);
+        }
+        else
+        {
+            Said("Not taken: " + error, false);
+        }
     }
 
     private void Typed()
@@ -172,17 +230,15 @@ public partial class SystemModePanel : HBoxContainer
         {
             return;
         }
-        if (_editor.SetSection(_section, _text.Text, out string error))
+        if (_editor.SetSection(_section, _text.Text, out string error, true))
         {
             _shownText = _text.Text;
             _changesSeen = _package?.History.Changes ?? -1;
-            _said.Text = "Reads.";
-            _said.AddThemeColorOverride("font_color", Palette.Leaf);
+            Said("Reads.", true);
         }
         else
         {
-            _said.Text = "Not taken: " + error;
-            _said.AddThemeColorOverride("font_color", Palette.Red);
+            Said("Not taken: " + error, false);
         }
     }
 

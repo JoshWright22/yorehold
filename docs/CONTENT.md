@@ -147,7 +147,9 @@ What the port reads so far, and where it differs:
   writes the package's own copy over it; the system's classes, creatures and spells still come from
   the game. The file is shown a section at a time as JSON; `create/system.json` lists the sections
   (`sections`: `id`, `name` and the top-level `keys` each holds; keys none names fall in Other) and
-  the `blank` system "A blank system" starts from. A typed section is taken only when the whole file
+  the `blank` system "A blank system" starts from. A key holding one plain value (a number, words,
+  true or false) is a field of its own and stays that kind; the rest of the section is a JSON box
+  under the fields. A typed field or section is taken only when the whole file
   still reads as a ruleset, and goes on the undo history. The bench beside it plays the system as it
   is on screen, saved or not: the chance each roll kind passes for modifiers +0 to +10 against DCs
   10 to 25, and a duel (a hero of a class at a level against one to six of a creature, on an open
