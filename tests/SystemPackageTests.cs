@@ -179,6 +179,13 @@ public class SystemPackageTests
         ana.Stats.AddModifier(new Modifier("damage", ModifierOp.Add, 3, "", Formula.Parse("melee", out _)), "test-melee");
         Assert.True(w.HitChance(0, 2) > hit);
         Assert.True(w.ExpectedDamage(0, 2) > damage + 1);
+
+        // and the defender's own: a goblin hard to reach in melee, in a fight, as the roll meets it
+        world.Fight();
+        float before = w.HitChance(0, 2), other = w.HitChance(0, 3);
+        w.Creatures[2].Sheet.Stats.AddModifier(new Modifier("ac", ModifierOp.Add, 5, "", Formula.Parse("melee", out _)), "test-guard");
+        Assert.True(w.HitChance(0, 2) < before);
+        Assert.Equal(other, w.HitChance(0, 3));
     }
 
     [Fact]

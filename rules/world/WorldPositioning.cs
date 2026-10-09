@@ -128,9 +128,21 @@ public sealed partial class World
         return shown.Defence(Rules, id);
     }
 
-    /// <summary>What an attack from one creature on another has to reach: flanking, and cover for ranged attacks.</summary>
+    /// <summary>
+    /// What an attack from one creature on another has to reach: flanking, cover for ranged
+    /// attacks, and the target's own modifiers to that defence with an "if" that holds for this
+    /// attack ("ranged", "melee", "attackerFlag.&lt;flag&gt;": +2 AC against ranged attacks).
+    /// </summary>
     public int AttackArmorClass(int from, int target, bool ranged, string defence = "")
     {
-        return PositionalArmorClass(target, defence) +Chapter.Rules.Positioning.CoverArmorClass(CoverFrom(from, target), ranged);
+        CharacterSheet attacker = Creatures[from].Sheet;
+        int situational = Creatures[target].Sheet.Situational(Rules, defence.Length > 0 ? defence : DefenceDefinition.ArmorClass, name => name switch
+        {
+            "ranged" => ranged ? 1 : 0,
+            "melee" => ranged ? 0 : 1,
+            _ when name.StartsWith("attackerFlag.", StringComparison.Ordinal) => attacker.HasFlag(Rules, name[13..]) ? 1 : 0,
+            _ => null,
+        });
+        return PositionalArmorClass(target, defence) + Chapter.Rules.Positioning.CoverArmorClass(CoverFrom(from, target), ranged) + situational;
     }
 }
