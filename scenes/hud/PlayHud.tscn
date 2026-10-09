@@ -519,15 +519,16 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 250.0
+offset_left = 16.0
 offset_top = -260.0
-offset_right = -250.0
+offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 0
 
 [node name="Plate" type="PanelContainer" parent="Talk/Column"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 theme_type_variation = &"NamePlate"
@@ -540,21 +541,62 @@ theme_type_variation = &"NamePlateLabel"
 layout_mode = 2
 theme_type_variation = &"TalkBox"
 
-[node name="Rows" type="VBoxContainer" parent="Talk/Column/Box"]
+[node name="Inner" type="HBoxContainer" parent="Talk/Column/Box"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
-[node name="Text" type="Label" parent="Talk/Column/Box/Rows"]
-custom_minimum_size = Vector2(700, 0)
+[node name="Card" type="VBoxContainer" parent="Talk/Column/Box/Inner"]
+custom_minimum_size = Vector2(132, 0)
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Face" type="Control" parent="Talk/Column/Box/Inner/Card"]
+custom_minimum_size = Vector2(116, 150)
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+script = ExtResource("7")
+
+[node name="Who" type="Label" parent="Talk/Column/Box/Inner/Card"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(0.9294, 0.9294, 0.9294, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="Role" type="Label" parent="Talk/Column/Box/Inner/Card"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 12
+
+[node name="Line" type="ColorRect" parent="Talk/Column/Box/Inner"]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Rows" type="VBoxContainer" parent="Talk/Column/Box/Inner"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Kind" type="Label" parent="Talk/Column/Box/Inner/Rows"]
+visible = false
+layout_mode = 2
+theme_type_variation = &"CapsLabel"
+theme_override_font_sizes/font_size = 10
+text = "NARRATION"
+
+[node name="Text" type="Label" parent="Talk/Column/Box/Inner/Rows"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme_type_variation = &"BookLabel"
 theme_override_colors/font_color = Color(0.9294, 0.9294, 0.9294, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 autowrap_mode = 3
 
-[node name="Replies" type="VBoxContainer" parent="Talk/Column/Box/Rows"]
+[node name="Replies" type="VBoxContainer" parent="Talk/Column/Box/Inner/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 0
 
 
 [node name="Journal" parent="." instance=ExtResource("11")]

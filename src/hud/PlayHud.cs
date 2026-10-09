@@ -138,6 +138,7 @@ public partial class PlayHud : Control
         _openDice.OffsetRight = -right - 80;
         _partyGear.OffsetRight = -right;
         _trade.OffsetRight = -right;
+        _talkColumn.OffsetRight = -16 - right;
         // the book-like panels sit over the map beside the chat, above the hotbar so a spell can be
         // dragged down onto it, as the design lays the spellbook out
         float half = Mathf.Min(452, (GetViewportRect().Size.X - right) / 2 - 16);
@@ -298,10 +299,11 @@ public partial class PlayHud : Control
         _talkColumn = GetNode<Control>("Talk/Column");
         _talkPlate = GetNode<Control>("Talk/Column/Plate");
         _talkSpeaker = GetNode<Label>("Talk/Column/Plate/Name");
-        _talkText = GetNode<Label>("Talk/Column/Box/Rows/Text");
-        _replies = GetNode<VBoxContainer>("Talk/Column/Box/Rows/Replies");
+        _talkText = GetNode<Label>("Talk/Column/Box/Inner/Rows/Text");
+        _replies = GetNode<VBoxContainer>("Talk/Column/Box/Inner/Rows/Replies");
         // the scene behind a conversation stays in view, darkened toward ink
-        GetNode<ColorRect>("Talk/Dim").Color = Palette.Faded(Palette.Ink, 0.6f);
+        // the map stays in view behind a conversation, as the design shows it
+        GetNode<ColorRect>("Talk/Dim").Visible = false;
         _speakerView = GetNode<PortraitView>("Talk/Speaker");
         _listenerView = GetNode<PortraitView>("Talk/Listener");
         _tip = GetNode<Control>("Tip");
@@ -695,6 +697,38 @@ public partial class PlayHud : Control
     // The conversation along the bottom, between the party cards and the log: who speaks, the line,
     // and a numbered button per reply (1 to 9 pick them too). The buttons are only made again when
     // the line changes, so a press isn't lost.
+    // a reply: its number (or key) dim, its words, and a check it rolls on the right in blue
+    private static Button Reply(string key, string text, string check)
+    {
+        var button = new Button
+        {
+            Text = $"{key}    {text}",
+            Alignment = HorizontalAlignment.Left,
+            FocusMode = FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(0, 32),
+        };
+        var off = new StyleBoxFlat { BgColor = Palette.Ink, ContentMarginLeft = 8, ContentMarginRight = 8 };
+        var lit = new StyleBoxFlat { BgColor = Palette.Dusk, ContentMarginLeft = 8, ContentMarginRight = 8 };
+        button.AddThemeStyleboxOverride("normal", off);
+        button.AddThemeStyleboxOverride("hover", lit);
+        button.AddThemeStyleboxOverride("pressed", lit);
+        button.AddThemeColorOverride("font_color", Palette.Bone);
+        button.AddThemeColorOverride("font_hover_color", Palette.Straw);
+        button.AddThemeColorOverride("font_pressed_color", Palette.Straw);
+        button.AddThemeFontSizeOverride("font_size", 15);
+        if (check.Length > 0)
+        {
+            var tag = new Label { Text = check, ThemeTypeVariation = "NumberLabel", HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
+            tag.AddThemeColorOverride("font_color", Palette.Blue);
+            tag.AddThemeFontSizeOverride("font_size", 13);
+            button.AddChild(tag);
+            tag.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            tag.OffsetRight = -10;
+        }
+        return button;
+    }
+
     private void ShowTalk(World world)
     {
         DialogueSession? talk = world.Talk;
@@ -710,19 +744,23 @@ public partial class PlayHud : Control
             return;
         }
 
-        // who speaks stands large on the left, the hero they talk to dimmed on the right
+        // who speaks has a card on the panel's left: their face, name and what they are; narration
+        // (a room's passage, nobody speaking) has none
         int with = world.TalkingWith;
-        if (with >= 0 && with < world.Creatures.Count)
+        bool spoken = with >= 0 && with < world.Creatures.Count;
+        _speakerView.Visible = false;
+        _listenerView.Visible = false;
+        GetNode<Control>("Talk/Column/Box/Inner/Card").Visible = spoken;
+        GetNode<Control>("Talk/Column/Box/Inner/Line").Visible = spoken;
+        GetNode<Control>("Talk/Column/Box/Inner/Rows/Kind").Visible = !spoken && node.Speaker.Length == 0;
+        if (spoken)
         {
             CharacterSheet them = world.Creatures[with].Sheet;
-            _speakerView.Show(them.Name, world.Tokens.Tokens[with].Color.ToGodot(), false, Portraits.Of(world, with));
+            GetNode<PortraitView>("Talk/Column/Box/Inner/Card/Face").Show(them.Name, world.Tokens.Tokens[with].Color.ToGodot(), false, Portraits.Of(world, with));
+            GetNode<Label>("Talk/Column/Box/Inner/Card/Who").Text = node.Speaker.Length > 0 ? node.Speaker : them.Name;
+            int shop = world.Creatures[with].Npc;
+            GetNode<Label>("Talk/Column/Box/Inner/Card/Role").Text = shop >= 0 && shop < world.Merchants.Count && world.Merchants[shop] != null ? "Merchant" : "";
         }
-        int hero = world.LeaderIndex();
-        CharacterSheet me = world.Creatures[hero].Sheet;
-        _listenerView.Show(me.Name, world.Tokens.Tokens[hero].Color.ToGodot(), false, Portraits.Of(world, hero));
-        _speakerView.Visible = with >= 0;
-        // narration (a room's passage, nobody speaking) is read over the map, not between two faces
-        _listenerView.Visible = with >= 0 || node.Speaker.Length > 0;
 
         List<DialogueChoice> choices = talk.Choices();
         string shown = $"{talk.Dialogue.Id}/{node.Id}/{string.Join(",", choices.Select(c => c.Id))}";
@@ -733,46 +771,30 @@ public partial class PlayHud : Control
         }
         _talkShown = shown;
         _talkSpeaker.Text = (node.Speaker.Length > 0 ? node.Speaker : with >= 0 ? world.Creatures[with].Sheet.Name : "").ToUpperInvariant();
-        _talkPlate.Visible = _talkSpeaker.Text.Length > 0;
-        _talkText.Text = node.Text;
-        _listenerView.Modulate = Palette.Smoke;
+        // the card names who speaks; the old name plate stays away
+        _talkPlate.Visible = false;
+        // a speaker's words in quotes; narration as it is written
+        _talkText.Text = spoken || node.Speaker.Length > 0 ? $"\u201c{node.Text}\u201d" : node.Text;
         foreach (Node old in _replies.GetChildren())
         {
             _replies.RemoveChild(old);
             old.QueueFree();
         }
         var lines = choices.Count == 0
-            ? new List<string> { "1. (Leave)" }
-            : choices.Select((c, i) => $"{i + 1}. {c.Text}" + (c.Check != null ? $"  [{c.Check.Skill} {c.Check.Difficulty}]" : "")).ToList();
+            ? new List<(string Text, string Check)> { ("Leave.", "") }
+            : choices.Select(c => (Text: c.Text, Check: c.Check != null ? $"{(world.Rules.Skill(c.Check.Skill)?.Name ?? TurnWords.Capital(c.Check.Skill))} DC {c.Check.Difficulty}" : "")).ToList();
         for (int i = 0; i < lines.Count; i++)
         {
             int index = i;
-            var button = new Button
-            {
-                Text = lines[i],
-                Alignment = HorizontalAlignment.Left,
-                FocusMode = FocusModeEnum.None,
-                CustomMinimumSize = new Vector2(0, 36),
-                ThemeTypeVariation = "ChoiceButton",
-            };
+            Button button = Reply($"{i + 1}", lines[i].Text, lines[i].Check);
             button.Pressed += () => ReplyPressed?.Invoke(index);
-            // the hero steps forward while the player weighs what they would say
-            button.MouseEntered += () => _listenerView.Modulate = Colors.White;
-            button.MouseExited += () => _listenerView.Modulate = Palette.Smoke;
             _replies.AddChild(button);
         }
         // a merchant's shop opens from the conversation, as E did beside one in the C++ client
         int npc = world.TalkingWith >= world.NpcStart ? world.Creatures[world.TalkingWith].Npc : -1;
         if (npc >= 0 && npc < world.Merchants.Count && world.Merchants[npc] != null)
         {
-            var trade = new Button
-            {
-                Text = "Trade (T)",
-                Alignment = HorizontalAlignment.Left,
-                FocusMode = FocusModeEnum.None,
-                CustomMinimumSize = new Vector2(0, 36),
-                ThemeTypeVariation = "ChoiceButton",
-            };
+            Button trade = Reply("T", "Show me what you're selling.", "");
             trade.Pressed += () => TradePressed?.Invoke();
             _replies.AddChild(trade);
         }
