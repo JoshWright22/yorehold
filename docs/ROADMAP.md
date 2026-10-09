@@ -502,6 +502,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     the barbarian starts without armour. Done 10/9: a class's `restores` per rest (the
     warlock's slots come back on a short rest). Doesn't fit yet: ammunition, Wild Shape,
     subclasses beyond a single path.
+  - Done 10/9: ten more creatures (gnoll, stirge with Blood Drain, goblin boss, shadow, wight,
+    harpy, minotaur, ghast, lizardfolk, troll with Regeneration as a turnStart trigger): 33.
   - Done 10/9: nine more spells (Bane, Ray of Sickness, Dissonant Whispers, Acid Splash, Acid
     Arrow, Blindness/Deafness, Barkskin, Fear, Prayer of Healing) on the SRD's class lists; an
     AC floor (`stat.acFloor`) in the AC formula for Barkskin. 59 spells.

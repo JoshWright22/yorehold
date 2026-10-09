@@ -1,0 +1,41 @@
+{
+  "id": "ghast",
+  "name": "Ghast",
+  "description": "A ghoul's elder, wrapped in a stench of the grave.",
+  "hp": 36,
+  "armorClass": 13,
+  "speed": 30,
+  "level": 2,
+  "abilities": {
+    "str": 16,
+    "dex": 17,
+    "con": 10,
+    "int": 11,
+    "wis": 10,
+    "cha": 8
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "ghast-claws"
+  ],
+  "darkvision": 60,
+  "dcAbility": "con",
+  "actions": [
+    "ghoul-touch"
+  ],
+  "stats": {
+    "immune.poison": 1,
+    "resist.necrotic": 1
+  },
+  "token": {
+    "color": [
+      100,
+      120,
+      100
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

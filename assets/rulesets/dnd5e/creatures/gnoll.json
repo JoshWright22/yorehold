@@ -1,0 +1,33 @@
+{
+  "id": "gnoll",
+  "name": "Gnoll",
+  "description": "A hyena-headed raider, always hungry.",
+  "hp": 22,
+  "armorClass": 15,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 14,
+    "dex": 12,
+    "con": 11,
+    "int": 6,
+    "wis": 10,
+    "cha": 7
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "spear"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      150,
+      120,
+      70
+    ],
+    "size": 0.4
+  },
+  "ai": "brute"
+}

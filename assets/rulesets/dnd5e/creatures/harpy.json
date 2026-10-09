@@ -1,0 +1,35 @@
+{
+  "id": "harpy",
+  "name": "Harpy",
+  "description": "Half woman, half vulture, all claws.",
+  "hp": 38,
+  "armorClass": 11,
+  "speed": 20,
+  "level": 2,
+  "abilities": {
+    "str": 12,
+    "dex": 13,
+    "con": 12,
+    "int": 7,
+    "wis": 10,
+    "cha": 13
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "claws"
+  ],
+  "actions": [
+    "multiattack"
+  ],
+  "token": {
+    "color": [
+      140,
+      110,
+      90
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

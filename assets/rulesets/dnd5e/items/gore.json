@@ -1,0 +1,10 @@
+{
+  "id": "gore",
+  "name": "Gore",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "2d8",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "piercing"
+}

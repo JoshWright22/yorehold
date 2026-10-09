@@ -1,0 +1,33 @@
+{
+  "id": "minotaur",
+  "name": "Minotaur",
+  "description": "A bull-headed brute that hunts the maze.",
+  "hp": 76,
+  "armorClass": 14,
+  "speed": 40,
+  "level": 3,
+  "abilities": {
+    "str": 18,
+    "dex": 11,
+    "con": 16,
+    "int": 6,
+    "wis": 16,
+    "cha": 9
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "greataxe"
+  ],
+  "darkvision": 60,
+  "token": {
+    "color": [
+      120,
+      70,
+      50
+    ],
+    "size": 0.4
+  },
+  "ai": "brute"
+}

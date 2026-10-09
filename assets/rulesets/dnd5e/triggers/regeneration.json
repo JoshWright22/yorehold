@@ -1,0 +1,13 @@
+{
+  "id": "regeneration",
+  "name": "Regeneration",
+  "description": "It regains 10 hit points at the start of its turn (in the book, not after acid or fire).",
+  "on": "turnStart",
+  "effects": [
+    {
+      "do": "heal",
+      "dice": "10",
+      "target": "self"
+    }
+  ]
+}

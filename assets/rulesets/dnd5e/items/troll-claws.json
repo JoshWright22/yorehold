@@ -1,0 +1,10 @@
+{
+  "id": "troll-claws",
+  "name": "Claws",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "2d6",
+  "attackAbility": "str",
+  "weight": 0,
+  "damageType": "slashing"
+}

@@ -1,0 +1,40 @@
+{
+  "id": "wight",
+  "name": "Wight",
+  "description": "A dead soldier who kept its sword and its hate.",
+  "hp": 45,
+  "armorClass": 14,
+  "speed": 30,
+  "level": 3,
+  "abilities": {
+    "str": 15,
+    "dex": 14,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 15
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "longsword"
+  ],
+  "darkvision": 60,
+  "actions": [
+    "multiattack"
+  ],
+  "stats": {
+    "immune.poison": 1,
+    "resist.necrotic": 1
+  },
+  "token": {
+    "color": [
+      90,
+      100,
+      110
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

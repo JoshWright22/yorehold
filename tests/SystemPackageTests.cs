@@ -475,6 +475,25 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ATrollsWoundsClose()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard",
+            ("rulesets/dnd5e/creatures/goblin.json", """
+                {"id": "goblin", "name": "Troll", "hp": 84, "armorClass": 15, "speed": 30, "level": 5,
+                 "abilities": {"str": 18, "dex": 13, "con": 20, "int": 7, "wis": 9, "cha": 7}, "proficiencies": ["weapons"],
+                 "items": ["troll-claws"], "actions": ["regeneration"]}
+                """));
+        World w = world.World;
+        world.Fight();
+        int troll = 2;
+        CharacterSheet sheet = w.Creatures[troll].Sheet;
+        sheet.Hp = 40;
+        Assert.True(world.TurnTo(troll), w.Refusal);
+        Assert.Equal(50, sheet.Hp);
+        Assert.NotNull(w.Chapter.Compendium.Creature("goblin"));
+    }
+
+    [Fact]
     public void BarkskinAndBaneChangeTheNumbers()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "druid");

@@ -1,0 +1,10 @@
+{
+  "id": "proboscis",
+  "name": "Proboscis",
+  "value": 0,
+  "slot": "mainHand",
+  "damage": "1d4",
+  "attackAbility": "dex",
+  "weight": 0,
+  "damageType": "piercing"
+}

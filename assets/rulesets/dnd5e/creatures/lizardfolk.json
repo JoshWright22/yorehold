@@ -1,0 +1,33 @@
+{
+  "id": "lizardfolk",
+  "name": "Lizardfolk",
+  "description": "A swamp hunter with a spear and a hide shield.",
+  "hp": 22,
+  "armorClass": 15,
+  "speed": 30,
+  "level": 1,
+  "abilities": {
+    "str": 15,
+    "dex": 10,
+    "con": 13,
+    "int": 7,
+    "wis": 12,
+    "cha": 7
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "spear",
+    "shield"
+  ],
+  "token": {
+    "color": [
+      80,
+      130,
+      80
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

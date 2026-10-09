@@ -1,0 +1,36 @@
+{
+  "id": "stirge",
+  "name": "Stirge",
+  "description": "A bat-winged bloodsucker the size of a cat.",
+  "hp": 2,
+  "armorClass": 14,
+  "speed": 40,
+  "level": 1,
+  "abilities": {
+    "str": 4,
+    "dex": 16,
+    "con": 11,
+    "int": 2,
+    "wis": 8,
+    "cha": 6
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "proboscis"
+  ],
+  "darkvision": 60,
+  "actions": [
+    "blood-drain"
+  ],
+  "token": {
+    "color": [
+      120,
+      60,
+      60
+    ],
+    "size": 0.4
+  },
+  "ai": "animal"
+}

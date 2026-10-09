@@ -1,0 +1,37 @@
+{
+  "id": "goblin-boss",
+  "name": "Goblin Boss",
+  "description": "Keeps the other goblins in line with a blade and a shield.",
+  "hp": 21,
+  "armorClass": 17,
+  "speed": 30,
+  "level": 2,
+  "abilities": {
+    "str": 10,
+    "dex": 14,
+    "con": 10,
+    "int": 10,
+    "wis": 8,
+    "cha": 10
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "scimitar",
+    "shield"
+  ],
+  "darkvision": 60,
+  "actions": [
+    "multiattack"
+  ],
+  "token": {
+    "color": [
+      110,
+      130,
+      60
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "blood-drain",
+  "name": "Blood Drain",
+  "description": "Its proboscis sticks: another 1d4 piercing as it drinks.",
+  "on": "hit",
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "1d4",
+      "type": "piercing"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "shadow",
+  "name": "Shadow",
+  "description": "A darkness that drains the strength of the living.",
+  "hp": 16,
+  "armorClass": 12,
+  "speed": 40,
+  "level": 1,
+  "abilities": {
+    "str": 6,
+    "dex": 14,
+    "con": 13,
+    "int": 6,
+    "wis": 10,
+    "cha": 8
+  },
+  "proficiencies": [
+    "weapons"
+  ],
+  "items": [
+    "strength-drain"
+  ],
+  "darkvision": 60,
+  "stats": {
+    "immune.poison": 1,
+    "resist.cold": 1,
+    "resist.fire": 1,
+    "resist.lightning": 1,
+    "weak.radiant": 1
+  },
+  "token": {
+    "color": [
+      60,
+      60,
+      80
+    ],
+    "size": 0.4
+  },
+  "ai": "cunning"
+}
