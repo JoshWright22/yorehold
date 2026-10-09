@@ -64,6 +64,16 @@
         "spontaneous"
       ]
     },
+    "restores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "description": "more resources a rest gives back to this class, by rest id: {\"short\": [\"slots-*\"]}"
+    },
     "spells": {
       "type": "object",
       "additionalProperties": {

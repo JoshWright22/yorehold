@@ -279,7 +279,10 @@ public sealed partial class World
                 continue;
             }
             CharacterSheet c = Creatures[i].Sheet;
-            if (!c.Death.Dead && c.RestoreResources(rest.Restores) > 0)
+            // a class may get more back from this rest than everyone does (a warlock's slots on a short rest)
+            List<string> restores = rest.Restores.Concat((Creatures[i].Choices?.Levels ?? new List<LevelChoice>()).Select(l => l.ClassId).Distinct()
+                .SelectMany(id => Chapter.Compendium.Class(id)?.Restores.GetValueOrDefault(rest.Id) ?? new List<string>())).Distinct().ToList();
+            if (!c.Death.Dead && c.RestoreResources(restores) > 0)
             {
                 Say($"{c.Name} is ready to cast again.");
             }

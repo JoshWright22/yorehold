@@ -147,9 +147,33 @@ public class ClassDefinition
     public List<string> Items { get; init; } = new();
     /// <summary>"known", "prepared" or "spontaneous".</summary>
     public string Casting { get; init; } = "known";
+    /// <summary>Resources a rest gives back to this class beyond the rest's own list, by rest id (5e's warlock: "short": ["slots-*"]).</summary>
+    public Dictionary<string, List<string>> Restores { get; init; } = new(StringComparer.Ordinal);
     /// <summary>Spell ids by spell level.</summary>
     public SortedDictionary<int, List<string>> Spells { get; init; } = new();
     public List<ClassLevel> Levels { get; init; } = new();
+
+    private static Dictionary<string, List<string>> ReadRestores(ContentNode? found)
+    {
+        var restores = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        if (found is not ContentNode node)
+        {
+            return restores;
+        }
+        if (!node.IsObject)
+        {
+            throw node.Fail("maps a rest's id to the resources it gives back, like {\"short\": [\"slots-*\"]}");
+        }
+        foreach (KeyValuePair<string, ContentNode> rest in node.Members())
+        {
+            if (!rest.Value.IsArray)
+            {
+                throw rest.Value.Fail("is a list of resource ids (\"*\" ends a prefix: \"slots-*\")");
+            }
+            restores[rest.Key] = rest.Value.Items().Select(id => id.AsText(64)).ToList();
+        }
+        return restores;
+    }
 
     public static ClassDefinition Read(ContentNode node)
     {
@@ -193,6 +217,7 @@ public class ClassDefinition
             Items = node.Texts("items"),
             Casting = casting,
             Spells = spells,
+            Restores = ReadRestores(node.Get("restores")),
             Levels = node.Get("levels") is ContentNode levels ? ClassLevel.ReadRows(levels) : new List<ClassLevel>(),
         };
     }

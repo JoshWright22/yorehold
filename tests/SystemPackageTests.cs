@@ -475,6 +475,21 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void AWarlocksSlotsComeBackOnAShortRest()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "warlock");
+        World w = world.World;
+        CharacterSheet warlock = w.Creatures[1].Sheet;
+        CharacterSheet fighter = w.Creatures[0].Sheet;
+        string slot = warlock.Resources.Keys.First(k => k.StartsWith("slots-", StringComparison.Ordinal));
+        warlock.Resources[slot] = warlock.Resources[slot] with { Current = 0 };
+        fighter.Resources["second-wind"] = fighter.Resources["second-wind"] with { Current = 0 };
+        Assert.True(w.Rest("short"), w.Refusal);
+        Assert.True(warlock.Resources[slot].Current == warlock.Resources[slot].Max, "The warlock's pact slots are back after a short rest");
+        Assert.Equal(fighter.Resources["second-wind"].Max, fighter.Resources["second-wind"].Current);
+    }
+
+    [Fact]
     public void UnarmouredDefenceCountsOnlyWithoutArmour()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "barbarian", "monk");

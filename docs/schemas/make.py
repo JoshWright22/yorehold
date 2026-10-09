@@ -144,7 +144,7 @@ CLASS_ROW = {"type": "object", "additionalProperties": False, "properties": {
 KINDS["class"] = schema("A Yorehold class (classes/<id>.json)", {
     "id": ID, "name": TEXT, "description": TEXT, "hitDie": INT, "bonusHp": INT, "speed": INT, "darkvision": INT, "dcAbility": TEXT,
     "proficiencies": IDS, "proficiencyRanks": {"type": "object", "additionalProperties": TEXT}, "items": IDS, "resources": {"type": "object"},
-    "casting": {"enum": ["known", "prepared", "spontaneous"]}, "spells": {"type": "object", "additionalProperties": IDS},
+    "casting": {"enum": ["known", "prepared", "spontaneous"]}, "restores": {"type": "object", "additionalProperties": TEXTS, "description": "more resources a rest gives back to this class, by rest id: {\"short\": [\"slots-*\"]}"}, "spells": {"type": "object", "additionalProperties": IDS},
     "levels": {"type": "array", "items": CLASS_ROW}}, strict=False)
 
 # The system file itself: its keys and what each is for come from the "ruleset.json" table in

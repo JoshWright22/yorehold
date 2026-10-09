@@ -19,6 +19,11 @@
     "leather"
   ],
   "casting": "known",
+  "restores": {
+    "short": [
+      "slots-*"
+    ]
+  },
   "spells": {
     "0": [
       "eldritch-blast",

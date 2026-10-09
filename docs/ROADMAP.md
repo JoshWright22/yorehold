@@ -499,8 +499,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     (an item's `longRange`) and a shot with a foe beside, each a place condition with
     disadvantage. Done 10/9: Unarmored Defense as the AC formula reading `worn.armor` and
     `worn.offHand` (barbarian 10 + Dex + Con, shield allowed; monk 10 + Dex + Wis, no shield);
-    the barbarian starts without armour. Doesn't fit yet: ammunition, warlock slots back on a
-    short rest, Wild Shape, subclasses beyond a single path.
+    the barbarian starts without armour. Done 10/9: a class's `restores` per rest (the
+    warlock's slots come back on a short rest). Doesn't fit yet: ammunition, Wild Shape,
+    subclasses beyond a single path.
   - Done 10/8: origins: nine species (traits as "species" feats: Breath Weapon, Draconic and
     Dwarven Resilience, Adrenaline Rush, Infernal Legacy), the four SRD backgrounds with their
     origin feats (Alert, Magic Initiate, Savage Attacker, Skilled), two fighting styles. Feats,
