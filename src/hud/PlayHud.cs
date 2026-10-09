@@ -138,6 +138,76 @@ public partial class PlayHud : Control
     }
 
     private HBoxContainer _openDice = null!;
+    private HBoxContainer _weapons = null!;
+    private string _weaponsShown = "";
+
+    // the weapons a hero carries, as chips beside the hotbar's heading: the one in hand in amber,
+    // a press takes another in hand (at the rules' cost in a fight)
+    private void MakeWeaponChips()
+    {
+        var head = GetNode<Label>("Bottom/Row/Hotbar/Head");
+        Node hotbar = head.GetParent();
+        var row = new HBoxContainer { Name = "HeadRow" };
+        hotbar.AddChild(row);
+        hotbar.MoveChild(row, 0);
+        head.Reparent(row);
+        head.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        head.VerticalAlignment = VerticalAlignment.Center;
+        _weapons = new HBoxContainer();
+        _weapons.AddThemeConstantOverride("separation", 4);
+        row.AddChild(_weapons);
+    }
+
+    private void ShowWeapons(World world, int hero)
+    {
+        CharacterSheet sheet = world.Creatures[hero].Sheet;
+        var weapons = sheet.Inventory.Select((item, index) => (Item: item, Index: index)).Where(w => w.Item.Slot == "mainHand").Take(4).ToList();
+        string shown = hero + "|" + string.Join(",", weapons.Select(w => w.Item.Name + (w.Item.Equipped ? "*" : "")));
+        if (shown == _weaponsShown)
+        {
+            return;
+        }
+        _weaponsShown = shown;
+        foreach (Node old in _weapons.GetChildren())
+        {
+            _weapons.RemoveChild(old);
+            old.QueueFree();
+        }
+        // one weapon has nothing to switch to
+        if (weapons.Count < 2)
+        {
+            return;
+        }
+        foreach ((Item item, int index) in weapons)
+        {
+            var chip = new Button { Text = item.Name, ToggleMode = true, FocusMode = FocusModeEnum.None, ThemeTypeVariation = "MainButton",
+                TooltipText = item.Equipped ? $"{item.Name} is in hand" : $"Take the {item.Name.ToLowerInvariant()} in hand" };
+            StyleBoxFlat off = GameScreen.Box(Palette.Ink, Palette.Slate);
+            StyleBoxFlat on = GameScreen.Box(Palette.Dusk, Palette.Straw);
+            foreach (StyleBoxFlat box in new[] { off, on })
+            {
+                box.ContentMarginLeft = box.ContentMarginRight = 8;
+                box.ContentMarginTop = box.ContentMarginBottom = 1;
+            }
+            chip.AddThemeStyleboxOverride("normal", off);
+            chip.AddThemeStyleboxOverride("hover", on);
+            chip.AddThemeStyleboxOverride("pressed", on);
+            chip.AddThemeStyleboxOverride("hover_pressed", on);
+            chip.AddThemeColorOverride("font_color", Palette.Bone);
+            chip.AddThemeColorOverride("font_hover_color", Palette.Bone);
+            chip.AddThemeColorOverride("font_pressed_color", Palette.Straw);
+            chip.AddThemeColorOverride("font_hover_pressed_color", Palette.Straw);
+            chip.AddThemeFontSizeOverride("font_size", 12);
+            chip.SetPressedNoSignal(item.Equipped);
+            int at = index;
+            chip.Pressed += () =>
+            {
+                _weaponsShown = ""; // shown again from what the rules made of it
+                ItemOrdered?.Invoke(new ItemOrder(ItemOrderKind.Equip, hero, at));
+            };
+            _weapons.AddChild(chip);
+        }
+    }
 
     // d4 to d20 over the map's lower right, for a roll the rules didn't ask for
     private void MakeOpenDice()
@@ -180,6 +250,7 @@ public partial class PlayHud : Control
         _partyCount = GetNode<Label>("PartyHead/Count");
         _top = GetNode<Control>("Top");
         MakeOpenDice();
+        MakeWeaponChips();
         _round = GetNode<Label>("Top/Initiative/Row/Head/Round");
         _cards = GetNode<HBoxContainer>("Top/Initiative/Row/Cards");
         _turn = GetNode<Label>("Top/Initiative/Row/Head/Turn");
@@ -806,6 +877,7 @@ public partial class PlayHud : Control
 
         // the bars as the player arranged them; End turn has the big button, so it gets no slot
         _barHero = shown;
+        ShowWeapons(world, shown);
         string[] layout = world.HotbarOf(shown);
         while (SlotScene != null && _slotViews.Count < layout.Length)
         {
