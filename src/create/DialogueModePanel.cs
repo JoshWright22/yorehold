@@ -20,11 +20,10 @@ public partial class DialogueModePanel : VBoxContainer
     private string _chapter = "\u0000";
     private List<string> _listed = new();
     private Label _file = null!;
-    private Label _count = null!;
-    private Button _back = null!;
-    private Button _on = null!;
     private Label _error = null!;
     private HBoxContainer _body = null!;
+    private ToolColumn _talks = null!;
+    private Button _first = null!;
     private ToolColumn _nodes = null!;
     private ToolColumn _node = null!;
     private ToolColumn _reply = null!;
@@ -48,12 +47,8 @@ public partial class DialogueModePanel : VBoxContainer
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 3);
         bar.AddChild(row);
-        _back = Small(row, "<", () => Step(-1));
-        _file = new Label { CustomMinimumSize = new Vector2(320, 0), ClipText = true };
+        _file = new Label { CustomMinimumSize = new Vector2(320, 0), ClipText = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         row.AddChild(_file);
-        _on = Small(row, ">", () => Step(1));
-        _count = new Label { ThemeTypeVariation = "DimLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        row.AddChild(_count);
         _graphView = new Button { Text = "Graph", ToggleMode = true, ThemeTypeVariation = "TabButton", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(90, 26),
             TooltipText = "The conversation as boxes and arrows; off, the lines and the picked one's form" };
         _graphView.Toggled += on => _graphing = on;
@@ -62,24 +57,32 @@ public partial class DialogueModePanel : VBoxContainer
         _voiceView = new Button { Text = "Voice", ToggleMode = true, ThemeTypeVariation = "TabButton", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(90, 26) };
         _voiceView.Toggled += on => _voicing = on;
         row.AddChild(_voiceView);
-        Button made = Small(row, "New conversation", () =>
+        // with none yet the list isn't there to start one from
+        _first = Small(row, "New conversation", () =>
         {
             _package?.NewDialogue();
             _chapter = "\u0000";
         });
-        made.CustomMinimumSize = new Vector2(150, 26);
+        _first.CustomMinimumSize = new Vector2(150, 26);
 
         _error = new Label { ThemeTypeVariation = "WarnLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart, Visible = false };
         AddChild(_error);
         _body = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         _body.AddThemeConstantOverride("separation", 0);
         AddChild(_body);
+        // the chapter's conversations down the left, as the design has them, and the story flags the open one uses
+        _talks = Column(210, false);
         _nodes = Column(200, false);
         _node = Column(0, true);
         _reply = Column(300, false);
+        // room on its right for the chat's tab, which stays at the screen's edge
+        var replyBox = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Iron, BorderWidthLeft = 1 };
+        replyBox.SetContentMarginAll(8);
+        replyBox.ContentMarginRight = 40;
+        _reply.GetParent().GetParent<PanelContainer>().AddThemeStyleboxOverride("panel", replyBox);
         _graph = new DialogueGraphView { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
         _body.AddChild(_graph);
-        _body.MoveChild(_graph, 0);
+        _body.MoveChild(_graph, 1);
         _graph.LinePicked += line =>
         {
             _picked = line;
@@ -116,10 +119,9 @@ public partial class DialogueModePanel : VBoxContainer
             }
         }
         string path = package.DialoguePath;
-        // the conversation by its name, not its file; < and > step through the chapter's others
+        // the conversation by its name, not its file; the list on the left opens the chapter's others
         _file.Text = path.Length == 0 ? "No conversations yet" : "Conversation: " + System.IO.Path.GetFileNameWithoutExtension(path);
-        _count.Text = _listed.Count < 2 ? "" : $"   {_listed.IndexOf(path) + 1} of {_listed.Count}";
-        _back.Disabled = _on.Disabled = _listed.Count < 2;
+        _first.Visible = package.DialogueEditor() == null;
 
         DialogueEditor? editor = package.DialogueEditor();
         if (!ReferenceEquals(editor, _editor))
@@ -165,6 +167,7 @@ public partial class DialogueModePanel : VBoxContainer
             _choice = null;
         }
         DialogueEditor.Node node = editor.Nodes[_picked];
+        _talks.Build($"{path}|{string.Join(",", _listed)}|{editor.Nodes.Count}|{string.Join(",", FlagsOf(editor))}", () => BuildTalks(package, editor));
         _graph.Editor = editor;
         _graph.Picked = _picked;
         _graph.PickedReply = _choice;
@@ -181,16 +184,6 @@ public partial class DialogueModePanel : VBoxContainer
             _choice = null;
             GetViewport().SetInputAsHandled();
         }
-    }
-
-    private void Step(int by)
-    {
-        if (_package == null || _listed.Count < 2)
-        {
-            return;
-        }
-        int at = Math.Max(0, _listed.IndexOf(_package.DialoguePath));
-        _package.OpenDialogue(_listed[((at + by) % _listed.Count + _listed.Count) % _listed.Count]);
     }
 
     private ToolColumn Column(float width, bool grow)
@@ -214,6 +207,72 @@ public partial class DialogueModePanel : VBoxContainer
         button.Pressed += press;
         row.AddChild(button);
         return button;
+    }
+
+    // ---------------------------------------------------------------- the conversations
+
+    private void BuildTalks(CreatePackage package, DialogueEditor editor)
+    {
+        HBoxContainer top = _talks.Row();
+        top.AddChild(new Label { Text = "CONVERSATIONS", ThemeTypeVariation = "CapsLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
+        ToolColumn.Narrow(_talks.Act("New", () =>
+        {
+            package.NewDialogue();
+            _chapter = "\u0000";
+        }, null, top), 52);
+        _talks.Gap(4);
+        foreach (string file in _listed)
+        {
+            string open = file;
+            bool shown = file == package.DialoguePath;
+            string name = System.IO.Path.GetFileNameWithoutExtension(file);
+            // the open one's lines as they are now; the others' as saved
+            string about = $"{(shown ? editor.Nodes.Count : SavedLines(package, file))} lines";
+            Button row = _talks.Toggle($"{name}\n{about}", () => package.DialoguePath == open, () => package.OpenDialogue(open));
+            row.CustomMinimumSize = new Vector2(0, 42);
+        }
+        _talks.Gap(10);
+        List<string> flags = FlagsOf(editor);
+        if (flags.Count > 0)
+        {
+            _talks.AddChild(new Label { Text = "STORY FLAGS USED", ThemeTypeVariation = "CapsLabel" });
+            foreach (string flag in flags)
+            {
+                var line = new Label { Text = flag, ThemeTypeVariation = "NumberLabel", ClipText = true };
+                line.AddThemeFontSizeOverride("font_size", 13);
+                line.AddThemeColorOverride("font_color", Palette.Ash);
+                _talks.AddChild(line);
+            }
+        }
+    }
+
+    // How many lines a conversation file has on disk; 0 when it can't be read.
+    private static int SavedLines(CreatePackage package, string file)
+    {
+        var files = new ContentFiles(package.PackagePath);
+        try
+        {
+            return files.Exists(file) && System.Text.Json.Nodes.JsonNode.Parse(files.ReadText(file))?["nodes"] is System.Text.Json.Nodes.JsonArray nodes ? nodes.Count : 0;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return 0;
+        }
+    }
+
+    // Every story flag the conversation sets, clears or asks for, once each, in order.
+    private static List<string> FlagsOf(DialogueEditor editor)
+    {
+        var flags = new List<string>();
+        foreach (DialogueEditor.Node node in editor.Nodes)
+        {
+            flags.AddRange(node.Flags.Set.Concat(node.Flags.Clear));
+            foreach (DialogueEditor.Choice choice in node.Choices)
+            {
+                flags.AddRange(choice.Require.Concat(choice.Forbid).Concat(choice.Flags.Set).Concat(choice.Flags.Clear));
+            }
+        }
+        return flags.Distinct().OrderBy(f => f, StringComparer.Ordinal).ToList();
     }
 
     // ---------------------------------------------------------------- nodes
