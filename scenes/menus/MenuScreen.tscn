@@ -125,16 +125,13 @@ theme_type_variation = &"PageText"
 bbcode_enabled = true
 
 [node name="Notice" type="Label" parent="Title"]
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
+layout_mode = 0
 offset_left = 40.0
-offset_top = -128.0
+offset_top = 116.0
 offset_right = 344.0
-offset_bottom = -76.0
-grow_vertical = 0
+offset_bottom = 152.0
 theme_type_variation = &"WarnLabel"
+theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
 [node name="Foot" type="Label" parent="Title"]
