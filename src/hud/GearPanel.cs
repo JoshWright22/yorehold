@@ -320,7 +320,16 @@ public sealed class GearPanel
         }
         foreach (Modifier m in d.Modifiers)
         {
-            string stat = m.Stat == "ac" ? "Armour Class" : m.Stat;
+            // stats a player knows by name; a rules system's own working values (5e's armorDexCap)
+            // stay off the page unless its names say what to call them
+            Ruleset rules = world.Rules;
+            string? stat = m.Stat == "ac" ? rules.DefenceName("ac")
+                : rules.Abilities.Find(a => a.Id == m.Stat)?.Name
+                ?? (rules.Sheet.Names.TryGetValue(m.Stat, out string? named) ? named : null);
+            if (stat == null)
+            {
+                continue;
+            }
             string value = m.Op switch
             {
                 ModifierOp.Override => $"{m.Value}",

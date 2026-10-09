@@ -134,7 +134,8 @@ public partial class PlayHud : Control
         _top.OffsetLeft = -200 - right / 2;
         _top.OffsetRight = 200 - right / 2;
         _openDice.OffsetRight = -right - 80;
-        _openDice.Visible = _bottom.Visible;
+        // over the map only: an open panel (the gear, the spells) covers it
+        _openDice.Visible = _bottom.Visible && OpenPanel.Length == 0;
     }
 
     private HBoxContainer _openDice = null!;
