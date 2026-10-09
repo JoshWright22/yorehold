@@ -51,12 +51,16 @@ public partial class FightAnimator : Node2D
     public bool Playing => _set != null;
     /// <summary>The blow has landed: the numbers may come out.</summary>
     public bool Struck => _set == null || _time >= _set.Impact;
+    private bool _sounded;
+    private string _outcome = "";
 
     /// <summary>Plays a set from the doer's token to the targets', the hit, miss or critical version.</summary>
     public void Play(UiAnimation set, World world, int doer, List<int> targets, bool hit, bool critical, TokensView tokens, PlayCamera camera)
     {
         _set = set;
         _steps = critical ? set.Critical : hit ? set.Hit : set.Miss;
+        _outcome = critical ? "critical" : hit ? "hit" : "miss";
+        _sounded = false;
         _doer = doer;
         _targets = targets.Where(t => t >= 0 && t < world.Tokens.Tokens.Count).Distinct().ToList();
         _from = world.Tokens.Tokens[doer].Position.ToGodot();
@@ -77,6 +81,12 @@ public partial class FightAnimator : Node2D
             return;
         }
         _time += delta;
+        // the blow is heard as it lands: "slash.hit", or plain "hit" when the set has none of its own
+        if (!_sounded && _time >= _set.Impact)
+        {
+            _sounded = true;
+            Sounds.Play($"{_set.Id}.{_outcome}");
+        }
         Nudge();
         QueueRedraw();
         if (_time >= _set.Seconds)

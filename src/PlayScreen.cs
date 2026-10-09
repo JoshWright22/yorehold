@@ -994,11 +994,14 @@ public partial class PlayScreen : Node2D
                 break;
             case WorldEventKind.Fight:
                 _pendingUse = null;
+                Sounds.Play("fight.start");
                 break;
             case WorldEventKind.Turn:
                 _fight.TurnBegan();
+                Sounds.Play("turn");
                 break;
             case WorldEventKind.FightOver:
+                Sounds.Play(e.Text == "victory" ? "fight.won" : "fight.lost");
                 _fight.FightEnded();
                 _camera.Following = true;
                 break;

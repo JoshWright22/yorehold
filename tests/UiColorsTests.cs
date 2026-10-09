@@ -28,6 +28,17 @@ public class UiColorsTests
     }
 
     [Fact]
+    public void EachMomentNamesItsSoundOrIsSilent()
+    {
+        UiSounds shipped = UiSounds.Read(ContentNode.Read(TestContent.Shipped(), UiSounds.File));
+        Assert.Equal("sounds/hit.ogg", shipped.For("slash.hit"));
+        Assert.Equal("", shipped.For("nothing.at-all"));
+        UiSounds skin = UiSounds.Read(TestContent.Json("""{"format": "yorehold.sounds", "version": 1, "sounds": {"slash.hit": "sounds/swish.wav", "hit": ""}}"""));
+        Assert.True(skin.For("slash.hit") == "sounds/swish.wav" && skin.For("bash.hit") == "", "A set's own sound wins; an empty file is silence");
+        Assert.Equal("sounds.hit", TestContent.Refused(() => UiSounds.Read(TestContent.Json("""{"format": "yorehold.sounds", "version": 1, "sounds": {"hit": "../secret.ogg"}}"""))).Field);
+    }
+
+    [Fact]
     public void TheScreensMoveAsTheMotionFileSays()
     {
         UiMotion shipped = UiMotion.Read(ContentNode.Read(TestContent.Shipped(), UiMotion.File));

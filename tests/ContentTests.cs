@@ -60,6 +60,7 @@ public class ContentTests
         Try("ui/shapes.json", () => UiShapes.Read(ContentNode.Read(files, UiShapes.File)));
         Try("ui/dice.json", () => UiDice.Read(ContentNode.Read(files, UiDice.File)));
         Try("ui/motion.json", () => UiMotion.Read(ContentNode.Read(files, UiMotion.File)));
+        Try("ui/sounds.json", () => UiSounds.Read(ContentNode.Read(files, UiSounds.File)));
         foreach (string path in files.List(UiAnimation.Folder))
         {
             Try(path, () => UiAnimation.Read(ContentNode.Read(files, path)));

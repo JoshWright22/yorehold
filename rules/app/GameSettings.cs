@@ -51,6 +51,8 @@ public sealed class GameSettings
     public int Dice { get; set; } = 2;
     /// <summary>Panels, the chat and HP bars cut to where they go instead of sliding.</summary>
     public bool LessMotion { get; set; }
+    /// <summary>0 off, 1 quiet, 2 medium, 3 loud.</summary>
+    public int Sound { get; set; } = 2;
     /// <summary>Installed content sets (by id) the player turned off: they join no game.</summary>
     public SortedSet<string> SetsOff { get; } = new(StringComparer.Ordinal);
 
@@ -102,6 +104,7 @@ public sealed class GameSettings
         settings.Skin = Clip(Text(j, "skin", ""), 128);
         settings.Dice = j["dice"] is JsonValue dice && dice.TryGetValue(out int shown) ? Math.Clamp(shown, 0, 2) : settings.Dice;
         settings.LessMotion = Bool(j, "lessMotion", settings.LessMotion);
+        settings.Sound = j["sound"] is JsonValue sound && sound.TryGetValue(out int loud) ? Math.Clamp(loud, 0, 3) : settings.Sound;
         if (j["setsOff"] is JsonArray setsOff)
         {
             foreach (JsonNode? set in setsOff)
@@ -176,6 +179,7 @@ public sealed class GameSettings
             ["skin"] = Skin,
             ["dice"] = Dice,
             ["lessMotion"] = LessMotion,
+            ["sound"] = Sound,
         };
         var keys = new JsonObject();
         foreach (KeyValuePair<string, List<string>> binding in Keys.OrderBy(k => k.Key, StringComparer.Ordinal))
@@ -217,7 +221,7 @@ public sealed class GameSettings
     {
         "zoomToCursor", "edgeScroll", "cameraFollows", "panSpeed", "fullscreen", "lighting", "timeOfDay", "sharedFog",
         "reactionPrompts", "lastCreatePackage", "keys", "server", "serverKey", "deviceId", "storyModel", "storyModelName", "skin", "dice",
-        "setsOff", "lessMotion",
+        "setsOff", "lessMotion", "sound",
     };
 
     private static string Clip(string text, int longest) => text.Length > longest ? text[..longest] : text;

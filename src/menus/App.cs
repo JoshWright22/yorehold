@@ -81,6 +81,7 @@ public static class App
         Palette.LoadShapes(Content());
         DiceTray.Load(Content());
         Motion.Load(Content());
+        Sounds.Load(Content());
         FightAnimator.Load(Content());
         try
         {

@@ -18,6 +18,7 @@ public sealed class SettingsPanel
     public static readonly string[] LightingWords = { "As the map says", "Off", "Mood", "Rules" };
     private static readonly string[] TimeWords = { "As the map says", "Day", "Dusk", "Night" };
     private static readonly string[] DiceWords = { "Off", "Fast", "Full" };
+    private static readonly string[] SoundWords = { "Off", "Quiet", "Medium", "Loud" };
     private static readonly string[] Groups = { "Display", "Gameplay", "Content", "Camera", "Controls", "Account" };
 
     // Escape, Enter and the digits always do the same thing (back, confirm, replies and hotbar slots)
@@ -41,6 +42,8 @@ public sealed class SettingsPanel
             (s, i) => s.Skin = i == 0 ? "" : NextSkin(s.Skin)),
         new("dice", "Dice", "Display", "Rolls thrown as dice over the screen before the numbers reach the log: off, fast or full.",
             s => DiceWords[Math.Clamp(s.Dice, 0, 2)], DiceWords, (s, i) => s.Dice = i),
+        new("sound", "Sound", "Display", "How loud the dice, blows and fights are. The game brings no sounds itself: a skin or an art pack with sounds does.",
+            s => SoundWords[Math.Clamp(s.Sound, 0, 3)], SoundWords, (s, i) => s.Sound = i),
         new("lessMotion", "Less motion", "Display", "Panels, the chat and HP bars cut straight to where they go instead of sliding.",
             s => OnOff(s.LessMotion), new[] { "On", "Off" }, (s, i) => s.LessMotion = i == 0),
         new("timeOfDay", "Time of day", "Display", "Outdoor maps by day, at dusk or at night. Underground maps stay as they are.",

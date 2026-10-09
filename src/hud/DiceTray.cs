@@ -58,6 +58,7 @@ public partial class DiceTray : SubViewportContainer
 
     /// <summary>The last throw has come to rest on its faces (or there is none showing).</summary>
     public bool Landed => !Visible || _age * _speed * 60 >= _length;
+    private bool _heardLanding = true;
 
     public override void _Ready()
     {
@@ -125,6 +126,11 @@ public partial class DiceTray : SubViewportContainer
             });
         }
         Visible = shown.Count > 0;
+        if (Visible)
+        {
+            Sounds.Play("dice.throw");
+            _heardLanding = false;
+        }
         Modulate = Colors.White;
         Place();
     }
@@ -137,6 +143,12 @@ public partial class DiceTray : SubViewportContainer
         }
         _age += delta;
         Place();
+        // the clatter of the dice coming to rest, once per throw
+        if (!_heardLanding && Landed)
+        {
+            _heardLanding = true;
+            Sounds.Play("dice.land");
+        }
         double after = _age - _length / (60 * _speed);
         if (after > Hold)
         {

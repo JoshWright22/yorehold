@@ -1,0 +1,17 @@
+{
+  "format": "yorehold.sounds",
+  "version": 1,
+  "about": "Which sound plays at which moment. The game ships no sounds: a skin or an art pack brings the files (sounds/... in its folder) and its own ui/sounds.json names them. A moment like \"slash.hit\" falls back to plain \"hit\".",
+  "volume": 0,
+  "sounds": {
+    "dice.throw": "sounds/dice-throw.ogg",
+    "dice.land": "sounds/dice-land.ogg",
+    "hit": "sounds/hit.ogg",
+    "miss": "sounds/miss.ogg",
+    "critical": "sounds/critical.ogg",
+    "fight.start": "sounds/fight-start.ogg",
+    "fight.won": "sounds/fight-won.ogg",
+    "fight.lost": "sounds/fight-lost.ogg",
+    "turn": "sounds/turn.ogg"
+  }
+}
