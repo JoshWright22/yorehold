@@ -32,6 +32,7 @@ public partial class SystemModePanel : HBoxContainer
     private string _section = "basics";
     private string _shownText = "";
     private string _kind = CheckRules.Attack;
+    private string _damage = "1d8+3";
     private string _class = "";
     private string _creature = "";
     private int _level = 1;
@@ -216,6 +217,15 @@ public partial class SystemModePanel : HBoxContainer
             table.AddThemeFontSizeOverride("font_size", 12);
             _bench.Gap(12);
 
+            _bench.Heading("Damage on average");
+            HBoxContainer diceRow = _bench.Row();
+            diceRow.AddChild(new Label { Text = "Dice", ThemeTypeVariation = "DimLabel", CustomMinimumSize = new Vector2(90, 0) });
+            _bench.Field(() => _damage, text => _damage = text, null, "1d8+3", diceRow);
+            Label damage = _bench.Live(() => DamageTable(editor), "NumberLabel");
+            damage.AutowrapMode = TextServer.AutowrapMode.Off;
+            damage.AddThemeFontSizeOverride("font_size", 12);
+            _bench.Gap(12);
+
             _bench.Heading("Duel");
             _bench.Dim($"One hero against the creatures on an open floor, played out {DuelFights} times by the AI.");
             Picker("Hero", classes, () => _class, id => _class = id);
@@ -245,11 +255,26 @@ public partial class SystemModePanel : HBoxContainer
             return "";
         }
         double[,] table = SystemBench.PassTable(kind, Modifiers, Dcs);
+        return Table(table, chance => $"{Math.Round(chance * 100)}%");
+    }
+
+    private string DamageTable(SystemEditor editor)
+    {
+        if (DiceExpression.Parse(_damage) is not DiceExpression dice)
+        {
+            return "Dice like 1d8+3 or 2d6.";
+        }
+        return Table(SystemBench.DamageTable(editor.Rules.Checks, _kind, dice, Modifiers, Dcs), average => $"{average:0.0}");
+    }
+
+    // modifiers down the side, DCs along the top
+    private static string Table(double[,] table, Func<double, string> cell)
+    {
         var lines = new List<string> { "mod" + string.Concat(Dcs.Select(dc => $"DC{dc}".PadLeft(6))) };
         for (int m = 0; m < Modifiers.Length; m++)
         {
             string row = (Modifiers[m] >= 0 ? "+" : "") + Modifiers[m];
-            lines.Add(row.PadRight(3) + string.Concat(Enumerable.Range(0, Dcs.Length).Select(d => $"{Math.Round(table[m, d] * 100)}%".PadLeft(6))));
+            lines.Add(row.PadRight(3) + string.Concat(Enumerable.Range(0, Dcs.Length).Select(d => cell(table[m, d]).PadLeft(6))));
         }
         return string.Join("\n", lines);
     }

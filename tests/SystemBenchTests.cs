@@ -13,6 +13,17 @@ public class SystemBenchTests
     }
 
     [Fact]
+    public void DamageTableCountsMissesAndCriticals()
+    {
+        var checks = new CheckRules();
+        double[,] table = SystemBench.DamageTable(checks, CheckRules.Attack, DiceExpression.Parse("1d8")!, new[] { 0 }, new[] { 10, 30 });
+        // 50% plain hits of 4.5 and 5% criticals of 9
+        Assert.Equal(0.5 * 4.5 + 0.05 * 9, table[0, 0], 3);
+        // only a natural 20 lands
+        Assert.Equal(0.05 * 9, table[0, 1], 3);
+    }
+
+    [Fact]
     public void DuelPlaysAHeroOfAClassAgainstACreature()
     {
         using var scratch = new Scratch();

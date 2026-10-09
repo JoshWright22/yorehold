@@ -24,6 +24,21 @@ public static class SystemBench
         return table;
     }
 
+    /// <summary>The damage an attack of the roll kind deals on average, for every modifier against every DC, with the system's own critical rule.</summary>
+    public static double[,] DamageTable(CheckRules checks, string kindId, DiceExpression damage, IReadOnlyList<int> modifiers, IReadOnlyList<int> dcs)
+    {
+        CheckKind kind = checks.Kind(kindId);
+        var table = new double[modifiers.Count, dcs.Count];
+        for (int m = 0; m < modifiers.Count; m++)
+        {
+            for (int d = 0; d < dcs.Count; d++)
+            {
+                table[m, d] = kind.ExpectedDamage(kind.Odds(modifiers[m], dcs[d]), damage, checks.CriticalDamage);
+            }
+        }
+        return table;
+    }
+
     /// <summary>
     /// One hero of heroClass at level against the creatures (ids in the system), on an open
     /// floor, played out fights times. The bench chapter is written into scratch, a folder of
