@@ -62,14 +62,14 @@ theme_override_constants/separation = 6
 
 [node name="Problem" type="Label" parent="Root/Left/Rows"]
 visible = false
-custom_minimum_size = Vector2(480, 0)
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 theme_type_variation = &"WarnLabel"
 autowrap_mode = 3
 
 [node name="Notice" type="Label" parent="Root/Left/Rows"]
 visible = false
-custom_minimum_size = Vector2(480, 0)
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 theme_type_variation = &"DimLabel"
 autowrap_mode = 3

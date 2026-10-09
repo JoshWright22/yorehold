@@ -241,6 +241,14 @@
     { "id": "epic-boon", "name": "Epic Boon feat" }
   ],
   "creation": {
+    "steps": [
+      { "name": "Species", "parts": ["race"] },
+      { "name": "Class", "parts": ["class"] },
+      { "name": "Background", "parts": ["background"] },
+      { "name": "Ability scores", "parts": ["scores"] },
+      { "name": "Skills and feat", "parts": ["skills", "feats"] },
+      { "name": "Name", "parts": ["name"] }
+    ],
     "names": {
       "race": "Species",
       "scores": "Ability scores"

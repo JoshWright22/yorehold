@@ -37,6 +37,7 @@ public partial class CharacterScreen : CanvasLayer
     private SheetView _sheet = null!;
     private Control _root = null!;
     private PortraitView _face = null!;
+    private VBoxContainer _steps = null!;
     private Label _faceName = null!;
     private Label _faceLine = null!;
     private DataPanel _library = null!;
@@ -74,9 +75,9 @@ public partial class CharacterScreen : CanvasLayer
         _sheet = GetNode<SheetView>("Root/Sheet");
         _root = GetNode<Control>("Root");
         // the character large between the steps and the sheet: who is being made, not just numbers
-        var faceColumn = new VBoxContainer { CustomMinimumSize = new Vector2(260, 0) };
+        var faceColumn = new VBoxContainer { CustomMinimumSize = new Vector2(220, 0) };
         faceColumn.AddThemeConstantOverride("separation", 8);
-        _face = new PortraitView { CustomMinimumSize = new Vector2(260, 260), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _face = new PortraitView { CustomMinimumSize = new Vector2(220, 260), MouseFilter = Control.MouseFilterEnum.Ignore };
         _faceName = new Label { ThemeTypeVariation = "TitleLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center };
         _faceName.AddThemeFontSizeOverride("font_size", 22);
         _faceLine = new Label { ThemeTypeVariation = "DimLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center };
@@ -85,6 +86,13 @@ public partial class CharacterScreen : CanvasLayer
         faceColumn.AddChild(_faceLine);
         _root.AddChild(faceColumn);
         _root.MoveChild(faceColumn, 1);
+        // the steps down the left, as the design lists them: number, name, what was picked
+        _steps = new VBoxContainer { CustomMinimumSize = new Vector2(184, 0) };
+        _steps.AddThemeConstantOverride("separation", 4);
+        _root.AddChild(_steps);
+        _root.MoveChild(_steps, 0);
+        _root.AddThemeConstantOverride("separation", 12);
+        GetNode<Control>("Root/Left").CustomMinimumSize = new Vector2(370, 0);
         _library = GetNode<DataPanel>("Library");
         _library.ClosePressed += Close;
         _library.SourcePicked += id =>
@@ -232,6 +240,8 @@ public partial class CharacterScreen : CanvasLayer
     {
         _dirty = false;
         Clear(_tabs);
+        Clear(_steps);
+        _steps.Visible = false;
         Clear(_body);
         Clear(_buttons);
         _problem.Text = "";
@@ -573,14 +583,25 @@ public partial class CharacterScreen : CanvasLayer
         }
         else
         {
-            _title.Text = "New character";
+            _title.Text = d.Steps[d.Step].Name;
+            _steps.Visible = true;
             for (int i = 0; i < d.Steps.Count; i++)
             {
                 // an earlier step can always be reopened, the next one once this one is done
                 bool open = i <= d.Step || (i == d.Step + 1 && d.StepDone(d.Step));
                 int step = i;
-                Button tab = Toggle(_tabs, $"{i + 1}. {d.Steps[i].Name}", i == d.Step, () => d.Step = step);
+                Button tab = Toggle(_steps, $"{i + 1}   {d.Steps[i].Name}", i == d.Step, () => d.Step = step);
                 tab.Disabled = !open;
+                tab.Alignment = HorizontalAlignment.Left;
+                tab.CustomMinimumSize = new Vector2(0, 40);
+                // what this step has picked so far, dim on the right
+                var picked = new Label { Text = Picked(d, i), ThemeTypeVariation = "DimLabel", HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore, ClipText = true };
+                picked.AddThemeFontSizeOverride("font_size", 12);
+                tab.AddChild(picked);
+                picked.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+                picked.OffsetLeft = 96;
+                picked.OffsetRight = -10;
             }
         }
 
@@ -636,20 +657,21 @@ public partial class CharacterScreen : CanvasLayer
 
         _problem.Text = d.StepProblem(d.Step);
         ShowDraftSide(d);
-        Push(_buttons, "Cancel (Esc)", true, Back);
+        // Back and Next say where they go, as the design's foot does; the way forward is amber
         if (!d.LevellingUp && d.Step > 0)
         {
-            Push(_buttons, "Back", true, () => d.Step--);
-        }
-        bool last = d.LevellingUp || d.Step == d.Steps.Count - 1;
-        if (!last)
-        {
-            Push(_buttons, "Next", d.StepDone(d.Step), () => d.Step++);
+            Push(_buttons, $"Back: {d.Steps[d.Step - 1].Name}", true, () => d.Step--);
         }
         else
         {
-            Push(_buttons, d.LevellingUp ? "Level up" : "Finish", d.Finished(), FinishDraft);
+            Push(_buttons, "Cancel (Esc)", true, Back);
         }
+        bool last = d.LevellingUp || d.Step == d.Steps.Count - 1;
+        Button forward = last
+            ? Push(_buttons, d.LevellingUp ? "Level up" : "Finish", d.Finished(), FinishDraft)
+            : Push(_buttons, $"Next: {d.Steps[d.Step + 1].Name}", d.StepDone(d.Step), () => d.Step++);
+        forward.ThemeTypeVariation = "EndTurnButton";
+        forward.AddThemeFontSizeOverride("font_size", 16);
     }
 
     private void NamePart(CharacterDraft d)
@@ -797,6 +819,27 @@ public partial class CharacterScreen : CanvasLayer
     }
 
     // the sheet and what is missing, without making the name box again while it is typed in
+    // What a step has picked, for the step list: the species, class or background's name, the name typed.
+    private string Picked(CharacterDraft d, int step)
+    {
+        foreach (string part in d.Steps[step].Parts)
+        {
+            string picked = part switch
+            {
+                "name" => d.Choices.Name.Trim(),
+                "race" => d.Choices.Race.Length > 0 && _compendium.Races.TryGetValue(d.Choices.Race, out var race) ? race.Name : "",
+                "background" => d.Choices.Background.Length > 0 && _compendium.Backgrounds.TryGetValue(d.Choices.Background, out var background) ? background.Name : "",
+                "class" => d.Choices.Levels.Count > 0 ? ClassName(d.Choices.Levels[^1].ClassId) : "",
+                _ => "",
+            };
+            if (picked.Length > 0)
+            {
+                return picked;
+            }
+        }
+        return "";
+    }
+
     private void ShowDraftSide(CharacterDraft d)
     {
         _sheet.ShowSheet(_rules, _compendium, d.Sheet, d.Choices, d.Problem);
@@ -806,7 +849,7 @@ public partial class CharacterScreen : CanvasLayer
         _problem.Visible = _problem.Text.Length > 0;
         foreach (Node child in _buttons.GetChildren())
         {
-            if (child is Button { Text: "Next" } next)
+            if (child is Button next && next.Text.StartsWith("Next", StringComparison.Ordinal))
             {
                 next.Disabled = !d.StepDone(d.Step);
             }
