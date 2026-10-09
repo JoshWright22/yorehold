@@ -1,0 +1,59 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "thrown",
+  "about": "A thrown weapon: a higher arc, a heavier landing.",
+  "seconds": 0.7,
+  "impact": 0.38,
+  "hit": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.2,
+      "distance": 0.15
+    },
+    {
+      "do": "projectile",
+      "at": 0.06,
+      "seconds": 0.32,
+      "color": "greys.paper",
+      "size": 0.16,
+      "height": 0.8
+    },
+    {
+      "do": "flash",
+      "at": 0.38,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.38,
+      "seconds": 0.22,
+      "distance": 0.18
+    }
+  ],
+  "miss": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.2,
+      "distance": 0.15
+    },
+    {
+      "do": "projectile",
+      "at": 0.06,
+      "seconds": 0.36,
+      "color": "greys.muted",
+      "size": 0.16,
+      "height": 0.8,
+      "distance": 1.5
+    },
+    {
+      "do": "dodge",
+      "at": 0.24,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ]
+}

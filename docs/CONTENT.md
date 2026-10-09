@@ -99,6 +99,12 @@ What the port reads so far, and where it differs:
   `ui/dice.json` is the thrown dice's look: `body` and `numbers` for a die that counts, `unkept`
   and `unkeptNumbers` for one that doesn't (each a role of ui/colors.json or "#rrggbb"), `most`
   shown at once (the rest as "+N") and `size` (1 is the game's own).
+- `ui/animations/<id>.json` is how an action plays out after its dice land: `seconds`, `impact`
+  (when the numbers come out), and `hit`, `miss` and `critical` lists of steps, each `do` (`lunge`,
+  `recoil`, `dodge`, `projectile`, `arc`, `ring`, `flash`, `glow`, `line`, `shake`), `at` and
+  `seconds`, `on` (`doer` or `target`), `distance` and `size` in squares, `height` (a projectile's
+  arc), `color` (a role of ui/colors.json or "#rrggbb"). An action, spell or item may name its set
+  with `"animation"`; otherwise one is picked from what it does.
 - `ui/credits.json` is new: the game's own credits. `{"entries": [{"name", "kind", "by", "licence",
   "text"}]}`; `kind` is the tab it shows under. The engine and the libraries inside it are not in the
   file: the credits screen asks the engine for them and their licence texts.

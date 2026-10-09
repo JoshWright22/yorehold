@@ -1,0 +1,88 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "bash",
+  "about": "A heavy blow: the doer heaves in, a ring breaks on the target.",
+  "seconds": 0.65,
+  "impact": 0.26,
+  "hit": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.36,
+      "distance": 0.3
+    },
+    {
+      "do": "ring",
+      "at": 0.22,
+      "seconds": 0.25,
+      "color": "greys.paper",
+      "size": 0.7
+    },
+    {
+      "do": "flash",
+      "at": 0.24,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.24,
+      "seconds": 0.22,
+      "distance": 0.18
+    },
+    {
+      "do": "shake",
+      "at": 0.24,
+      "seconds": 0.18,
+      "size": 0.08
+    }
+  ],
+  "miss": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.36,
+      "distance": 0.3
+    },
+    {
+      "do": "dodge",
+      "at": 0.14,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ],
+  "critical": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.36,
+      "distance": 0.4
+    },
+    {
+      "do": "ring",
+      "at": 0.22,
+      "seconds": 0.3,
+      "color": "gold.main",
+      "size": 1
+    },
+    {
+      "do": "flash",
+      "at": 0.24,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.24,
+      "seconds": 0.22,
+      "distance": 0.18
+    },
+    {
+      "do": "shake",
+      "at": 0.24,
+      "seconds": 0.18,
+      "size": 0.08
+    }
+  ]
+}

@@ -80,6 +80,7 @@ public static class App
         Palette.LoadFonts(Content());
         Palette.LoadShapes(Content());
         DiceTray.Load(Content());
+        FightAnimator.Load(Content());
         try
         {
             Keys = KeyBindings.Read(ContentNode.Read(Content(), "ui/keys.json"));

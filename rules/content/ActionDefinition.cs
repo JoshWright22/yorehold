@@ -34,7 +34,7 @@ public class ActionDefinition
 {
     private static readonly string[] Fields =
     {
-        "id", "name", "description", "order", "cost", "endsTurn", "general", "readies", "requires", "target", "area", "log", "save", "effects", "secret",
+        "id", "name", "description", "order", "cost", "endsTurn", "general", "readies", "requires", "target", "area", "log", "save", "effects", "secret", "animation",
     };
 
     public string Id { get; init; } = "";
@@ -63,6 +63,8 @@ public class ActionDefinition
     public string Log { get; init; } = "";
     /// <summary>Its rolls are a game master's to know (PF2e's secret trait): they aren't thrown on screen.</summary>
     public bool Secret { get; init; }
+    /// <summary>The animation set it plays (ui/animations/&lt;id&gt;.json); empty: one picked from what it does.</summary>
+    public string Animation { get; init; } = "";
     public Effect Effect { get; init; } = new();
 
     /// <summary>Actions it takes this creature (see CostsHands), never more than a turn has.</summary>
@@ -252,6 +254,7 @@ public class ActionDefinition
             Area = area,
             Log = node.Text("log", "", 200),
             Secret = node.Bool("secret", false),
+            Animation = node.Text("animation", "", 64),
             Effect = Effect.Read(node.Get("effects"), node.Get("save")),
         };
     }

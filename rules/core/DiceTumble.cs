@@ -24,7 +24,7 @@ public static class DiceTumble
     private const float Gravity = 30f;
     private const float Bounce = 0.35f;
     private const float Friction = 0.45f;
-    private const float MostSeconds = 4f;
+    private const float MostSeconds = 3f;
 
     /// <summary>
     /// Throws a die of size (its farthest corner from the middle) from the table's left end, in its
@@ -51,7 +51,7 @@ public static class DiceTumble
                 Corners = solid.Vertices.Select(v => v * size).ToList(),
                 Position = new Vector3(-table.HalfWidth + size * (1.5f + Between(0, 1.5f)), size * 3f + Between(0, size * 2), lanes[i]),
                 // thrown hard enough to cross most of the table, whatever its size
-                Velocity = new Vector3(table.HalfWidth * Between(1.5f, 2.1f), Between(0.5f, 2f), table.HalfDepth * Between(-0.6f, 0.6f)),
+                Velocity = new Vector3(table.HalfWidth * Between(1.2f, 1.6f), Between(0.5f, 2f), table.HalfDepth * Between(-0.6f, 0.6f)),
                 Rotation = Quaternion.Normalize(new Quaternion(Between(-1, 1), Between(-1, 1), Between(-1, 1), Between(-1, 1))),
                 Spin = new Vector3(Between(-25, 25), Between(-25, 25), Between(-25, 25)),
             });
@@ -111,8 +111,8 @@ public static class DiceTumble
                     die.Frames.Add(new Frame(die.Position, die.Rotation));
                 }
             }
-            still = dice.All(d => d.Velocity.Length() < 0.08f && d.Spin.Length() < 0.25f) ? still + Step : 0;
-            if (still > 0.2f)
+            still = dice.All(d => d.Velocity.Length() < 0.2f && d.Spin.Length() < 0.8f) ? still + Step : 0;
+            if (still > 0.15f)
             {
                 break;
             }

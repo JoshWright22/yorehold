@@ -1,0 +1,52 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "burst",
+  "about": "A spell that bursts over an area: a glow, then a wide ring on everyone it reaches.",
+  "seconds": 0.8,
+  "impact": 0.4,
+  "hit": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.24,
+      "color": "gold.main",
+      "size": 0.9
+    },
+    {
+      "do": "ring",
+      "at": 0.2,
+      "seconds": 0.4,
+      "color": "gold.main",
+      "size": 1.6
+    },
+    {
+      "do": "flash",
+      "at": 0.4,
+      "seconds": 0.22,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.4,
+      "seconds": 0.2,
+      "distance": 0.12
+    }
+  ],
+  "miss": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.24,
+      "color": "gold.main",
+      "size": 0.9
+    },
+    {
+      "do": "ring",
+      "at": 0.2,
+      "seconds": 0.4,
+      "color": "gold.dark",
+      "size": 1.6
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "cone",
+  "about": "Breath or a spray of flame: lines from the doer to each one it reaches.",
+  "seconds": 0.75,
+  "impact": 0.38,
+  "hit": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.2,
+      "color": "red.main",
+      "size": 0.8
+    },
+    {
+      "do": "line",
+      "at": 0.14,
+      "seconds": 0.26,
+      "color": "red.light",
+      "size": 1
+    },
+    {
+      "do": "flash",
+      "at": 0.38,
+      "seconds": 0.2,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.38,
+      "seconds": 0.2,
+      "distance": 0.12
+    }
+  ],
+  "miss": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.2,
+      "color": "red.main",
+      "size": 0.8
+    },
+    {
+      "do": "line",
+      "at": 0.14,
+      "seconds": 0.26,
+      "color": "red.dark",
+      "size": 1
+    }
+  ]
+}

@@ -99,6 +99,11 @@ public sealed record WorldEvent(WorldEventKind Kind, string Text = "")
     public int Group { get; init; } = -1;
     /// <summary>The dice, for Dice.</summary>
     public RollResult? Roll { get; init; }
+    /// <summary>For Dice: who acted, who it was about, the action or spell, and whether it landed (a hit, a failed save).</summary>
+    public int By { get; init; } = -1;
+    public int Who { get; init; } = -1;
+    public string Action { get; init; } = "";
+    public bool Hit { get; init; }
 }
 
 /// <summary>Player choices that change what the rules see.</summary>

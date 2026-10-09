@@ -1,0 +1,24 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "touch",
+  "about": "Something done by hand: a step in and a glow on the one touched.",
+  "seconds": 0.55,
+  "impact": 0.26,
+  "hit": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.3,
+      "distance": 0.25
+    },
+    {
+      "do": "glow",
+      "at": 0.16,
+      "seconds": 0.3,
+      "on": "target",
+      "color": "blue.light",
+      "size": 0.9
+    }
+  ]
+}

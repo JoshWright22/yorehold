@@ -73,6 +73,28 @@ public class DiceFacesTests
     }
 
     [Fact]
+    public void EachActionPlaysTheAnimationThatFitsIt()
+    {
+        ContentFiles files = TestContent.Shipped();
+        RulesFolder rules = RulesFolder.Load(files, "rulesets/dnd5e");
+        var compendium = new Compendium();
+        compendium.Load(files, "rulesets/dnd5e", "");
+        compendium.LoadOptions(files, "rulesets/dnd5e");
+        string Weapon(string action, string item) => UiAnimation.For(rules.Action(action)!, false, compendium.Items[item]);
+        string Spell(string id) => UiAnimation.For(compendium.Spells[id].Action, true, null);
+        Assert.Equal(("slash", "thrust", "bash", "arrow", "claw"),
+            (Weapon("attack", "longsword"), Weapon("attack", "rapier"), Weapon("attack", "mace"), Weapon("attack", "longbow"), Weapon("attack", "bite")));
+        Assert.Equal(("burst", "cone", "bolt", "heal", "debuff", "buff"),
+            (Spell("fireball"), Spell("burning-hands"), Spell("fire-bolt"), Spell("cure-wounds"), Spell("hold-person"), Spell("bless")));
+        // every set it can pick ships, and each loads
+        foreach (string id in new[] { "slash", "thrust", "bash", "claw", "arrow", "thrown", "bolt", "burst", "cone", "touch", "heal", "buff", "debuff" })
+        {
+            UiAnimation set = UiAnimation.Read(ContentNode.Read(files, $"{UiAnimation.Folder}/{id}.json"));
+            Assert.True(set.Impact <= set.Seconds && set.Hit.Count > 0, id);
+        }
+    }
+
+    [Fact]
     public void DiceThrownTogetherDontEndInsideEachOther()
     {
         var table = new DiceTumble.Table(4, 1.6f);

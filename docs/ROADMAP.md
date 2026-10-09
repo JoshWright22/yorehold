@@ -826,6 +826,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     left on top gets the rolled number (its label swapped in). Josh, 10/9: the screen itself is
     the table: `DiceTray` covers the screen, seen from straight above, the dice bouncing off its
     edges with only their shadows on the map. Fast plays the throw at twice the speed.
+  - Done 10/9 (step 2): attack animations from data: `ui/animations/*.json` (slash, thrust, bash,
+    claw, arrow, thrown, bolt, burst, cone, touch, heal, buff, debuff), each a timeline of lunge,
+    recoil, dodge, projectile, arc, ring, flash, glow, line and shake steps with hit, miss and
+    critical versions and an impact time. `UiAnimation.For` picks a set from what an action does
+    (an action's or weapon's own `animation` first); `FightAnimator` plays it once the dice land
+    and the held numbers come out at impact. Left: one beat per attack of a Multiattack; sound.
   - Order of work: (1) beats and shown values, with the current dice strip, so results wait for
     the dice; (2) attack animations from the shipped sets; (3) the table tumble; (4) sound
     hooks per step (a skin's files), (5) Create can preview an action's animation.

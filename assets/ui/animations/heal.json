@@ -1,0 +1,25 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "heal",
+  "about": "Healing: a soft glow and a small ring on the one healed.",
+  "seconds": 0.7,
+  "impact": 0.3,
+  "hit": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.5,
+      "on": "target",
+      "color": "blue.light",
+      "size": 1
+    },
+    {
+      "do": "ring",
+      "at": 0.2,
+      "seconds": 0.35,
+      "color": "blue.light",
+      "size": 0.7
+    }
+  ]
+}

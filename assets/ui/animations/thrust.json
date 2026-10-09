@@ -1,0 +1,89 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "thrust",
+  "about": "A stab: the doer drives forward, a short line to the target.",
+  "seconds": 0.55,
+  "impact": 0.2,
+  "hit": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.3,
+      "distance": 0.5
+    },
+    {
+      "do": "line",
+      "at": 0.08,
+      "seconds": 0.14,
+      "color": "greys.paper",
+      "size": 0.5
+    },
+    {
+      "do": "flash",
+      "at": 0.18,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.18,
+      "seconds": 0.22,
+      "distance": 0.18
+    }
+  ],
+  "miss": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.3,
+      "distance": 0.5
+    },
+    {
+      "do": "line",
+      "at": 0.08,
+      "seconds": 0.14,
+      "color": "greys.muted",
+      "size": 0.5
+    },
+    {
+      "do": "dodge",
+      "at": 0.1,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ],
+  "critical": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.3,
+      "distance": 0.6
+    },
+    {
+      "do": "line",
+      "at": 0.08,
+      "seconds": 0.14,
+      "color": "gold.main",
+      "size": 0.6
+    },
+    {
+      "do": "flash",
+      "at": 0.18,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.18,
+      "seconds": 0.22,
+      "distance": 0.18
+    },
+    {
+      "do": "shake",
+      "at": 0.18,
+      "seconds": 0.18,
+      "size": 0.08
+    }
+  ]
+}

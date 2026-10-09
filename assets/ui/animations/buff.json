@@ -1,0 +1,25 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "buff",
+  "about": "A blessing or guard: a gold glow on the one helped.",
+  "seconds": 0.6,
+  "impact": 0.28,
+  "hit": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.45,
+      "on": "target",
+      "color": "gold.main",
+      "size": 1
+    },
+    {
+      "do": "ring",
+      "at": 0.18,
+      "seconds": 0.3,
+      "color": "gold.main",
+      "size": 0.6
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "claw",
+  "about": "A creature's bite or claws: a lunge and two quick rakes.",
+  "seconds": 0.6,
+  "impact": 0.24,
+  "hit": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.32,
+      "distance": 0.45
+    },
+    {
+      "do": "arc",
+      "at": 0.1,
+      "seconds": 0.12,
+      "color": "red.light",
+      "size": 0.7
+    },
+    {
+      "do": "arc",
+      "at": 0.18,
+      "seconds": 0.12,
+      "color": "red.light",
+      "size": 0.7,
+      "height": 1
+    },
+    {
+      "do": "flash",
+      "at": 0.22,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.22,
+      "seconds": 0.22,
+      "distance": 0.18
+    }
+  ],
+  "miss": [
+    {
+      "do": "lunge",
+      "at": 0,
+      "seconds": 0.32,
+      "distance": 0.45
+    },
+    {
+      "do": "dodge",
+      "at": 0.1,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ]
+}

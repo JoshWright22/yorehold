@@ -80,6 +80,8 @@ public sealed class EffectResult
     public List<EffectEvent> Events { get; } = new();
     /// <summary>From a secret action: its dice aren't shown.</summary>
     public bool Secret { get; set; }
+    /// <summary>The action or spell whose effect this is, for the screen to pick how it looks.</summary>
+    public string Source { get; set; } = "";
 }
 
 /// <summary>

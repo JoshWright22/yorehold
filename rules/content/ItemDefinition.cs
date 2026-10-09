@@ -29,6 +29,8 @@ public class ItemDefinition
     public List<string> Actions { get; init; } = new();
     /// <summary>A weapon's reach in squares: 1 in melee, more for a bow or a thrown spear.</summary>
     public int Range { get; init; } = 1;
+    /// <summary>The animation set its attacks play (ui/animations/&lt;id&gt;.json); empty: one picked from it.</summary>
+    public string Animation { get; init; } = "";
     /// <summary>What using it up does, for consumables.</summary>
     public ActionDefinition? Use { get; init; }
     /// <summary>The "use" object as written, so a carried item is saved the way it was read.</summary>
@@ -77,6 +79,7 @@ public class ItemDefinition
             Quantity = node.Int("quantity", 1, 0),
             Magic = node.Bool("magic", false),
             Supplies = node.Int("supplies", 0, 0, 10000),
+            Animation = node.Text("animation", "", 64),
             Modifiers = ContentParts.ModifiersFrom(node, strict: false),
             Actions = node.Names("actions"),
             Use = use,

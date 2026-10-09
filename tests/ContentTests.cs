@@ -59,6 +59,10 @@ public class ContentTests
         Try("ui/fonts.json", () => UiFonts.Read(ContentNode.Read(files, UiFonts.File)));
         Try("ui/shapes.json", () => UiShapes.Read(ContentNode.Read(files, UiShapes.File)));
         Try("ui/dice.json", () => UiDice.Read(ContentNode.Read(files, UiDice.File)));
+        foreach (string path in files.List(UiAnimation.Folder))
+        {
+            Try(path, () => UiAnimation.Read(ContentNode.Read(files, path)));
+        }
         Try("create/compendium.json", () =>
         {
             if (!new CompendiumEditor(new History()).SetKinds(files.ReadText("create/compendium.json"), out string error))

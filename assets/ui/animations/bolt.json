@@ -1,0 +1,66 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "bolt",
+  "about": "A spell flung at one target: a glow on the caster, a bolt, a flash.",
+  "seconds": 0.7,
+  "impact": 0.36,
+  "hit": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.2,
+      "color": "blue.main",
+      "size": 0.8
+    },
+    {
+      "do": "projectile",
+      "at": 0.12,
+      "seconds": 0.24,
+      "color": "blue.light",
+      "size": 0.22
+    },
+    {
+      "do": "flash",
+      "at": 0.36,
+      "seconds": 0.2,
+      "color": "blue.main"
+    },
+    {
+      "do": "ring",
+      "at": 0.36,
+      "seconds": 0.25,
+      "color": "blue.light",
+      "size": 0.6
+    },
+    {
+      "do": "recoil",
+      "at": 0.36,
+      "seconds": 0.2,
+      "distance": 0.12
+    }
+  ],
+  "miss": [
+    {
+      "do": "glow",
+      "at": 0,
+      "seconds": 0.2,
+      "color": "blue.main",
+      "size": 0.8
+    },
+    {
+      "do": "projectile",
+      "at": 0.12,
+      "seconds": 0.28,
+      "color": "blue.light",
+      "size": 0.22,
+      "distance": 1.5
+    },
+    {
+      "do": "dodge",
+      "at": 0.24,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ]
+}

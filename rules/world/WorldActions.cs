@@ -317,6 +317,7 @@ public sealed partial class World
             _aim = aim;
             result = action.Effect.Run(new WorldEffectHost(this), context);
             result.Secret = action.Secret;
+            result.Source = action.Id;
             if (Fighting && CurrentCreature == me)
             {
                 Encounter!.Current.Budget.Attacks += result.Events.Count(e => e.Kind == EffectEventKind.Attack);
@@ -401,6 +402,7 @@ public sealed partial class World
                     _events.Add(new WorldEvent(WorldEventKind.Dice, e.Kind.ToString().ToLowerInvariant())
                     {
                         Roll = e.Roll, At = roller >= 0 && roller < Tokens.Tokens.Count ? Tokens.Tokens[roller].Position : Tokens.Tokens[e.Who].Position,
+                        By = e.By, Who = e.Who, Action = result.Source, Hit = e.Kind == EffectEventKind.Save ? !e.Success : e.Success,
                     });
                 }
             }

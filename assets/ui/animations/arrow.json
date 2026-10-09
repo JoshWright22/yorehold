@@ -1,0 +1,47 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "arrow",
+  "about": "A shot: a thin arrow flies from the doer to the target.",
+  "seconds": 0.6,
+  "impact": 0.32,
+  "hit": [
+    {
+      "do": "projectile",
+      "at": 0.04,
+      "seconds": 0.28,
+      "color": "greys.paper",
+      "size": 0.08,
+      "height": 0.25
+    },
+    {
+      "do": "flash",
+      "at": 0.32,
+      "seconds": 0.16,
+      "color": "red.main"
+    },
+    {
+      "do": "recoil",
+      "at": 0.32,
+      "seconds": 0.22,
+      "distance": 0.18
+    }
+  ],
+  "miss": [
+    {
+      "do": "projectile",
+      "at": 0.04,
+      "seconds": 0.32,
+      "color": "greys.muted",
+      "size": 0.08,
+      "height": 0.25,
+      "distance": 1.6
+    },
+    {
+      "do": "dodge",
+      "at": 0.2,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ]
+}

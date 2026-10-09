@@ -61,7 +61,12 @@ public partial class PlayScreen : Node2D
     // An action's results (log lines, floating numbers) waiting for its dice to land; while they
     // wait the world, the panels and the HP bars hold still, so nothing shows before the dice do.
     private readonly System.Collections.Generic.List<WorldEvent> _held = new();
-    private bool Holding => _held.Count > 0;
+    // the action those results belong to, to animate once the dice are down
+    private WorldEvent? _beat;
+    private System.Collections.Generic.List<int> _beatTargets = new();
+    private bool _beatHit;
+    private FightAnimator _animator = null!;
+    private bool Holding => _held.Count > 0 || _animator.Playing;
     private PlayCamera _camera = null!;
     private Hud _hud = null!;
     private FightControl _fight = null!;
@@ -89,6 +94,8 @@ public partial class PlayScreen : Node2D
         _shading = GetNode<TextureRect>("Shading/LightMap");
         _fog = GetNode<FogView>("Overlay/Fog");
         _floaters = GetNode<FloatersView>("Overlay/Floaters");
+        _animator = new FightAnimator { Name = "Animator" };
+        _floaters.GetParent().AddChild(_animator);
         _camera = GetNode<PlayCamera>("Camera");
         _hud = GetNode<Hud>("Hud");
         // the dice strip, over the map at the top, under the panels
@@ -313,7 +320,15 @@ public partial class PlayScreen : Node2D
         }
         // the world waits while the character screens are up, and while thrown dice are still rolling
         _fight.Paused = _characters.IsOpen || Holding;
-        if (Holding && _dice.Landed)
+        if (_held.Count > 0 && _dice.Landed && !_animator.Playing)
+        {
+            // the dice are down: the blow plays, and its numbers come out when it lands
+            if (!StartBeat())
+            {
+                Release();
+            }
+        }
+        if (_animator.Playing && _animator.Struck && _held.Count > 0)
         {
             Release();
         }
@@ -807,8 +822,22 @@ public partial class PlayScreen : Node2D
         }
         var thrown = new System.Collections.Generic.List<DiceFaces.Shown>();
         System.Collections.Generic.List<WorldEvent> events = _world.TakeEvents().ToList();
-        // dice to throw: the results of this batch wait for them to land
-        bool hold = App.Settings.Dice > 0 && events.Any(e => e.Kind == WorldEventKind.Dice && e.Roll != null && DiceFaces.Of(e.Roll).Count > 0);
+        // dice to throw, or a blow to play: the results of this batch wait for them
+        bool dice = App.Settings.Dice > 0 && events.Any(e => e.Kind == WorldEventKind.Dice && e.Roll != null && DiceFaces.Of(e.Roll).Count > 0);
+        WorldEvent? beat = events.FirstOrDefault(e => e.Kind == WorldEventKind.Dice && e.By >= 0 && e.Action.Length > 0);
+        bool hold = dice || (beat != null && _world.Fighting);
+        if (hold && beat != null)
+        {
+            _beat = beat;
+            var landed = events.Where(e => e.Kind == WorldEventKind.Dice && e.Text is "attack" or "save" && e.Who >= 0).ToList();
+            _beatTargets = landed.Select(e => e.Who).Distinct().ToList();
+            if (_beatTargets.Count == 0 && beat.Who >= 0)
+            {
+                _beatTargets.Add(beat.Who);
+            }
+            // landed: an attack that hit, a save that failed; with no roll against anyone, it simply happens
+            _beatHit = landed.Count == 0 || landed.Any(e => e.Hit);
+        }
         foreach (WorldEvent e in events)
         {
             if (hold && e.Kind is WorldEventKind.Log or WorldEventKind.Floater)
@@ -827,6 +856,30 @@ public partial class PlayScreen : Node2D
             // nothing came to throw after all
             Release();
         }
+    }
+
+    // The blow of the held action, from its animation set; false when there is none to play.
+    private bool StartBeat()
+    {
+        if (_world == null || _beat is not WorldEvent beat || beat.By < 0 || beat.By >= _world.Creatures.Count)
+        {
+            return false;
+        }
+        _beat = null;
+        if (_world.FindAction(beat.Action) is not ActionDefinition action)
+        {
+            return false;
+        }
+        bool spell = _world.SpellOf(action) != null;
+        ItemDefinition? weapon = _world.Creatures[beat.By].Sheet.WeaponItem?.Definition;
+        if (FightAnimator.Set(UiAnimation.For(action, spell, weapon)) is not UiAnimation set)
+        {
+            return false;
+        }
+        // a critical: the attack's natural top roll
+        bool critical = _beatHit && _held.Count > 0 && beat.Text == "attack" && beat.Roll?.Natural20 == true;
+        _animator.Play(set, _world, beat.By, _beatTargets, _beatHit, critical, _tokens, _camera);
+        return true;
     }
 
     // The held results, now the dice are down.

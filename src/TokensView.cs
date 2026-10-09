@@ -47,6 +47,47 @@ public partial class TokensView : Node2D
     /// <summary>The tokens keep what they showed (who stands, who fell): an action's dice are still rolling.</summary>
     public bool Hold { get; set; }
 
+    // where each nudged token stood before an animation moved it
+    private readonly Dictionary<int, Vector2> _unnudged = new();
+
+    /// <summary>Where a token's view stands now (its own place, before any nudge).</summary>
+    public Vector2 PositionOf(int token) =>
+        _unnudged.TryGetValue(token, out Vector2 at) ? at : token >= 0 && token < _views.Count ? _views[token].Position : Vector2.Zero;
+
+    /// <summary>Moves token views off their places by these offsets for a frame of an animation (a lunge, a recoil).</summary>
+    public void Nudge(Dictionary<int, Vector2> offsets)
+    {
+        foreach ((int token, Vector2 at) in _unnudged)
+        {
+            _views[token].Position = at;
+        }
+        foreach ((int token, Vector2 offset) in offsets)
+        {
+            if (token < 0 || token >= _views.Count)
+            {
+                continue;
+            }
+            if (!_unnudged.ContainsKey(token))
+            {
+                _unnudged[token] = _views[token].Position;
+            }
+            _views[token].Position = _unnudged[token] + offset;
+        }
+    }
+
+    /// <summary>Every nudged token back on its place.</summary>
+    public void ClearNudges()
+    {
+        foreach ((int token, Vector2 at) in _unnudged)
+        {
+            if (token < _views.Count)
+            {
+                _views[token].Position = at;
+            }
+        }
+        _unnudged.Clear();
+    }
+
     public override void _Process(double delta)
     {
         if (_world == null || Hold)

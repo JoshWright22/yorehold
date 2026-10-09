@@ -1,0 +1,46 @@
+{
+  "format": "yorehold.animation",
+  "version": 1,
+  "id": "debuff",
+  "about": "A curse or a hold: a dark line to the target and a red flash.",
+  "seconds": 0.6,
+  "impact": 0.3,
+  "hit": [
+    {
+      "do": "line",
+      "at": 0.04,
+      "seconds": 0.24,
+      "color": "red.dark",
+      "size": 0.6
+    },
+    {
+      "do": "flash",
+      "at": 0.3,
+      "seconds": 0.2,
+      "color": "red.dark"
+    },
+    {
+      "do": "glow",
+      "at": 0.3,
+      "seconds": 0.3,
+      "on": "target",
+      "color": "red.dark",
+      "size": 0.9
+    }
+  ],
+  "miss": [
+    {
+      "do": "line",
+      "at": 0.04,
+      "seconds": 0.24,
+      "color": "red.dark",
+      "size": 0.6
+    },
+    {
+      "do": "dodge",
+      "at": 0.24,
+      "seconds": 0.24,
+      "distance": 0.3
+    }
+  ]
+}
