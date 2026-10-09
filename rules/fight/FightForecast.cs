@@ -186,6 +186,28 @@ public static class FightSimulation
         return (at.Count, forecast, at);
     }
 
+    /// <summary>
+    /// The files with the chapter's party at another level: a copy of its chapter.json with that
+    /// level, in scratch, laid over them. The chapter itself is not changed. Null if the chapter
+    /// file can't be read.
+    /// </summary>
+    public static ContentFiles? AtLevel(Func<ContentFiles> fresh, string chapter, int level, string scratch)
+    {
+        string file = chapter + "/chapter.json";
+        ContentFiles files = fresh();
+        if (!files.Exists(file) || JsonNode.Parse(files.ReadText(file)) is not JsonObject text)
+        {
+            return null;
+        }
+        text["level"] = Math.Clamp(level, 1, 20);
+        string path = Path.Combine(scratch, file.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, text.ToJsonString());
+        ContentFiles layered = fresh();
+        layered.Add(scratch);
+        return layered;
+    }
+
     // Free squares nearest a cell, by straight steps, as far as walls allow.
     private static List<Cell> FreeNear(World w, Cell from, int count)
     {

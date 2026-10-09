@@ -292,8 +292,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     `make.py`, so the two can't drift; the four shipped systems pass it.
   - Done 10/9: a system's own dice in any dice text, `2d{0,0,1,1,2,1}`: rolled, counted for
     odds and averages, and thrown on a solid with those faces.
-  - Left: the builder's balancing by forecast (and parties of a chosen level, not only the
-    chapter's own); faces with words or symbols on them, not only numbers (several counts at
+  - Done 10/9: Create's forecast, fit and grow play the party at a chosen level, from a copy of
+    the chapter file (`FightSimulation.AtLevel`).
+  - Left: the builder's balancing by forecast; faces with words or symbols on them, not only numbers (several counts at
     once, like Genesys's successes and advantages).
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The

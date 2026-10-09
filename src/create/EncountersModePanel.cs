@@ -45,6 +45,8 @@ public partial class EncountersModePanel : HBoxContainer
     // the same, taking foes out until the fight is no longer too hard
     private Task<(int LeaveOut, FightForecast Forecast)>? _fit;
     private string _fitOf = "";
+    // the party's level the forecasts play at; 0 is the chapter's own
+    private int _level;
     // the other way: more of the last foe for a fight that is too easy
     private Task<(int More, FightForecast Forecast, List<Cell> At)>? _grow;
     private string _growOf = "";
@@ -305,7 +307,11 @@ public partial class EncountersModePanel : HBoxContainer
         _props.Gap();
 
         _props.Heading("Forecast");
-        _props.Dim($"Played out {ForecastFights} times by the AI, with the party the chapter starts with");
+        _props.Dim($"Played out {ForecastFights} times by the AI, with the party the chapter starts with, at its level or another");
+        Stepper(() => _level == 0 ? "Party at the chapter's level" : $"Party at level {_level}", step =>
+        {
+            _level = Math.Clamp(_level + step, 0, 20);
+        });
         _props.Live(() => ForecastLine(Now().Id));
         _props.Act("Play it out", () => StartForecast(group, Now().Id), () => Now().Creatures.Count > 0 && (_forecast == null || _forecast.IsCompleted));
         _props.Act("Fit to the party", () => StartFit(group, Now().Id), () => Now().Creatures.Count > 1 && (_fit == null || _fit.IsCompleted));
@@ -398,7 +404,7 @@ public partial class EncountersModePanel : HBoxContainer
             _hint = "Save first: the forecast plays the saved chapter.";
             return;
         }
-        if (_files() is not ContentFiles files || Chapter.Length == 0)
+        if (PlayedFiles()?.Invoke() is not ContentFiles files)
         {
             return;
         }
@@ -416,7 +422,7 @@ public partial class EncountersModePanel : HBoxContainer
             _hint = "Save first: the fit plays the saved chapter.";
             return;
         }
-        if (_files() is not ContentFiles files || Chapter.Length == 0)
+        if (PlayedFiles()?.Invoke() is not ContentFiles files)
         {
             return;
         }
@@ -433,7 +439,7 @@ public partial class EncountersModePanel : HBoxContainer
             _hint = "Save first: the fit plays the saved chapter.";
             return;
         }
-        if (_files() is not ContentFiles files || Chapter.Length == 0)
+        if (PlayedFiles()?.Invoke() is not ContentFiles files)
         {
             return;
         }
@@ -493,6 +499,28 @@ public partial class EncountersModePanel : HBoxContainer
     // How many foes the finished fit for this group leaves out; null while none is ready.
     private int? FitDone(string id) => _fit is { IsCompletedSuccessfully: true } && id == _fitOf ? _fit.Result.LeaveOut : null;
 
+    // The files the forecasts play: the package as saved, with the party at the chosen level
+    // when there is one (a copy of the chapter file in a scratch folder, written here once).
+    private Func<ContentFiles>? PlayedFiles()
+    {
+        Func<ContentFiles?> files = _files;
+        if (files() is null || Chapter.Length == 0)
+        {
+            return null;
+        }
+        if (_level == 0)
+        {
+            return () => files()!;
+        }
+        string scratch = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "yorehold-level");
+        return FightSimulation.AtLevel(() => files()!, Chapter, _level, scratch) == null ? null : () =>
+        {
+            ContentFiles layered = files()!;
+            layered.Add(scratch);
+            return layered;
+        };
+    }
+
     private void StartGrow(int group, string id)
     {
         if (!Saved)
@@ -500,16 +528,15 @@ public partial class EncountersModePanel : HBoxContainer
             _hint = "Save first: the fit plays the saved chapter.";
             return;
         }
-        if (_files() is null || Chapter.Length == 0)
+        if (PlayedFiles() is not Func<ContentFiles> files)
         {
             return;
         }
         _hint = "";
         string chapter = Chapter;
-        Func<ContentFiles?> files = _files;
         string scratch = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "yorehold-grow");
         _growOf = id;
-        _grow = Task.Run(() => FightSimulation.Grow(() => files()!, chapter, group, FitFights, scratch));
+        _grow = Task.Run(() => FightSimulation.Grow(files, chapter, group, FitFights, scratch));
     }
 
     private (int More, FightForecast Forecast, List<Cell> At)? GrowDone(string id) =>

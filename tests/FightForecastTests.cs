@@ -65,5 +65,13 @@ public class FightForecastTests
         Assert.Equal(2, grown.Fights);
         // the chapter itself is as it was
         Assert.Equal(chapter, File.ReadAllText(Path.Combine(scratch.Folder, "chapters", "lone", "chapter.json")));
+
+        // the same party at another level, from a copy of the chapter
+        using var level = new Scratch();
+        ContentFiles atFive = FightSimulation.AtLevel(() => TestContent.ShippedWith(scratch), "chapters/lone", 5, level.Folder)!;
+        World five = World.Load(atFive, "chapters/lone", 1);
+        Assert.Equal(5, five.Creatures[0].Sheet.Level);
+        Assert.Equal(1, World.Load(TestContent.ShippedWith(scratch), "chapters/lone", 1).Creatures[0].Sheet.Level);
+        Assert.Equal(chapter, File.ReadAllText(Path.Combine(scratch.Folder, "chapters", "lone", "chapter.json")));
     }
 }
