@@ -57,6 +57,10 @@ public sealed class CharacterChoices
     /// <summary>The ruleset id it was made under.</summary>
     public string Ruleset { get; set; } = "";
     public string Notes { get; set; } = "";
+    /// <summary>The player's picture for this hero ("portraits/wren.png", from the content or an art pack); "" for the class's own.</summary>
+    public string Portrait { get; set; } = "";
+    /// <summary>Where that picture is cut: one 3:4 crop used on every card, token and panel.</summary>
+    public PictureFocus PortraitFocus { get; set; } = PictureFocus.Middle;
     /// <summary>The ruleset's fields as written for this character, by field id.</summary>
     public SortedDictionary<string, List<string>> Fields { get; } = new(StringComparer.Ordinal);
     /// <summary>The pick of each of the ruleset's option kinds (heritage: an option id).</summary>
@@ -69,6 +73,7 @@ public sealed class CharacterChoices
         var copy = new CharacterChoices
         {
             Name = Name, Race = Race, Background = Background, ScoreMethod = ScoreMethod, Xp = Xp, Ruleset = Ruleset, Notes = Notes,
+            Portrait = Portrait, PortraitFocus = PortraitFocus,
         };
         foreach (KeyValuePair<string, int> score in Scores)
         {
@@ -252,13 +257,22 @@ public sealed class CharacterChoices
         {
             j["options"] = new JsonObject(Options.Select(o => KeyValuePair.Create(o.Key, (JsonNode?)JsonValue.Create(o.Value))));
         }
+        if (Portrait.Length > 0)
+        {
+            j["portrait"] = new JsonObject
+            {
+                ["picture"] = Portrait,
+                ["focus"] = new JsonArray(Math.Round(PortraitFocus.X, 4), Math.Round(PortraitFocus.Y, 4)),
+                ["zoom"] = Math.Round(PortraitFocus.Zoom, 4),
+            };
+        }
         return j;
     }
 
     public static CharacterChoices Read(ContentNode node)
     {
         node.RequireObject("a character is a JSON object");
-        node.Only("version", "name", "race", "background", "scoreMethod", "scores", "levels", "xp", "ruleset", "notes", "fields", "options");
+        node.Only("version", "name", "race", "background", "scoreMethod", "scores", "levels", "xp", "ruleset", "notes", "fields", "options", "portrait");
         int version = node.Int("version", Version, 1);
         if (version > Version)
         {
@@ -281,6 +295,18 @@ public sealed class CharacterChoices
                 throw field.Value.Fail("is a list of up to 20 lines");
             }
             choices.Fields[field.Key] = field.Value.Items().Select(line => line.AsText(FieldDefinition.MostLetters)).ToList();
+        }
+        // a picture the player picked and how it is cut; characters from before it simply have none
+        if (node.Get("portrait") is ContentNode portrait)
+        {
+            portrait.RequireObject("is an object with a picture, and a focus and zoom for its crop");
+            portrait.Only("picture", "focus", "zoom");
+            choices.Portrait = portrait.At("picture").AsText(200);
+            if (!choices.Portrait.StartsWith("portraits/", StringComparison.Ordinal) || choices.Portrait.Contains(".."))
+            {
+                throw portrait.Fail("picture", "is a picture in a portraits folder, like \"portraits/wren.png\"");
+            }
+            choices.PortraitFocus = PictureFocus.Read(portrait) ?? PictureFocus.Middle;
         }
         foreach (KeyValuePair<string, ContentNode> option in node.Get("options")?.Members() ?? Enumerable.Empty<KeyValuePair<string, ContentNode>>())
         {

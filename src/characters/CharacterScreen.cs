@@ -38,6 +38,23 @@ public partial class CharacterScreen : CanvasLayer
     private Control _root = null!;
     private PortraitView _face = null!;
     private VBoxContainer _steps = null!;
+    private Button _portraitButton = null!;
+    private PortraitCropView _crop = null!;
+
+    private void OpenPortrait()
+    {
+        if (_draft == null)
+        {
+            return;
+        }
+        CharacterChoices choices = _draft.Choices;
+        _crop.Open(_world?.Files ?? App.Content(), choices.Name, choices.Portrait, choices.PortraitFocus, (picture, focus) =>
+        {
+            choices.Portrait = picture;
+            choices.PortraitFocus = focus;
+            Changed();
+        });
+    }
     private Label _faceName = null!;
     private Label _faceLine = null!;
     private DataPanel _library = null!;
@@ -84,6 +101,14 @@ public partial class CharacterScreen : CanvasLayer
         faceColumn.AddChild(_face);
         faceColumn.AddChild(_faceName);
         faceColumn.AddChild(_faceLine);
+        // the player's own picture for the hero, and where it is cut
+        _portraitButton = new Button { Text = "Choose portrait and crop", FocusMode = Control.FocusModeEnum.None, Visible = false };
+        _portraitButton.Pressed += OpenPortrait;
+        faceColumn.AddChild(_portraitButton);
+        // over the whole screen, in the screens' theme (this layer has no themed root of its own)
+        _crop = new PortraitCropView { Name = "Portrait", Theme = GD.Load<Theme>("res://scenes/hud/hud-theme.tres") };
+        AddChild(_crop);
+        _crop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(faceColumn);
         _root.MoveChild(faceColumn, 1);
         // the steps down the left, as the design lists them: number, name, what was picked
@@ -242,6 +267,7 @@ public partial class CharacterScreen : CanvasLayer
         Clear(_tabs);
         Clear(_steps);
         _steps.Visible = false;
+        _portraitButton.Visible = false;
         Clear(_body);
         Clear(_buttons);
         _problem.Text = "";
@@ -306,7 +332,14 @@ public partial class CharacterScreen : CanvasLayer
                 break;
             }
         }
-        _face.Show(name, Palette.Leather, false, picture);
+        // a picture the player picked wins, cut where they chose
+        PictureFocus? focus = null;
+        if (choices is { Portrait.Length: > 0 } && PlayerArt.Texture(files, choices.Portrait) is Texture2D own)
+        {
+            picture = own;
+            focus = choices.PortraitFocus;
+        }
+        _face.Show(name, Palette.Leather, false, picture, focus);
         _faceName.Text = name;
         string raceName = race.Length > 0 ? char.ToUpperInvariant(race[0]) + race[1..] + " " : "";
         // a system without levels or a class to ask for (Fate) names neither
@@ -648,6 +681,7 @@ public partial class CharacterScreen : CanvasLayer
         {
             _title.Text = d.Steps[d.Step].Name;
             _steps.Visible = true;
+            _portraitButton.Visible = true;
             for (int i = 0; i < d.Steps.Count; i++)
             {
                 // an earlier step can always be reopened, the next one once this one is done

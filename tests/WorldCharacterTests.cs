@@ -59,6 +59,26 @@ public class WorldCharacterTests
     }
 
     [Fact]
+    public void APickedPortraitAndItsCropTravelWithTheHero()
+    {
+        using WorldFixture world = Yard();
+        World w = world.World;
+        CharacterChoices ada = CharacterChoices.Roll(w.Rules, "Ada", "rogue", new Rng(9));
+        ada.Portrait = "portraits/ada.png";
+        ada.PortraitFocus = new PictureFocus(0.3, 0.25, 2);
+        CharacterChoices read = CharacterChoices.Read(TestContent.Json(ada.ToJson().ToJsonString(), "ada.json"));
+        Assert.True(read.Portrait == "portraits/ada.png" && read.PortraitFocus == new PictureFocus(0.3, 0.25, 2), "The picture and its crop are kept in the character file");
+        Assert.Equal("", CharacterChoices.Read(TestContent.Json(new CharacterChoices { Name = "Old", Levels = { new LevelChoice("rogue") } }.ToJson().ToJsonString(), "old.json")).Portrait);
+        Assert.Throws<ContentException>(() => CharacterChoices.Read(TestContent.Json(
+            ada.ToJson().ToJsonString().Replace("portraits/ada.png", "../secret.png"), "bad.json")));
+
+        w.SetParty(new PartyPick?[] { new PartyPick(read, Array.Empty<Item>(), "ada.json", 0) });
+        w.NewAdventure(5);
+        Assert.True(w.Tokens.Tokens[0].Image == "portraits/ada.png" && w.Creatures[0].Choices!.PortraitFocus.Zoom == 2,
+            "The seated hero's token shows the picked picture, cut where the player chose");
+    }
+
+    [Fact]
     public void LibraryCharactersTakeSeats()
     {
         using WorldFixture world = Yard();

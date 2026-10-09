@@ -300,7 +300,8 @@ public sealed partial class World
             {
                 Name = hero.Sheet.Name,
                 Color = member.Color,
-                Image = member.Image,
+                // a library hero brings the picture their player picked
+                Image = hero.Choices?.Portrait is { Length: > 0 } picked ? picked : member.Image,
                 Radius = GameMap.CellSize * 0.4f,
                 Position = Grid.Center(member.At),
             });

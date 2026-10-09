@@ -29,6 +29,11 @@ public static class Portraits
     /// </summary>
     public static PictureFocus FocusOf(World world, int creature)
     {
+        // a hero's picked picture carries the crop its player chose
+        if (world.Creatures[creature].Choices is { Portrait.Length: > 0 } choices && world.Tokens.Tokens[creature].Image == choices.Portrait)
+        {
+            return choices.PortraitFocus;
+        }
         string id = world.Creatures[creature].CreatureId;
         return string.IsNullOrEmpty(id) ? PictureFocus.Middle
             : world.Chapter.Compendium.Creature(id)?.Token.Framing ?? PictureFocus.Middle;
