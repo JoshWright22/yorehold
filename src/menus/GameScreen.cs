@@ -14,7 +14,7 @@ public static class GameScreen
 
     public static ScreenSizes Sizes => _sizes ??= ScreenSizes.Load(App.Content());
 
-    private static StyleBoxFlat Box(Color fill, Color line)
+    public static StyleBoxFlat Box(Color fill, Color line)
     {
         var box = new StyleBoxFlat { BgColor = fill, BorderColor = line, ContentMarginLeft = 16, ContentMarginRight = 16 };
         box.SetBorderWidthAll(1);

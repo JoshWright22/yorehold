@@ -67,7 +67,7 @@ Status: not started, in progress, matches, differs (with why).
 | Lobby | `game/02-lobby.png` | new screen | not started | seats, ready, invite |
 | Character creation | `game/03-character-creation.png` | `src/characters/CharacterScreen.cs` | not started | 8 steps |
 | Portrait crop | `game/04-portrait-crop.png` | new screen | not started | one 3:4 crop |
-| Options | `game/05-options.png` | `src/menus/SettingsPanel.cs` | not started | groups, chips, search |
+| Options | `game/05-options.png` | `src/menus/SettingsPanel.cs` | matches | bar with search and Close, groups left with counts, rows divided by 1 px lines, choices outlined in amber, Reset to defaults per group; the design's resolution, interface size and frame limit rows are not settings yet |
 | Play screen | `game/06-play.png` | `src/hud/PlayHud.cs`, `PlayScreen.cs` | not started | party list left, turn order top, hotbar with weapon chips, chat column with Party, Combat log and Global tabs, dice buttons on the map |
 | Party inventory | `game/07-party-inventory.png` | `src/hud/GearPanel.cs` | not started | drag and drop |
 | Chest or shop | `game/08-chest-or-shop.png` | containers and merchants | not started | drag to buy, sell, take |

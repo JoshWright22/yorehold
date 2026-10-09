@@ -165,33 +165,57 @@ public sealed class SettingsPanel
     private string _capturing = "";
     private string _shown = "";
 
+    // The design's options page: a bar across the top (name, search, Close), the groups listed on
+    // the left with how many settings each holds, the picked group's rows on the right.
+    private const int BarHeight = 48;
+    private const int GroupsWidth = 240;
+    // room on the right for the chat's tab
+    private const int RightRoom = 64;
+
     public SettingsPanel(Control view)
     {
         View = view;
-        ScreenSizes sizes = GameScreen.Sizes;
-        var band = new ColorRect { Color = Palette.Ink, MouseFilter = Control.MouseFilterEnum.Ignore };
-        view.AddChild(band);
-        band.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.LeftWide);
-        band.OffsetRight = sizes.BandWidth;
-        var edge = new ColorRect { Color = Palette.Iron, MouseFilter = Control.MouseFilterEnum.Ignore };
-        view.AddChild(edge);
-        edge.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.LeftWide);
-        edge.OffsetLeft = sizes.BandWidth;
-        edge.OffsetRight = sizes.BandWidth + 1;
+        var floor = new ColorRect { Color = Palette.Night, MouseFilter = Control.MouseFilterEnum.Ignore };
+        view.AddChild(floor);
+        floor.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        var bar = new ColorRect { Color = Palette.Ink, MouseFilter = Control.MouseFilterEnum.Ignore };
+        view.AddChild(bar);
+        bar.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopWide);
+        bar.OffsetBottom = BarHeight;
+        Line(view, Control.LayoutPreset.TopWide);
+        var side = new ColorRect { Color = Palette.Ink, MouseFilter = Control.MouseFilterEnum.Ignore };
+        view.AddChild(side);
+        side.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.LeftWide);
+        side.OffsetTop = BarHeight + 1;
+        side.OffsetRight = GroupsWidth;
+        Line(view, Control.LayoutPreset.LeftWide);
 
-        var heading = new Label { Text = "SETTINGS", ThemeTypeVariation = "TitleLabel", Position = new Vector2(sizes.Margin - 2, 44) };
-        heading.AddThemeFontSizeOverride("font_size", sizes.HeadingFont);
+        var heading = new Label { Text = "Options", ThemeTypeVariation = "TitleLabel", Position = new Vector2(16, 0), Size = new Vector2(80, BarHeight),
+            VerticalAlignment = VerticalAlignment.Center };
+        heading.AddThemeFontSizeOverride("font_size", 20);
         heading.AddThemeColorOverride("font_color", Palette.Bone);
         view.AddChild(heading);
-        _summary = new Label { ThemeTypeVariation = "DimLabel", Position = new Vector2(sizes.Margin + 2, 126) };
+        _search = new LineEdit { PlaceholderText = "Search options", ClearButtonEnabled = true, Position = new Vector2(100, 9), Size = new Vector2(260, 30) };
+        _search.TextChanged += _ => _shown = "";
+        view.AddChild(_search);
+        _summary = new Label { ThemeTypeVariation = "DimLabel", Position = new Vector2(376, 0), Size = new Vector2(420, BarHeight),
+            VerticalAlignment = VerticalAlignment.Center };
         view.AddChild(_summary);
+        Button close = SmallButton("Close", "Esc");
+        close.Pressed += () => Closed?.Invoke();
+        view.AddChild(close);
+        close.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopRight);
+        close.OffsetLeft = -RightRoom - 88;
+        close.OffsetRight = -RightRoom + 16;
+        close.OffsetTop = 8;
+        close.OffsetBottom = BarHeight - 8;
 
-        _groups = new VBoxContainer { Position = new Vector2(sizes.Margin - 8, 182), Size = new Vector2(sizes.BandWidth - 2 * sizes.Margin + 16, 400) };
-        _groups.AddThemeConstantOverride("separation", (int)sizes.Gap);
+        _groups = new VBoxContainer { Position = new Vector2(8, BarHeight + 16), Size = new Vector2(GroupsWidth - 16, 400) };
+        _groups.AddThemeConstantOverride("separation", 2);
         view.AddChild(_groups);
         foreach (string group in Groups)
         {
-            Button button = GameScreen.BigButton(group);
+            Button button = GroupButton(group);
             button.Pressed += () =>
             {
                 _group = group;
@@ -201,44 +225,121 @@ public sealed class SettingsPanel
             _groups.AddChild(button);
             _groupButtons.Add(button);
         }
-        Button back = GameScreen.BigButton("Back", "Esc");
-        back.AnchorTop = back.AnchorBottom = 1;
-        back.Position = new Vector2(sizes.Margin - 8, 0);
-        back.Pressed += () => Closed?.Invoke();
-        view.AddChild(back);
-        back.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomLeft);
-        back.OffsetLeft = sizes.Margin - 8;
-        back.OffsetRight = sizes.BandWidth - sizes.Margin + 8;
-        back.OffsetTop = -sizes.Margin - sizes.ButtonHeight;
-        back.OffsetBottom = -sizes.Margin;
-
-        _search = new LineEdit { PlaceholderText = "Search every setting", ClearButtonEnabled = true };
-        view.AddChild(_search);
-        _search.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopWide);
-        _search.OffsetLeft = sizes.BandWidth + sizes.Margin;
-        _search.OffsetRight = -sizes.Margin;
-        _search.OffsetTop = 52;
-        _search.OffsetBottom = 84;
-        _search.TextChanged += _ => _shown = "";
-
-        _said = new Label { ThemeTypeVariation = "WarnLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        view.AddChild(_said);
-        _said.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopWide);
-        _said.OffsetLeft = sizes.BandWidth + sizes.Margin;
-        _said.OffsetRight = -sizes.Margin;
-        _said.OffsetTop = 92;
-        _said.OffsetBottom = 120;
 
         var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         view.AddChild(scroll);
         scroll.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        scroll.OffsetLeft = sizes.BandWidth + sizes.Margin;
-        scroll.OffsetRight = -sizes.Margin;
-        scroll.OffsetTop = 126;
-        scroll.OffsetBottom = -sizes.Margin;
+        scroll.OffsetLeft = GroupsWidth + 32;
+        scroll.OffsetRight = -RightRoom;
+        scroll.OffsetTop = BarHeight + 20;
+        scroll.OffsetBottom = -16;
+        var page = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        page.AddThemeConstantOverride("separation", 0);
+        scroll.AddChild(page);
+        _said = new Label { ThemeTypeVariation = "WarnLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        page.AddChild(_said);
         _rows = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _rows.AddThemeConstantOverride("separation", 0);
-        scroll.AddChild(_rows);
+        page.AddChild(_rows);
+    }
+
+    // the 1 px line under the bar, or down the groups' edge
+    private static void Line(Control view, Control.LayoutPreset along)
+    {
+        var line = new ColorRect { Color = Palette.Iron, MouseFilter = Control.MouseFilterEnum.Ignore };
+        view.AddChild(line);
+        line.SetAnchorsAndOffsetsPreset(along);
+        if (along == Control.LayoutPreset.TopWide)
+        {
+            line.OffsetTop = BarHeight;
+            line.OffsetBottom = BarHeight + 1;
+        }
+        else
+        {
+            line.OffsetTop = BarHeight + 1;
+            line.OffsetLeft = GroupsWidth;
+            line.OffsetRight = GroupsWidth + 1;
+        }
+    }
+
+    // a group in the left list: its name, its count dim on the right; the shown one outlined in amber
+    private static Button GroupButton(string group)
+    {
+        Button button = GameScreen.BigButton(group);
+        button.CustomMinimumSize = new Vector2(0, 40);
+        button.AddThemeFontSizeOverride("font_size", 16);
+        StyleBoxFlat open = GameScreen.Box(Palette.Dusk, Palette.Straw);
+        StyleBoxFlat shut = GameScreen.Box(Palette.Ink, Palette.Ink);
+        StyleBoxFlat hover = GameScreen.Box(Palette.Dusk, Palette.Dusk);
+        foreach (StyleBoxFlat box in new[] { open, shut, hover })
+        {
+            box.ContentMarginLeft = 12;
+        }
+        button.AddThemeStyleboxOverride("normal", shut);
+        button.AddThemeStyleboxOverride("hover", hover);
+        button.AddThemeStyleboxOverride("pressed", open);
+        button.AddThemeStyleboxOverride("hover_pressed", open);
+        button.AddThemeColorOverride("font_pressed_color", Palette.Straw);
+        button.AddThemeColorOverride("font_hover_pressed_color", Palette.Straw);
+        button.GetChild<Label>(0).AddThemeFontSizeOverride("font_size", 13);
+        return button;
+    }
+
+    // a plain outlined button, its key after the name (Close Esc)
+    private static Button SmallButton(string text, string key)
+    {
+        var button = new Button { Text = key.Length == 0 ? text : text + "  " + key, FocusMode = Control.FocusModeEnum.None, ThemeTypeVariation = "MainButton" };
+        StyleBoxFlat box = GameScreen.Box(Palette.Ink, Palette.Slate);
+        StyleBoxFlat lit = GameScreen.Box(Palette.Dusk, Palette.Ash);
+        foreach (StyleBoxFlat b in new[] { box, lit })
+        {
+            b.ContentMarginLeft = b.ContentMarginRight = 12;
+        }
+        button.AddThemeStyleboxOverride("normal", box);
+        button.AddThemeStyleboxOverride("hover", lit);
+        button.AddThemeStyleboxOverride("pressed", lit);
+        button.AddThemeStyleboxOverride("disabled", box);
+        button.AddThemeFontSizeOverride("font_size", 14);
+        foreach (string state in new[] { "font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color" })
+        {
+            button.AddThemeColorOverride(state, Palette.Bone);
+        }
+        button.AddThemeColorOverride("font_disabled_color", Palette.Slate);
+        return button;
+    }
+
+    // How many rows a group shows, for the count beside its name.
+    private static int CountIn(string group) => Settings.Count(s => s.Group == group) + group switch
+    {
+        "Controls" => App.Keys.Actions.Count,
+        "Account" => 1,
+        "Content" => 4 + ContentSets.List(Places.SetFolders()).Count,
+        _ => 0,
+    };
+
+    // The group's settings back as they come.
+    private void ResetGroup(string group)
+    {
+        var defaults = new GameSettings();
+        foreach (Setting setting in Settings.Where(s => s.Group == group))
+        {
+            if (setting.Id == "panSpeed")
+            {
+                App.Settings.PanSpeed = defaults.PanSpeed;
+                continue;
+            }
+            int option = Array.IndexOf(setting.Options, setting.Value(defaults));
+            if (option >= 0)
+            {
+                setting.Set(App.Settings, option);
+            }
+        }
+        if (group == "Controls")
+        {
+            App.Keys.ResetAll();
+        }
+        _said.Text = "";
+        App.Save();
     }
 
     public void Opened()
@@ -254,12 +355,14 @@ public sealed class SettingsPanel
         GameSettings now = App.Settings;
         var defaults = new GameSettings();
         KeyBindings keys = App.Keys;
+        _said.Visible = _said.Text.Length > 0;
         int changed = Settings.Count(s => s.Value(now) != s.Value(defaults)) + keys.Overrides().Count;
-        _summary.Text = changed == 0 ? "Everything is at its default." : $"{changed} changed. Changes are kept as they are made.";
+        _summary.Text = changed == 0 ? "Changes save as you make them." : $"Changes save as you make them. {changed} away from the defaults.";
         bool searching = _search.Text.Trim().Length > 0;
         for (int i = 0; i < Groups.Length; i++)
         {
             _groupButtons[i].SetPressedNoSignal(!searching && Groups[i] == _group);
+            GameScreen.SetRight(_groupButtons[i], CountIn(Groups[i]).ToString());
         }
 
         // made again only when what they show changes, so a press isn't lost to a rebuild
@@ -278,6 +381,10 @@ public sealed class SettingsPanel
         }
         string words = _search.Text.Trim();
         bool Wanted(string group, string text) => words.Length > 0 ? text.Contains(words, StringComparison.OrdinalIgnoreCase) : group == _group;
+        _rows.AddChild(new Label { Text = words.Length > 0 ? "MATCHING" : _group.ToUpperInvariant(), ThemeTypeVariation = "CapsLabel",
+            CustomMinimumSize = new Vector2(0, 28), VerticalAlignment = VerticalAlignment.Top });
+        _rows.AddChild(new ColorRect { Color = Palette.Iron, CustomMinimumSize = new Vector2(0, 1), MouseFilter = Control.MouseFilterEnum.Ignore });
+        int before = _rows.GetChildCount();
 
         foreach (Setting setting in Settings.Where(s => Wanted(s.Group, s.Name + " " + s.Help + " " + s.Group)))
         {
@@ -353,7 +460,7 @@ public sealed class SettingsPanel
         {
             HBoxContainer row = Row(action.Name, action.Description, keys.Changed(action.Id));
             bool waiting = _capturing == action.Id;
-            row.AddChild(new Label { Text = waiting ? "press a key..." : keys.KeysText(action.Id), CustomMinimumSize = new Vector2(110, 0), ThemeTypeVariation = waiting ? "WarnLabel" : "" });
+            row.AddChild(new Label { Text = waiting ? "press a key..." : keys.KeysText(action.Id), CustomMinimumSize = new Vector2(110, 0), ThemeTypeVariation = waiting ? "WarnLabel" : "NumberLabel" });
             Choice(row, waiting ? "Cancel" : "Change", false, () =>
             {
                 _said.Text = "";
@@ -368,11 +475,23 @@ public sealed class SettingsPanel
         }
         if (_group == "Controls" && words.Length == 0)
         {
-            _rows.AddChild(new Label { Text = "Escape, Enter and the number keys are fixed.", ThemeTypeVariation = "DimLabel" });
+            _rows.AddChild(new Label { Text = "Escape, Enter and the number keys are fixed.", ThemeTypeVariation = "DimLabel", CustomMinimumSize = new Vector2(0, 32) });
         }
-        if (_rows.GetChildCount() == 0)
+        if (_rows.GetChildCount() == before)
         {
-            _rows.AddChild(new Label { Text = "No setting matches.", ThemeTypeVariation = "DimLabel" });
+            _rows.AddChild(new Label { Text = "No setting matches.", ThemeTypeVariation = "DimLabel", CustomMinimumSize = new Vector2(0, 32) });
+        }
+        // the groups made of settings can be put back as they come, in one press
+        if (words.Length == 0 && _group is not "Content" and not "Account")
+        {
+            string group = _group;
+            var foot = new HBoxContainer { CustomMinimumSize = new Vector2(0, 52) };
+            Button reset = SmallButton($"Reset {group.ToLowerInvariant()} to defaults", "");
+            reset.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
+            reset.CustomMinimumSize = new Vector2(0, 32);
+            reset.Pressed += () => ResetGroup(group);
+            foot.AddChild(reset);
+            _rows.AddChild(foot);
         }
     }
 
@@ -382,22 +501,21 @@ public sealed class SettingsPanel
         var panel = new PanelContainer();
         var style = new StyleBoxFlat
         {
-            BgColor = _rows.GetChildCount() % 2 == 0 ? Palette.Ink : Palette.Night,
+            BgColor = Palette.Night,
             BorderColor = Palette.Iron,
             BorderWidthBottom = 1,
-            ContentMarginLeft = 12,
-            ContentMarginRight = 12,
-            ContentMarginTop = 6,
-            ContentMarginBottom = 6,
+            ContentMarginTop = 10,
+            ContentMarginBottom = 10,
         };
         panel.AddThemeStyleboxOverride("panel", style);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
         panel.AddChild(row);
-        var words = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 54) };
+        var words = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 44) };
         words.AddThemeConstantOverride("separation", 0);
-        var title = new Label { Text = changed ? name + "  • changed" : name };
-        title.AddThemeFontSizeOverride("font_size", 18);
+        var title = new Label { Text = changed ? name + "  • changed" : name, ThemeTypeVariation = "TitleLabel" };
+        title.AddThemeFontSizeOverride("font_size", 16);
+        title.AddThemeColorOverride("font_color", Palette.Bone);
         words.AddChild(title);
         words.AddChild(new Label { Text = help, ThemeTypeVariation = "DimLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart });
         row.AddChild(words);
@@ -410,7 +528,27 @@ public sealed class SettingsPanel
 
     private static void Choice(HBoxContainer row, string text, bool on, Action press, bool enabled = true)
     {
-        var button = new Button { Text = text, ToggleMode = true, ThemeTypeVariation = "ChipButton", FocusMode = Control.FocusModeEnum.None, Disabled = !enabled };
+        // the design's choice: an outlined box, the one in use outlined and named in amber
+        var button = new Button { Text = text, ToggleMode = true, ThemeTypeVariation = "MainButton", FocusMode = Control.FocusModeEnum.None, Disabled = !enabled,
+            CustomMinimumSize = new Vector2(0, 32) };
+        StyleBoxFlat off = GameScreen.Box(Palette.Night, Palette.Slate);
+        StyleBoxFlat lit = GameScreen.Box(Palette.Dusk, Palette.Ash);
+        StyleBoxFlat picked = GameScreen.Box(Palette.Dusk, Palette.Straw);
+        foreach (StyleBoxFlat box in new[] { off, lit, picked })
+        {
+            box.ContentMarginLeft = box.ContentMarginRight = 12;
+        }
+        button.AddThemeStyleboxOverride("normal", off);
+        button.AddThemeStyleboxOverride("hover", lit);
+        button.AddThemeStyleboxOverride("pressed", picked);
+        button.AddThemeStyleboxOverride("hover_pressed", picked);
+        button.AddThemeStyleboxOverride("disabled", GameScreen.Box(Palette.Night, Palette.Iron));
+        button.AddThemeFontSizeOverride("font_size", 14);
+        button.AddThemeColorOverride("font_color", Palette.Bone);
+        button.AddThemeColorOverride("font_hover_color", Palette.Bone);
+        button.AddThemeColorOverride("font_pressed_color", Palette.Straw);
+        button.AddThemeColorOverride("font_hover_pressed_color", Palette.Straw);
+        button.AddThemeColorOverride("font_disabled_color", Palette.Slate);
         button.SetPressedNoSignal(on);
         button.Pressed += press;
         row.AddChild(button);
