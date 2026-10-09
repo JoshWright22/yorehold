@@ -82,12 +82,12 @@ Status: not started, in progress, matches, differs (with why).
 | Create pipeline | `editor/01-create-pipeline.png` | import and build | not started | |
 | Edit (projects) | `editor/02-edit-projects.png` | Create's project list | in progress | fills the screen, titled Edit; differs: no size, status or edited columns, New buttons are one per system in the page's actions |
 | Import from a book | `editor/03-import-from-book.png` | `src/create/CreateImport.cs` | not started | |
-| Story graph | `editor/04-story-graph.png` | `src/create/StoryModePanel.cs` | not started | |
+| Story graph | `editor/04-story-graph.png` | `src/create/StoryGraphView.cs` | in progress | boxes and right-angled links drawn like the design; differs: no Graph/Paths switch, no build status or questions on the boxes, the left column lists nodes and suggestions |
 | Build conflict | `editor/05-build-conflict.png` | rebuild after edits | not started | |
 | Map | `editor/06-map.png` | `src/create/MapModePanel.cs` | in progress | tools as a two-column grid with keys under TOOLS; differs: no room list, the inspector is the tile and floor column, no status bar with the cursor and zoom |
-| Encounters | `editor/07-encounters.png` | `src/create/EncountersModePanel.cs` | not started | |
+| Encounters | `editor/07-encounters.png` | `src/create/EncountersModePanel.cs` | differs | the design is a form (difficulty bar, a creature table with counts, a small placement map, add from the compendium); ours places on the full map with the fight's form on the right |
 | Dialogue | `editor/08-dialogue.png` | `src/create/DialogueGraphView.cs`, `DialogueModePanel.cs` | close | the graph (on by default; Graph toggles the form): lines L, replies R, checks C in blue with pass and fail arrows, ends E, back links as a stub naming the line; the right column edits the picked box. Differs: no conversation list on the left (< and > step through), no Add line / Add reply under the graph (the form has them) |
 | Cutscene | `editor/09-cutscene.png` | `src/create/CutsceneModePanel.cs` | not started | |
-| Compendium | `editor/10-compendium.png` | `src/create/CompendiumModePanel.cs` | not started | form left, "how players see it" page right |
+| Compendium | `editor/10-compendium.png` | `src/create/CompendiumModePanel.cs` | differs | ours: one table of every kind and a generic form; the design: a list by kind, a form with steppers, and how players see it on the right |
 | Publish | `editor/11-publish.png` | publishing | not started | |
 | Website pages | `web/*.png`, `parts/04-web-header.png`, `05-web-footer.png` | `yorehold-web` | not started | step 5 |

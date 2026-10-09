@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using Yorehold.Rules;
 
@@ -143,26 +144,29 @@ public partial class StoryGraphView : Control
             return;
         }
         Font font = GetThemeDefaultFont();
+        Font bold = GetThemeFont("font", "TitleLabel");
 
-        // links under the nodes, each with an arrowhead where it arrives
+        // links under the nodes, routed at right angles as the design draws them, an arrowhead
+        // where each arrives and its words beside the bend
         for (int i = 0; i < Editor.Links.Count; i++)
         {
-            (Vector2 from, Vector2 to)? ends = Ends(i);
-            if (ends is not (Vector2 from, Vector2 to))
+            if (Route(i) is not Vector2[] route)
             {
                 continue;
             }
             bool picked = Link == i;
             Color color = picked ? Palette.Straw : Editor.Links[i].When.Count == 0 ? Palette.Smoke : Palette.Amber;
-            DrawLine(from, to, color, picked ? 3 : 2);
-            Vector2 back = (to - from).Normalized();
+            DrawPolyline(route, color, picked ? 2 : 1);
+            Vector2 to = route[^1];
+            Vector2 back = (to - route[^2]).Normalized();
             Vector2 across = new(-back.Y, back.X);
-            DrawLine(to, to - back * 12 + across * 6, color, 2);
-            DrawLine(to, to - back * 12 - across * 6, color, 2);
+            DrawColoredPolygon(new[] { to, to - back * 9 + across * 5, to - back * 9 - across * 5 }, color);
             if (Editor.Links[i].Text.Length > 0)
             {
-                Vector2 middle = (from + to) / 2;
-                DrawString(font, middle + new Vector2(-80, -8), Editor.Links[i].Text, HorizontalAlignment.Center, 160, 12, Palette.Ash);
+                Vector2 bend = (route[1] + route[2]) / 2;
+                bool upright = Mathf.IsEqualApprox(route[1].X, route[2].X);
+                Vector2 at = upright ? bend + new Vector2(-150, 4) : bend + new Vector2(-75, -6);
+                DrawString(font, at, Editor.Links[i].Text, upright ? HorizontalAlignment.Right : HorizontalAlignment.Center, upright ? 144 : 150, 12, Palette.Ash);
             }
         }
 
@@ -174,24 +178,15 @@ public partial class StoryGraphView : Control
             {
                 continue;
             }
-            DrawRect(r, Palette.Ink);
-            DrawRect(new Rect2(r.Position, new Vector2(6, r.Size.Y)), ColorOf(node.Kind));
+            DrawRect(r, Palette.Dusk);
             DrawRect(r, Node == i ? Palette.Straw : Palette.Slate, false, Node == i ? 2 : 1);
-            DrawString(font, r.Position + new Vector2(12, 20), StoryEditor.NameOf(node), HorizontalAlignment.Left, r.Size.X - 18, 14, Palette.Bone);
-            string under = StoryEditor.KindName(node.Kind);
-            if (node.Ref.Length > 0)
-            {
-                under += ": " + node.Ref[(node.Ref.LastIndexOf('/') + 1)..];
-            }
-            else if (node.Kind == StoryEditor.Kind.Scene && node.Chapter.Length > 0)
-            {
-                under += ": " + CreatePackage.Leaf(node.Chapter);
-            }
-            if (node.Xp is int xp)
-            {
-                under += $", {xp} xp";
-            }
-            DrawString(font, r.Position + new Vector2(12, 40), under, HorizontalAlignment.Left, r.Size.X - 18, 12, Palette.Smoke);
+            DrawString(bold, r.Position + new Vector2(10, 18), StoryEditor.NameOf(node), HorizontalAlignment.Left, r.Size.X - 20, 13, Palette.Bone);
+            string under = node.Ref.Length > 0 ? node.Ref[(node.Ref.LastIndexOf('/') + 1)..]
+                : node.Kind == StoryEditor.Kind.Scene && node.Chapter.Length > 0 ? CreatePackage.Leaf(node.Chapter) : "";
+            DrawString(font, r.Position + new Vector2(10, 34), under, HorizontalAlignment.Left, r.Size.X - 20, 12, Palette.Ash);
+            // its kind at the foot, coloured, with the XP a fight gives
+            string kind = StoryEditor.KindName(node.Kind).ToLowerInvariant() + (node.Xp is int xp ? $" · {xp} xp" : "");
+            DrawString(font, r.Position + new Vector2(10, r.Size.Y - 6), kind, HorizontalAlignment.Right, r.Size.X - 20, 11, ColorOf(node.Kind));
         }
 
         if (Linking && Node is int start && start < Editor.Nodes.Count)
@@ -202,21 +197,6 @@ public partial class StoryGraphView : Control
         string help = Linking ? "Click the node the link goes to, Escape stops" : "Drag nodes to move them, drag the background to look around";
         DrawString(font, new Vector2(10, Size.Y - 10), help, HorizontalAlignment.Left, -1, 12, Palette.Smoke);
         DrawRect(new Rect2(Vector2.Zero, Size), Palette.Iron, false, 1);
-    }
-
-    private (Vector2, Vector2)? Ends(int link)
-    {
-        if (Editor == null || Editor.Find(Editor.Links[link].From) is not int a || Editor.Find(Editor.Links[link].To) is not int b)
-        {
-            return null;
-        }
-        Rect2 ra = RectOf(Editor.Nodes[a]), rb = RectOf(Editor.Nodes[b]);
-        Vector2 ca = ra.GetCenter(), cb = rb.GetCenter();
-        // two links between the same pair sit a little apart
-        bool both = Editor.FindLink(Editor.Links[link].To, Editor.Links[link].From) != null;
-        Vector2 d = cb - ca;
-        Vector2 side = both && d.Length() > 0 ? new Vector2(-d.Y, d.X).Normalized() * 5 : Vector2.Zero;
-        return (EdgeOf(ra, cb) + side, EdgeOf(rb, ca) + side);
     }
 
     private int? NodeAt(Vector2 at)
@@ -244,12 +224,39 @@ public partial class StoryGraphView : Control
         }
         for (int i = 0; i < Editor.Links.Count; i++)
         {
-            if (Ends(i) is (Vector2 from, Vector2 to) && Geometry2D.GetClosestPointToSegment(at, from, to).DistanceTo(at) < 6)
+            if (Route(i) is Vector2[] route && Enumerable.Range(0, route.Length - 1).Any(k => Geometry2D.GetClosestPointToSegment(at, route[k], route[k + 1]).DistanceTo(at) < 6))
             {
                 return i;
             }
         }
         return null;
+    }
+
+    // A link's way between its boxes at right angles: out of the side facing the other box and in
+    // at the other's, bending halfway. Two links between the same pair sit a little apart.
+    private Vector2[]? Route(int link)
+    {
+        if (Editor == null || Editor.Find(Editor.Links[link].From) is not int a || Editor.Find(Editor.Links[link].To) is not int b)
+        {
+            return null;
+        }
+        Rect2 ra = RectOf(Editor.Nodes[a]), rb = RectOf(Editor.Nodes[b]);
+        float apart = Editor.FindLink(Editor.Links[link].To, Editor.Links[link].From) != null ? 6 : 0;
+        if (rb.Position.X >= ra.End.X || rb.End.X <= ra.Position.X)
+        {
+            // side by side: out of the right (or left) edge, in at the other's facing edge
+            bool right = rb.Position.X >= ra.End.X;
+            var from = new Vector2(right ? ra.End.X : ra.Position.X, ra.GetCenter().Y + apart);
+            var to = new Vector2(right ? rb.Position.X : rb.End.X, rb.GetCenter().Y + apart);
+            float middle = (from.X + to.X) / 2;
+            return new[] { from, new Vector2(middle, from.Y), new Vector2(middle, to.Y), to };
+        }
+        // one above the other: out of the bottom (or top), in at the other's facing edge
+        bool down = rb.Position.Y >= ra.GetCenter().Y;
+        var top = new Vector2(ra.GetCenter().X + apart, down ? ra.End.Y : ra.Position.Y);
+        var end = new Vector2(rb.GetCenter().X + apart, down ? rb.Position.Y : rb.End.Y);
+        float half = (top.Y + end.Y) / 2;
+        return new[] { top, new Vector2(top.X, half), new Vector2(end.X, half), end };
     }
 
     // Where the line from the middle of box toward a point leaves it.
