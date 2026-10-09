@@ -7,17 +7,20 @@ using Yorehold.Rules;
 namespace Yorehold;
 
 /// <summary>
-/// The dice of a roll thrown across a felt table over the fight (R17, R19): each die flies in
-/// from the left, bounces off the felt and the rails and rolls to a stop, as DiceTumble worked
-/// out, and the number the game's seeded roll gave is put on the face that ends up on top. The
-/// result never comes from the throw. A die that wasn't kept (the low one of advantage) is
-/// dimmed; fast plays the throw at twice the speed.
+/// The dice of a roll thrown across the screen as if it were the table (R17, R19): each die flies
+/// in from the left, bounces off the screen's edges and the others and rolls to a stop, as
+/// DiceTumble worked out, seen from straight above with only its shadow on the map. The number
+/// the game's seeded roll gave is put on the face that ends up on top; the result never comes
+/// from the throw. A die that wasn't kept (the low one of advantage) is dimmed; fast plays the
+/// throw at twice the speed.
 /// </summary>
 public partial class DiceTray : SubViewportContainer
 {
-    // the table, in the tray's own units: felt at y = 0, rails at the edges
-    private static readonly DiceTumble.Table Felt = new(4f, 1.6f);
-    private const float Size = 0.5f;
+    // the screen as a table, in the tray's own units: 16 by 9 like the window, floor at y = 0
+    private static readonly DiceTumble.Table Felt = new(8f, 4.5f);
+    private const float DieSize = 0.42f;
+    // high above with a narrow lens, so the floor fills the screen and the dice barely lean
+    private const float CameraHeight = 30f;
     private const double Hold = 0.9;
     private const double Fade = 0.35;
 
@@ -59,12 +62,12 @@ public partial class DiceTray : SubViewportContainer
         Stretch = true;
         MouseFilter = MouseFilterEnum.Ignore;
         Visible = false;
-        _view = new SubViewport { TransparentBg = true, OwnWorld3D = true, Size = new Vector2I(920, 360), RenderTargetUpdateMode = SubViewport.UpdateMode.WhenVisible, Msaa3D = Viewport.Msaa.Msaa4X };
+        _view = new SubViewport { TransparentBg = true, OwnWorld3D = true, Size = new Vector2I(1280, 720), RenderTargetUpdateMode = SubViewport.UpdateMode.WhenVisible, Msaa3D = Viewport.Msaa.Msaa4X };
         AddChild(_view);
-        // looking down the table at a slant, as a player leaning over it would
-        var camera = new Camera3D { Fov = 34 };
+        // straight down at the screen-table; its height and lens make the floor exactly the screen
+        var camera = new Camera3D { Fov = 2 * Mathf.RadToDeg(Mathf.Atan(Felt.HalfDepth / CameraHeight)), KeepAspect = Camera3D.KeepAspectEnum.Height };
         _view.AddChild(camera);
-        camera.LookAtFromPosition(new Vector3(0, 6.4f, 5.4f), new Vector3(0, 0, 0.35f), Vector3.Up);
+        camera.LookAtFromPosition(new Vector3(0, CameraHeight, 0), Vector3.Zero, Vector3.Forward);
         _view.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-60, -25, 0), LightEnergy = 1.1f, ShadowEnabled = true });
         var environment = new Godot.Environment
         {
@@ -74,35 +77,17 @@ public partial class DiceTray : SubViewportContainer
             BackgroundMode = Godot.Environment.BGMode.ClearColor,
         };
         _view.AddChild(new WorldEnvironment { Environment = environment });
-        _view.AddChild(BuildTable());
+        _view.AddChild(ShadowCatcher());
         _dice = new Node3D();
         _view.AddChild(_dice);
     }
 
-    // The felt and its four rails, in the screens' greys.
-    private static Node3D BuildTable()
+    // The floor the dice land on: unseen itself, it only takes their shadows, so the dice sit on the map.
+    private static Node3D ShadowCatcher() => new MeshInstance3D
     {
-        var table = new Node3D();
-        Material Flat(Color color) => new StandardMaterial3D { AlbedoColor = color, Roughness = 1, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
-        table.AddChild(new MeshInstance3D
-        {
-            Mesh = new BoxMesh { Size = new Vector3(Felt.HalfWidth * 2, 0.1f, Felt.HalfDepth * 2) },
-            Position = new Vector3(0, -0.05f, 0),
-            MaterialOverride = Flat(Palette.Dusk),
-        });
-        const float rail = 0.18f, high = 0.32f;
-        foreach ((Vector3 at, Vector3 size) in new[]
-        {
-            (new Vector3(0, high / 2, -Felt.HalfDepth - rail / 2), new Vector3(Felt.HalfWidth * 2 + rail * 2, high, rail)),
-            (new Vector3(0, high / 2, Felt.HalfDepth + rail / 2), new Vector3(Felt.HalfWidth * 2 + rail * 2, high, rail)),
-            (new Vector3(-Felt.HalfWidth - rail / 2, high / 2, 0), new Vector3(rail, high, Felt.HalfDepth * 2)),
-            (new Vector3(Felt.HalfWidth + rail / 2, high / 2, 0), new Vector3(rail, high, Felt.HalfDepth * 2)),
-        })
-        {
-            table.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = size }, Position = at, MaterialOverride = Flat(Palette.Iron) });
-        }
-        return table;
-    }
+        Mesh = new PlaneMesh { Size = new Vector2(Felt.HalfWidth * 2, Felt.HalfDepth * 2) },
+        MaterialOverride = new StandardMaterial3D { ShadowToOpacity = true, AlbedoColor = new Color(Palette.Night, 0.55f), Transparency = BaseMaterial3D.TransparencyEnum.Alpha },
+    };
 
     /// <summary>Throws a roll's dice across the table; fast plays the throw twice as quick. A new throw replaces the last.</summary>
     public void Throw(List<DiceFaces.Shown> dice, bool fast)
@@ -116,10 +101,10 @@ public partial class DiceTray : SubViewportContainer
         _age = 0;
         List<DiceFaces.Shown> shown = dice.Take(Look.Most).ToList();
         int more = dice.Count - shown.Count;
-        float size = Size * (float)Look.Size;
+        float size = DieSize * (float)Look.Size;
         // thrown together, each from its own lane across the table; they knock off each other
         List<float> lanes = Enumerable.Range(0, shown.Count)
-            .Select(i => shown.Count == 1 ? 0 : -Felt.HalfDepth + size * 1.5f + i * (Felt.HalfDepth * 2 - size * 3) / (shown.Count - 1)).ToList();
+            .Select(i => shown.Count == 1 ? 0 : (i - (shown.Count - 1) / 2f) * Math.Min(size * 2.6f, Felt.HalfDepth * 1.2f / (shown.Count - 1))).ToList();
         List<string> shapes = shown.Select(d => d.Shape == "dF" ? "d6" : d.Shape == "d10t" ? "d10" : d.Shape).ToList();
         List<DiceTumble.Path> paths = DiceTumble.ThrowAll(shapes, size, Felt, lanes, (int)_spin.Randi());
         for (int i = 0; i < shown.Count; i++)
@@ -134,7 +119,7 @@ public partial class DiceTray : SubViewportContainer
             _dice.AddChild(new Label3D
             {
                 Text = $"+{more}", FontSize = 96, PixelSize = 0.006f, Modulate = Palette.Named(Look.Body), OutlineSize = 0,
-                Position = new Vector3(Felt.HalfWidth - 0.4f, 0.05f, Felt.HalfDepth - 0.3f), RotationDegrees = new Vector3(-90, 0, 0),
+                Position = new Vector3(Felt.HalfWidth - 1.2f, 0.05f, 0), RotationDegrees = new Vector3(-90, 0, 0),
             });
         }
         Visible = shown.Count > 0;
@@ -198,7 +183,7 @@ public partial class DiceTray : SubViewportContainer
             {
                 Text = labels[f],
                 FontSize = 64,
-                PixelSize = solid.Faces.Count >= 20 ? 0.0066f : solid.Faces.Count >= 12 ? 0.0074f : 0.009f,
+                PixelSize = solid.Faces.Count >= 20 ? 0.0052f : solid.Faces.Count >= 12 ? 0.0066f : 0.009f,
                 Modulate = Palette.Named(die.Kept ? Look.Numbers : Look.UnkeptNumbers),
                 OutlineSize = 0,
                 DoubleSided = false,

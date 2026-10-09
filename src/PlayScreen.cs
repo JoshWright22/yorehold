@@ -94,11 +94,8 @@ public partial class PlayScreen : Node2D
         // the dice strip, over the map at the top, under the panels
         _dice = new DiceTray { Name = "Dice" };
         _hud.AddChild(_dice);
-        _dice.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
-        _dice.OffsetLeft = -460;
-        _dice.OffsetRight = 460;
-        _dice.OffsetTop = 130;
-        _dice.OffsetBottom = 460;
+        // the whole screen is the table the dice are thrown across
+        _dice.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _fight = GetNode<FightControl>("Fight");
         _fightGround = GetNode<FightGroundView>("Overlay/FightGround");
         _tokenBars = GetNode<TokenBarsView>("Overlay/TokenBars");

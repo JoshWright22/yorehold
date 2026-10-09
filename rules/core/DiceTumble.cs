@@ -50,7 +50,8 @@ public static class DiceTumble
                 Solid = solid,
                 Corners = solid.Vertices.Select(v => v * size).ToList(),
                 Position = new Vector3(-table.HalfWidth + size * (1.5f + Between(0, 1.5f)), size * 3f + Between(0, size * 2), lanes[i]),
-                Velocity = new Vector3(Between(6f, 8.5f), Between(0.5f, 2f), Between(-1f, 1f)),
+                // thrown hard enough to cross most of the table, whatever its size
+                Velocity = new Vector3(table.HalfWidth * Between(1.5f, 2.1f), Between(0.5f, 2f), table.HalfDepth * Between(-0.6f, 0.6f)),
                 Rotation = Quaternion.Normalize(new Quaternion(Between(-1, 1), Between(-1, 1), Between(-1, 1), Between(-1, 1))),
                 Spin = new Vector3(Between(-25, 25), Between(-25, 25), Between(-25, 25)),
             });

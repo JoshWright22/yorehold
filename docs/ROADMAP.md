@@ -823,8 +823,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     of a Multiattack, and the attack animation between landing and the numbers.
   - Done 10/9 (step 3): dice thrown across a felt table: `DiceTumble` (rules) simulates a roll's
     dice together, bouncing off the felt, the rails and each other until they lie flat; the face
-    left on top gets the rolled number (its label swapped in); `DiceTray` is a tilted 3D table
-    over the fight that plays the throw back. Fast plays it at twice the speed.
+    left on top gets the rolled number (its label swapped in). Josh, 10/9: the screen itself is
+    the table: `DiceTray` covers the screen, seen from straight above, the dice bouncing off its
+    edges with only their shadows on the map. Fast plays the throw at twice the speed.
   - Order of work: (1) beats and shown values, with the current dice strip, so results wait for
     the dice; (2) attack animations from the shipped sets; (3) the table tumble; (4) sound
     hooks per step (a skin's files), (5) Create can preview an action's animation.
