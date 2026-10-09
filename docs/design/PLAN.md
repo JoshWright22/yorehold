@@ -77,10 +77,10 @@ Status: not started, in progress, matches, differs (with why).
 | Pause | `game/11-pause.png` | `src/menus/MenuScreen.cs` (pause page) | matches but the online note | adventure, chapter and round under PAUSED; Options; Save and quit to main menu; last saved at the foot; the online-game note waits for online play |
 | Wordmark | `parts/00-wordmark.png`, `01-wordmark-small.png` | title band | not started | |
 | Chat closed and open | `parts/02-chat-closed.png`, `03-chat-open.png` | `src/hud/ChatPanel.cs` | matches | full-height column, open by default; tabs underlined in amber; > puts it away to a tab with < and the unread count; box with Send |
-| Editor toolbar | `parts/06-editor-toolbar.png` | `src/create/CreateScreen.cs` | not started | breadcrumb, mode tabs, Test play, Publish |
+| Editor toolbar | `parts/06-editor-toolbar.png` | `src/create/CreateScreen.cs` | close | < Projects, the package and the chapter (pressed for the next), modes underlined in amber in story order, Test play, Save in amber (no Publish yet); Undo and Redo stay at the foot; the chat steps aside |
 | Editor flow | `editor/00-flow.png` | Create's screens | not started | |
 | Create pipeline | `editor/01-create-pipeline.png` | import and build | not started | |
-| Edit (projects) | `editor/02-edit-projects.png` | Create's project list | not started | |
+| Edit (projects) | `editor/02-edit-projects.png` | Create's project list | in progress | fills the screen, titled Edit; differs: no size, status or edited columns, New buttons are one per system in the page's actions |
 | Import from a book | `editor/03-import-from-book.png` | `src/create/CreateImport.cs` | not started | |
 | Story graph | `editor/04-story-graph.png` | `src/create/StoryModePanel.cs` | not started | |
 | Build conflict | `editor/05-build-conflict.png` | rebuild after edits | not started | |

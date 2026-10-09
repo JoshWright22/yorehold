@@ -70,6 +70,12 @@ public partial class CreateScreen : Control
         _package = new CreatePackage(Places.GameContent());
         _package.ArtFolders.AddRange(Places.ArtFolders());
         _start = GetNode<DataPanel>("Start");
+        // the project list fills the screen, as the design lays it out
+        _start.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _start.OffsetLeft = 16;
+        _start.OffsetTop = 16;
+        _start.OffsetRight = -48;
+        _start.OffsetBottom = -16;
         _editor = GetNode<Control>("Editor");
         _map = GetNode<MapModePanel>("Editor/Body/Modes/Map");
         _encounters = GetNode<EncountersModePanel>("Editor/Body/Modes/Encounters");
@@ -111,6 +117,7 @@ public partial class CreateScreen : Control
         _save.Pressed += Save;
         GetNode<Button>("Editor/Bar/Row/Playtest").Pressed += Playtest;
         GetNode<Button>("Editor/Bar/Row/Close").Pressed += Leave;
+        LayToolbar();
         _start.ActionPressed += StartAction;
         _start.ClosePressed += () => Closed?.Invoke();
         FindPackages();
@@ -123,8 +130,79 @@ public partial class CreateScreen : Control
         Opened();
     }
 
+    // The design's toolbar: a breadcrumb (Projects, the package, the chapter), the modes as
+    // underlined tabs in the order a story is made, and Test play and Save on the right.
+    private void LayToolbar()
+    {
+        var row = GetNode<HBoxContainer>("Editor/Top/Row");
+        row.AddThemeConstantOverride("separation", 4);
+        GetNode<Control>("Editor/Top/Row/Title").Visible = false;
+        var projects = new Button { Text = "<  Projects", FocusMode = FocusModeEnum.None, Flat = true };
+        projects.AddThemeColorOverride("font_color", Palette.Ash);
+        projects.AddThemeColorOverride("font_hover_color", Palette.Bone);
+        projects.AddThemeFontSizeOverride("font_size", 14);
+        projects.Pressed += Leave;
+        row.AddChild(projects);
+        row.MoveChild(projects, 0);
+        _name.ThemeTypeVariation = "TitleLabel";
+        _name.AddThemeColorOverride("font_color", Palette.Bone);
+        _name.AddThemeFontSizeOverride("font_size", 15);
+        _name.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+        _name.ClipText = false;
+        _name.VerticalAlignment = VerticalAlignment.Center;
+        row.MoveChild(_name, 1);
+        _chapter.Flat = true;
+        _chapter.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+        _chapter.AddThemeColorOverride("font_color", Palette.Ash);
+        _chapter.AddThemeColorOverride("font_hover_color", Palette.Bone);
+        _chapter.AddThemeFontSizeOverride("font_size", 14);
+        _chapter.TooltipText = "The next chapter";
+        row.MoveChild(_chapter, 2);
+        row.AddChild(new Control { CustomMinimumSize = new Vector2(16, 0) });
+        int at = 4;
+        foreach (Button tab in new[] { _storyTab, _mapTab, _encountersTab, _dialogueTab, _cutsceneTab, _compendiumTab })
+        {
+            row.MoveChild(tab, at++);
+            tab.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+            tab.CustomMinimumSize = Vector2.Zero;
+            var off = new StyleBoxFlat { BgColor = Palette.Ink };
+            off.SetContentMarginAll(10);
+            var under = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Straw, BorderWidthBottom = 2 };
+            under.SetContentMarginAll(10);
+            tab.AddThemeStyleboxOverride("normal", off);
+            tab.AddThemeStyleboxOverride("hover", off);
+            tab.AddThemeStyleboxOverride("pressed", under);
+            tab.AddThemeStyleboxOverride("hover_pressed", under);
+            tab.AddThemeColorOverride("font_color", Palette.Ash);
+            tab.AddThemeColorOverride("font_hover_color", Palette.Bone);
+            tab.AddThemeColorOverride("font_pressed_color", Palette.Bone);
+            tab.AddThemeColorOverride("font_hover_pressed_color", Palette.Bone);
+            tab.AddThemeFontSizeOverride("font_size", 14);
+        }
+        row.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+        // Test play and Save leave the bottom bar for the top, as the design has Test play and Publish
+        var test = GetNode<Button>("Editor/Bar/Row/Playtest");
+        test.Text = "Test play";
+        test.AddThemeFontSizeOverride("font_size", 14);
+        test.Reparent(row);
+        test.AddThemeStyleboxOverride("normal", HeroGearColumn.Box(Palette.Ink, Palette.Slate, 8));
+        test.AddThemeStyleboxOverride("hover", HeroGearColumn.Box(Palette.Dusk, Palette.Ash, 8));
+        _save.Reparent(row);
+        _save.ThemeTypeVariation = "EndTurnButton";
+        _save.AddThemeFontSizeOverride("font_size", 14);
+        _save.CustomMinimumSize = new Vector2(72, 0);
+        GetNode<Control>("Editor/Bar/Row/Close").Visible = false;
+    }
+
+    public override void _ExitTree()
+    {
+        ChatPanel.Current?.StepAside("create", false);
+    }
+
     public override void _Process(double delta)
     {
+        // the editor is a wide workspace: the chat steps aside while it is up, as on the design
+        ChatPanel.Current?.StepAside("create", IsVisibleInTree());
         bool open = _package.IsOpen;
         _start.Visible = !open;
         _editor.Visible = open;
@@ -153,8 +231,9 @@ public partial class CreateScreen : Control
         _map.Visible = _mode == Mode.Map;
         _encounters.Visible = _mode == Mode.Encounters;
         _dialogue.Visible = _mode == Mode.Dialogue;
-        _name.Text = _package.Manifest!.Name + (_package.IsGameContent ? "   the game's own content" : "");
-        _chapter.Text = "Chapter: " + (_package.Chapter.Length == 0 ? "none" : CreatePackage.Leaf(_package.Chapter));
+        _name.Text = _package.Manifest!.Name + (_package.IsGameContent ? " (the game's own)" : "");
+        // the breadcrumb's last part: the chapter, pressed to go to the next one
+        _chapter.Text = "›  " + (_package.Chapter.Length == 0 ? "no chapter" : CreatePackage.Leaf(_package.Chapter));
         _chapter.Disabled = _package.Chapters.Count < 2;
         if (_mode == Mode.Map)
         {
@@ -410,7 +489,7 @@ public partial class CreateScreen : Control
 
     private void FillStart()
     {
-        _start.SetHead("Create", "make your own adventures");
+        _start.SetHead("Edit", "Your adventures and content");
         _start.SetSources(Array.Empty<(string, string)>(), "");
         _start.SetTabs(new[] { "All", "Made here", "Imports", "The game's" });
         _start.SetChips(Array.Empty<string>());

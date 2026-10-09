@@ -87,7 +87,7 @@
 262 down left
 264 up left
 276 shot .dev/create-saved.png
-280 button Playtest
+280 button Test_play
 282 down left
 284 up left
 380 shot .dev/create-playtest.png
