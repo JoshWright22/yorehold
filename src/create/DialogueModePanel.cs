@@ -31,6 +31,10 @@ public partial class DialogueModePanel : VBoxContainer
     private Button _voiceView = null!;
     private VoicePanel _voice = null!;
     private bool _voicing;
+    // the conversation as a graph (the design's view), or the lines and the picked one's form
+    private DialogueGraphView _graph = null!;
+    private Button _graphView = null!;
+    private bool _graphing = true;
 
     private int _picked;
     private int? _choice;
@@ -50,6 +54,10 @@ public partial class DialogueModePanel : VBoxContainer
         _on = Small(row, ">", () => Step(1));
         _count = new Label { ThemeTypeVariation = "DimLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
         row.AddChild(_count);
+        _graphView = new Button { Text = "Graph", ToggleMode = true, ThemeTypeVariation = "TabButton", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(90, 26),
+            TooltipText = "The conversation as boxes and arrows; off, the lines and the picked one's form" };
+        _graphView.Toggled += on => _graphing = on;
+        row.AddChild(_graphView);
         // the recorded lines of the same conversation, in place of its nodes
         _voiceView = new Button { Text = "Voice", ToggleMode = true, ThemeTypeVariation = "TabButton", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(90, 26) };
         _voiceView.Toggled += on => _voicing = on;
@@ -69,6 +77,26 @@ public partial class DialogueModePanel : VBoxContainer
         _nodes = Column(200, false);
         _node = Column(0, true);
         _reply = Column(300, false);
+        _graph = new DialogueGraphView { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
+        _body.AddChild(_graph);
+        _body.MoveChild(_graph, 0);
+        _graph.LinePicked += line =>
+        {
+            _picked = line;
+            _choice = null;
+        };
+        _graph.ReplyPicked += (line, reply) =>
+        {
+            _picked = line;
+            _choice = reply;
+        };
+        // a double click on a line opens it in the form, where its words are typed
+        _graph.LineOpened += line =>
+        {
+            _picked = line;
+            _choice = null;
+            _graphing = false;
+        };
         _voice = new VoicePanel { SizeFlagsVertical = SizeFlags.ExpandFill, Visible = false };
         AddChild(_voice);
     }
@@ -105,6 +133,11 @@ public partial class DialogueModePanel : VBoxContainer
             _reply.Invalidate();
         }
         _voiceView.SetPressedNoSignal(_voicing);
+        _graphView.SetPressedNoSignal(_graphing);
+        _graph.Visible = _graphing;
+        // the graph takes the place of the line list and the form; the right column stays for the picked box
+        _nodes.GetParent().GetParent<Control>().Visible = !_graphing;
+        _node.GetParent().GetParent<Control>().Visible = !_graphing;
         _body.Visible = editor != null && !_voicing;
         _voice.Visible = editor != null && _voicing;
         _error.Visible = editor == null;
@@ -132,6 +165,9 @@ public partial class DialogueModePanel : VBoxContainer
             _choice = null;
         }
         DialogueEditor.Node node = editor.Nodes[_picked];
+        _graph.Editor = editor;
+        _graph.Picked = _picked;
+        _graph.PickedReply = _choice;
         _nodes.Build($"{_picked}|{editor.Start}|{string.Join("|", editor.Nodes.Select(n => n.Id))}", () => BuildNodes(editor));
         _node.Build($"{_picked}|{_choice}|{string.Join("|", node.Choices.Select(r => r.Text))}", () => BuildNode(editor));
         _reply.Build($"{_picked}|{_choice}|{(_choice is int at ? node.Choices[at].Check != null : false)}", () => BuildReply(editor));
