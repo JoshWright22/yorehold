@@ -4,7 +4,7 @@ using Yorehold.Rules;
 
 namespace Yorehold;
 
-/// <summary>A hero on the left edge: portrait, HP, conditions, and a frame when it is their turn or they can take it.</summary>
+/// <summary>A hero in the party list on the left: portrait, name, class line, HP, conditions, and a frame when it is their turn or they can take it.</summary>
 public partial class PartyCard : TipButton
 {
     public int Creature { get; private set; } = -1;
@@ -12,6 +12,9 @@ public partial class PartyCard : TipButton
     // the scene has all of these
     private PortraitView _portrait = null!;
     private Label _name = null!;
+    private Label _line = null!;
+    private Label _turnWord = null!;
+    private bool? _low;
     private ProgressBar _hp = null!;
     private Label _hpText = null!;
     private HBoxContainer _conditions = null!;
@@ -19,16 +22,31 @@ public partial class PartyCard : TipButton
     private Panel _turn = null!;
     private readonly List<ConditionBadge> _badges = new();
 
+    /// <summary>A thin HP bar in white, red with its number once a quarter or less is left; returns what it showed.</summary>
+    public static bool ShowLow(ProgressBar bar, Label number, CharacterSheet sheet, bool? shown)
+    {
+        bool low = sheet.Hp * 4 <= sheet.MaxHp;
+        number.AddThemeColorOverride("font_color", low ? Palette.Red : Palette.Bone);
+        if (low != shown)
+        {
+            bar.AddThemeStyleboxOverride("fill", new StyleBoxFlat { BgColor = low ? Palette.Red : Palette.Bone });
+            bar.AddThemeStyleboxOverride("background", new StyleBoxFlat { BgColor = Palette.Iron });
+        }
+        return low;
+    }
+
     public override void _Ready()
     {
         base._Ready();
         _portrait = GetNode<PortraitView>("Portrait");
         _name = GetNode<Label>("Name");
+        _line = GetNode<Label>("Line");
+        _turnWord = GetNode<Label>("Turn");
         _hp = GetNode<ProgressBar>("Hp");
         _hpText = GetNode<Label>("Hp/Text");
         _conditions = GetNode<HBoxContainer>("Conditions");
         _ready = GetNode<Panel>("Ready");
-        _turn = GetNode<Panel>("Turn");
+        _turn = GetNode<Panel>("Frame");
     }
 
     /// <summary>marked = the gold frame (their turn, or the selected hero between fights); ready = the green one (can take the shared turn).</summary>
@@ -43,8 +61,13 @@ public partial class PartyCard : TipButton
         _hp.Value = Mathf.Max(0, sheet.Hp);
         // down, the card shows the system's own track (death saves, a dying value) in place of HP
         (string downed, string downedLine) = sheet.DownedText(world.Rules);
-        _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
+        _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)}/{sheet.MaxHp}";
+        // a hero at a quarter of their HP or less shows it in red
+        _low = ShowLow(_hp, _hpText, sheet, _low);
+        // what the system calls them: class and level where it has classes, else their ancestry
+        _line.Text = sheet.ClassName.Length > 0 ? $"{sheet.ClassName}, level {sheet.Level}" : sheet.Ancestry;
         _turn.Visible = marked;
+        _turnWord.Visible = marked && world.Fighting;
         _ready.Visible = ready && !marked;
 
         var conditions = HudText.Conditions(world, sheet);

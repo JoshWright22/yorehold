@@ -3,13 +3,11 @@ using Yorehold.Rules;
 
 namespace Yorehold;
 
-/// <summary>One portrait in the turn order along the top. Whoever's turn it is gets a bigger card.</summary>
+/// <summary>One square in the turn order along the top, underlined in its side's colour; whoever's turn it is is framed.</summary>
 public partial class InitiativeCard : TipButton
 {
-    [Export] public Vector2 NormalSize { get; set; } = new(54, 66);
-    [Export] public Vector2 CurrentSize { get; set; } = new(72, 86);
-    [Export] public Color PartyColor { get; set; } = new(0.36f, 0.6f, 0.86f);
-    [Export] public Color EnemyColor { get; set; } = new(0.8f, 0.26f, 0.2f);
+    [Export] public Vector2 NormalSize { get; set; } = new(40, 40);
+    [Export] public Vector2 CurrentSize { get; set; } = new(40, 40);
 
     public int Creature { get; private set; } = -1;
 
@@ -38,7 +36,7 @@ public partial class InitiativeCard : TipButton
         CharacterSheet sheet = who.Sheet;
         _portrait.Show(sheet.Name, world.Tokens.Tokens[creature].Color.ToGodot(), sheet.Down, Portraits.Of(world, creature), Portraits.FocusOf(world, creature));
         // a card that has had its turn greys its side strip instead of going see-through
-        _side.Color = done && !current ? Palette.Slate : who.Team == 0 ? PartyColor : EnemyColor;
+        _side.Color = done && !current ? Palette.Slate : who.Team == 0 ? Palette.Bone : Palette.Red;
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
         _turn.Visible = current;

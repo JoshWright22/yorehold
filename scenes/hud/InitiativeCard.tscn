@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://src/hud/PortraitView.cs" id="2"]
 
 [node name="InitiativeCard" type="Button"]
-custom_minimum_size = Vector2(56, 66)
+custom_minimum_size = Vector2(40, 40)
 size_flags_vertical = 0
 focus_mode = 0
 script = ExtResource("1")
@@ -14,10 +14,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 7.0
-offset_right = -4.0
-offset_bottom = -11.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -25,16 +25,20 @@ script = ExtResource("2")
 
 [node name="Side" type="ColorRect" parent="."]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
-offset_left = 4.0
-offset_top = 3.0
-offset_right = -4.0
-offset_bottom = 6.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = -4.0
+offset_right = -1.0
+offset_bottom = -1.0
 grow_horizontal = 2
+grow_vertical = 0
 mouse_filter = 2
 
 [node name="Hp" type="ProgressBar" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0

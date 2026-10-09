@@ -53,6 +53,8 @@ public partial class PlayHud : Control
 
     // the scene has all of these
     private VBoxContainer _party = null!;
+    private Label _partyCount = null!;
+    private bool? _barLow;
     private Control _top = null!;
     private Label _round = null!;
     private HBoxContainer _cards = null!;
@@ -124,22 +126,23 @@ public partial class PlayHud : Control
     public override void _Ready()
     {
         _party = GetNode<VBoxContainer>("Party");
+        _partyCount = GetNode<Label>("PartyHead/Count");
         _top = GetNode<Control>("Top");
-        _round = GetNode<Label>("Top/Initiative/Row/Round");
+        _round = GetNode<Label>("Top/Initiative/Row/Head/Round");
         _cards = GetNode<HBoxContainer>("Top/Initiative/Row/Cards");
-        _turn = GetNode<Label>("Top/Initiative/Row/Turn");
+        _turn = GetNode<Label>("Top/Initiative/Row/Head/Turn");
         _bottom = GetNode<Control>("Bottom");
-        _portrait = GetNode<PortraitView>("Bottom/Selected/Rows/Portrait");
-        _hp = GetNode<ProgressBar>("Bottom/Selected/Rows/Hp");
-        _hpText = GetNode<Label>("Bottom/Selected/Rows/Hp/Text");
-        _actions = GetNode<PipsView>("Bottom/Hotbar/Rows/Status/Actions");
-        _bonusLabel = GetNode<Label>("Bottom/Hotbar/Rows/Status/BonusLabel");
-        _bonus = GetNode<PipsView>("Bottom/Hotbar/Rows/Status/Bonus");
-        _reactionPip = GetNode<PipsView>("Bottom/Hotbar/Rows/Status/Reaction");
-        _move = GetNode<MoveBarView>("Bottom/Hotbar/Rows/Status/Move");
-        _moveText = GetNode<Label>("Bottom/Hotbar/Rows/Status/MoveText");
-        _slots = GetNode<GridContainer>("Bottom/Hotbar/Rows/Slots");
-        _endTurn = GetNode<Button>("Bottom/EndTurn");
+        _portrait = GetNode<PortraitView>("Bottom/Row/Selected/Who/Portrait");
+        _hp = GetNode<ProgressBar>("Bottom/Row/Selected/Hp");
+        _hpText = GetNode<Label>("Bottom/Row/Selected/Who/Facts/HpText");
+        _actions = GetNode<PipsView>("Bottom/Row/Selected/Status/ActionRow/Actions");
+        _bonusLabel = GetNode<Label>("Bottom/Row/Selected/Status/BonusRow/BonusLabel");
+        _bonus = GetNode<PipsView>("Bottom/Row/Selected/Status/BonusRow/Bonus");
+        _reactionPip = GetNode<PipsView>("Bottom/Row/Selected/Status/ReactionRow/Reaction");
+        _move = GetNode<MoveBarView>("Bottom/Row/Selected/Status/MoveRow/Move");
+        _moveText = GetNode<Label>("Bottom/Row/Selected/Status/MoveRow/MoveText");
+        _slots = GetNode<GridContainer>("Bottom/Row/Hotbar/Slots");
+        _endTurn = GetNode<Button>("Bottom/Row/EndTurn");
         _log = GetNode<LogPanel>("Log");
         _reaction = GetNode<Control>("Reaction");
         _reactionTitle = GetNode<Label>("Reaction/Rows/Title");
@@ -168,29 +171,29 @@ public partial class PlayHud : Control
         _sheet.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _sheet.ClosePressed += () => OpenPanel = "";
         _sheet.ReactionHeld += (hero, id, held) => ReactionHeld?.Invoke(hero, id, held);
-        _sheetButton = GetNode<Button>("Bottom/Menu/Sheet");
+        _sheetButton = GetNode<Button>("Bottom/Row/Menu/Sheet");
         _gearView = GetNode<DataPanel>("Gear");
-        _gearButton = GetNode<Button>("Bottom/Menu/Gear");
+        _gearButton = GetNode<Button>("Bottom/Row/Menu/Gear");
         _gear = new GearPanel(_gearView);
         _gear.Ordered += order => ItemOrdered?.Invoke(order);
         _gearView.ClosePressed += () => OpenPanel = "";
         _spellsView = GetNode<DataPanel>("Spells");
-        _spellsButton = GetNode<Button>("Bottom/Menu/Spells");
+        _spellsButton = GetNode<Button>("Bottom/Row/Menu/Spells");
         _spells = new SpellPanel(_spellsView);
         _spells.Ordered += order => SpellOrdered?.Invoke(order);
         _spells.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _spellsView.ClosePressed += () => OpenPanel = "";
         _journalView = GetNode<DataPanel>("Journal");
-        _journalButton = GetNode<Button>("Bottom/Menu/Journal");
+        _journalButton = GetNode<Button>("Bottom/Row/Menu/Journal");
         _journal = new JournalPanel(_journalView);
         _journalView.ClosePressed += () => OpenPanel = "";
         _campView = GetNode<DataPanel>("Camp");
-        _campButton = GetNode<Button>("Bottom/Menu/Camp");
+        _campButton = GetNode<Button>("Bottom/Row/Menu/Camp");
         _camp = new CampPanel(_campView);
         _camp.Ordered += order => CampOrdered?.Invoke(order);
         _camp.HeroPicked += hero => CreaturePressed?.Invoke(hero);
         _campView.ClosePressed += () => OpenPanel = "";
-        foreach (Node child in GetNode("Bottom/Menu").GetChildren())
+        foreach (Node child in GetNode("Bottom/Row/Menu").GetChildren())
         {
             if (child is Button button)
             {
@@ -259,7 +262,7 @@ public partial class PlayHud : Control
             ("Camp", "Camp", "camp"), ("Save", "Save", "save"),
         })
         {
-            GetNode<Button>("Bottom/Menu/" + button).Text = App.WithKey(label, action);
+            GetNode<Button>("Bottom/Row/Menu/" + button).Text = App.WithKey(label, action);
         }
     }
 
@@ -426,6 +429,7 @@ public partial class PlayHud : Control
         _talk.Visible = node != null;
         // like a visual novel, the conversation has the screen: the party and the log step back
         _party.Visible = node == null;
+        GetNode<Control>("PartyHead").Visible = node == null;
         _log.Visible = node == null;
         if (talk == null || node == null)
         {
@@ -527,6 +531,8 @@ public partial class PlayHud : Control
             _partyCards.Add(card);
         }
         int leader = world.LeaderIndex();
+        int standing = Enumerable.Range(0, world.HeroCount).Count(i => !world.Creatures[i].Sheet.Down);
+        _partyCount.Text = $"{standing} / {world.HeroCount}";
         for (int i = 0; i < _partyCards.Count; i++)
         {
             _partyCards[i].Visible = i < world.HeroCount;
@@ -610,7 +616,7 @@ public partial class PlayHud : Control
             _orderCards[i].Show(world, creature, place == fight.CurrentIndex, world.CanChooseTurn(creature), inBlock && fight.Order[place].TurnDone);
         }
 
-        _round.Text = $"Round {Math.Max(1, fight.Round)}";
+        _round.Text = $"ROUND {Math.Max(1, fight.Round)}";
         _turn.Text = world.CurrentCreature is int now && world.ReactionPrompt == null ? $"{world.Creatures[now].Sheet.Name}'s turn" : "";
     }
 
@@ -620,8 +626,9 @@ public partial class PlayHud : Control
         _portrait.Show(sheet.Name, world.Tokens.Tokens[shown].Color.ToGodot(), sheet.Down, Portraits.Of(world, shown), Portraits.FocusOf(world, shown));
         _hp.MaxValue = Mathf.Max(1, sheet.MaxHp);
         _hp.Value = Mathf.Max(0, sheet.Hp);
+        _barLow = PartyCard.ShowLow(_hp, _hpText, sheet, _barLow);
         (string downed, _) = sheet.DownedText(world.Rules);
-        _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)} / {sheet.MaxHp}";
+        _hpText.Text = downed.Length > 0 ? downed : sheet.Tracks.Count > 0 ? HudText.TrackBoxes(sheet) : $"{Mathf.Max(0, sheet.Hp)}/{sheet.MaxHp}";
 
         // off their turn a hero has nothing to spend, whatever was left over from the last one
         TurnBudget? budget = world.BudgetOf(shown);
@@ -635,7 +642,10 @@ public partial class PlayHud : Control
         _reactionPip.Show(1, !fighting || budget is { Reaction: true } ? 1 : 0);
         int left = mine ? budget!.MovementLeft : fighting ? 0 : sheet.SpeedSquares(world.Rules);
         _move.Show(Math.Max(sheet.SpeedSquares(world.Rules), left), left, mine ? aim.PathCost : 0);
-        _moveText.Text = $"{left * world.Rules.FeetPerSquare} ft";
+        _moveText.Text = $"{left * world.Rules.FeetPerSquare}/{sheet.SpeedSquares(world.Rules) * world.Rules.FeetPerSquare} ft";
+        GetNode<Label>("Bottom/Row/Selected/Who/Facts/Name").Text = sheet.Name;
+        string defence = world.Rules.Checks.Kind(CheckRules.Attack).DefenceId;
+        GetNode<Label>("Bottom/Row/Selected/Who/Facts/Defence").Text = $"{world.Rules.DefenceName(defence)} {sheet.Defence(world.Rules, defence)}";
 
         // the bars as the player arranged them; End turn has the big button, so it gets no slot
         _barHero = shown;

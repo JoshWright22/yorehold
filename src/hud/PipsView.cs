@@ -10,6 +10,8 @@ public partial class PipsView : Control
     [Export] public Color Rim { get; set; } = Palette.Ink;
     [Export] public float PipSize { get; set; } = 16;
     [Export] public float Gap { get; set; } = 4;
+    /// <summary>Square boxes, as the hotbar's action, bonus action and reaction marks are drawn.</summary>
+    [Export] public bool Square { get; set; }
 
     private int _total;
     private int _filled;
@@ -32,6 +34,14 @@ public partial class PipsView : Control
         for (int i = 0; i < _total; i++)
         {
             var at = new Vector2(r + i * (PipSize + Gap), Size.Y / 2);
+            if (Square)
+            {
+                // a filled box while it is there to use, an empty outline once spent
+                var box = new Rect2(at - new Vector2(r, r), PipSize, PipSize);
+                DrawRect(box, i < _filled ? Full : Palette.Ink);
+                DrawRect(box, i < _filled ? Full : Palette.Slate, false, 1);
+                continue;
+            }
             DrawCircle(at, r, Rim);
             DrawCircle(at, r - 1.5f, i < _filled ? Full : Spent);
         }

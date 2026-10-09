@@ -123,6 +123,7 @@ layer = 4
 script = ExtResource("8")
 
 [node name="Title" type="Label" parent="Hud"]
+visible = false
 offset_left = 16.0
 offset_top = 10.0
 offset_right = 616.0
