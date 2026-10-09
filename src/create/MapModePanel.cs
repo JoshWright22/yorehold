@@ -23,9 +23,11 @@ public partial class MapModePanel : HBoxContainer
         Kit,
     }
 
-    private static readonly (Tool Tool, string Name)[] Tools =
+    // each tool with the key that picks it, shown on its button as the design has them
+    private static readonly (Tool Tool, string Name, Key Key)[] Tools =
     {
-        (Tool.Paint, "Paint"), (Tool.Fill, "Fill box"), (Tool.Wall, "Wall"), (Tool.Light, "Light"), (Tool.Marker, "Marker"), (Tool.Kit, "Kit"),
+        (Tool.Paint, "Paint", Key.P), (Tool.Fill, "Fill box", Key.B), (Tool.Wall, "Wall", Key.W), (Tool.Light, "Light", Key.L),
+        (Tool.Marker, "Marker", Key.M), (Tool.Kit, "Kit", Key.K),
     };
 
     // palette colours a lamp can have, by what they look like in play
@@ -60,7 +62,7 @@ public partial class MapModePanel : HBoxContainer
     public override void _Ready()
     {
         AddThemeConstantOverride("separation", 0);
-        _tools = Column(132, false);
+        _tools = Column(200, false);
         _view = new EditorMapView { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
         AddChild(_view);
         _props = Column(236, true);
@@ -144,6 +146,21 @@ public partial class MapModePanel : HBoxContainer
 
     public override void _UnhandledKeyInput(InputEvent @event)
     {
+        // a tool's key picks it, unless a text box has the keys
+        if (_editor != null && IsVisibleInTree() && @event is InputEventKey { Pressed: true, Echo: false, CtrlPressed: false, AltPressed: false } press
+            && GetViewport().GuiGetFocusOwner() is not LineEdit and not TextEdit)
+        {
+            foreach ((Tool tool, string _, Key key) in Tools)
+            {
+                if (press.Keycode == key)
+                {
+                    _tool = tool;
+                    _hint = "";
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
+            }
+        }
         if (_editor != null && IsVisibleInTree() && @event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Delete } && _tool == Tool.Light && _light is int light)
         {
             _editor.RemoveLight(light);
@@ -172,13 +189,29 @@ public partial class MapModePanel : HBoxContainer
 
     private void BuildTools()
     {
-        foreach ((Tool tool, string name) in Tools)
+        var caps = new Label { Text = "TOOLS", ThemeTypeVariation = "CapsLabel" };
+        caps.AddThemeFontSizeOverride("font_size", 10);
+        _tools.AddChild(caps);
+        // two across, each with its key on the right, the picked one outlined in amber
+        var grid = new GridContainer { Columns = 2 };
+        grid.AddThemeConstantOverride("h_separation", 4);
+        grid.AddThemeConstantOverride("v_separation", 4);
+        _tools.AddChild(grid);
+        foreach ((Tool tool, string name, Key key) in Tools)
         {
-            _tools.Toggle(name, () => _tool == tool, () =>
+            Button button = _tools.Toggle(name, () => _tool == tool, () =>
             {
                 _tool = tool;
                 _hint = "";
-            });
+            }, grid, "PickButton");
+            button.CustomMinimumSize = new Vector2(0, 32);
+            button.AddThemeFontSizeOverride("font_size", 13);
+            var shortcut = new Label { Text = OS.GetKeycodeString(key), ThemeTypeVariation = "NumberLabel", HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
+            shortcut.AddThemeFontSizeOverride("font_size", 11);
+            button.AddChild(shortcut);
+            shortcut.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            shortcut.OffsetRight = -6;
         }
         _tools.Gap();
         _tools.Toggle("Grid", () => _view.Grid, () =>

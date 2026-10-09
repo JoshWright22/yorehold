@@ -84,7 +84,7 @@ Status: not started, in progress, matches, differs (with why).
 | Import from a book | `editor/03-import-from-book.png` | `src/create/CreateImport.cs` | not started | |
 | Story graph | `editor/04-story-graph.png` | `src/create/StoryModePanel.cs` | not started | |
 | Build conflict | `editor/05-build-conflict.png` | rebuild after edits | not started | |
-| Map | `editor/06-map.png` | `src/create/MapModePanel.cs` | not started | |
+| Map | `editor/06-map.png` | `src/create/MapModePanel.cs` | in progress | tools as a two-column grid with keys under TOOLS; differs: no room list, the inspector is the tile and floor column, no status bar with the cursor and zoom |
 | Encounters | `editor/07-encounters.png` | `src/create/EncountersModePanel.cs` | not started | |
 | Dialogue | `editor/08-dialogue.png` | `src/create/DialogueModePanel.cs` | not started | |
 | Cutscene | `editor/09-cutscene.png` | `src/create/CutsceneModePanel.cs` | not started | |
