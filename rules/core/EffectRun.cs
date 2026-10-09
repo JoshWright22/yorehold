@@ -551,7 +551,7 @@ internal sealed class EffectRun
                 {
                     "dice" => rolled.Total - rolled.Flat,
                     "flat" => rolled.Flat,
-                    "max" => rolled.Dice.Where(die => die.Kept).Sum(die => die.Sides),
+                    "max" => rolled.Dice.Where(die => die.Kept).Sum(die => die.Faces?.Max() ?? (die.Fudge ? 1 : die.Sides)),
                     _ => null,
                 });
             }

@@ -69,7 +69,13 @@ trigger's `if` reads `advantage`, `critical`, `flag.<flag>`, `targetFlag.<flag>`
 
 `2d6+3`, `1d20-1`, `4d6kh3` (keep highest), `2d20kl1` (keep lowest), `d%`, `1d6!` (exploding,
 at most 20 times), `6d6s5` (count dice showing 5 or more), `4dF` (Fate dice, -1/0/+1), and dice
-whose count is a formula in braces: `{ceil(level / 2)}d6`.
+whose count is a formula in braces: `{ceil(level / 2)}d6`. A system's own die lists what each
+face counts in braces after the `d`: `2d{0,0,1,1,2,1}` is two six-faced dice that count 0, 0, 1,
+1, 2 and 1 (up to 100 faces, each -1000 to 1000). A list of whole numbers with commas is always
+faces; anything else in braces after the `d` is a formula for the number of sides
+(`1d{hands.free >= 1 ? 10 : 8}`). Such dice keep, drop and count successes like any other but
+don't explode; odds and averages are counted from the faces, and a thrown one shows on the
+smallest solid its faces fit evenly (three faces on a d6, each twice).
 
 ## ruleset.json
 

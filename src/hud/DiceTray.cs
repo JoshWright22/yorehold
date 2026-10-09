@@ -190,7 +190,7 @@ public partial class DiceTray : SubViewportContainer
     // number's own face and the up face swap labels, so the die still has each label once.
     private Node3D Build(DiceFaces.Shown die, DiceSolids.Solid solid, int up, float size)
     {
-        List<string> labels = DiceFaces.Labels(die.Shape).ToList();
+        List<string> labels = (die.Labels ?? DiceFaces.Labels(die.Shape)).ToList();
         int own = labels.IndexOf(die.Face);
         if (own >= 0 && own != up)
         {

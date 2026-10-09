@@ -47,6 +47,50 @@ public class DiceTests
     }
 
     [Fact]
+    public void ASystemsOwnDieCountsWhatItsFacesSay()
+    {
+        DiceExpression boost = DiceExpression.Parse("2d{0, 0, 1, 1, 2, -1} + 1")!;
+        Assert.Equal("2d{0,0,1,1,2,-1}+1", boost.ToString());
+        Assert.Equal((-1, 5), (boost.Minimum(), boost.Maximum()));
+        Assert.Equal(2 * 0.5 + 1, boost.Average(), 6);
+        var random = new Rng(7);
+        for (int i = 0; i < 200; i++)
+        {
+            RollResult roll = Dice.Roll(boost, random);
+            Assert.All(roll.Dice, die => Assert.Contains(die.Value, new[] { 0, 1, 2, -1 }));
+            Assert.Equal(roll.Dice.Sum(d => d.Value) + 1, roll.Total);
+        }
+        // counted exactly: two dice of six faces each, a 2 and a 2 once in 36
+        Dictionary<int, double> spread = CheckKind.Spread(DiceExpression.Parse("2d{0,0,1,1,2,-1}")!);
+        Assert.Equal(1 / 36.0, spread[4], 9);
+        Assert.Equal(1.0, spread.Values.Sum(), 9);
+        // successes count faces at or over the number, kept dice the best
+        Assert.Equal(2, DiceExpression.Parse("3d{0,1,2}s1")!.Maximum() - 1);
+        Assert.Equal(2, Dice.Roll(DiceExpression.Parse("3d{2,2}kh1")!, random).Total);
+
+        foreach (string bad in new[] { "1d{}", "1d{a}", "1d{1,2", "1d{1,2}!", "1d{5000}" })
+        {
+            Assert.Null(DiceExpression.Parse(bad));
+        }
+        // in content dice, a list of faces stays a die while a formula in braces is worked out
+        string filled = DiceText.Fill("{level}d{0, 1, 2}+{level + 1}", name => name == "level" ? 2 : null);
+        Assert.Equal("2d{0,1,2}+3", DiceExpression.Parse(filled)!.ToString());
+        Assert.True(DiceText.IsValid("{level}d{0,1,2}"));
+        Assert.True(DiceText.IsValid("1d{hands.free >= 1 ? 10 : 8}"));
+        Assert.False(DiceText.IsValid("1d{0,1"));
+    }
+
+    [Fact]
+    public void ASystemsOwnDieIsThrownOnTheSolidItsFacesFit()
+    {
+        RollResult roll = Dice.Roll(DiceExpression.Parse("1d{0,1,2}")!, new Rng(7));
+        DiceFaces.Shown shown = Assert.Single(DiceFaces.Of(roll));
+        Assert.Equal("d6", shown.Shape);
+        Assert.Equal(new[] { "0", "1", "2", "0", "1", "2" }, shown.Labels);
+        Assert.Contains(shown.Face, shown.Labels!);
+    }
+
+    [Fact]
     public void ASaveKeepsTheStateAndCarriesOn()
     {
         var first = new Rng(21);

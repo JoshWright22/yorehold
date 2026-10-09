@@ -290,8 +290,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/9: a machine-readable schema beside the reference: `docs/schemas/ruleset.schema.json`,
     its keys and their descriptions read from the "ruleset.json" table in RULES_LANGUAGE.md by
     `make.py`, so the two can't drift; the four shipped systems pass it.
+  - Done 10/9: a system's own dice in any dice text, `2d{0,0,1,1,2,1}`: rolled, counted for
+    odds and averages, and thrown on a solid with those faces.
   - Left: the builder's balancing by forecast (and parties of a chosen level, not only the
-    chapter's own); custom symbol faces in dice expressions (and R17's dice showing them).
+    chapter's own); faces with words or symbols on them, not only numbers (several counts at
+    once, like Genesys's successes and advantages).
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The
     import (R13) writes systems in it, and the game checks the draft by loading and running it.
@@ -761,7 +764,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     ability's modifier or its save rolls the system's check dice with the hero's modifier for
     everyone to see); d4 to d20 buttons over the map.
   - Done 10/9: a player's own dice set (`user://dice/<name>.json`, Options > Display > Dice set).
-  - Left: symbol faces from a system's custom dice.
+  - Done 10/9: a system's own dice (`d{0,0,1,1,2,1}`) are thrown with their numbers on the
+    faces. Left: words or symbols on faces (see R2b).
   - Josh, 10/9: the dice don't look like they roll across a table. See R19 for the plan.
 
 - [ ] **R21. What Foundry VTT's systems teach the rules language.** Josh, 10/9: Foundry's dnd5e

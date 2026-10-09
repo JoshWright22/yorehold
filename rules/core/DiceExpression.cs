@@ -6,23 +6,29 @@ namespace Yorehold.Rules;
 /// One part of dice text: "3d6", "4d6kh3", "2d20kl1" or a flat number (Sides 0, Count is the
 /// number). Explode: a die showing its highest face rolls again and adds ("1d6!"). SuccessAt: the
 /// term counts the dice showing that much or more instead of adding them ("6d6s5"). Fudge: the
-/// dice show -1, 0 or +1 ("4dF").
+/// dice show -1, 0 or +1 ("4dF"). Faces: a system's own die, what each face counts written out
+/// ("2d{0,0,1,1,2,1}"); Sides is how many faces it has.
 /// </summary>
 public readonly record struct DiceTerm(int Count = 1, int Sides = 0, int KeepHighest = 0, int KeepLowest = 0, int Sign = 1,
-    bool Explode = false, int SuccessAt = 0, bool Fudge = false)
+    bool Explode = false, int SuccessAt = 0, bool Fudge = false, int[]? Faces = null)
 {
     /// <summary>Rolls again on an exploding die stop here, so a roll always ends.</summary>
     public const int MostExplosions = 20;
+    /// <summary>The most faces a die of its own may have.</summary>
+    public const int MostFaces = 100;
 
     /// <summary>How many of its dice count toward the total.</summary>
     public int Kept => KeepHighest != 0 ? KeepHighest : KeepLowest != 0 ? KeepLowest : Count;
 
     /// <summary>The lowest and highest face of one die.</summary>
-    public int LowFace => Fudge ? -1 : 1;
-    public int HighFace => Fudge ? 1 : Sides;
+    public int LowFace => Faces != null ? Faces.Min() : Fudge ? -1 : 1;
+    public int HighFace => Faces != null ? Faces.Max() : Fudge ? 1 : Sides;
+
+    /// <summary>What face number n (1 to Sides) of one die counts.</summary>
+    public int ValueOf(int face) => Faces != null ? Faces[face - 1] : Fudge ? face - 2 : face;
 }
 
-/// <summary>Parsed dice text like "2d6+3", "1d20-1", "4d6kh3", "d%", "1d6!", "6d6s5" or "4dF". Case and spaces don't matter.</summary>
+/// <summary>Parsed dice text like "2d6+3", "1d20-1", "4d6kh3", "d%", "1d6!", "6d6s5", "4dF" or "3d{0,1,1,2}". Case and spaces don't matter.</summary>
 public sealed class DiceExpression
 {
     public List<DiceTerm> Terms { get; } = new();
@@ -61,7 +67,17 @@ public sealed class DiceExpression
                 int count = number < 0 ? 1 : number;
                 int sides;
                 bool fudge = false;
-                if (pos < text.Length && text[pos] == '%')
+                int[]? faces = null;
+                if (pos < text.Length && text[pos] == '{')
+                {
+                    faces = ReadFaces(text, ref pos);
+                    if (faces == null)
+                    {
+                        return null;
+                    }
+                    sides = faces.Length;
+                }
+                else if (pos < text.Length && text[pos] == '%')
                 {
                     sides = 100;
                     pos++;
@@ -97,7 +113,7 @@ public sealed class DiceExpression
                 bool explode = false;
                 if (pos < text.Length && text[pos] == '!')
                 {
-                    if (sides < 2 || fudge)
+                    if (sides < 2 || fudge || faces != null)
                     {
                         return null;
                     }
@@ -114,7 +130,7 @@ public sealed class DiceExpression
                         return null;
                     }
                 }
-                term = new DiceTerm(count, sides, keepHighest, keepLowest, sign, explode, successAt, fudge);
+                term = new DiceTerm(count, sides, keepHighest, keepLowest, sign, explode, successAt, fudge, faces);
             }
             else
             {
@@ -125,7 +141,8 @@ public sealed class DiceExpression
                 term = new DiceTerm(number, 0, 0, 0, sign);
             }
 
-            magnitude += term.Sides == 0 ? term.Count : (long)term.Kept * term.Sides * (term.Explode ? DiceTerm.MostExplosions + 1 : 1);
+            int biggest = term.Faces == null ? term.Sides : Math.Max(Math.Abs(term.LowFace), Math.Abs(term.HighFace));
+            magnitude += term.Sides == 0 ? term.Count : (long)term.Kept * biggest * (term.Explode ? DiceTerm.MostExplosions + 1 : 1);
             totalDice += term.Sides == 0 ? 0 : term.Count;
             // Room for critical doubling and modifiers, and a stop on absurd expressions.
             if (magnitude > int.MaxValue / 4 || totalDice > 10000 || expression.Terms.Count >= 128)
@@ -157,7 +174,11 @@ public sealed class DiceExpression
                 continue;
             }
             text.Append('d');
-            if (term.Fudge)
+            if (term.Faces != null)
+            {
+                text.Append('{').Append(string.Join(",", term.Faces)).Append('}');
+            }
+            else if (term.Fudge)
             {
                 text.Append('F');
             }
@@ -205,7 +226,7 @@ public sealed class DiceExpression
                 total += CheckKind.Spread(one).Sum(p => p.Key * p.Value);
                 continue;
             }
-            double face = term.Fudge ? 0 : (term.Sides + 1) / 2.0;
+            double face = term.Faces != null ? term.Faces.Average() : term.Fudge ? 0 : (term.Sides + 1) / 2.0;
             if (term.Explode)
             {
                 // each top face rolls again: s/(s-1) times the plain average, less the rolls past the limit
@@ -239,6 +260,27 @@ public sealed class DiceExpression
     private static int Low(DiceTerm term) => term.Sides == 0 ? term.Count : term.SuccessAt != 0 ? 0 : term.Kept * term.LowFace;
     private static int High(DiceTerm term) => term.Sides == 0 ? term.Count : term.SuccessAt != 0 ? term.Kept
         : term.Kept * term.HighFace * (term.Explode ? DiceTerm.MostExplosions + 1 : 1);
+
+    // Reads "{0,0,1,-1}" at pos: whole numbers, each -1000 to 1000, 1 to MostFaces of them. Null if it isn't.
+    private static int[]? ReadFaces(string text, ref int pos)
+    {
+        int close = text.IndexOf('}', pos);
+        if (close < 0)
+        {
+            return null;
+        }
+        string[] parts = text[(pos + 1)..close].Split(',');
+        pos = close + 1;
+        var faces = new int[parts.Length];
+        for (int i = 0; i < parts.Length; i++)
+        {
+            if (!int.TryParse(parts[i], System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out faces[i]) || Math.Abs(faces[i]) > 1000)
+            {
+                return null;
+            }
+        }
+        return faces.Length is >= 1 and <= DiceTerm.MostFaces ? faces : null;
+    }
 
     // Reads digits at pos; -1 if there are none or the number is too big to be dice.
     private static int ReadNumber(string text, ref int pos)

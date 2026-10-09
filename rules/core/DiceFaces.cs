@@ -4,11 +4,13 @@ namespace Yorehold.Rules;
 /// How a rolled die is shown thrown: its shape and the face that lands up. The result is the
 /// game's seeded roll; the throw only turns the die so that face shows. Shapes are the solids
 /// (d4, d6, d8, d10, d12, d20); a Fate die is a d6 marked +, - and blank; a d100 is a pair of d10s;
-/// any other size shows as a d20-like ball with its number.
+/// any other size shows as a d20-like ball with its number. A system's own die is the smallest
+/// solid its faces go into evenly (three faces on a d6, twice round), each face its number.
 /// </summary>
 public static class DiceFaces
 {
-    public sealed record Shown(string Shape, string Face, bool Kept);
+    /// <summary>Labels: the faces' own words, face 0 first, for a system's own die; null for a shape's usual ones.</summary>
+    public sealed record Shown(string Shape, string Face, bool Kept, IReadOnlyList<string>? Labels = null);
 
     public static readonly int[] Solids = { 4, 6, 8, 10, 12, 20 };
 
@@ -18,7 +20,13 @@ public static class DiceFaces
         var shown = new List<Shown>();
         foreach (DieRoll die in roll.Dice)
         {
-            if (die.Fudge)
+            if (die.Faces is int[] faces)
+            {
+                int solid = Solids.FirstOrDefault(s => s >= faces.Length && s % faces.Length == 0, 20);
+                string Label(int value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                shown.Add(new Shown("d" + solid, Label(die.Value), die.Kept, Enumerable.Range(0, solid).Select(i => Label(faces[i % faces.Length])).ToList()));
+            }
+            else if (die.Fudge)
             {
                 shown.Add(new Shown("dF", die.Value > 0 ? "+" : die.Value < 0 ? "-" : "", die.Kept));
             }

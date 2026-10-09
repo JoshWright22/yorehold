@@ -2,8 +2,8 @@ using System.Text;
 
 namespace Yorehold.Rules;
 
-/// <summary>One die as it fell. Fudge marks Fate's dice (-1, 0, +1) apart from a d3.</summary>
-public readonly record struct DieRoll(int Sides, int Value, bool Kept = true, bool Fudge = false);
+/// <summary>One die as it fell. Fudge marks Fate's dice (-1, 0, +1) apart from a d3; Faces, a system's own die (what each face counts).</summary>
+public readonly record struct DieRoll(int Sides, int Value, bool Kept = true, bool Fudge = false, int[]? Faces = null);
 
 public enum Advantage
 {
@@ -55,7 +55,7 @@ public sealed class RollResult
     {
         foreach (DieRoll die in Dice)
         {
-            if (die.Kept && die.Sides == 20)
+            if (die.Kept && die.Sides == 20 && die.Faces == null)
             {
                 return die.Value;
             }

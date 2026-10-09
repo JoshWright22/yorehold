@@ -12,6 +12,8 @@ public static class DiceText
 {
     private static readonly Regex Braces = new(@"\{([^{}]*)\}", RegexOptions.CultureInvariant);
     private static readonly Regex BarePath = new(@"@[A-Za-z][\w.\-]*", RegexOptions.CultureInvariant);
+    // a system's own die, "d{0,0,1,2}": whole numbers with commas between, never a formula
+    private static readonly Regex FaceList = new(@"^\s*-?\d+(\s*,\s*-?\d+)+\s*$", RegexOptions.CultureInvariant);
 
     // A Foundry "@" path outside braces is a formula of its own; spaces don't matter in dice.
     private static string Braced(string input)
@@ -41,10 +43,15 @@ public static class DiceText
         bool formulasRead = true;
         string plain = Braces.Replace(input, match =>
         {
+            if (FaceList.IsMatch(match.Groups[1].Value))
+            {
+                return match.Value;
+            }
             formulasRead &= Formula.Parse(match.Groups[1].Value, out _) != null;
             return "1";
         });
-        return formulasRead && !plain.Contains('{') && !plain.Contains('}') && DiceExpression.Parse(plain) != null;
+        // braces left over that aren't a die's faces don't parse as dice
+        return formulasRead && DiceExpression.Parse(plain) != null;
     }
 
     /// <summary>The dice with each formula in braces replaced by its whole value, from names.</summary>
@@ -55,8 +62,8 @@ public static class DiceText
         {
             return input;
         }
-        string filled = Braces.Replace(input, match =>
-            (Formula.Parse(match.Groups[1].Value, out _)?.Whole(names) ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        string filled = Braces.Replace(input, match => FaceList.IsMatch(match.Groups[1].Value) ? match.Value
+            : (Formula.Parse(match.Groups[1].Value, out _)?.Whole(names) ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture));
         // "+-2" from a negative modifier reads as "-2"
         return filled.Replace("+-", "-").Replace("--", "+");
     }

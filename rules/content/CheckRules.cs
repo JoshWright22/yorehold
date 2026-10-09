@@ -184,7 +184,7 @@ public sealed class CheckKind
         Array.Fill(faces, 1);
         while (true)
         {
-            IEnumerable<int> shown = faces.Select(f => term.Fudge ? f - 2 : f);
+            IEnumerable<int> shown = faces.Select(term.ValueOf);
             IEnumerable<int> kept = term.KeepHighest != 0 ? shown.OrderByDescending(f => f).Take(term.KeepHighest)
                 : term.KeepLowest != 0 ? shown.OrderBy(f => f).Take(term.KeepLowest)
                 : shown;

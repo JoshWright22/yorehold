@@ -19,14 +19,14 @@ public static class Dice
             for (int i = 0; i < term.Count; i++)
             {
                 int face = random.Range(1, term.Sides);
-                int value = term.Fudge ? face - 2 : face;
+                int value = term.ValueOf(face);
                 // an exploding die adds each roll again on its top face, up to a limit
                 for (int again = 0; term.Explode && face == term.Sides && again < DiceTerm.MostExplosions; again++)
                 {
                     face = random.Range(1, term.Sides);
                     value += face;
                 }
-                result.Dice.Add(new DieRoll(term.Sides, value, true, term.Fudge));
+                result.Dice.Add(new DieRoll(term.Sides, value, true, term.Fudge, term.Faces));
             }
 
             if (term.KeepHighest != 0 || term.KeepLowest != 0)
