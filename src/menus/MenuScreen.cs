@@ -49,6 +49,8 @@ public partial class MenuScreen : CanvasLayer
     public event Action<MenuOrder, string>? Ordered;
 
     public Page Showing { get; private set; } = Page.None;
+    /// <summary>The world being played, for where the pause page says the party is.</summary>
+    public Func<World?>? Playing { get; set; }
     public bool IsOpen => Showing != Page.None;
     /// <summary>Why a save can't be loaded right now (in a fight); empty when it can.</summary>
     public string LoadRefusal { get; set; } = "";
@@ -58,6 +60,8 @@ public partial class MenuScreen : CanvasLayer
     private Control _title = null!;
     private Label _name = null!;
     private Label _sub = null!;
+    private Font _subSpaced = null!;
+    private Font _subPlain = null!;
     private BannerView _banner = null!;
     private TextureRect _logo = null!;
     private Button _creditsLink = null!;
@@ -91,6 +95,8 @@ public partial class MenuScreen : CanvasLayer
         // the wordmark and the tagline are spaced out, as the design sets them
         Spaced(_name, 10);
         Spaced(_sub, 2);
+        _subSpaced = _sub.GetThemeFont("font");
+        _subPlain = ((FontVariation)_subSpaced).BaseFont;
         _banner = GetNode<BannerView>("Banner");
         _logo = GetNode<TextureRect>("Title/Logo");
         _creditsLink = GetNode<Button>("Title/Credits");
@@ -298,6 +304,39 @@ public partial class MenuScreen : CanvasLayer
         }
     }
 
+    // Where the party is: the adventure, the chapter and the round of a fight.
+    private string PausedWhere()
+    {
+        if (Playing?.Invoke() is not World world)
+        {
+            return "";
+        }
+        var parts = new List<string>();
+        if (world.Adventure is Adventure adventure && adventure.Title.Length > 0)
+        {
+            parts.Add(adventure.Title);
+        }
+        parts.Add(world.Chapter.Title);
+        if (world.Fighting)
+        {
+            parts.Add($"Round {Math.Max(1, world.Encounter!.Round)}");
+        }
+        return string.Join(" · ", parts.Where(p => p.Length > 0));
+    }
+
+    // How long ago the game last saved itself.
+    private string LastSaved()
+    {
+        if (Autosave() is not SaveSummary save || save.Written == default)
+        {
+            return "Not saved yet";
+        }
+        TimeSpan ago = DateTime.Now - save.Written;
+        string when = ago.TotalMinutes < 1 ? "just now" : ago.TotalHours < 1 ? $"{(int)ago.TotalMinutes} min ago"
+            : ago.TotalDays < 1 ? $"{(int)ago.TotalHours} h ago" : save.Written.ToString("d MMM, HH:mm");
+        return $"Last saved {when}";
+    }
+
     private SaveSummary? Autosave()
     {
         string path = Places.SaveFile();
@@ -310,9 +349,9 @@ public partial class MenuScreen : CanvasLayer
         if (Showing == Page.Pause)
         {
             _list.Add(new Entry("resume", "Resume", "Esc", true, ""));
-            _list.Add(new Entry("settings", "Settings", "", true, ""));
+            _list.Add(new Entry("settings", "Options", "", true, ""));
             _list.Add(new Entry("load", "Load", Count(_saves.Count, "save"), _saves.Count > 0, "There is no save yet."));
-            _list.Add(new Entry("quit", "Save and quit to title", "", true, ""));
+            _list.Add(new Entry("quit", "Save and quit", "to main menu", true, ""));
             return;
         }
         // Josh, 10/7: four buttons; what playing can start opens under Play
@@ -360,8 +399,10 @@ public partial class MenuScreen : CanvasLayer
         bool paused = Showing == Page.Pause;
         _name.Text = paused ? "PAUSED" : "YOREHOLD";
         _name.Visible = paused || !_logo.Visible;
-        _sub.Text = paused ? "THE ADVENTURE WAITS" : GameScreen.Sizes.Tagline.ToUpperInvariant();
-        _foot.Text = paused ? "" : App.Online.Status;
+        _sub.Text = paused ? PausedWhere() : GameScreen.Sizes.Tagline.ToUpperInvariant();
+        // the tagline is spaced capitals; where the party is reads as a plain line
+        _sub.AddThemeFontOverride("font", paused ? _subPlain : _subSpaced);
+        _foot.Text = paused ? LastSaved() : App.Online.Status;
         _online.Text = paused ? "" : $"Version {Rules.Version.Text}";
         if (_picked < 0 || _picked >= _list.Count)
         {

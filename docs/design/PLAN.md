@@ -73,7 +73,7 @@ Status: not started, in progress, matches, differs (with why).
 | Chest or shop | `game/08-chest-or-shop.png` | containers and merchants | not started | drag to buy, sell, take |
 | Spellbook | `game/09-spellbook.png` | `src/hud/SpellPanel.cs` | not started | drag to the hotbar |
 | Conversation | `game/10-conversation.png` | talk panel | not started | |
-| Pause | `game/11-pause.png` | `src/menus/MenuScreen.cs` (pause page) | not started | |
+| Pause | `game/11-pause.png` | `src/menus/MenuScreen.cs` (pause page) | matches but the online note | adventure, chapter and round under PAUSED; Options; Save and quit to main menu; last saved at the foot; the online-game note waits for online play |
 | Wordmark | `parts/00-wordmark.png`, `01-wordmark-small.png` | title band | not started | |
 | Chat closed and open | `parts/02-chat-closed.png`, `03-chat-open.png` | `src/hud/ChatPanel.cs` | not started | |
 | Editor toolbar | `parts/06-editor-toolbar.png` | `src/create/CreateScreen.cs` | not started | breadcrumb, mode tabs, Test play, Publish |

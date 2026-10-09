@@ -23,6 +23,7 @@ public partial class Main : Node
         App.Load();
         _menus = GetNode<MenuScreen>("Menus");
         _menus.Ordered += Order;
+        _menus.Playing = () => _play?.World;
         // one chat over every screen, so it carries on from the title into the game
         AddChild(new ChatPanel { Name = "Chat" });
 

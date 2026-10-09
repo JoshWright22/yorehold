@@ -49,8 +49,7 @@ public static class GameScreen
         var fact = new Label
         {
             Text = right,
-            // keys and counts in the number face
-            ThemeTypeVariation = "NumberLabel",
+            ThemeTypeVariation = FactFace(right),
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -78,7 +77,15 @@ public static class GameScreen
     }
 
     /// <summary>The fact or key shown on a big button's right.</summary>
-    public static void SetRight(Button button, string right) => button.GetChild<Label>(0).Text = right;
+    public static void SetRight(Button button, string right)
+    {
+        Label fact = button.GetChild<Label>(0);
+        fact.Text = right;
+        fact.ThemeTypeVariation = FactFace(right);
+    }
+
+    // keys and counts (Esc, Alt F4, 17) in the number face; words like "to main menu" in the plain one
+    private static string FactFace(string fact) => fact.Length <= 6 ? "NumberLabel" : "DimLabel";
 
     /// <summary>Greyed: its name in slate.</summary>
     /// <summary>Picked or not; a picked one's key turns dark to read on the amber.</summary>
