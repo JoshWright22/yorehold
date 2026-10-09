@@ -324,7 +324,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     each roll kind and action says which it is rolled against. AC stops being special.
     Done 10/8: `defences` as formulas, a roll kind's `defence`, an attack step's `against`; the
     AI, the aim, flanking and cover use whichever applies. Fate attacks meet Defend (the better of
-    Quick and Careful), no AC. Left: the aim's odds for an action naming another defence.
+    Quick and Careful), no AC. Done 10/9: the aim's odds follow the action's own attack: the
+    defence it names and the ability it rolls with (a spell attack uses the caster's bonus).
   - The character's data: a system declares its numbers in groups (abilities, skills,
     approaches), text fields (Fate's aspects and high concept) and lists. The sheet is drawn from
     those groups, not a fixed menu of sections.

@@ -188,4 +188,18 @@ public class DiceFacesTests
         Assert.True(world.Said("Ana rolls Strength save: "));
         Assert.Equal(2, world.Events.Count(e => e.Kind == WorldEventKind.Dice && e.Text == "open"));
     }
+
+    [Fact]
+    public void TheAimsOddsAreTheActionsOwnAttack()
+    {
+        using WorldFixture world = WorldFixture.Load("chapters/dnd5e-test", 2);
+        World w = world.World;
+        Assert.False(w.Fighting);
+        CharacterSheet cy = w.Creatures[2].Sheet;
+        int vex = Enumerable.Range(0, w.Creatures.Count).First(i => w.Creatures[i].Sheet.Name == "Vex");
+        CheckKind attack = w.Rules.Checks.Kind(CheckRules.Attack);
+        int ac = w.Creatures[vex].Sheet.AttackDefence(w.Rules);
+        Assert.Equal((float)attack.ChanceToPass(cy.SpellAttackModifier(w.Rules), ac, Advantage.None), w.HitChance(2, vex, "fire-bolt"), 4);
+        Assert.Equal((float)attack.ChanceToPass(cy.AttackModifier(w.Rules), ac, Advantage.None), w.HitChance(2, vex), 4);
+    }
 }

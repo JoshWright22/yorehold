@@ -165,9 +165,40 @@ public sealed partial class World
         }
         ActionDefinition? action = FindAction(actionId);
         CharacterSheet sheet = Creatures[attacker].Sheet;
-        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && RangeOf(attacker, action) > 1) : Creatures[target].Sheet.AttackDefence(Rules);
+        (int bonus, int ac) = AttackNumbers(attacker, target, action);
         // counted from the system's own dice and outcomes, so it is right for any of them
-        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null, Grid.Distance(CellOf(attacker), CellOf(target))));
+        return (float)Rules.Checks.Kind(CheckRules.Attack).ChanceToPass(bonus + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null, Grid.Distance(CellOf(attacker), CellOf(target))));
+    }
+
+    // The action's own attack, as its effect rolls it: the defence it names (`against`; else the
+    // system's for attacks) and the bonus of the ability it names ("caster" for a spell attack).
+    private (int Bonus, int Defence) AttackNumbers(int attacker, int target, ActionDefinition? action)
+    {
+        CharacterSheet sheet = Creatures[attacker].Sheet;
+        EffectStep? step = action == null ? null : AttackStep(action.Effect.Steps);
+        string defence = step?.Against ?? "";
+        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && RangeOf(attacker, action) > 1, defence)
+            : Creatures[target].Sheet.Defence(Rules, defence.Length > 0 ? defence : Rules.Checks.Kind(CheckRules.Attack).DefenceId);
+        int bonus = step?.Ability == "caster" ? sheet.SpellAttackModifier(Rules)
+            : step?.Ability is { Length: > 0 } ability ? sheet.AttackModifier(Rules, ability)
+            : sheet.AttackModifier(Rules);
+        return (bonus, ac);
+    }
+
+    private static EffectStep? AttackStep(List<EffectStep> steps)
+    {
+        foreach (EffectStep step in steps)
+        {
+            if (step.Kind == EffectKind.Roll && step.How == "attack")
+            {
+                return step;
+            }
+            if (AttackStep(step.Steps) is EffectStep inner)
+            {
+                return inner;
+            }
+        }
+        return null;
     }
 
     /// <summary>The same attack as HitChance, as the chance of each of the system's outcomes by id.</summary>
@@ -175,8 +206,8 @@ public sealed partial class World
     {
         ActionDefinition? action = FindAction(actionId ?? StrikeAction);
         CharacterSheet sheet = Creatures[attacker].Sheet;
-        int ac = Fighting ? AttackArmorClass(attacker, target, action != null && RangeOf(attacker, action) > 1) : Creatures[target].Sheet.AttackDefence(Rules);
-        return Rules.Checks.Kind(CheckRules.Attack).Odds(sheet.AttackModifier(Rules) + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null, Grid.Distance(CellOf(attacker), CellOf(target))));
+        (int bonus, int ac) = AttackNumbers(attacker, target, action);
+        return Rules.Checks.Kind(CheckRules.Attack).Odds(bonus + AttackPenaltyNow(attacker), ac, sheet.AttackAdvantage(Rules, Creatures[target].Sheet, Fighting ? PlaceConditions(attacker, target) : null, Grid.Distance(CellOf(attacker), CellOf(target))));
     }
 
     /// <summary>The same attack's odds as the aim shows them ("55%, 5% critical").</summary>
