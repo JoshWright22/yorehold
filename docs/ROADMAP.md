@@ -287,8 +287,11 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     steps, moments, the fixed core and how a draft is checked and measured.
   - Done 10/8: the forecast says when a fight is too hard (wins under 3 in 4, or loses a hero
     over a third of the time) or too easy (always won in two rounds unscathed); Create shows it.
+  - Done 10/9: a machine-readable schema beside the reference: `docs/schemas/ruleset.schema.json`,
+    its keys and their descriptions read from the "ruleset.json" table in RULES_LANGUAGE.md by
+    `make.py`, so the two can't drift; the four shipped systems pass it.
   - Left: the builder's balancing by forecast (and parties of a chosen level, not only the
-    chapter's own); a machine-readable schema beside the reference.
+    chapter's own); custom symbol faces in dice expressions (and R17's dice showing them).
   - Readable by the AI: the language has a schema and a reference written for people and for
     the story model, and every rule in a system carries a one-line plain description. The
     import (R13) writes systems in it, and the game checks the draft by loading and running it.

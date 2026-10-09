@@ -83,7 +83,7 @@ is named in the log and left out, so nothing goes missing quietly.
 feat, option, race, background, trigger, reaction, class). VS Code uses them in this repo through
 `.vscode/settings.json`; for a package folder of your own, copy `docs/schemas/vscode-settings.json`
 into its `.vscode/settings.json` with the paths pointed at the schemas. The editor then completes
-field names and flags mistakes as you type; the game's own check stays the last word.
+field names and flags mistakes as you type; the game's own check stays the last word. The system file itself has one too (`ruleset.schema.json`, for any `ruleset.json`), its keys described as in RULES_LANGUAGE.md.
 
 Not taken: Foundry's document ids and folder records (our file names are the ids), its
 per-document permission data, and its HTML descriptions (ours are plain words).
