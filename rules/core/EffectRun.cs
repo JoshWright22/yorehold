@@ -286,7 +286,8 @@ internal sealed class EffectRun
                     continue;
                 }
                 int value = Math.Max(1, step.Value + step.Scale.Value * ScaleSteps(step.Scale));
-                sheet.AddCondition(_rules, step.Id, step.Duration, value);
+                // a condition that saves at the caster's DC keeps this effect's
+                sheet.AddCondition(_rules, step.Id, step.Duration, value, _context.Dc);
                 Note(EffectEventKind.ConditionAdded, actor, step.Id, sheet.ConditionValue(step.Id));
             }
             break;

@@ -475,6 +475,21 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void HoldPersonSavesAgainstTheCastersDc()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");
+        World w = world.World;
+        int dc = w.Creatures[1].Sheet.DifficultyClass(w.Rules);
+        CharacterSheet goblin = w.Creatures[2].Sheet;
+        goblin.AddCondition(w.Rules, "held", 10, 1, dc);
+        Assert.Equal(dc, goblin.Conditions.Find(c => c.Id == "held")!.SaveDc);
+        // put on another way (no effect's DC), it keeps the definition's own
+        w.Creatures[3].Sheet.AddCondition(w.Rules, "held");
+        Assert.Equal(0, w.Creatures[3].Sheet.Conditions.Find(c => c.Id == "held")!.SaveDc);
+        Assert.True(w.Rules.Condition("held")!.SaveFromCaster);
+    }
+
+    [Fact]
     public void ATrollsWoundsClose()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard",

@@ -102,7 +102,11 @@
           "type": "string"
         },
         "dc": {
-          "type": "integer"
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "a number, or \"caster\": the DC of what put it on"
         }
       }
     },

@@ -11,6 +11,6 @@
   "hitsAreCritical": true,
   "save": {
     "ability": "wis",
-    "dc": 13
+    "dc": "caster"
   }
 }

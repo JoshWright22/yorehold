@@ -479,8 +479,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     beside them as critical hits; Shield cast as a reaction (a reaction may name a spell; the
     slot is spent); versatile weapons by the hands they leave free (`hands.free` in weapon dice).
   - Doesn't fit yet (back to the steps):
-    two-weapon fighting; Scorching Ray's extra ray per slot; Hold Person's repeat save at the
-    caster's DC (the held condition saves at 13). Then the rest of the SRD: all classes and
+    two-weapon fighting; Scorching Ray's extra ray per slot. Done 10/9: a condition's save may
+    be `"dc": "caster"`, kept from the effect that put it on (Hold Person's hold). Then the rest
+    of the SRD: all classes and
     levels, the spell list, the bestiary.
   - Done 10/8: ten spells for the 2nd and 3rd level slots (Inflict Wounds, Command, Scorching
     Ray, Shatter, Hold Person, Lesser Restoration, Fireball, Lightning Bolt, Mass Healing Word,

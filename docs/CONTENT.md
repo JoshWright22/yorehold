@@ -1072,7 +1072,7 @@ Each condition is one file in the ruleset folder, `conditions/<id>.json`, named 
 | `stacking` | Applying it again: `refresh` (default) restarts the duration, `longest` keeps the longer one, `value` adds the values up to `maxValue`. |
 | `maxValue`, `perValue`, `decay` | With `value` stacking: the highest value, whether `add` modifiers count once per point of value, and how much the value falls at the end of each round. |
 | `ends` | What ends it: `turnStart` or `turnEnd` (its own turn), `attack` (it attacks), `damage` (it is hit), `healed` (it is brought back above 0 HP), `move`, `rest`, `fightStart`, `fightEnd`. |
-| `save` | `{ "ability": "wis", "dc": 12 }`: a save at the end of each round that ends it on a success. |
+| `save` | `{ "ability": "wis", "dc": 12 }`: a save at the end of each round that ends it on a success. `"dc": "caster"` saves against the DC of the spell or effect that put it on (5e's Hold Person), kept with the condition; put on another way it has no DC to keep and uses 10. |
 | `removes` | Other conditions taken off when this one goes on. |
 
 A file with an unknown event or stacking, a save with an ability the ruleset lacks, or `removes` naming a condition that does not exist stops the chapter from loading and is named in the error.

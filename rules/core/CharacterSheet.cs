@@ -7,6 +7,8 @@ public sealed class ActiveCondition
     public int RoundsLeft { get; set; } = -1;
     /// <summary>How strongly, for conditions that stack by value (Frightened 2).</summary>
     public int Value { get; init; } = 1;
+    /// <summary>The DC its end-of-turn save is against, when its definition says "caster"; 0 for the definition's own.</summary>
+    public int SaveDc { get; init; }
 }
 
 /// <summary>
@@ -995,7 +997,7 @@ public sealed partial class CharacterSheet
     /// definition's own). One already there is refreshed, kept if it lasts longer, or raised by
     /// value, as its stacking says. Conditions it removes come off.
     /// </summary>
-    public void AddCondition(Ruleset rules, string id, int rounds = DefinedDuration, int value = 1)
+    public void AddCondition(Ruleset rules, string id, int rounds = DefinedDuration, int value = 1, int saveDc = 0)
     {
         ConditionDefinition? definition = rules.Condition(id);
         if (rounds == DefinedDuration)
@@ -1014,7 +1016,7 @@ public sealed partial class CharacterSheet
             value = definition.Stacking == ConditionStacking.Value ? Math.Min(definition.MaxValue, value + (old?.Value ?? 0)) : 1;
         }
         RemoveCondition(id); // whatever was there is replaced by what was just worked out
-        Conditions.Add(new ActiveCondition { Id = id, RoundsLeft = rounds, Value = value });
+        Conditions.Add(new ActiveCondition { Id = id, RoundsLeft = rounds, Value = value, SaveDc = definition?.SaveFromCaster == true ? saveDc : 0 });
         if (definition == null)
         {
             return;
@@ -1108,7 +1110,7 @@ public sealed partial class CharacterSheet
                 ended.Add(active.Id);
             }
             else if (definition.SaveAbility.Length > 0 && random != null
-                && rules.Checks.Passes(CheckRules.Save, RollSave(rules, definition.SaveAbility, Advantage.None, random), definition.SaveDc))
+                && rules.Checks.Passes(CheckRules.Save, RollSave(rules, definition.SaveAbility, Advantage.None, random), active.SaveDc > 0 ? active.SaveDc : definition.SaveDc))
             {
                 ended.Add(active.Id);
             }

@@ -109,7 +109,7 @@ KINDS = {
         "id": ID, "name": TEXT, "description": TEXT, "flags": TEXTS, "modifiers": MODIFIERS, "duration": INT,
         "ends": dict(TEXTS, description="events that end it: turnStart, turnEnd, attack, damage, move, rest, fightEnd, healed..."),
         "stacking": {"enum": ["refresh", "longest", "value"]}, "maxValue": INT, "perValue": BOOL, "decay": INT, "removes": IDS,
-        "save": {"type": "object", "properties": {"ability": TEXT, "dc": INT}},
+        "save": {"type": "object", "properties": {"ability": TEXT, "dc": {"type": ["integer", "string"], "description": "a number, or \"caster\": the DC of what put it on"}}},
         "advantageOnAttacks": BOOL, "disadvantageOnAttacks": BOOL, "attackersAdvantage": BOOL, "attackersDisadvantage": BOOL,
         "attackersWithin": INT, "attackersBeyond": {"type": ["string", "object"]}, "hitsAreCritical": BOOL, "attackersFlatCheck": INT,
         "advantageOnChecks": BOOL, "disadvantageOnChecks": BOOL,

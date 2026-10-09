@@ -53,6 +53,8 @@ public class ConditionDefinition
     /// <summary>A save at the end of each round that ends it. Empty = no save.</summary>
     public string SaveAbility { get; init; } = "";
     public int SaveDc { get; init; } = 10;
+    /// <summary>The save is against the DC of the effect that put it on (`"dc": "caster"`); SaveDc when it came another way.</summary>
+    public bool SaveFromCaster { get; init; }
     public List<string> Removes { get; init; } = new();
 
     public bool HasFlag(string flag) => Flags.Contains(flag);
@@ -84,11 +86,24 @@ public class ConditionDefinition
         }
         string saveAbility = "";
         int saveDc = 10;
+        bool saveFromCaster = false;
         if (node.Get("save") is ContentNode save)
         {
             save.RequireObject("needs an ability and a dc");
             saveAbility = save.At("ability").AsName();
-            saveDc = save.Int("dc", 10, -1000, 1000);
+            // "caster": the DC of whatever put it on (Hold Person's), kept with the condition
+            if (save.Get("dc") is ContentNode dc && dc.IsString)
+            {
+                if (dc.AsText() != "caster")
+                {
+                    throw save.Fail("dc", "is a number, or \"caster\" for the DC of whoever put it on");
+                }
+                saveFromCaster = true;
+            }
+            else
+            {
+                saveDc = save.Int("dc", 10, -1000, 1000);
+            }
         }
         return new ConditionDefinition
         {
@@ -116,6 +131,7 @@ public class ConditionDefinition
             Ends = ends,
             SaveAbility = saveAbility,
             SaveDc = saveDc,
+            SaveFromCaster = saveFromCaster,
             Removes = DifferentNames(node, "removes"),
         };
     }
