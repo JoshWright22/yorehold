@@ -105,6 +105,44 @@ public class FoundryImportTests
     }
 
     [Fact]
+    public void APf2eClassBecomesAClassWithRanksAndFeatRows()
+    {
+        // made-up class shaped like a pf2e class item
+        const string json = """
+            [
+              {"_id": "c2", "name": "Tide Caller", "type": "class", "system": {
+                "slug": "tide-caller", "hp": 8, "keyAbility": {"value": ["wis"]}, "perception": 2,
+                "savingThrows": {"fortitude": 1, "reflex": 1, "will": 2},
+                "attacks": {"simple": 1, "martial": 0, "unarmed": 1}, "defenses": {"unarmored": 1, "light": 1, "medium": 0, "heavy": 0},
+                "trainedSkills": {"value": ["nature"], "additional": 2},
+                "ancestryFeatLevels": {"value": [1, 5]}, "classFeatLevels": {"value": [1, 2]}, "skillFeatLevels": {"value": [2]},
+                "generalFeatLevels": {"value": [3]}, "skillIncreaseLevels": {"value": [3]},
+                "items": {"a": {"name": "Undertow", "level": 1, "uuid": "Compendium.x.Item.u1"}, "b": {"name": "Deep Calm", "level": 3, "uuid": "Compendium.x.Item.zz"}},
+                "traits": {"value": [], "rarity": "common"}}},
+              {"_id": "u1", "name": "Undertow", "type": "feat", "system": {"description": {"value": "<p>Pulls a foe.</p>"}, "traits": {"value": []}}}
+            ]
+            """;
+        FoundryImport import = FoundryImport.Read(json);
+        Assert.Equal(new[] { "classes/tide-caller.json" }, import.Files.Keys);
+        ClassDefinition caller = ClassDefinition.Read(Node(import, "classes/tide-caller.json"));
+        Assert.Equal((8, "wis"), (caller.HitDie, caller.DcAbility));
+        Assert.Equal("expert", caller.ProficiencyRanks["will"]);
+        Assert.Equal("trained", caller.ProficiencyRanks["weapons"]);
+        Assert.Equal("trained", caller.ProficiencyRanks["nature"]);
+        Assert.Equal(5, caller.Levels.Count);
+        Assert.Equal(new[] { "ancestry", "class" }, caller.Levels[0].Feats);
+        Assert.Equal(2, caller.Levels[0].Skills);
+        Assert.Equal("Pulls a foe.", caller.Levels[0].Features.Single().Description);
+        Assert.Equal(1, caller.Levels[2].Skills);
+        Assert.Equal("Deep Calm", caller.Levels[2].Features.Single().Name);
+        Assert.Contains(import.Report, line => line.Contains("Deep Calm") && line.Contains("name only"));
+
+        // the ranks and their targets are the pf2e system's own
+        RulesFolder rules = RulesFolder.Load(TestContent.Shipped(), "rulesets/pf2e");
+        ClassDefinition.CheckRanks(rules.Rules, caller.ProficiencyRanks, caller.DcAbility, "classes/tide-caller.json");
+    }
+
+    [Fact]
     public void A5eClassBecomesAClassWithItsLevelRows()
     {
         // made-up class: two features granted by id, one in the export and one not

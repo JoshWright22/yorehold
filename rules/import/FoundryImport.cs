@@ -54,6 +54,11 @@ public sealed class FoundryImport
                     import._granted.Add(GrantedId(item));
                 }
             }
+            // pf2e lists its features under items, each with the level it comes at
+            foreach (JsonObject item in (document["system"]?["items"] as JsonObject ?? new JsonObject()).Select(p => p.Value).OfType<JsonObject>())
+            {
+                import._granted.Add(GrantedId(item));
+            }
         }
         foreach (JsonObject document in documents)
         {
@@ -132,7 +137,10 @@ public sealed class FoundryImport
             case "action":
                 Write("feats", Feat(name, system, pf2e));
                 break;
-            case "class" when !pf2e:
+            case "class" when pf2e || system["savingThrows"] is JsonObject:
+                Write("classes", Pf2eClass(name, system));
+                break;
+            case "class":
                 Write("classes", Dnd5eClass(name, system));
                 break;
             case "npc":
@@ -384,19 +392,9 @@ public sealed class FoundryImport
                     Row(level)["features"] = features;
                     foreach (JsonNode? item in configuration["items"] as JsonArray ?? new JsonArray())
                     {
-                        string key = GrantedId(item);
-                        if (_documents.TryGetValue(key, out JsonObject? feat))
+                        if (Feature(name, GrantedId(item), "", level) is JsonObject feature)
                         {
-                            var feature = new JsonObject { ["id"] = Slug(Text(feat["name"])), ["name"] = Text(feat["name"]) };
-                            if (Plain(feat["system"]?["description"]?["value"]) is { Length: > 0 } about)
-                            {
-                                feature["description"] = about;
-                            }
                             features.Add(feature);
-                        }
-                        else
-                        {
-                            Report.Add($"{name}: a level {level} feature ({key}) isn't in this export; export it with the class to bring its name and words");
                         }
                     }
                     if (features.Count == 0)
@@ -444,6 +442,28 @@ public sealed class FoundryImport
             entry["levels"] = levels;
         }
         return entry;
+    }
+
+    // A class feature from the feat of that id in the same export; with only a name (pf2e lists
+    // one), that name and no words; with neither, a line in the report and nothing.
+    private JsonObject? Feature(string owner, string key, string named, int level)
+    {
+        if (_documents.TryGetValue(key, out JsonObject? feat))
+        {
+            var feature = new JsonObject { ["id"] = Slug(Text(feat["name"])), ["name"] = Text(feat["name"]) };
+            if (Plain(feat["system"]?["description"]?["value"]) is { Length: > 0 } about)
+            {
+                feature["description"] = about;
+            }
+            return feature;
+        }
+        if (named.Length > 0)
+        {
+            Report.Add($"{owner}: {named} (level {level}) isn't in this export; it comes with its name only");
+            return new JsonObject { ["id"] = Slug(named), ["name"] = named };
+        }
+        Report.Add($"{owner}: a level {level} feature ({key}) isn't in this export; export it with the class to bring its name and words");
+        return null;
     }
 
     // "saves:dex" is "dex", "armor:lgt" is "armor", "weapon:sim" is "weapons", "skills:ste" is "stealth"
@@ -553,6 +573,124 @@ public sealed class FoundryImport
             item["range"] = feet / 5;
         }
         return item;
+    }
+
+    // Foundry's pf2e proficiency numbers
+    private static readonly string[] Pf2eRanks = { "untrained", "trained", "expert", "master", "legendary" };
+
+    /// <summary>
+    /// A pf2e class item: HP per level, key ability, the first-level ranks it lists (perception,
+    /// saves, the best of its weapon and armour ranks, its trained skills), a row per level with
+    /// the feats it picks there and its skill increases, and its features by level (named from
+    /// the feats in the same export, else by the name it lists). Rank rises that features give
+    /// later are rule elements, named in the report.
+    /// </summary>
+    private JsonObject Pf2eClass(string name, JsonObject system)
+    {
+        string id = Text(system["slug"]) is { Length: > 0 } slug ? Slug(slug) : Slug(name);
+        var entry = new JsonObject { ["id"] = id, ["name"] = name };
+        if (Plain(system["description"]?["value"]) is { Length: > 0 } words)
+        {
+            entry["description"] = words;
+        }
+        entry["hitDie"] = Int(system["hp"]) ?? 8;
+        var keys = (system["keyAbility"]?["value"] as JsonArray ?? new JsonArray()).Select(Text).Where(k => k.Length > 0).ToList();
+        if (keys.Count > 0)
+        {
+            entry["dcAbility"] = keys[0];
+            if (keys.Count > 1)
+            {
+                Report.Add($"{name}: its key ability is one of {string.Join(", ", keys)}; {keys[0]} is taken");
+            }
+        }
+        string Rank(JsonNode? node) => Pf2eRanks[Math.Clamp(Int(node) ?? 0, 0, Pf2eRanks.Length - 1)];
+        int Best(JsonObject? group, params string[] names) => names.Max(n => Int(group?[n]) ?? 0);
+        var ranks = new JsonObject();
+        var proficiencies = new JsonArray();
+        void Set(string target, int number)
+        {
+            if (number > 0)
+            {
+                ranks[target] = Pf2eRanks[Math.Clamp(number, 0, Pf2eRanks.Length - 1)];
+            }
+        }
+        Set("perception", Int(system["perception"]) ?? 0);
+        foreach ((string save, JsonNode? rank) in system["savingThrows"] as JsonObject ?? new JsonObject())
+        {
+            Set(save, Int(rank) ?? 0);
+        }
+        int weapons = Best(system["attacks"] as JsonObject, "simple", "martial", "advanced");
+        Set("weapons", weapons);
+        int armour = Best(system["defenses"] as JsonObject, "light", "medium", "heavy");
+        Set("armor", armour);
+        if (Int(system["attacks"]?["simple"]) != Int(system["attacks"]?["martial"]))
+        {
+            Report.Add($"{name}: simple and martial weapons have different ranks; both are {Rank(weapons)} here");
+        }
+        ranks["dc"] = Pf2eRanks[Math.Clamp(Int(system["classDC"]) ?? 1, 1, Pf2eRanks.Length - 1)];
+        if (weapons > 0)
+        {
+            proficiencies.Add("weapons");
+        }
+        if (armour > 0)
+        {
+            proficiencies.Add("armor");
+        }
+        foreach (string skill in (system["trainedSkills"]?["value"] as JsonArray ?? new JsonArray()).Select(Text).Where(s => s.Length > 0))
+        {
+            ranks[Slug(skill)] = "trained";
+            proficiencies.Add(Slug(skill));
+        }
+        entry["proficiencyRanks"] = ranks;
+        entry["proficiencies"] = proficiencies;
+
+        var rows = new SortedDictionary<int, JsonObject>();
+        JsonObject Row(int level)
+        {
+            if (!rows.TryGetValue(level, out JsonObject? row))
+            {
+                rows[level] = row = new JsonObject();
+            }
+            return row;
+        }
+        if (Int(system["trainedSkills"]?["additional"]) is int additional and > 0)
+        {
+            Row(1)["skills"] = additional;
+        }
+        foreach ((string key, string kind) in new[] { ("ancestryFeatLevels", "ancestry"), ("classFeatLevels", "class"), ("skillFeatLevels", "skill"), ("generalFeatLevels", "general") })
+        {
+            foreach (int level in (system[key]?["value"] as JsonArray ?? new JsonArray()).Select(Int).OfType<int>().Where(l => l is >= 1 and <= 20))
+            {
+                var feats = Row(level)["feats"] as JsonArray ?? new JsonArray();
+                feats.Add(kind);
+                Row(level)["feats"] = feats;
+            }
+        }
+        foreach (int level in (system["skillIncreaseLevels"]?["value"] as JsonArray ?? new JsonArray()).Select(Int).OfType<int>().Where(l => l is >= 1 and <= 20))
+        {
+            Row(level)["skills"] = (Int(Row(level)["skills"]) ?? 0) + 1;
+        }
+        foreach (JsonObject item in (system["items"] as JsonObject ?? new JsonObject()).Select(p => p.Value).OfType<JsonObject>().OrderBy(i => Int(i["level"]) ?? 1))
+        {
+            int level = Math.Clamp(Int(item["level"]) ?? 1, 1, 20);
+            if (Feature(name, GrantedId(item), Text(item["name"]), level) is JsonObject feature)
+            {
+                var features = Row(level)["features"] as JsonArray ?? new JsonArray();
+                features.Add(feature);
+                Row(level)["features"] = features;
+            }
+        }
+        Report.Add($"{name}: ability boosts at 5, 10, 15 and 20 and rank rises from features are the system's or the features' own; add them to the level rows if this system's class files carry them");
+        if (rows.Count > 0)
+        {
+            var levels = new JsonArray();
+            for (int level = 1; level <= rows.Keys.Max(); level++)
+            {
+                levels.Add(rows.TryGetValue(level, out JsonObject? row) ? row : new JsonObject());
+            }
+            entry["levels"] = levels;
+        }
+        return entry;
     }
 
     private static void Traits(JsonObject item, JsonObject system)

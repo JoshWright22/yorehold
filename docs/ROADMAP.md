@@ -785,8 +785,8 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     armour, spells, feats and creatures from a creator's own exports, one undoable change, a log
     line for each thing left out. Done 10/9: dnd5e classes and their advancement (features from
     the same export, scale values, score improvements); scenes as maps; Active Effects of a
-    plain amount as modifiers, and worn equipment. Left: pf2e classes, effects that are
-    formulas, conditions.
+    plain amount as modifiers, and worn equipment; pf2e classes (ranks, feat rows, features).
+    Left: effects that are formulas, conditions, pf2e rule elements beyond FlatModifier.
   - Done 10/9: JSON schemas for twelve kinds (`docs/schemas/*.schema.json`, made by `make.py` from
     the readers' fields; every shipped file passes), wired into VS Code by `.vscode/settings.json`
     (`docs/schemas/vscode-settings.json` for a package folder of your own).
