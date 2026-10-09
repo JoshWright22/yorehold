@@ -128,6 +128,7 @@ public sealed partial class CreatePackage
         _history.MarkSaved();
         CloseDialogues();
         CloseCompendium();
+        CloseSystem();
         CloseCutscenes();
         CloseStory();
         _encounters.Clear();
@@ -386,7 +387,7 @@ public sealed partial class CreatePackage
                 hooks?.MarkSaved();
             }));
         }
-        if (!CutscenesToSave(changed) || !DialoguesToSave(changed) || !StoryToSave(changed) || !CompendiumToSave(changed))
+        if (!CutscenesToSave(changed) || !DialoguesToSave(changed) || !StoryToSave(changed) || !CompendiumToSave(changed) || !SystemToSave(changed))
         {
             return false;
         }

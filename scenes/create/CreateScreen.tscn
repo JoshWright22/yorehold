@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Theme" path="res://scenes/hud/hud-theme.tres" id="1"]
 [ext_resource type="Script" path="res://src/create/CreateScreen.cs" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://src/create/CompendiumModePanel.cs" id="7"]
 [ext_resource type="Script" path="res://src/create/CutsceneModePanel.cs" id="8"]
 [ext_resource type="Script" path="res://src/create/StoryModePanel.cs" id="9"]
+[ext_resource type="Script" path="res://src/create/SystemModePanel.cs" id="10"]
 
 [node name="CreateScreen" type="Control"]
 layout_mode = 3
@@ -104,6 +105,14 @@ theme_type_variation = &"TabButton"
 toggle_mode = true
 text = "Story"
 
+[node name="System" type="Button" parent="Editor/Top/Row"]
+custom_minimum_size = Vector2(110, 26)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TabButton"
+toggle_mode = true
+text = "System"
+
 [node name="Name" type="Label" parent="Editor/Top/Row"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -185,6 +194,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("9")
+
+[node name="System" type="HBoxContainer" parent="Editor/Body/Modes"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10")
 
 [node name="Problems" type="PanelContainer" parent="Editor/Body"]
 custom_minimum_size = Vector2(220, 0)

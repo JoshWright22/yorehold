@@ -72,6 +72,13 @@ public class ContentTests
                 throw new ContentException("create/compendium.json", "", error);
             }
         });
+        Try("create/system.json", () =>
+        {
+            if (!new SystemEditor(new History()).SetSections(files.ReadText("create/system.json"), out string error))
+            {
+                throw new ContentException("create/system.json", "", error);
+            }
+        });
         Try(OutlineSchemas.File, () => OutlineSchemas.Load(files));
         Try(ScreenSizes.File, () => ScreenSizes.Load(files));
         foreach (string table in files.List(SystemTable.Folder))

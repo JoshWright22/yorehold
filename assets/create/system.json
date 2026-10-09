@@ -1,0 +1,32 @@
+{
+  "sections": [
+    { "id": "basics", "name": "Name and scores", "keys": ["version", "id", "name", "modifierTable", "scoreMin", "scoreMax", "scoreMethods"] },
+    { "id": "abilities", "name": "Abilities and skills", "keys": ["abilities", "skills", "saves", "passiveBase"] },
+    { "id": "checks", "name": "Rolls and outcomes", "keys": ["checks", "baseDc", "trapFumble", "attackPenalty"] },
+    { "id": "proficiency", "name": "Proficiency", "keys": ["proficiencyByLevel", "proficiencyRanks", "proficientRank", "untrainedRank"] },
+    { "id": "defences", "name": "Defences", "keys": ["baseArmorClass", "armorClassAbility", "defences"] },
+    { "id": "tracks", "name": "Hit points, tracks and death", "keys": ["defaultHitDie", "hitDieByClass", "tracks", "death"] },
+    { "id": "turns", "name": "Turns and actions", "keys": ["turnOrder", "turnWords", "actionsPerTurn", "bonusActions", "freeMove", "strikeCostsHands", "sharedTurns", "feetPerSquare"] },
+    { "id": "formulas", "name": "Sheet formulas and fields", "keys": ["formulas", "fields", "sheet"] },
+    { "id": "growth", "name": "Making and levelling heroes", "keys": ["roles", "creation", "xpForLevel", "advancement", "featKinds", "optionKinds"] },
+    { "id": "rests", "name": "Rests and after a fight", "keys": ["rests", "afterVictory", "reviveAfterVictory", "revivePrice", "reviveHp", "companions", "carryPerStrength", "magicItemLimit"] }
+  ],
+  "blank": {
+    "version": 1,
+    "id": "new-system",
+    "name": "New system",
+    "abilities": [
+      { "id": "body", "name": "Body" },
+      { "id": "mind", "name": "Mind" }
+    ],
+    "skills": [],
+    "scoreMin": 1,
+    "scoreMax": 20,
+    "baseArmorClass": 10,
+    "baseDc": 10,
+    "defaultHitDie": 8,
+    "actionsPerTurn": 1,
+    "bonusActions": false,
+    "freeMove": true
+  }
+}

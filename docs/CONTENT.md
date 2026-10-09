@@ -142,6 +142,16 @@ What the port reads so far, and where it differs:
   and "The next step waits for it" is a toggle. The preview draws the fade in palette ink with the
   file's alpha, the way play does, whatever colour the file names.
 - Story mode ("Planning the story in Create") works as described, with `story.json` in the same format.
+- System mode edits the `ruleset.json` the package's first chapter plays by (the `ruleset` it names,
+  else `rulesets/yorehold`). A package without its own shows the game's, and its first saved change
+  writes the package's own copy over it; the system's classes, creatures and spells still come from
+  the game. The file is shown a section at a time as JSON; `create/system.json` lists the sections
+  (`sections`: `id`, `name` and the top-level `keys` each holds; keys none names fall in Other) and
+  the `blank` system "A blank system" starts from. A typed section is taken only when the whole file
+  still reads as a ruleset, and goes on the undo history. The bench beside it plays the system as it
+  is on screen, saved or not: the chance each roll kind passes for modifiers +0 to +10 against DCs
+  10 to 25, and a duel (a hero of a class at a level against one to six of a creature, on an open
+  floor, played out 20 times by the AI, in a scratch chapter of its own).
 - Voice lines ("Voice lines in Create") use the same voice file, `create/voice.json` and
   `voice/vocabulary.txt`. Match to line, Use as line, Look again and the SRT and VTT copies work. This
   port can't listen to a recording yet: it has no speech model, so Import is greyed and says so. When
@@ -187,6 +197,7 @@ rulesets/my-rules.json         optional custom rules, as one file or a folder li
 ui/theme.json                  colors and frame styling
 create/compendium.json         the game's own: the forms of Create's Compendium mode
 create/voice.json              the game's own: settings for voice lines in Create
+create/system.json             the game's own: System mode's sections and blank system
 voice/wren.hello.wav           optional recorded lines and their words with timings (see Voice lines in Create)
 voice/wren.hello.voice.json
 voice/vocabulary.txt
