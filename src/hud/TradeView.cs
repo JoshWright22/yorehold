@@ -85,6 +85,8 @@ public partial class TradeView : Control, IGearCells
         _body.OffsetRight = -8;
         _body.OffsetBottom = -8;
         _said = new Label { ThemeTypeVariation = "WarnLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        // in the tree from the start (the page takes it when it is built), so it is freed with the screen
+        _body.AddChild(_said);
     }
 
     /// <summary>Opens on a source: "pile:2" or "shop:0". Returns false when there is none such.</summary>
