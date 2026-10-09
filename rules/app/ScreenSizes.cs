@@ -15,13 +15,15 @@ public sealed class ScreenSizes
     public float Gap { get; init; } = 6;
     public float Margin { get; init; } = 48;
     public double BannerSeconds { get; init; } = 8;
+    /// <summary>The line under the game's name on the title.</summary>
+    public string Tagline { get; init; } = "";
 
     public static ScreenSizes Load(ContentFiles files) => files.Exists(File) ? Read(ContentNode.Read(files, File)) : new ScreenSizes();
 
     public static ScreenSizes Read(ContentNode node)
     {
         node.RequireObject("screen sizes are a JSON object");
-        node.Only("bandWidth", "buttonHeight", "buttonFont", "headingFont", "gap", "margin", "bannerSeconds");
+        node.Only("bandWidth", "buttonHeight", "buttonFont", "headingFont", "gap", "margin", "bannerSeconds", "tagline");
         return new ScreenSizes
         {
             BandWidth = (float)node.Number("bandWidth", 440, 200, 1200),
@@ -31,6 +33,7 @@ public sealed class ScreenSizes
             Gap = (float)node.Number("gap", 6, 0, 100),
             Margin = (float)node.Number("margin", 48, 0, 400),
             BannerSeconds = node.Number("bannerSeconds", 8, 1, 600),
+            Tagline = node.Text("tagline", "", 120),
         };
     }
 }

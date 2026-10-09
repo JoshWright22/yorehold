@@ -63,7 +63,7 @@ Status: not started, in progress, matches, differs (with why).
 | Page | Picture | Game screen or file | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Game flow | `game/00-flow.png` | screen order | not started | Lobby between the menu and play is new |
-| Main menu | `game/01-main-menu.png` | `src/menus/MenuScreen.cs` | not started | amber Play, keys shown on the right, global chat open, art card at the foot |
+| Main menu | `game/01-main-menu.png` | `src/menus/MenuScreen.cs` | done but the chat | 384 px band, spaced wordmark and tagline, amber Play, keys P/E/O/Alt F4 (pressable), version and sign-in at the foot, art card only without art; the docked chat column comes with the play screen's chat |
 | Lobby | `game/02-lobby.png` | new screen | not started | seats, ready, invite |
 | Character creation | `game/03-character-creation.png` | `src/characters/CharacterScreen.cs` | not started | 8 steps |
 | Portrait crop | `game/04-portrait-crop.png` | new screen | not started | one 3:4 crop |

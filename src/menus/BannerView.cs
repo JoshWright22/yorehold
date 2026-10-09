@@ -16,6 +16,11 @@ public partial class BannerView : Control
     [Export] public Color Fill { get; set; } = Palette.Night;
 
     private readonly List<string> _pictures = new();
+
+    /// <summary>The players' art packs bring pictures to show.</summary>
+    public bool HasPictures => _pictures.Count > 0;
+    /// <summary>How long each picture stays.</summary>
+    public double Seconds => _seconds;
     private ContentFiles? _files;
     private int _shown;
     private double _clock;

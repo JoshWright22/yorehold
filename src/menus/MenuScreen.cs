@@ -88,6 +88,9 @@ public partial class MenuScreen : CanvasLayer
         _title = GetNode<Control>("Title");
         _name = GetNode<Label>("Title/Name");
         _sub = GetNode<Label>("Title/Sub");
+        // the wordmark and the tagline are spaced out, as the design sets them
+        Spaced(_name, 10);
+        Spaced(_sub, 2);
         _banner = GetNode<BannerView>("Banner");
         _logo = GetNode<TextureRect>("Title/Logo");
         _creditsLink = GetNode<Button>("Title/Credits");
@@ -154,8 +157,9 @@ public partial class MenuScreen : CanvasLayer
         _back.Visible = page != Page.Pause;
         _back.Color = Palette.Ink;
         _creditsLink.Visible = page == Page.Title;
-        // paused, the card would sit on the hotbar and only say what the buttons say
-        GetNode<Control>("Title/Page").Visible = page != Page.Pause;
+        // paused, the card would sit on the hotbar and only say what the buttons say; on the title it
+        // only says where pictures come from, while there are none
+        GetNode<Control>("Title/Page").Visible = page != Page.Pause && !(page == Page.Title && _banner.HasPictures);
         Texture2D? logo = GameScreen.Logo();
         _logo.Texture = logo;
         _logo.Visible = logo != null && page == Page.Title;
@@ -247,6 +251,16 @@ public partial class MenuScreen : CanvasLayer
             case Key.Enter or Key.KpEnter when Showing == Page.Load:
                 _load.LoadPicked();
                 break;
+            // the keys the title's buttons show
+            case Key.P or Key.E or Key.O when Showing == Page.Title && !key.CtrlPressed && !key.AltPressed:
+                string id = key.Keycode == Key.P ? "play" : key.Keycode == Key.E ? "create" : "settings";
+                int at = _list.FindIndex(e => e.Id == id);
+                if (at >= 0)
+                {
+                    _picked = at;
+                    Press(at);
+                }
+                break;
         }
     }
 
@@ -302,7 +316,8 @@ public partial class MenuScreen : CanvasLayer
             return;
         }
         // Josh, 10/7: four buttons; what playing can start opens under Play
-        _list.Add(new Entry("play", "Play", _playOpen ? "" : "continue, new, load", true, ""));
+        // the facts on the four are their keys, as on the design's title
+        _list.Add(new Entry("play", "Play", "P", true, ""));
         if (_playOpen)
         {
             SaveSummary? save = Autosave();
@@ -314,9 +329,9 @@ public partial class MenuScreen : CanvasLayer
             _list.Add(new Entry("load", "Load", Count(_saves.Count, "save"), _saves.Count > 0, "There is no save yet.", true));
             _list.Add(new Entry("characters", "Characters", LibraryFact(), true, "", true));
         }
-        _list.Add(new Entry("create", "Edit", "make adventures", true, ""));
-        _list.Add(new Entry("settings", "Options", "", true, ""));
-        _list.Add(new Entry("exit", "Exit", "", true, ""));
+        _list.Add(new Entry("create", "Edit", "E", true, ""));
+        _list.Add(new Entry("settings", "Options", "O", true, ""));
+        _list.Add(new Entry("exit", "Exit", "Alt F4", true, ""));
     }
 
     private static string Count(int count, string what)
@@ -345,9 +360,9 @@ public partial class MenuScreen : CanvasLayer
         bool paused = Showing == Page.Pause;
         _name.Text = paused ? "PAUSED" : "YOREHOLD";
         _name.Visible = paused || !_logo.Visible;
-        _sub.Text = paused ? "The adventure waits." : $"Version {Rules.Version.Text}";
-        _foot.Text = paused ? "" : _contentLine;
-        _online.Text = paused ? "" : App.Online.Status;
+        _sub.Text = paused ? "THE ADVENTURE WAITS" : GameScreen.Sizes.Tagline.ToUpperInvariant();
+        _foot.Text = paused ? "" : App.Online.Status;
+        _online.Text = paused ? "" : $"Version {Rules.Version.Text}";
         if (_picked < 0 || _picked >= _list.Count)
         {
             _picked = _list.FindIndex(e => e.Enabled);
@@ -389,10 +404,12 @@ public partial class MenuScreen : CanvasLayer
         }
         for (int i = 0; i < _buttons.Count; i++)
         {
-            _buttons[i].SetPressedNoSignal(i == _picked);
+            GameScreen.SetPicked(_buttons[i], i == _picked);
         }
 
-        string page = _picked >= 0 && _picked < _list.Count ? PageFor(_list[_picked]) : "";
+        // the title's card only says where its pictures come from; the buttons say the rest
+        string page = Showing == Page.Title ? NoArtPage()
+            : _picked >= 0 && _picked < _list.Count ? PageFor(_list[_picked]) : "";
         if (page != _pageShown)
         {
             _pageShown = page;
@@ -441,6 +458,14 @@ public partial class MenuScreen : CanvasLayer
             case "settings": Open(Page.Settings); break;
         }
     }
+
+    private static void Spaced(Label label, int pixels) =>
+        label.AddThemeFontOverride("font", new FontVariation { BaseFont = label.GetThemeFont("font"), SpacingGlyph = pixels });
+
+    private string NoArtPage() =>
+        new BookPage().Title("No player art yet").Rule()
+            .Text($"Pictures from your installed art packs show here and change every {_banner.Seconds:0} seconds. Add packs in Options.")
+            .ToString();
 
     // What the picked entry is, as a book page: the save for Continue, the adventure for a new one.
     private string PageFor(Entry entry)

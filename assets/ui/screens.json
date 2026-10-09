@@ -1,9 +1,10 @@
 {
-  "bandWidth": 440,
-  "buttonHeight": 50,
-  "buttonFont": 22,
-  "headingFont": 60,
-  "gap": 6,
-  "margin": 48,
-  "bannerSeconds": 8
+  "bandWidth": 384,
+  "buttonHeight": 56,
+  "buttonFont": 20,
+  "headingFont": 32,
+  "gap": 8,
+  "margin": 40,
+  "bannerSeconds": 8,
+  "tagline": "Tabletop adventures on a d20"
 }

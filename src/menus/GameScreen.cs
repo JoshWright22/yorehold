@@ -32,21 +32,25 @@ public static class GameScreen
             Alignment = HorizontalAlignment.Left,
             CustomMinimumSize = new Vector2(0, Sizes.ButtonHeight),
             FocusMode = Control.FocusModeEnum.None,
+            // the bold face of the main action; the boxes and colours below are this button's own
+            ThemeTypeVariation = "MainButton",
         };
         button.AddThemeFontSizeOverride("font_size", Sizes.ButtonFont);
         button.AddThemeStyleboxOverride("normal", Box(Palette.Ink, Palette.Iron));
         button.AddThemeStyleboxOverride("hover", Box(Palette.Dusk, Palette.Slate));
-        button.AddThemeStyleboxOverride("pressed", Box(Palette.Dusk, Palette.Straw));
-        button.AddThemeStyleboxOverride("hover_pressed", Box(Palette.Dusk, Palette.Straw));
+        // the picked one is filled in amber, as the design draws the main action
+        button.AddThemeStyleboxOverride("pressed", Box(Palette.Straw, Palette.Straw));
+        button.AddThemeStyleboxOverride("hover_pressed", Box(Palette.Straw, Palette.Straw));
         button.AddThemeStyleboxOverride("disabled", Box(Palette.Ink, Palette.Iron));
         button.AddThemeColorOverride("font_color", Palette.Bone);
         button.AddThemeColorOverride("font_hover_color", Palette.Bone);
-        button.AddThemeColorOverride("font_pressed_color", Palette.Straw);
-        button.AddThemeColorOverride("font_hover_pressed_color", Palette.Straw);
+        button.AddThemeColorOverride("font_pressed_color", Palette.Night);
+        button.AddThemeColorOverride("font_hover_pressed_color", Palette.Night);
         var fact = new Label
         {
             Text = right,
-            ThemeTypeVariation = "DimLabel",
+            // keys and counts in the number face
+            ThemeTypeVariation = "NumberLabel",
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -77,6 +81,21 @@ public static class GameScreen
     public static void SetRight(Button button, string right) => button.GetChild<Label>(0).Text = right;
 
     /// <summary>Greyed: its name in slate.</summary>
+    /// <summary>Picked or not; a picked one's key turns dark to read on the amber.</summary>
+    public static void SetPicked(Button button, bool picked)
+    {
+        button.SetPressedNoSignal(picked);
+        Label fact = button.GetChild<Label>(0);
+        if (picked)
+        {
+            fact.AddThemeColorOverride("font_color", Palette.Night);
+        }
+        else
+        {
+            fact.RemoveThemeColorOverride("font_color");
+        }
+    }
+
     public static void SetEnabled(Button button, bool enabled)
     {
         button.AddThemeColorOverride("font_color", enabled ? Palette.Bone : Palette.Slate);
