@@ -29,6 +29,8 @@ public partial class PlayHud : Control
 
     public event Action<string>? ActionPressed;
     public event Action? EndTurnPressed;
+    /// <summary>A die to roll in the open: its sides, and the hero shown on the bar.</summary>
+    public event Action<int, int>? DieRolled;
     /// <summary>A party card or a card in the turn order.</summary>
     public event Action<int>? CreaturePressed;
     /// <summary>True for use it, false for pass.</summary>
@@ -128,6 +130,40 @@ public partial class PlayHud : Control
     {
         _top.OffsetLeft = -200 - right / 2;
         _top.OffsetRight = 200 - right / 2;
+        _openDice.OffsetRight = -right - 80;
+        _openDice.Visible = _bottom.Visible;
+    }
+
+    private HBoxContainer _openDice = null!;
+
+    // d4 to d20 over the map's lower right, for a roll the rules didn't ask for
+    private void MakeOpenDice()
+    {
+        _openDice = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore, GrowHorizontal = GrowDirection.Begin, GrowVertical = GrowDirection.Begin };
+        _openDice.AddThemeConstantOverride("separation", 4);
+        AddChild(_openDice);
+        _openDice.SetAnchorsAndOffsetsPreset(LayoutPreset.BottomRight, LayoutPresetMode.KeepSize);
+        _openDice.OffsetBottom = -212;
+        _openDice.OffsetTop = -240;
+        foreach (int sides in new[] { 4, 6, 8, 10, 12, 20 })
+        {
+            var die = new Button { Name = $"D{sides}", Text = $"d{sides}", FocusMode = FocusModeEnum.None, ThemeTypeVariation = "MainButton", CustomMinimumSize = new Vector2(36, 28),
+                TooltipText = $"Roll a d{sides} for everyone to see" };
+            die.AddThemeStyleboxOverride("normal", GameScreen.Box(Palette.Ink, Palette.Slate));
+            die.AddThemeStyleboxOverride("hover", GameScreen.Box(Palette.Dusk, Palette.Ash));
+            die.AddThemeStyleboxOverride("pressed", GameScreen.Box(Palette.Dusk, Palette.Straw));
+            foreach (string state in new[] { "font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color" })
+            {
+                die.AddThemeColorOverride(state, Palette.Bone);
+            }
+            die.AddThemeFontOverride("font", GetThemeFont("font", "NumberLabel"));
+            die.AddThemeFontSizeOverride("font_size", 13);
+            die.Pressed += () => DieRolled?.Invoke(sides, _barHero);
+            _openDice.AddChild(die);
+        }
+        var say = new Label { Text = "roll for everyone to see", ThemeTypeVariation = "DimLabel", VerticalAlignment = VerticalAlignment.Center };
+        say.AddThemeFontSizeOverride("font_size", 12);
+        _openDice.AddChild(say);
     }
 
     public override void _ExitTree()
@@ -140,6 +176,7 @@ public partial class PlayHud : Control
         _party = GetNode<VBoxContainer>("Party");
         _partyCount = GetNode<Label>("PartyHead/Count");
         _top = GetNode<Control>("Top");
+        MakeOpenDice();
         _round = GetNode<Label>("Top/Initiative/Row/Head/Round");
         _cards = GetNode<HBoxContainer>("Top/Initiative/Row/Cards");
         _turn = GetNode<Label>("Top/Initiative/Row/Head/Turn");

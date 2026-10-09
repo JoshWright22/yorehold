@@ -275,6 +275,7 @@ public partial class PlayScreen : Node2D
             _hud.Panels.SpellOrdered += Order;
             _hud.Panels.CampOrdered += Order;
             _hud.Panels.ReplyPressed += index => _world?.Reply(index, _world.LeaderIndex());
+            _hud.Panels.DieRolled += (sides, who) => _world?.RollInOpen(who, sides);
             _hud.Panels.BackPressed += () => _world?.ReturnFromWipe();
             _hud.Panels.TradePressed += Trade;
             _hud.Panels.HotbarChanged += edit =>
@@ -314,6 +315,8 @@ public partial class PlayScreen : Node2D
 
     public override void _Process(double delta)
     {
+        // the dice land on the map, not under the chat column beside it
+        _dice.OffsetRight = ChatPanel.Current?.Open == true ? -ChatPanel.Width : 0;
         if (_world == null)
         {
             return;

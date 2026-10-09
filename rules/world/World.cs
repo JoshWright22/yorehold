@@ -233,6 +233,16 @@ public sealed partial class World
         _events.Add(new WorldEvent(WorldEventKind.Log, line));
     }
 
+    /// <summary>A die rolled for everyone to see (the play screen's d4 to d20 buttons): thrown, then said in the log.</summary>
+    public RollResult RollInOpen(int who, int sides)
+    {
+        RollResult roll = Dice.Roll($"1d{Math.Clamp(sides, 2, 100)}", NextRandom(0x09e7d1ceUL));
+        string name = who >= 0 && who < Creatures.Count ? Creatures[who].Sheet.Name : "The party";
+        _events.Add(new WorldEvent(WorldEventKind.Dice, "open") { Roll = roll, Who = who });
+        Say($"{name} rolls d{sides}: {roll.Total}");
+        return roll;
+    }
+
     /// <summary>Starts the chapter again from its files. Every roll that follows comes from seed.</summary>
     public void NewAdventure(ulong seed)
     {

@@ -148,4 +148,17 @@ public class DiceFacesTests
         Assert.True(world.TurnTo(0) && world.Use("sense", 0), world.World.Refusal);
         Assert.DoesNotContain(world.Events, e => e.Kind == WorldEventKind.Dice);
     }
+
+    [Fact]
+    public void ADieRolledInTheOpenIsThrownAndSaid()
+    {
+        using WorldFixture world = WorldFixture.Load("chapters/goblin-keep", 3);
+        RollResult roll = world.World.RollInOpen(0, 20);
+        Assert.InRange(roll.Total, 1, 20);
+        Assert.True(world.Said($"rolls d20: {roll.Total}"));
+        WorldEvent thrown = Assert.Single(world.Events, e => e.Kind == WorldEventKind.Dice && e.Text == "open");
+        Assert.Single(DiceFaces.Of(thrown.Roll!));
+        // no one acted on anyone, so no blow plays after it
+        Assert.Equal(-1, thrown.By);
+    }
 }

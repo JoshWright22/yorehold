@@ -16,8 +16,10 @@ namespace Yorehold;
 /// </summary>
 public partial class DiceTray : SubViewportContainer
 {
-    // the screen as a table, in the tray's own units: 16 by 9 like the window, floor at y = 0
-    private static readonly DiceTumble.Table Felt = new(8f, 4.5f);
+    // the screen as a table, in the tray's own units: 9 deep and as wide as the tray's shape (16
+    // across a full 16:9 window, less beside the chat column), floor at y = 0
+    private const float HalfDepth = 4.5f;
+    private DiceTumble.Table Felt => new(HalfDepth * Mathf.Max(1f, Size.X / Mathf.Max(1f, Size.Y)), HalfDepth);
     private const float DieSize = 0.42f;
     // high above with a narrow lens, so the floor fills the screen and the dice barely lean
     private const float CameraHeight = 30f;
@@ -65,7 +67,7 @@ public partial class DiceTray : SubViewportContainer
         _view = new SubViewport { TransparentBg = true, OwnWorld3D = true, Size = new Vector2I(1280, 720), RenderTargetUpdateMode = SubViewport.UpdateMode.WhenVisible, Msaa3D = Viewport.Msaa.Msaa4X };
         AddChild(_view);
         // straight down at the screen-table; its height and lens make the floor exactly the screen
-        var camera = new Camera3D { Fov = 2 * Mathf.RadToDeg(Mathf.Atan(Felt.HalfDepth / CameraHeight)), KeepAspect = Camera3D.KeepAspectEnum.Height };
+        var camera = new Camera3D { Fov = 2 * Mathf.RadToDeg(Mathf.Atan(HalfDepth / CameraHeight)), KeepAspect = Camera3D.KeepAspectEnum.Height };
         _view.AddChild(camera);
         camera.LookAtFromPosition(new Vector3(0, CameraHeight, 0), Vector3.Zero, Vector3.Forward);
         _view.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-60, -25, 0), LightEnergy = 1.1f, ShadowEnabled = true });
@@ -85,7 +87,7 @@ public partial class DiceTray : SubViewportContainer
     // The floor the dice land on: unseen itself, it only takes their shadows, so the dice sit on the map.
     private static Node3D ShadowCatcher() => new MeshInstance3D
     {
-        Mesh = new PlaneMesh { Size = new Vector2(Felt.HalfWidth * 2, Felt.HalfDepth * 2) },
+        Mesh = new PlaneMesh { Size = new Vector2(HalfDepth * 8, HalfDepth * 2) },
         MaterialOverride = new StandardMaterial3D { ShadowToOpacity = true, AlbedoColor = new Color(Palette.Night, 0.55f), Transparency = BaseMaterial3D.TransparencyEnum.Alpha },
     };
 
