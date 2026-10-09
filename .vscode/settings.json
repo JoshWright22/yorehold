@@ -71,6 +71,12 @@
         "**/classes/*.json"
       ],
       "url": "./docs/schemas/class.schema.json"
+    },
+    {
+      "fileMatch": [
+        "**/ruleset.json"
+      ],
+      "url": "./docs/schemas/ruleset.schema.json"
     }
   ]
 }

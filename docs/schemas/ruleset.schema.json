@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A Yorehold rules system (ruleset.json)",
+  "description": "Read by rules/content/Ruleset.cs; the whole language is docs/RULES_LANGUAGE.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "abilities": {
+      "description": "The numbers a character has (Fate's approaches are its abilities)."
+    },
+    "actionsPerTurn": {
+      "description": "What a turn holds."
+    },
+    "advancement": {
+      "description": "How characters go up: experience, milestones, or not at all."
+    },
+    "afterVictory": {
+      "description": "Recovery."
+    },
+    "armorClassAbility": {
+      "description": "see docs/RULES_LANGUAGE.md"
+    },
+    "attackPenalty": {
+      "description": "A formula from attacks made this turn (PF2e's multiple attack penalty)."
+    },
+    "baseArmorClass": {
+      "description": "see docs/RULES_LANGUAGE.md"
+    },
+    "baseDc": {
+      "description": "DCs and passive scores; when a trap check fumbles."
+    },
+    "bonusActions": {
+      "description": "What a turn holds."
+    },
+    "carryPerStrength": {
+      "description": "Carrying and distance."
+    },
+    "checks": {
+      "description": "Roll kinds (attack, check, save, initiative and any of the system's own): dice, dice with advantage and disadvantage, outcomes worst to best, the degree formula that picks one, opposed, the defence attacks meet, and criticalDamage."
+    },
+    "companions": {
+      "description": "Who joins the party and how."
+    },
+    "creation": {
+      "description": "The steps of making a character and the parts each picks; what parts are called."
+    },
+    "damageTaken": {
+      "description": "Resistances, weaknesses and immunities."
+    },
+    "death": {
+      "description": "Death saves or a dying track; the downed, dying, stable and dead conditions; what clears wounded."
+    },
+    "defaultHitDie": {
+      "description": "How characters go up: experience, milestones, or not at all."
+    },
+    "defences": {
+      "description": "Defences beside ac, each a formula (Fate's Defend)."
+    },
+    "encumberedAt": {
+      "description": "Carrying and distance."
+    },
+    "encumberedSpeed": {
+      "description": "Carrying and distance."
+    },
+    "featKinds": {
+      "description": "Kinds of feat; kinds of pick beside race and class (PF2e's heritage)."
+    },
+    "feetPerSquare": {
+      "description": "Carrying and distance."
+    },
+    "fields": {
+      "description": "Words a character is made of (Fate's high concept, trouble, aspects)."
+    },
+    "formulas": {
+      "description": "Resistances, weaknesses and immunities."
+    },
+    "freeMove": {
+      "description": "What a turn holds."
+    },
+    "hitDieByClass": {
+      "description": "How characters go up: experience, milestones, or not at all."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "a-z, 0-9, - and _; the file name without .json"
+    },
+    "immobileAt": {
+      "description": "Carrying and distance."
+    },
+    "magicItemLimit": {
+      "description": "Carrying and distance."
+    },
+    "modifierTable": {
+      "description": "How a score becomes a modifier and how scores are set."
+    },
+    "name": {
+      "type": "string",
+      "description": "the system's name, as players see it"
+    },
+    "optionKinds": {
+      "description": "Kinds of feat; kinds of pick beside race and class (PF2e's heritage)."
+    },
+    "passiveBase": {
+      "description": "DCs and passive scores; when a trap check fumbles."
+    },
+    "proficiencyByLevel": {
+      "description": "Proficiency as a number or ranks."
+    },
+    "proficiencyRanks": {
+      "description": "Proficiency as a number or ranks."
+    },
+    "proficientRank": {
+      "description": "Proficiency as a number or ranks."
+    },
+    "rests": {
+      "description": "Recovery."
+    },
+    "reviveAfterVictory": {
+      "description": "Recovery."
+    },
+    "reviveHp": {
+      "description": "Recovery."
+    },
+    "revivePrice": {
+      "description": "Recovery."
+    },
+    "roles": {
+      "description": "Which ability or skill the game uses for initiative, HP, attacks, carrying, perception, stealth."
+    },
+    "saves": {
+      "description": "Saves of their own (Fortitude, Reflex, Will) or none: abilities are saves."
+    },
+    "scoreMax": {
+      "description": "How a score becomes a modifier and how scores are set."
+    },
+    "scoreMethods": {
+      "description": "How a score becomes a modifier and how scores are set."
+    },
+    "scoreMin": {
+      "description": "How a score becomes a modifier and how scores are set."
+    },
+    "sharedTurns": {
+      "description": "Members of a side next in order pick who goes."
+    },
+    "sheet": {
+      "description": "Which parts the character sheet shows, in order, and their labels."
+    },
+    "skills": {
+      "description": "The numbers a character has (Fate's approaches are its abilities)."
+    },
+    "strikeCostsHands": {
+      "description": "What a turn holds."
+    },
+    "tracks": {
+      "description": "What harm uses up, in order (HP; Fate's stress and consequences)."
+    },
+    "trapFumble": {
+      "description": "DCs and passive scores; when a trap check fumbles."
+    },
+    "turnOrder": {
+      "description": "One initiative order or side by side; rolled or by the modifier alone; picked: whoever acted names who's next."
+    },
+    "turnWords": {
+      "description": "What the system calls an action, a bonus action, a reaction, a free action."
+    },
+    "untrainedRank": {
+      "description": "Proficiency as a number or ranks."
+    },
+    "version": {
+      "description": "Which system this is."
+    },
+    "xpForLevel": {
+      "description": "How characters go up: experience, milestones, or not at all."
+    }
+  }
+}

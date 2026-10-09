@@ -147,6 +147,33 @@ KINDS["class"] = schema("A Yorehold class (classes/<id>.json)", {
     "casting": {"enum": ["known", "prepared", "spontaneous"]}, "spells": {"type": "object", "additionalProperties": IDS},
     "levels": {"type": "array", "items": CLASS_ROW}}, strict=False)
 
+# The system file itself: its keys and what each is for come from the "ruleset.json" table in
+# docs/RULES_LANGUAGE.md, so the reference and the schema can't drift apart; the shipped systems'
+# own keys are added so every one of them passes.
+def ruleset_schema():
+    import glob, re
+    with open(os.path.join(HERE, "..", "RULES_LANGUAGE.md"), encoding="utf-8") as f:
+        text = f.read()
+    section = text.split("## ruleset.json", 1)[1].split("\n## ", 1)[0]
+    props = {}
+    for line in section.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or not cells[0].startswith("`"):
+            continue
+        for key in re.findall(r"`([A-Za-z]+)`", cells[0]):
+            props[key] = {"description": cells[1].replace("`", "")}
+    for path in glob.glob(os.path.join(HERE, "..", "..", "assets", "rulesets", "*", "ruleset.json")):
+        with open(path, encoding="utf-8") as f:
+            for key in json.load(f):
+                props.setdefault(key, {"description": "see docs/RULES_LANGUAGE.md"})
+    props["id"] = ID
+    props["name"] = dict(TEXT, description="the system's name, as players see it")
+    return {"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "A Yorehold rules system (ruleset.json)",
+            "description": "Read by rules/content/Ruleset.cs; the whole language is docs/RULES_LANGUAGE.md.",
+            "type": "object", "additionalProperties": False, "properties": dict(sorted(props.items()))}
+
+KINDS["ruleset"] = ruleset_schema()
+
 for kind, s in KINDS.items():
     with open(os.path.join(HERE, kind + ".schema.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(s, f, indent=2)
@@ -156,7 +183,8 @@ for kind, s in KINDS.items():
 # which files each schema checks, for an editor's settings
 folders = {"item": "items", "creature": "creatures", "action": "actions", "spell": "spells", "condition": "conditions", "feat": "feats",
            "option": "options", "race": "races", "background": "backgrounds", "trigger": "triggers", "reaction": "reactions", "class": "classes"}
-settings = {"json.schemas": [{"fileMatch": [f"**/{folder}/*.json"], "url": f"./docs/schemas/{kind}.schema.json"} for kind, folder in folders.items()]}
+settings = {"json.schemas": [{"fileMatch": [f"**/{folder}/*.json"], "url": f"./docs/schemas/{kind}.schema.json"} for kind, folder in folders.items()]
+            + [{"fileMatch": ["**/ruleset.json"], "url": "./docs/schemas/ruleset.schema.json"}]}
 with open(os.path.join(HERE, "vscode-settings.json"), "w", encoding="utf-8", newline="\n") as f:
     json.dump(settings, f, indent=2)
     f.write("\n")
