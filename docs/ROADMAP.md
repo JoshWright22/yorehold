@@ -796,6 +796,7 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     has settled, play the action's animation, and at its impact moment release that step's log
     lines, floaters and shown-HP changes; a miss plays the miss variant. A Multiattack is one
     beat per attack; a fireball is one throw, one animation, then all the saves' results.
+  - Done 10/9: one beat per attack. The rules say each attack's line before the next attack's dice; the play screen splits the batch at each attack and plays them in turn.
   - Dice that roll across a table: a small deterministic tumble written in `rules/` (a rigid
     polyhedron from `DiceSolids` thrown onto a plane with walls: gravity, bounce, friction and
     rolling, stepped at a fixed rate from the roll's seed). It is run to the end first, which

@@ -66,7 +66,9 @@ public partial class PlayScreen : Node2D
     private System.Collections.Generic.List<int> _beatTargets = new();
     private bool _beatHit;
     private FightAnimator _animator = null!;
-    private bool Holding => _held.Count > 0 || _animator.Playing;
+    private bool Holding => _held.Count > 0 || _animator.Playing || _queued.Count > 0;
+    // the later attacks of one action (a Multiattack), each shown as its own beat in turn
+    private readonly System.Collections.Generic.List<System.Collections.Generic.List<WorldEvent>> _queued = new();
     private PlayCamera _camera = null!;
     private Hud _hud = null!;
     private FightControl _fight = null!;
@@ -335,8 +337,16 @@ public partial class PlayScreen : Node2D
         {
             Release();
         }
-        _tokenBars.Hold = Holding;
-        _tokens.Hold = Holding;
+        // one attack's beat is over: the next attack of the same action throws its dice
+        if (_held.Count == 0 && !_animator.Playing && _queued.Count > 0)
+        {
+            System.Collections.Generic.List<WorldEvent> next = _queued[0];
+            _queued.RemoveAt(0);
+            ShowBatch(next);
+        }
+        bool beat = _held.Count > 0 || _animator.Playing;
+        _tokenBars.Hold = beat;
+        _tokens.Hold = beat;
         if (_characters.IsOpen || Holding)
         {
             Refresh();
@@ -831,8 +841,25 @@ public partial class PlayScreen : Node2D
         {
             return;
         }
-        var thrown = new System.Collections.Generic.List<DiceFaces.Shown>();
         System.Collections.Generic.List<WorldEvent> events = _world.TakeEvents().ToList();
+        // an action that attacks more than once (a Multiattack) plays one beat per attack: each
+        // attack's dice, blow and numbers in turn, the next starting where its dice event is
+        var starts = events.Select((e, i) => (e, i)).Where(p => p.e.Kind == WorldEventKind.Dice && p.e.Text == "attack" && p.e.By >= 0).Select(p => p.i).ToList();
+        if (starts.Count > 1 && App.Settings.Dice > 0 && _world.Fighting)
+        {
+            for (int k = 1; k < starts.Count; k++)
+            {
+                int end = k + 1 < starts.Count ? starts[k + 1] : events.Count;
+                _queued.Add(events.GetRange(starts[k], end - starts[k]));
+            }
+            events = events.GetRange(0, starts[1]);
+        }
+        ShowBatch(events);
+    }
+
+    private void ShowBatch(System.Collections.Generic.List<WorldEvent> events)
+    {
+        var thrown = new System.Collections.Generic.List<DiceFaces.Shown>();
         // dice to throw, or a blow to play: the results of this batch wait for them
         bool dice = App.Settings.Dice > 0 && events.Any(e => e.Kind == WorldEventKind.Dice && e.Roll != null && DiceFaces.Of(e.Roll).Count > 0);
         WorldEvent? beat = events.FirstOrDefault(e => e.Kind == WorldEventKind.Dice && e.By >= 0 && e.Action.Length > 0);
@@ -909,6 +936,7 @@ public partial class PlayScreen : Node2D
         switch (e.Kind)
         {
             case WorldEventKind.Reset:
+                _queued.Clear();
                 _hud.ClearLog();
                 _floaters.Clear();
                 _pendingUse = null;

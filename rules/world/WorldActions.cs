@@ -390,6 +390,12 @@ public sealed partial class World
             {
                 continue;
             }
+            // the last attack's line is said before the next attack's dice, so a screen showing
+            // one beat per attack finds each attack's words after its own dice
+            if (e.Kind == EffectEventKind.Attack)
+            {
+                Flush();
+            }
             if (e.Roll.Dice.Count > 0 && e.Kind is EffectEventKind.Attack or EffectEventKind.Check or EffectEventKind.Save
                 or EffectEventKind.Defence or EffectEventKind.Damage or EffectEventKind.Heal)
             {

@@ -161,4 +161,15 @@ public class DiceFacesTests
         // no one acted on anyone, so no blow plays after it
         Assert.Equal(-1, thrown.By);
     }
+
+    [Fact]
+    public void EachAttackOfAMultiattackIsSaidBeforeTheNextOnesDice()
+    {
+        using WorldFixture world = WorldFixture.Load("chapters/dnd5e-test", 1);
+        Assert.True(world.StepUntil(() => world.Log.Count(l => l.StartsWith("Vex attacks", StringComparison.Ordinal)) >= 2, 30), "The captain attacks twice");
+        var attacks = world.Events.Select((e, i) => (e, i)).Where(p => p.e.Kind == WorldEventKind.Dice && p.e.Text == "attack" && p.e.Action.Length > 0).Select(p => p.i).ToList();
+        int firstLine = world.Events.FindIndex(e => e.Kind == WorldEventKind.Log && e.Text.StartsWith("Vex attacks", StringComparison.Ordinal));
+        Assert.True(attacks.Count >= 2 && attacks[0] < firstLine && firstLine < attacks[1],
+            "The first attack's line comes after its dice and before the second attack's, so the screen can show one beat per attack");
+    }
 }
