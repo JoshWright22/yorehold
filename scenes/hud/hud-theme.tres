@@ -98,16 +98,12 @@ content_margin_left = 9.0
 content_margin_top = 1.0
 content_margin_right = 9.0
 content_margin_bottom = 2.0
-bg_color = Color(0.9294, 0.9294, 0.9294, 1)
+bg_color = Color(0.1216, 0.1216, 0.1216, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.9294, 0.9294, 0.9294, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_color = Color(0.9098, 0.702, 0.2275, 1)
 
 [sub_resource type="StyleBoxFlat" id="chip"]
 content_margin_left = 9.0
@@ -326,32 +322,24 @@ content_margin_left = 10.0
 content_margin_top = 5.0
 content_margin_right = 10.0
 content_margin_bottom = 5.0
-bg_color = Color(0.6275, 0.6275, 0.6275, 1)
+bg_color = Color(0.1216, 0.1216, 0.1216, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.6275, 0.6275, 0.6275, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_color = Color(0.9098, 0.702, 0.2275, 1)
 
 [sub_resource type="StyleBoxFlat" id="pick_on"]
 content_margin_left = 10.0
 content_margin_top = 5.0
 content_margin_right = 10.0
 content_margin_bottom = 5.0
-bg_color = Color(0.9294, 0.9294, 0.9294, 1)
+bg_color = Color(0.1216, 0.1216, 0.1216, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.9294, 0.9294, 0.9294, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_color = Color(0.9098, 0.702, 0.2275, 1)
 
 [sub_resource type="StyleBoxFlat" id="frame_ready"]
 draw_center = false
@@ -405,21 +393,18 @@ content_margin_top = 3.0
 content_margin_right = 10.0
 content_margin_bottom = 4.0
 bg_color = Color(0.2, 0.2, 0.2, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="tab_on"]
 content_margin_left = 10.0
 content_margin_top = 3.0
 content_margin_right = 10.0
 content_margin_bottom = 4.0
-bg_color = Color(0.9294, 0.9294, 0.9294, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+bg_color = Color(0.1216, 0.1216, 0.1216, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9098, 0.702, 0.2275, 1)
 
 [sub_resource type="StyleBoxFlat" id="tab"]
 content_margin_left = 10.0
@@ -427,10 +412,6 @@ content_margin_top = 3.0
 content_margin_right = 10.0
 content_margin_bottom = 4.0
 bg_color = Color(0.0824, 0.0824, 0.0824, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="talk_box"]
 content_margin_left = 24.0
@@ -558,8 +539,8 @@ CellLabel/colors/font_color = Color(0.6275, 0.6275, 0.6275, 1)
 ChipButton/base_type = &"Button"
 ChipButton/colors/font_color = Color(0.6275, 0.6275, 0.6275, 1)
 ChipButton/colors/font_hover_color = Color(0.9294, 0.9294, 0.9294, 1)
-ChipButton/colors/font_hover_pressed_color = Color(0.0824, 0.0824, 0.0824, 1)
-ChipButton/colors/font_pressed_color = Color(0.0824, 0.0824, 0.0824, 1)
+ChipButton/colors/font_hover_pressed_color = Color(0.9098, 0.702, 0.2275, 1)
+ChipButton/colors/font_pressed_color = Color(0.9098, 0.702, 0.2275, 1)
 ChipButton/font_sizes/font_size = 13
 ChipButton/styles/hover = SubResource("chip_hover")
 ChipButton/styles/hover_pressed = SubResource("chip_on")
@@ -662,8 +643,8 @@ PageText/fonts/mono_font = SubResource("mono")
 PageText/fonts/normal_font = SubResource("book")
 PanelContainer/styles/panel = SubResource("panel")
 PickButton/base_type = &"Button"
-PickButton/colors/font_hover_pressed_color = Color(0.0824, 0.0824, 0.0824, 1)
-PickButton/colors/font_pressed_color = Color(0.0824, 0.0824, 0.0824, 1)
+PickButton/colors/font_hover_pressed_color = Color(0.9098, 0.702, 0.2275, 1)
+PickButton/colors/font_pressed_color = Color(0.9098, 0.702, 0.2275, 1)
 PickButton/font_sizes/font_size = 15
 PickButton/styles/hover_pressed = SubResource("pick_on_hover")
 PickButton/styles/pressed = SubResource("pick_on")
@@ -685,8 +666,8 @@ RowOddButton/styles/normal = SubResource("row_odd")
 TabButton/base_type = &"Button"
 TabButton/colors/font_color = Color(0.6275, 0.6275, 0.6275, 1)
 TabButton/colors/font_hover_color = Color(0.9294, 0.9294, 0.9294, 1)
-TabButton/colors/font_hover_pressed_color = Color(0.0824, 0.0824, 0.0824, 1)
-TabButton/colors/font_pressed_color = Color(0.0824, 0.0824, 0.0824, 1)
+TabButton/colors/font_hover_pressed_color = Color(0.9098, 0.702, 0.2275, 1)
+TabButton/colors/font_pressed_color = Color(0.9098, 0.702, 0.2275, 1)
 TabButton/font_sizes/font_size = 14
 TabButton/styles/hover = SubResource("tab_hover")
 TabButton/styles/hover_pressed = SubResource("tab_on")

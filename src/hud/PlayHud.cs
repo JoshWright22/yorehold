@@ -138,6 +138,19 @@ public partial class PlayHud : Control
         _openDice.OffsetRight = -right - 80;
         _partyGear.OffsetRight = -right;
         _trade.OffsetRight = -right;
+        // the book-like panels sit over the map beside the chat, above the hotbar so a spell can be
+        // dragged down onto it, as the design lays the spellbook out
+        float half = Mathf.Min(452, (GetViewportRect().Size.X - right) / 2 - 16);
+        float below = _bottom.Visible ? _bottom.Size.Y + 30 : 16;
+        foreach (Control panel in new Control[] { _spellsView, _journalView, _campView, _sheet, _gearView })
+        {
+            panel.AnchorTop = 0;
+            panel.AnchorBottom = 1;
+            panel.OffsetLeft = -half - right / 2;
+            panel.OffsetRight = half - right / 2;
+            panel.OffsetTop = 16;
+            panel.OffsetBottom = -below;
+        }
         // over the map only: an open panel (the gear, the spells) covers it
         _openDice.Visible = _bottom.Visible && OpenPanel.Length == 0;
     }
