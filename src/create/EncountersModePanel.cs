@@ -27,7 +27,15 @@ public partial class EncountersModePanel : HBoxContainer
 
     private EncountersEditor? _editor;
     private ToolColumn _tools = null!;
+    private ToolColumn _form = null!;
     private ToolColumn _props = null!;
+    private ToolColumn _add = null!;
+    private GameMap? _map;
+    private string _search = "";
+    // the band each fight's last forecast put it in, by its id, and the creatures it had then:
+    // a fight changed since is shown as not played
+    private readonly Dictionary<string, (int Band, string Kinds)> _bands = new(StringComparer.Ordinal);
+    private string _forecastKinds = "";
     private EditorMapView _view = null!;
     private Label _error = null!;
 
@@ -68,13 +76,35 @@ public partial class EncountersModePanel : HBoxContainer
 
     public static Color ColorOf(int group) => GroupColors[group % GroupColors.Length];
 
+    // The design's layout: the fights down the left; the picked fight's name, difficulty and
+    // creatures over its placement on the map, with its rules beside the map; the compendium's
+    // creatures to add down the right.
     public override void _Ready()
     {
         AddThemeConstantOverride("separation", 0);
-        _tools = Column(172);
+        _tools = Column(this, 210);
+        var middle = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
+        middle.AddThemeConstantOverride("separation", 0);
+        AddChild(middle);
+        var head = new PanelContainer();
+        var headBox = new StyleBoxFlat { BgColor = Palette.Night, BorderColor = Palette.Iron, BorderWidthBottom = 1 };
+        headBox.SetContentMarginAll(12);
+        head.AddThemeStyleboxOverride("panel", headBox);
+        middle.AddChild(head);
+        _form = new ToolColumn { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        head.AddChild(_form);
+        var lower = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        lower.AddThemeConstantOverride("separation", 0);
+        middle.AddChild(lower);
         _view = new EditorMapView { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
-        AddChild(_view);
-        _props = Column(252);
+        lower.AddChild(_view);
+        _props = Column(lower, 250);
+        _add = Column(this, 280);
+        // room on its right for the chat's tab, which stays at the screen's edge
+        var addBox = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Iron, BorderWidthLeft = 1 };
+        addBox.SetContentMarginAll(8);
+        addBox.ContentMarginRight = 40;
+        ((PanelContainer)_add.GetParent().GetParent()).AddThemeStyleboxOverride("panel", addBox);
         _error = new Label { ThemeTypeVariation = "WarnLabel", AutowrapMode = TextServer.AutowrapMode.WordSmart, Visible = false };
         _view.AddChild(_error);
         _error.SetAnchorsAndOffsetsPreset(LayoutPreset.TopWide, LayoutPresetMode.Minsize, 16);
@@ -126,15 +156,38 @@ public partial class EncountersModePanel : HBoxContainer
         {
             _lootItem = editor.Names.Items.Keys.FirstOrDefault() ?? "";
         }
+        _map = map;
         _view.Floor = 0; // creatures stand on floor 0
         _view.ShowMap(map, files);
         _view.QueueRedraw();
+        NoteBand();
 
-        _tools.Build(string.Join("|", editor.Groups.Select(g => g.Id + "=" + g.Creatures.Count)), BuildTools);
-        string props = $"{_placing}|{_group}|{_creature}|{editor.Groups.Count}|{(editor.Groups.Count > 0 ? editor.Groups[_group].Creatures.Count : 0)}|"
-            + $"{(editor.Groups.Count > 0 ? string.Join(",", editor.Groups[_group].Loot.Items) : "")}|{editor.Names.Creatures.Count}|{editor.Names.Items.Count}";
+        _tools.Build(string.Join("|", editor.Groups.Select((g, i) => $"{g.Id}={g.Creatures.Count}:{BandOf(editor, i)}")) + "|" + _group, BuildTools);
+        string kinds = editor.Groups.Count == 0 ? "" : KindsOf(editor.Groups[_group]);
+        _form.Build($"{_group}|{editor.Groups.Count}|{kinds}", BuildForm);
+        string props = $"{_group}|{_creature}|{editor.Groups.Count}|{(editor.Groups.Count > 0 ? editor.Groups[_group].Creatures.Count : 0)}|"
+            + $"{(editor.Groups.Count > 0 ? string.Join(",", editor.Groups[_group].Loot.Items) : "")}|{editor.Names.Items.Count}";
         _props.Build(props, BuildProps);
+        _add.Build($"{_search}|{editor.Names.Creatures.Count}|{_placing}|{_kind}", BuildAdd);
     }
+
+    // a forecast that has come in puts its fight in a band, for the list and the bar
+    private void NoteBand()
+    {
+        if (_forecast is { IsCompletedSuccessfully: true } && _forecastOf.Length > 0)
+        {
+            _bands[_forecastOf] = (_forecast.Result.Band(), _forecastKinds);
+        }
+    }
+
+    // "goblin x3, goblin-boss x1": what a fight is made of, to tell when it changed
+    private static string KindsOf(EncountersEditor.Group group) =>
+        string.Join(",", group.Creatures.GroupBy(p => p.Creature).Select(k => k.Key + "x" + k.Count()));
+
+    // the band of the fight's last forecast, -1 if it hasn't been played as it is now
+    private int BandOf(EncountersEditor editor, int group) =>
+        group < editor.Groups.Count && _bands.TryGetValue(editor.Groups[group].Id, out (int Band, string Kinds) known)
+        && known.Kinds == KindsOf(editor.Groups[group]) ? known.Band : -1;
 
     public override void _UnhandledKeyInput(InputEvent @event)
     {
@@ -146,10 +199,10 @@ public partial class EncountersModePanel : HBoxContainer
         }
     }
 
-    private ToolColumn Column(float width)
+    private static ToolColumn Column(Container into, float width)
     {
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(width, 0), SizeFlagsVertical = SizeFlags.ExpandFill };
-        AddChild(panel);
+        into.AddChild(panel);
         var box = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         panel.AddChild(box);
         var column = new ToolColumn { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -164,50 +217,48 @@ public partial class EncountersModePanel : HBoxContainer
             return;
         }
         EncountersEditor editor = _editor;
-        HBoxContainer tools = _tools.Row();
-        _tools.Toggle("Select", () => !_placing, () => _placing = false, tools, "TabButton").Alignment = HorizontalAlignment.Center;
-        _tools.Toggle("Place", () => _placing, () => _placing = true, tools, "TabButton").Alignment = HorizontalAlignment.Center;
-        _tools.Gap();
-        _tools.Heading("Fights");
-        for (int g = 0; g < editor.Groups.Count; g++)
-        {
-            int group = g;
-            _tools.Toggle($"{editor.Groups[g].Id}  ({editor.Groups[g].Creatures.Count})", () => _group == group, () =>
-            {
-                // picking a group shows the group, not whoever was picked in it
-                _group = group;
-                _creature = null;
-                _hint = "";
-            }).Icon = MapModePanel.Swatch(ColorOf(g));
-        }
-        if (editor.Groups.Count == 0)
-        {
-            _tools.Dim("None yet.");
-        }
-        HBoxContainer row = _tools.Row();
-        _tools.Act("Add", () =>
+        HBoxContainer top = _tools.Row();
+        var title = new Label { Text = "ENCOUNTERS", ThemeTypeVariation = "CapsLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
+        top.AddChild(title);
+        ToolColumn.Narrow(_tools.Act("New", () =>
         {
             if (editor.AddGroup() is int added)
             {
                 _group = added;
                 _creature = null;
             }
-        }, null, row);
-        _tools.Act("Remove", () =>
+        }, null, top), 56);
+        _tools.Gap(4);
+        for (int g = 0; g < editor.Groups.Count; g++)
+        {
+            int group = g;
+            EncountersEditor.Group fight = editor.Groups[g];
+            int band = BandOf(editor, g);
+            string how = band < 0 ? "not played" : DifficultyBar.Bands[band];
+            Button row = _tools.Toggle($"E{g + 1} · {fight.Id}\n{fight.Creatures.Count} creatures · {how}", () => _group == group, () =>
+            {
+                // picking a group shows the group, not whoever was picked in it
+                _group = group;
+                _creature = null;
+                _hint = "";
+            });
+            row.CustomMinimumSize = new Vector2(0, 44);
+            row.Icon = MapModePanel.Swatch(ColorOf(g));
+        }
+        if (editor.Groups.Count == 0)
+        {
+            _tools.Dim("None yet. New makes one; Add on the right puts a creature in it.");
+        }
+        _tools.Act("Remove this fight", () =>
         {
             editor.RemoveGroup(_group);
             _creature = null;
-        }, () => editor.Groups.Count > 0, row);
+        }, () => editor.Groups.Count > 0);
+        _tools.Gap(12);
         // an imported adventure's fights, all at once: each played with fewer foes until it fits
         _tools.Act("Fit every fight", () => StartFitAll(editor), () => editor.Groups.Count > 0 && (_fitAll == null || _fitAll.IsCompleted));
         _tools.Live(FitAllLine);
         _tools.Act(() => $"Take out {FitAllCuts()?.Sum(c => c.LeaveOut) ?? 0}", () => ApplyFitAll(editor), () => FitAllCuts()?.Any(c => c.LeaveOut > 0) == true);
-        _tools.Gap();
-        _tools.Toggle("Grid", () => _view.Grid, () => _view.Grid = !_view.Grid, null, "ChipButton");
-        _tools.Act("Fit map", _view.Fit);
-        _tools.Live(() => _view.Hover is Cell at ? $"at {at.X}, {at.Y}" : "");
-        _tools.Gap();
-        _tools.Dim("Left: pick, drag, place\nRight: remove\nMiddle: move\nWheel: zoom");
     }
 
     private void BuildProps()
@@ -216,11 +267,16 @@ public partial class EncountersModePanel : HBoxContainer
         {
             return;
         }
-        if (_placing)
-        {
-            BuildPalette(_editor);
-        }
-        else if (_creature is int creature)
+        // the map's own tools sit over its column: what a click does, the grid, and fitting it to the view
+        HBoxContainer tools = _props.Row();
+        _props.Toggle("Select", () => !_placing, () => _placing = false, tools, "TabButton").Alignment = HorizontalAlignment.Center;
+        _props.Toggle("Place", () => _placing, () => _placing = true, tools, "TabButton").Alignment = HorizontalAlignment.Center;
+        HBoxContainer view = _props.Row();
+        _props.Toggle("Grid", () => _view.Grid, () => _view.Grid = !_view.Grid, view, "ChipButton");
+        _props.Act("Fit map", _view.Fit, null, view);
+        _props.Live(() => _placing ? $"A click places {(_editor.Names.Creatures.TryGetValue(_kind, out EncountersEditor.Catalog.Creature? c) ? c.Name : _kind)}." : "Left: pick and drag. Right: remove. Middle: move. Wheel: zoom.");
+        _props.Gap(10);
+        if (_creature is int creature)
         {
             BuildCreature(_editor, creature);
         }
@@ -232,19 +288,227 @@ public partial class EncountersModePanel : HBoxContainer
         _props.Live(() => _hint, "WarnLabel");
     }
 
-    private void BuildPalette(EncountersEditor editor)
+    // The picked fight as the design lays it out: its name and opening words, how hard it is for
+    // the party (the forecast's band, at the chapter's level or another), and its creatures by
+    // kind with how many of each.
+    private void BuildForm()
     {
-        _props.Heading("Place");
-        _props.Live(() => editor.Groups.Count == 0 ? "into a new fight" : "into " +editor.Groups[Math.Min(_group, editor.Groups.Count - 1)].Id);
+        if (_editor == null)
+        {
+            return;
+        }
+        EncountersEditor editor = _editor;
+        if (editor.Groups.Count == 0)
+        {
+            _form.Heading("No fights yet");
+            _form.Dim("New on the left makes one; Add on the right puts a creature in it, beside the others.");
+            return;
+        }
+        int group = _group;
+        EncountersEditor.Group Now() => editor.Groups[Math.Min(group, editor.Groups.Count - 1)];
+
+        HBoxContainer names = _form.Row();
+        names.AddThemeConstantOverride("separation", 12);
+        VBoxContainer Labelled(string label, float width)
+        {
+            var box = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsStretchRatio = width };
+            box.AddThemeConstantOverride("separation", 2);
+            box.AddChild(new Label { Text = label, ThemeTypeVariation = "DimLabel" });
+            names.AddChild(box);
+            return box;
+        }
+        _form.Field(() => Now().Id, typed =>
+        {
+            if (typed != Now().Id && !editor.SetGroupId(group, typed))
+            {
+                _hint = typed.Length == 0 ? "A fight needs a name." : "Another fight has that name.";
+            }
+            else
+            {
+                _hint = "";
+            }
+        }, editor.EndTyping, "id", Labelled("Name, for the story and triggers", 1));
+        _form.Field(() => Now().Text, typed => editor.SetGroupText(group, typed), editor.EndTyping, "nothing", Labelled("What the game says as it starts", 1.6f));
+        _form.Gap(8);
+
+        // the difficulty box
+        var box = new PanelContainer();
+        box.AddThemeStyleboxOverride("panel", Boxed());
+        _form.AddChild(box);
+        var inside = new VBoxContainer();
+        inside.AddThemeConstantOverride("separation", 6);
+        box.AddChild(inside);
+        var top = new HBoxContainer();
+        inside.AddChild(top);
+        top.AddChild(new Label { Text = "DIFFICULTY FOR", ThemeTypeVariation = "CapsLabel", SizeFlagsHorizontal = SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
+        int heroes = editor.FixedOnes.Count(f => f.Kind == EncountersEditor.FixedKind.Hero);
+        Label party = _form.Live(() => $"{heroes} heroes, " + (_level == 0 ? "the chapter's level" : $"level {_level}"), "", top);
+        party.VerticalAlignment = VerticalAlignment.Center;
+        party.AutowrapMode = TextServer.AutowrapMode.Off;
+        ToolColumn.Narrow(_form.Act("-", () => _level = Math.Max(0, _level - 1), null, top), 28);
+        ToolColumn.Narrow(_form.Act("+", () => _level = Math.Min(20, _level + 1), null, top), 28);
+        inside.AddChild(new DifficultyBar { Band = () => BandOf(editor, group) });
+        _form.Live(() => ForecastLine(Now().Id), "DimLabel", inside);
+        HBoxContainer acts = new();
+        acts.AddThemeConstantOverride("separation", 4);
+        inside.AddChild(acts);
+        _form.Act($"Play it out ({ForecastFights} times)", () => StartForecast(group, Now().Id), () => Now().Creatures.Count > 0 && (_forecast == null || _forecast.IsCompleted), acts);
+        _form.Act("Too hard: fewer", () => StartFit(group, Now().Id), () => Now().Creatures.Count > 1 && (_fit == null || _fit.IsCompleted), acts);
+        _form.Act("Too easy: more", () => StartGrow(group, Now().Id), () => Now().Creatures.Count > 0 && (_grow == null || _grow.IsCompleted), acts);
+        HBoxContainer fit = new();
+        inside.AddChild(fit);
+        _form.Live(() => FitLine(Now().Id) is { Length: > 0 } a ? a : GrowLine(Now().Id), "DimLabel", fit).SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _form.Act(() => FitDone(Now().Id) is > 0 and int fewer ? $"Take the last {fewer} out" : GrowDone(Now().Id) is { More: > 0 } grown ? $"Add {grown.More} more" : "Apply", () =>
+        {
+            if (FitDone(Now().Id) is > 0 and int fewer)
+            {
+                // the last ones first, as the fit left them out
+                for (int i = 0; i < fewer && Now().Creatures.Count > 1; i++)
+                {
+                    editor.RemoveCreature(group, Now().Creatures.Count - 1);
+                }
+                _fit = null;
+            }
+            else if (GrowDone(Now().Id) is { More: > 0 } grown)
+            {
+                if (editor.AddCreatures(group, Now().Creatures[^1].Creature, grown.At))
+                {
+                    _grow = null;
+                }
+                else
+                {
+                    _hint = "Those squares aren't free any more; try again.";
+                }
+            }
+        }, () => FitDone(Now().Id) is > 0 || GrowDone(Now().Id) is { More: > 0 }, fit).SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+        _form.Gap(8);
+
+        // the creatures by kind
+        var table = new PanelContainer();
+        table.AddThemeStyleboxOverride("panel", Boxed());
+        _form.AddChild(table);
+        var grid = new GridContainer { Columns = 5 };
+        grid.AddThemeConstantOverride("h_separation", 16);
+        grid.AddThemeConstantOverride("v_separation", 4);
+        table.AddChild(grid);
+        foreach (string head in new[] { "CREATURE", "LEVEL", "XP", "COUNT", "BEHAVIOUR" })
+        {
+            grid.AddChild(new Label { Text = head, ThemeTypeVariation = "CapsLabel", SizeFlagsHorizontal = head == "CREATURE" ? SizeFlags.ExpandFill : SizeFlags.Fill });
+        }
+        foreach (IGrouping<string, EncountersEditor.Placement> kind in Now().Creatures.GroupBy(p => p.Creature))
+        {
+            string id = kind.Key;
+            bool known = editor.Names.Creatures.TryGetValue(id, out EncountersEditor.Catalog.Creature? look);
+            var name = new Label { Text = known ? look!.Name : id + " (not in this package)", SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipText = true };
+            name.AddThemeColorOverride("font_color", known ? Palette.Bone : Palette.Red);
+            grid.AddChild(name);
+            int level = known ? Math.Max(1, look!.Level) : 1;
+            grid.AddChild(Number(level.ToString(CultureInfo.InvariantCulture)));
+            grid.AddChild(Number((level * editor.Names.XpPerLevel).ToString(CultureInfo.InvariantCulture)));
+            var count = new HBoxContainer();
+            count.AddThemeConstantOverride("separation", 4);
+            grid.AddChild(count);
+            ToolColumn.Narrow(_form.Act("-", () =>
+            {
+                int last = Now().Creatures.FindLastIndex(p => p.Creature == id);
+                if (last >= 0)
+                {
+                    editor.RemoveCreature(group, last);
+                    _creature = null;
+                }
+            }, null, count), 24);
+            count.AddChild(Number(kind.Count().ToString(CultureInfo.InvariantCulture)));
+            ToolColumn.Narrow(_form.Act("+", () => AddOne(editor, id), () => known, count), 24);
+            string ai = EncountersEditor.ProfileOf(kind.First().Ai) is { Length: > 0 } own ? own
+                : EncountersEditor.ProfileOf(Now().Ai) is { Length: > 0 } fights ? fights : "its own way";
+            grid.AddChild(new Label { Text = ai, ThemeTypeVariation = "DimLabel" });
+        }
+        if (Now().Creatures.Count == 0)
+        {
+            _form.Dim("Nobody in this fight yet: Add on the right.");
+        }
+    }
+
+    private static StyleBoxFlat Boxed()
+    {
+        var box = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Iron };
+        box.SetBorderWidthAll(1);
+        box.SetContentMarginAll(10);
+        return box;
+    }
+
+    private static Label Number(string text) => new() { Text = text, ThemeTypeVariation = "NumberLabel", HorizontalAlignment = HorizontalAlignment.Right };
+
+    // The compendium's creatures, to add to the picked fight: Add puts one beside the fight's
+    // others (or mid-map for a new fight); picking a name makes the map's click place it.
+    private void BuildAdd()
+    {
+        if (_editor == null)
+        {
+            return;
+        }
+        EncountersEditor editor = _editor;
+        var title = new Label { Text = "ADD FROM COMPENDIUM", ThemeTypeVariation = "CapsLabel" };
+        _add.AddChild(title);
+        var search = new LineEdit { Text = _search, PlaceholderText = "Search creatures", ClearButtonEnabled = true, CustomMinimumSize = new Vector2(0, 30) };
+        search.TextChanged += typed => _search = typed;
+        _add.AddChild(search);
+        if (_search.Length > 0)
+        {
+            // keep typing where it was after the list is made again
+            search.CallDeferred(Control.MethodName.GrabFocus);
+            search.CaretColumn = _search.Length;
+        }
+        _add.Gap(4);
         if (editor.Names.Creatures.Count == 0)
         {
-            _props.Dim("No creatures in this package.");
+            _add.Dim("No creatures in this package.");
             return;
         }
         foreach ((string id, EncountersEditor.Catalog.Creature creature) in editor.Names.Creatures)
         {
-            _props.Toggle($"{creature.Name}   L{creature.Level}", () => _kind == id, () => _kind = id).Icon
-                = MapModePanel.Swatch(Palette.Nearest(Color.Color8(creature.Color.R, creature.Color.G, creature.Color.B)));
+            if (_search.Length > 0 && !creature.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) && !id.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            string kind = id;
+            HBoxContainer row = _add.Row();
+            var words = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            words.AddThemeConstantOverride("separation", 0);
+            row.AddChild(words);
+            var name = new Button { Text = creature.Name, Flat = true, Alignment = HorizontalAlignment.Left, FocusMode = FocusModeEnum.None, ClipText = true };
+            name.AddThemeColorOverride("font_color", _placing && _kind == kind ? Palette.Straw : Palette.Bone);
+            name.TooltipText = "Place it with a click on the map";
+            name.Pressed += () =>
+            {
+                _kind = kind;
+                _placing = true;
+            };
+            words.AddChild(name);
+            words.AddChild(new Label { Text = $"Level {creature.Level}", ThemeTypeVariation = "DimLabel" });
+            ToolColumn.Narrow(_add.Act("Add", () => AddOne(editor, kind), null, row), 52).SizeFlagsVertical = SizeFlags.ShrinkCenter;
+        }
+    }
+
+    // One more of a creature in the picked fight, on the free square nearest the fight's others,
+    // or the map's middle for a fight with nobody in it yet (a new one if there is none).
+    private void AddOne(EncountersEditor editor, string kind)
+    {
+        if (editor.Groups.Count == 0)
+        {
+            _group = editor.AddGroup() ?? 0;
+        }
+        List<EncountersEditor.Placement> others = editor.Groups[_group].Creatures;
+        Cell near = others.LastOrDefault(p => p.Creature == kind)?.At ?? others.LastOrDefault()?.At
+            ?? (_map != null ? new Cell(_map.Width / 2, _map.Height / 2) : new Cell(0, 0));
+        if (editor.FreeNear(near) is Cell at && editor.AddCreature(_group, kind, at) != null)
+        {
+            _creature = null;
+            _hint = "";
+        }
+        else
+        {
+            _hint = "No free square near the fight.";
         }
     }
 
@@ -252,28 +516,12 @@ public partial class EncountersModePanel : HBoxContainer
     {
         if (editor.Groups.Count == 0)
         {
-            _props.Heading("No fights yet");
-            _props.Dim("Pick Place, then click the map. The first creature makes the first fight; more join it.");
             return;
         }
         int group = _group;
         EncountersEditor.Group Now() => editor.Groups[Math.Min(group, editor.Groups.Count - 1)];
 
-        _props.Heading("Fight").AddThemeColorOverride("font_color", ColorOf(group));
-        _props.Dim("Its name, for the story and triggers");
-        _props.Field(() => Now().Id, typed =>
-        {
-            if (typed != Now().Id && !editor.SetGroupId(group, typed))
-            {
-                _hint = typed.Length == 0 ? "A group needs an id." : "Another group has that id.";
-            }
-            else
-            {
-                _hint = "";
-            }
-        }, editor.EndTyping, "id");
-        _props.Dim("What the game says as it starts");
-        _props.Field(() => Now().Text, typed => editor.SetGroupText(group, typed), editor.EndTyping, "nothing");
+        _props.Heading("Rules for this fight");
         _props.Dim("Story flags it sets when won, for a door or a conversation to wait for (comma between)");
         _props.Field(() => string.Join(", ", Now().Set), typed =>
         {
@@ -304,43 +552,6 @@ public partial class EncountersModePanel : HBoxContainer
         }, editor.EndTyping, "0", xp);
         _props.Act(() => $"Use {editor.ProposedXp(group)}, from the foes' levels",() => editor.SetGroupXp(group, editor.ProposedXp(group)),
             () => Now().Xp != editor.ProposedXp(group) && Now().Creatures.Count > 0);
-        _props.Gap();
-
-        _props.Heading("Forecast");
-        _props.Dim($"Played out {ForecastFights} times by the AI, with the party the chapter starts with, at its level or another");
-        Stepper(() => _level == 0 ? "Chapter's level" : $"Party level {_level}", step =>
-        {
-            _level = Math.Clamp(_level + step, 0, 20);
-        });
-        _props.Live(() => ForecastLine(Now().Id));
-        _props.Act("Play it out", () => StartForecast(group, Now().Id), () => Now().Creatures.Count > 0 && (_forecast == null || _forecast.IsCompleted));
-        _props.Act("Fit to the party", () => StartFit(group, Now().Id), () => Now().Creatures.Count > 1 && (_fit == null || _fit.IsCompleted));
-        _props.Live(() => FitLine(Now().Id));
-        _props.Act(() => FitDone(Now().Id) is int fewer && fewer > 0 ? $"Take the last {fewer} out" : "Take them out", () =>
-        {
-            // the last ones first, as the fit left them out
-            if (FitDone(Now().Id) is int fewer)
-            {
-                for (int i = 0; i < fewer && Now().Creatures.Count > 1; i++)
-                {
-                    editor.RemoveCreature(group, Now().Creatures.Count - 1);
-                }
-                _fit = null;
-            }
-        }, () => FitDone(Now().Id) is > 0);
-        _props.Act("Too easy: try more foes", () => StartGrow(group, Now().Id), () => Now().Creatures.Count > 0 && (_grow == null || _grow.IsCompleted));
-        _props.Live(() => GrowLine(Now().Id));
-        _props.Act(() => GrowDone(Now().Id) is { More: > 0 } grown ? $"Add {grown.More} more {Now().Creatures[^1].Creature}" : "Add them", () =>
-        {
-            if (GrowDone(Now().Id) is { More: > 0 } grown && editor.AddCreatures(group, Now().Creatures[^1].Creature, grown.At))
-            {
-                _grow = null;
-            }
-            else
-            {
-                _hint = "Those squares aren't free any more; try again.";
-            }
-        }, () => GrowDone(Now().Id) is { More: > 0 });
         _props.Gap();
 
         _props.Heading("Loot");
@@ -411,6 +622,7 @@ public partial class EncountersModePanel : HBoxContainer
         _hint = "";
         string chapter = Chapter;
         _forecastOf = id;
+        _forecastKinds = _editor != null && group < _editor.Groups.Count ? KindsOf(_editor.Groups[group]) : "";
         // the rules have no engine types, so a world can be played on another thread
         _forecast = Task.Run(() => FightSimulation.Forecast(seed => World.Load(files, chapter, seed), group, ForecastFights));
     }

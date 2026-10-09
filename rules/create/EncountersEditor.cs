@@ -399,6 +399,31 @@ public sealed class EncountersEditor
         return _fixed.All(f => f.At != cell);
     }
 
+    /// <summary>The free square nearest from, by straight steps over squares someone could stand on; null if there is none near.</summary>
+    public Cell? FreeNear(Cell from, int most = 4000)
+    {
+        var seen = new HashSet<Cell> { from };
+        var queue = new Queue<Cell>();
+        queue.Enqueue(from);
+        while (queue.Count > 0 && seen.Count <= most)
+        {
+            Cell at = queue.Dequeue();
+            if (Free(at))
+            {
+                return at;
+            }
+            foreach (Cell next in new[] { new Cell(at.X + 1, at.Y), new Cell(at.X - 1, at.Y), new Cell(at.X, at.Y + 1), new Cell(at.X, at.Y - 1) })
+            {
+                // through anyone standing, never through a wall
+                if ((next == from || Standable(next)) && seen.Add(next))
+                {
+                    queue.Enqueue(next);
+                }
+            }
+        }
+        return null;
+    }
+
     // ---------------------------------------------------------------- groups
 
     /// <summary>An empty id gets the next free "encounter-N".</summary>

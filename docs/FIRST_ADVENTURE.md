@@ -23,10 +23,13 @@ Test play (top right) drops you on the map as it is now, and Esc brings you back
 
 ## 3. Put a fight in it
 
-Encounters mode, Place: click the map to put creatures down, the example creature among them.
-The fight panel names it, says what the game shows as it starts, and "Play it out" plays it 20
-times with the game's own AI on both sides: "won 9 in 10, 1 in 5 lose a hero". Too hard: "Fit to
-the party" takes foes out until it isn't.
+Encounters mode: New on the left makes a fight; Add beside a creature on the right (the example
+creature among them) puts one in it, beside the others, and the table's - and + change how many.
+Place, by the map, puts one where you click instead. Name the fight and say what the game shows
+as it starts. Under DIFFICULTY FOR, "Play it out" plays it 20 times with the game's own AI on
+both sides ("won 9 in 10, 1 in 5 lose a hero") and fills the bar to Too easy, Fits, Hard or Too
+hard; - and + try the party at another level. "Too hard: fewer" takes foes out until it isn't,
+"Too easy: more" adds more of the last one; Apply makes the change.
 
 ## 4. Give someone something to say
 

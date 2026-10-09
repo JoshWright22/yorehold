@@ -22,6 +22,9 @@ public class FightForecastTests
         Assert.StartsWith("too hard", new FightForecast(10, 5, 6, 1, 4, 0).Verdict());
         Assert.StartsWith("too easy", new FightForecast(10, 10, 0, 0, 1.5, 0).Verdict());
         Assert.Equal("", new FightForecast(10, 9, 2, 0, 3, 0).Verdict());
+        // and as the difficulty bar's band
+        Assert.Equal((3, 0, 2, 1, -1), (new FightForecast(10, 5, 6, 1, 4, 0).Band(), new FightForecast(10, 10, 0, 0, 1.5, 0).Band(),
+            new FightForecast(10, 9, 2, 0, 3, 0).Band(), new FightForecast(10, 10, 1, 0, 3, 0).Band(), new FightForecast(0, 0, 0, 0, 0, 0).Band()));
     }
 
     [Fact]

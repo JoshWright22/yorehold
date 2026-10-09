@@ -43,6 +43,22 @@ public sealed record FightForecast(int Fights, int Won, int LostAHero, int Heroe
         return "";
     }
 
+    /// <summary>
+    /// Where the fight sits for the party, as Create's difficulty bar shows it: 0 too easy, 1 fits,
+    /// 2 hard (it fits, but a hero goes down in more than 1 in 7), 3 too hard; -1 when nothing was played.
+    /// </summary>
+    public int Band()
+    {
+        if (Fights == 0 || Fights == Unfinished)
+        {
+            return -1;
+        }
+        string verdict = Verdict();
+        return verdict.StartsWith("too hard", StringComparison.Ordinal) ? 3
+            : verdict.StartsWith("too easy", StringComparison.Ordinal) ? 0
+            : HeroLossChance > 1.0 / 7 ? 2 : 1;
+    }
+
     // 0.2 as "1 in 5", 0.9 as "9 in 10": the plainest fraction near it
     private static string InN(double share)
     {
