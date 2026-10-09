@@ -77,6 +77,47 @@ public class FoundryImportTests
     private static ContentNode Node(FoundryImport import, string path) => ContentNode.Parse(path, import.Files[path].ToJsonString());
 
     [Fact]
+    public void A5eClassBecomesAClassWithItsLevelRows()
+    {
+        // made-up class: two features granted by id, one in the export and one not
+        const string json = """
+            [
+              {"_id": "cls1", "name": "Reed Warden", "type": "class", "system": {
+                "identifier": "reed-warden", "hd": {"denomination": "d10"},
+                "spellcasting": {"progression": "half", "ability": "wis"},
+                "advancement": [
+                  {"type": "HitPoints", "level": 1},
+                  {"type": "Trait", "level": 1, "configuration": {"grants": ["saves:str", "saves:wis", "armor:lgt", "weapon:mar"],
+                    "choices": [{"count": 2, "pool": ["skills:ste", "skills:sur"]}]}},
+                  {"type": "Trait", "level": 1, "classRestriction": "secondary", "configuration": {"grants": ["saves:cha"]}},
+                  {"type": "ItemGrant", "level": 1, "configuration": {"items": [{"uuid": "Compendium.x.features.Item.f1"}, "Compendium.x.features.Item.f9"]}},
+                  {"type": "ScaleValue", "title": "Thorn Strike", "configuration": {"identifier": "thorn-strike", "type": "dice",
+                    "scale": {"1": {"number": 1, "faces": 6}, "3": {"number": 2, "faces": 6}}}},
+                  {"type": "AbilityScoreImprovement", "level": 4, "configuration": {"points": 2}},
+                  {"type": "Subclass", "level": 3}
+                ]}},
+              {"_id": "f1", "name": "Mire Step", "type": "feat", "system": {"description": {"value": "<p>Moves through mud.</p>"}}},
+              {"_id": "f2", "name": "Lone Feat", "type": "feat", "system": {}}
+            ]
+            """;
+        FoundryImport import = FoundryImport.Read(json);
+        // the granted feat is the class's feature, not a feat of its own
+        Assert.Equal(new[] { "classes/reed-warden.json", "feats/lone-feat.json" }, import.Files.Keys.OrderBy(k => k));
+        ClassDefinition warden = ClassDefinition.Read(Node(import, "classes/reed-warden.json"));
+        Assert.Equal((10, "wis"), (warden.HitDie, warden.DcAbility));
+        Assert.Equal(new[] { "str", "wis", "armor", "weapons" }, warden.Proficiencies);
+        Assert.Equal(4, warden.Levels.Count);
+        Assert.Equal(2, warden.Levels[0].Skills);
+        Assert.Equal("Mire Step", Assert.Single(warden.Levels[0].Features).Name);
+        Assert.Equal(1, warden.Levels[0].Scale["thorn-strike"]);
+        Assert.Equal(2, warden.Levels[2].Scale["thorn-strike"]);
+        Assert.Equal((2, 1, true), (warden.Levels[3].Boosts, warden.Levels[3].BoostStep, warden.Levels[3].BoostsRepeat));
+        Assert.Contains(import.Report, line => line.Contains("f9"));
+        Assert.Contains(import.Report, line => line.Contains("Subclass"));
+        Assert.Contains(import.Report, line => line.Contains("\"half\""));
+    }
+
+    [Fact]
     public void AFoundrySceneBecomesAMapOnTheGrid()
     {
         // 10 x 8 squares of 100 px with Foundry's quarter padding: the map starts at (300, 200)

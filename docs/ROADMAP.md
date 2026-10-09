@@ -783,8 +783,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     `@` paths in formulas and dice (RULES_LANGUAGE.md).
   - Done 10/9: the importer (Create > Compendium > From Foundry...): dnd5e and pf2e weapons,
     armour, spells, feats and creatures from a creator's own exports, one undoable change, a log
-    line for each thing left out. Left: classes and their advancement, conditions and effects,
-    Scenes as maps.
+    line for each thing left out. Done 10/9: dnd5e classes and their advancement (features from
+    the same export, scale values, score improvements); scenes as maps. Left: pf2e classes,
+    conditions and effects.
   - Done 10/9: JSON schemas for twelve kinds (`docs/schemas/*.schema.json`, made by `make.py` from
     the readers' fields; every shipped file passes), wired into VS Code by `.vscode/settings.json`
     (`docs/schemas/vscode-settings.json` for a package folder of your own).

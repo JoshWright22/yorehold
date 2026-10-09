@@ -16,6 +16,10 @@ public sealed class FoundryImport
     public Dictionary<string, JsonObject> Files { get; } = new(StringComparer.Ordinal);
     public List<string> Report { get; } = new();
 
+    // every document in the export by its Foundry id, and the ids a class grants as features
+    private readonly Dictionary<string, JsonObject> _documents = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _granted = new(StringComparer.Ordinal);
+
     /// <summary>Reads exported JSON: one document or a list. Unknown kinds are reported, not refused.</summary>
     public static FoundryImport Read(string json)
     {
@@ -30,8 +34,26 @@ public sealed class FoundryImport
             import.Report.Add("not JSON: " + error.Message);
             return import;
         }
-        IEnumerable<JsonNode?> documents = root is JsonArray list ? list : new[] { root };
-        foreach (JsonObject document in documents.OfType<JsonObject>())
+        List<JsonObject> documents = (root is JsonArray list ? list : new JsonArray(root?.DeepClone())).OfType<JsonObject>().ToList();
+        // a class's features are feats it grants by id; those in the same export become its features, not feats
+        foreach (JsonObject document in documents)
+        {
+            if (Text(document["_id"]) is { Length: > 0 } id)
+            {
+                import._documents[id] = document;
+            }
+        }
+        foreach (JsonObject document in documents.Where(d => Text(d["type"]) == "class"))
+        {
+            foreach (JsonObject grant in Advancements(document["system"] as JsonObject).Where(a => Text(a["type"]) == "ItemGrant"))
+            {
+                foreach (JsonNode? item in grant["configuration"]?["items"] as JsonArray ?? new JsonArray())
+                {
+                    import._granted.Add(GrantedId(item));
+                }
+            }
+        }
+        foreach (JsonObject document in documents)
         {
             try
             {
@@ -74,9 +96,15 @@ public sealed class FoundryImport
             case "spell":
                 Write("spells", pf2e ? Pf2eSpell(name, system) : Dnd5eSpell(name, system));
                 break;
+            case "feat" when _granted.Contains(Text(document["_id"])):
+                // written into the class that grants it
+                break;
             case "feat":
             case "action":
                 Write("feats", Feat(name, system, pf2e));
+                break;
+            case "class" when !pf2e:
+                Write("classes", Dnd5eClass(name, system));
                 break;
             case "npc":
                 Write("creatures", pf2e || system["abilities"]?["str"]?["mod"] != null ? Pf2eCreature(name, document, system) : Dnd5eCreature(name, document, system));
@@ -208,6 +236,185 @@ public sealed class FoundryImport
         }
         spell["effects"] = effects;
         return spell;
+    }
+
+    // Foundry's short names for the dnd5e skills, as the game's skill ids
+    private static readonly Dictionary<string, string> Dnd5eSkills = new(StringComparer.Ordinal)
+    {
+        ["acr"] = "acrobatics", ["ani"] = "animal-handling", ["arc"] = "arcana", ["ath"] = "athletics", ["dec"] = "deception",
+        ["his"] = "history", ["ins"] = "insight", ["itm"] = "intimidation", ["inv"] = "investigation", ["med"] = "medicine",
+        ["nat"] = "nature", ["prc"] = "perception", ["prf"] = "performance", ["per"] = "persuasion", ["rel"] = "religion",
+        ["slt"] = "sleight-of-hand", ["ste"] = "stealth", ["sur"] = "survival",
+    };
+
+    /// <summary>
+    /// A dnd5e class item: its hit die, casting ability, the saves, armour, weapons and skills its
+    /// Trait advancements give at first level, and a row per level with the features its
+    /// ItemGrants give (named from the feats in the same export), its scale values and its ability
+    /// score improvements. Spell slots and subclasses are named in the report.
+    /// </summary>
+    private JsonObject Dnd5eClass(string name, JsonObject system)
+    {
+        string id = Text(system["identifier"]) is { Length: > 0 } identifier ? Slug(identifier) : Slug(name);
+        var entry = new JsonObject { ["id"] = id, ["name"] = name };
+        if (Plain(system["description"]?["value"]) is { Length: > 0 } words)
+        {
+            entry["description"] = words;
+        }
+        string die = Text(system["hd"]?["denomination"]) is { Length: > 0 } d ? d : Text(system["hitDice"]);
+        entry["hitDie"] = int.TryParse(die.TrimStart('d'), out int sides) && sides > 0 ? sides : 8;
+        string casting = Text(system["spellcasting"]?["ability"]);
+        if (casting.Length > 0)
+        {
+            entry["dcAbility"] = casting;
+        }
+        if (Text(system["spellcasting"]?["progression"]) is { Length: > 0 } progression && progression != "none")
+        {
+            Report.Add($"{name}: casts as a \"{progression}\" caster; its spell slots are added on its level rows by hand");
+        }
+
+        List<JsonObject> advancements = Advancements(system);
+        var proficiencies = new JsonArray();
+        var rows = new SortedDictionary<int, JsonObject>();
+        JsonObject Row(int level)
+        {
+            if (!rows.TryGetValue(level, out JsonObject? row))
+            {
+                rows[level] = row = new JsonObject();
+            }
+            return row;
+        }
+        foreach (JsonObject advancement in advancements)
+        {
+            int level = Math.Clamp(Int(advancement["level"]) ?? 1, 1, 20);
+            JsonObject configuration = advancement["configuration"] as JsonObject ?? new JsonObject();
+            string title = Text(advancement["title"]);
+            switch (Text(advancement["type"]))
+            {
+                case "HitPoints":
+                    break;
+                case "Trait":
+                    // the multiclass copy of a trait ("secondary") is not the class's own
+                    if (Text(advancement["classRestriction"]) == "secondary")
+                    {
+                        break;
+                    }
+                    foreach (string grant in (configuration["grants"] as JsonArray ?? new JsonArray()).Select(Text))
+                    {
+                        string? proficiency = Proficiency(grant);
+                        if (proficiency != null && !proficiencies.Any(p => Text(p) == proficiency))
+                        {
+                            proficiencies.Add(proficiency);
+                        }
+                    }
+                    foreach (JsonObject choice in (configuration["choices"] as JsonArray ?? new JsonArray()).OfType<JsonObject>())
+                    {
+                        var pool = (choice["pool"] as JsonArray ?? new JsonArray()).Select(Text).ToList();
+                        if (pool.Count > 0 && pool.All(p => p.StartsWith("skills:", StringComparison.Ordinal)))
+                        {
+                            Row(level)["skills"] = (Int(Row(level)["skills"]) ?? 0) + (Int(choice["count"]) ?? 1);
+                            Report.Add($"{name}: picks {Int(choice["count"]) ?? 1} skills at level {level} from any; the file's list ({string.Join(", ", pool.Select(Proficiency))}) has no place here yet");
+                        }
+                        else if (pool.Count > 0)
+                        {
+                            Report.Add($"{name}: a choice of {Int(choice["count"]) ?? 1} from {string.Join(", ", pool)} at level {level}; left out");
+                        }
+                    }
+                    break;
+                case "ItemGrant":
+                    var features = Row(level)["features"] as JsonArray ?? new JsonArray();
+                    Row(level)["features"] = features;
+                    foreach (JsonNode? item in configuration["items"] as JsonArray ?? new JsonArray())
+                    {
+                        string key = GrantedId(item);
+                        if (_documents.TryGetValue(key, out JsonObject? feat))
+                        {
+                            var feature = new JsonObject { ["id"] = Slug(Text(feat["name"])), ["name"] = Text(feat["name"]) };
+                            if (Plain(feat["system"]?["description"]?["value"]) is { Length: > 0 } about)
+                            {
+                                feature["description"] = about;
+                            }
+                            features.Add(feature);
+                        }
+                        else
+                        {
+                            Report.Add($"{name}: a level {level} feature ({key}) isn't in this export; export it with the class to bring its name and words");
+                        }
+                    }
+                    if (features.Count == 0)
+                    {
+                        Row(level).Remove("features");
+                    }
+                    break;
+                case "ScaleValue":
+                    string scaleId = Text(configuration["identifier"]) is { Length: > 0 } sid ? Slug(sid) : Slug(title);
+                    string kind = Text(configuration["type"]);
+                    foreach ((string at, JsonNode? value) in configuration["scale"] as JsonObject ?? new JsonObject())
+                    {
+                        // dice count their dice (scale.sneak-attack is how many); a number or a distance is itself
+                        int? number = kind == "dice" ? Int(value?["number"]) ?? 1 : Int(value?["value"]);
+                        if (int.TryParse(at, out int scaleLevel) && scaleLevel is >= 1 and <= 20 && number is int n)
+                        {
+                            var scale = Row(scaleLevel)["scale"] as JsonObject ?? new JsonObject();
+                            scale[scaleId] = n;
+                            Row(scaleLevel)["scale"] = scale;
+                        }
+                    }
+                    if (kind == "dice")
+                    {
+                        Report.Add($"{name}: scale.{scaleId} counts the dice of {title}; their size is in the effect that rolls them");
+                    }
+                    break;
+                case "AbilityScoreImprovement":
+                    Row(level)["boosts"] = Int(configuration["points"]) ?? 2;
+                    Row(level)["boostStep"] = 1;
+                    Row(level)["boostsRepeat"] = true;
+                    break;
+                default:
+                    Report.Add($"{name}: a \"{Text(advancement["type"])}\" advancement at level {level}{(title.Length > 0 ? $" ({title})" : "")}; left out");
+                    break;
+            }
+        }
+        entry["proficiencies"] = proficiencies;
+        if (rows.Count > 0)
+        {
+            var levels = new JsonArray();
+            for (int level = 1; level <= rows.Keys.Max(); level++)
+            {
+                levels.Add(rows.TryGetValue(level, out JsonObject? row) ? row : new JsonObject());
+            }
+            entry["levels"] = levels;
+        }
+        return entry;
+    }
+
+    // "saves:dex" is "dex", "armor:lgt" is "armor", "weapon:sim" is "weapons", "skills:ste" is "stealth"
+    private static string? Proficiency(string grant)
+    {
+        string[] parts = grant.Split(':');
+        return parts[0] switch
+        {
+            "saves" when parts.Length > 1 => parts[1],
+            "armor" => "armor",
+            "weapon" => "weapons",
+            "skills" when parts.Length > 1 => Dnd5eSkills.GetValueOrDefault(parts[1], parts[1]),
+            _ => null,
+        };
+    }
+
+    // advancement is a list in current exports and an object keyed by id in some older ones
+    private static List<JsonObject> Advancements(JsonObject? system) => system?["advancement"] switch
+    {
+        JsonArray list => list.OfType<JsonObject>().ToList(),
+        JsonObject keyed => keyed.Select(p => p.Value).OfType<JsonObject>().ToList(),
+        _ => new List<JsonObject>(),
+    };
+
+    // an ItemGrant's item, {"uuid": "Compendium.dnd5e.classfeatures.Item.abc123"} or the uuid alone, is "abc123"
+    private static string GrantedId(JsonNode? item)
+    {
+        string uuid = item is JsonObject o ? Text(o["uuid"]) : Text(item);
+        return uuid.Contains('.') ? uuid[(uuid.LastIndexOf('.') + 1)..] : uuid;
     }
 
     // "8d6" from a damage part's number and die (or its custom formula), with its first type.
