@@ -137,8 +137,31 @@ public partial class CharacterScreen : CanvasLayer
         Closed?.Invoke();
     }
 
+    public override void _ExitTree()
+    {
+        ChatPanel.Current?.StepAside("characters", false);
+    }
+
+    // Centred on the screen less the chat column when it is out, and no wider than what is left.
+    private void MakeRoom()
+    {
+        float room = ChatPanel.Current?.Open == true ? ChatPanel.Width : 0;
+        float left = _root.GetViewport().GetVisibleRect().Size.X - room;
+        foreach ((Control panel, float half) in new[] { (_root, 620f), ((Control)_library, 560f) })
+        {
+            float fits = Mathf.Min(half, left / 2 - 16);
+            panel.OffsetLeft = -fits - room / 2;
+            panel.OffsetRight = fits - room / 2;
+        }
+    }
+
     public override void _Process(double delta)
     {
+        ChatPanel.Current?.StepAside("characters", Visible);
+        if (Visible)
+        {
+            MakeRoom();
+        }
         if (_dirty && Visible)
         {
             Redraw();

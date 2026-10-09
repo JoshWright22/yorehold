@@ -233,19 +233,62 @@ public partial class ChatPanel : CanvasLayer
         return tab;
     }
 
-    public void Toggle()
+    private readonly HashSet<string> _aside = new();
+    private bool _reopen;
+
+    /// <summary>
+    /// A wide screen (options, character creation, the inventory, a shop) puts the column away while
+    /// it is open, as the design shows them, and it comes back when the last such screen closes.
+    /// Cheap to call every frame: nothing moves unless the answer changes.
+    /// </summary>
+    public void StepAside(string screen, bool aside)
     {
-        Open = !Open;
+        bool before = _aside.Count > 0;
+        if (aside)
+        {
+            _aside.Add(screen);
+        }
+        else
+        {
+            _aside.Remove(screen);
+        }
+        bool now = _aside.Count > 0;
+        if (before == now)
+        {
+            return;
+        }
+        if (now && Open)
+        {
+            _reopen = true;
+            Slide(false, false);
+        }
+        else if (!now && _reopen && !Open)
+        {
+            _reopen = false;
+            Slide(true, false);
+        }
+        else if (!now)
+        {
+            _reopen = false;
+        }
+    }
+
+    public void Toggle() => Slide(!Open, true);
+
+    // Out or away; a pull by the player puts the keys in the box, a step aside doesn't.
+    private void Slide(bool open, bool focus)
+    {
+        Open = open;
         _slide?.Kill();
         _slide = CreateTween();
         _slide.TweenProperty(_frame, "offset_left", Open ? -(Width + TabWidth) : -TabWidth, SlideSeconds)
             .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
         _tab.Visible = !Open;
-        if (Open)
+        if (Open && focus)
         {
             _box.GrabFocus();
         }
-        else
+        else if (!Open)
         {
             _box.ReleaseFocus();
         }

@@ -197,6 +197,7 @@ public partial class MenuScreen : CanvasLayer
 
     public override void _Process(double delta)
     {
+        ChatPanel.Current?.StepAside("options", Showing == Page.Settings);
         MakeRoom();
         // a save may have arrived from another device, or been finished there
         if (App.Sync.LocalChanges != _syncChangesSeen)

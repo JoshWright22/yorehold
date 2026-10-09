@@ -261,6 +261,7 @@ public partial class PlayHud : Control
     public override void _ExitTree()
     {
         ChatPanel.Current?.ShowLog(null);
+        ChatPanel.Current?.StepAside("gear", false);
     }
 
     public override void _Ready()
@@ -680,6 +681,7 @@ public partial class PlayHud : Control
             _trade.Refresh(world, hero);
         }
         _gearView.Visible = false;
+        ChatPanel.Current?.StepAside("gear", _partyGear.Visible || _trade.Visible);
         _journalButton.SetPressedNoSignal(OpenPanel == "Journal");
         _journalView.Visible = OpenPanel == "Journal";
         if (_journalView.Visible)
