@@ -85,6 +85,11 @@ public sealed partial class World
         {
             return false;
         }
+        if (AttackStep(action.Effect.Steps) is { Hand: "off" } && Creatures[creature].Sheet.OffHandWeapon == null)
+        {
+            why = "nothing to strike with in the off hand";
+            return false;
+        }
         return action.Meets(Creatures[creature].Sheet, Rules, out why);
     }
 

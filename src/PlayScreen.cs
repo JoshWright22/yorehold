@@ -773,7 +773,7 @@ public partial class PlayScreen : Node2D
         World w = _world;
         bool done = order.Kind switch
         {
-            ItemOrderKind.Equip => w.Equip(order.Hero, order.Item, true),
+            ItemOrderKind.Equip => w.Equip(order.Hero, order.Item, true, order.Slot),
             ItemOrderKind.Unequip => w.Equip(order.Hero, order.Item, false),
             ItemOrderKind.Use => w.Consume(order.Hero, order.Item, order.Target),
             ItemOrderKind.Give => w.Give(order.Hero, order.Target, item: order.Item),

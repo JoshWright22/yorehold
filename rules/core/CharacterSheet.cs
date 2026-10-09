@@ -98,7 +98,13 @@ public sealed partial class CharacterSheet
     }
 
     /// <summary>The equipped main-hand item, if there is one.</summary>
-    public Item? WeaponItem => Inventory.Find(i => i.Equipped && i.Slot == "mainHand");
+    public Item? WeaponItem => OffHand ? OffHandWeapon : Inventory.Find(i => i.Equipped && i.Slot == "mainHand");
+
+    /// <summary>A weapon held in the off hand, if there is one.</summary>
+    public Item? OffHandWeapon => Inventory.Find(i => i.Equipped && i.Slot == "offHand" && i.Definition.Damage.Length > 0);
+
+    /// <summary>While an off-hand attack is rolled: the weapon it strikes with is the off hand's.</summary>
+    public bool OffHand { get; set; }
 
     public DeathState Death { get; } = new();
     /// <summary>Experience so far; levels come from it (see AddXp).</summary>
@@ -1170,13 +1176,15 @@ public sealed partial class CharacterSheet
     /// something that needs more than are free puts the other held items away, the last listed
     /// first, so a greatsword leaves no hand for a shield.
     /// </summary>
-    public bool Equip(int index)
+    public bool Equip(int index, string slot = "")
     {
         if (index < 0 || index >= Inventory.Count || Inventory[index].Slot.Length == 0 || Inventory[index].Equipped)
         {
             return false;
         }
         Item item = Inventory[index];
+        // a one-handed weapon may go in the off hand instead (two-weapon fighting)
+        item.HeldIn = slot.Length > 0 && slot != item.Definition.Slot && item.CanGoIn(slot) ? slot : "";
         for (int i = 0; i < Inventory.Count; i++)
         {
             if (Inventory[i].Equipped && Inventory[i].Slot == item.Slot)
@@ -1209,6 +1217,7 @@ public sealed partial class CharacterSheet
             return;
         }
         Inventory[index].Equipped = false;
+        Inventory[index].HeldIn = "";
         Stats.RemoveSource(ItemSource(Inventory[index], index));
     }
 

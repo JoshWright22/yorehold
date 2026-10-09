@@ -475,6 +475,34 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void ADaggerInTheOffHandStrikesAsABonusAction()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "rogue", "wizard");
+        World w = world.World;
+        CharacterSheet rogue = w.Creatures[0].Sheet;
+        int main = rogue.Inventory.FindIndex(i => i.Equipped && i.Slot == "mainHand");
+        Assert.True(main >= 0, "the rogue holds a weapon");
+        rogue.Inventory.Add(new Item(w.Chapter.Compendium.Item("dagger")!));
+        int dagger = rogue.Inventory.Count - 1;
+        Assert.True(rogue.Equip(dagger, "offHand"), "a one-handed weapon can go in the off hand");
+        Assert.True(rogue.Inventory[main].Equipped && rogue.Inventory[dagger].Slot == "offHand" && rogue.OffHandWeapon == rogue.Inventory[dagger],
+            "both hands hold a weapon");
+        Assert.Equal("mainHand", Item.Read(TestContent.Json(rogue.Inventory[dagger].ToJson().ToJsonString(), "dagger.json")).Definition.Slot);
+        Assert.Equal("offHand", Item.Read(TestContent.Json(rogue.Inventory[dagger].ToJson().ToJsonString(), "dagger.json")).HeldIn);
+
+        world.Put(0, new Cell(2, 2));
+        world.Put(2, new Cell(3, 2));
+        world.Fight();
+        Assert.True(world.TurnTo(0), w.Refusal);
+        Assert.True(world.Use("off-hand-attack", 2), w.Refusal);
+        Assert.True(world.Log.Any(l => l.Contains(" attacks ")), string.Join(" / ", world.Log.TakeLast(4)));
+        // put away, there is nothing to strike with
+        rogue.Unequip(dagger);
+        Assert.Equal("", rogue.Inventory[dagger].HeldIn);
+        Assert.False(w.CanUse(0, w.FindAction("off-hand-attack")!, out string why));
+    }
+
+    [Fact]
     public void HoldPersonSavesAgainstTheCastersDc()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "wizard");

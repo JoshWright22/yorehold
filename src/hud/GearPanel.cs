@@ -20,7 +20,7 @@ public enum ItemOrderKind
 }
 
 /// <summary>Something the gear panel asks the world to do; the play screen does it.</summary>
-public sealed record ItemOrder(ItemOrderKind Kind, int Hero, int Item = -1, int Target = -1, int Pile = -1, int Npc = -1);
+public sealed record ItemOrder(ItemOrderKind Kind, int Hero, int Item = -1, int Target = -1, int Pile = -1, int Npc = -1, string Slot = "");
 
 /// <summary>
 /// The gear panel (I): a hero's pack, or a pile or a shop beside them, as a data panel. Tabs are

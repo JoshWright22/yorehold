@@ -169,7 +169,13 @@ public partial class PartyGearView : Control, IGearCells
         }
         else if (toSlot.Length > 0 && !moved.Equipped)
         {
-            Ordered?.Invoke(new ItemOrder(ItemOrderKind.Equip, fromHero, item));
+            Ordered?.Invoke(new ItemOrder(ItemOrderKind.Equip, fromHero, item, Slot: toSlot));
+        }
+        else if (toSlot.Length > 0 && moved.Equipped && toSlot != moved.Slot && moved.CanGoIn(toSlot))
+        {
+            // from one hand to the other: put away, then taken up there
+            Ordered?.Invoke(new ItemOrder(ItemOrderKind.Unequip, fromHero, item));
+            Ordered?.Invoke(new ItemOrder(ItemOrderKind.Equip, fromHero, item, Slot: toSlot));
         }
         else if (toSlot.Length == 0 && moved.Equipped)
         {

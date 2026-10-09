@@ -355,7 +355,7 @@ public sealed partial class World
     }
 
     /// <summary>Puts an item on or away: free between fights, an Interact on the hero's own turn in one.</summary>
-    public bool Equip(int hero, int item, bool on)
+    public bool Equip(int hero, int item, bool on, string slot = "")
     {
         Refusal = "";
         if (!CanEquip(hero, item, on, out string why))
@@ -373,7 +373,7 @@ public sealed partial class World
         {
             // whatever it pushed out of a slot or a hand is named too
             List<bool> before = sheet.Inventory.Select(i => i.Equipped).ToList();
-            sheet.Equip(item);
+            sheet.Equip(item, slot);
             List<string> away = sheet.Inventory.Where((i, n) => before[n] && !i.Equipped).Select(i => i.Name).ToList();
             Say($"{sheet.Name}{(thing.Held ? " takes up " : " puts on ")}{thing.Name}{(away.Count == 0 ? "." : ", putting away " + string.Join(", ", away) + ".")}");
         }

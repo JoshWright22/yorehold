@@ -19,12 +19,17 @@ public sealed class Item
     public ItemDefinition Definition { get; }
     public int Quantity { get; set; }
     public bool Equipped { get; set; }
+    /// <summary>The slot it is held in instead of its file's own: a one-handed weapon held in the off hand. "" for its own.</summary>
+    public string HeldIn { get; set; } = "";
     /// <summary>Copper. A merchant may ask another price than the file's.</summary>
     public int Value { get; set; }
 
     public string Id => Definition.Id;
     public string Name => Definition.Name;
-    public string Slot => Definition.Slot;
+    public string Slot => HeldIn.Length > 0 ? HeldIn : Definition.Slot;
+
+    /// <summary>Whether it can be worn or held in that slot: its own, or a one-handed main-hand item in the off hand.</summary>
+    public bool CanGoIn(string slot) => slot == Definition.Slot || (slot == "offHand" && Definition.Slot == "mainHand" && Definition.Hands <= 1);
     public int Hands => Definition.Hands;
     public double Weight => Definition.Weight;
     public bool Magic => Definition.Magic;
@@ -35,7 +40,7 @@ public sealed class Item
 
     public Item Copy()
     {
-        return new Item(Definition, Quantity) { Equipped = Equipped, Value = Value };
+        return new Item(Definition, Quantity) { Equipped = Equipped, Value = Value, HeldIn = HeldIn };
     }
 
     /// <summary>The same shape the C++ client saved, so its library files read here and back.</summary>
@@ -51,7 +56,7 @@ public sealed class Item
         {
             ["id"] = Id,
             ["name"] = Name,
-            ["slot"] = Slot,
+            ["slot"] = Definition.Slot,
             ["damage"] = Definition.Damage,
             ["attackAbility"] = Definition.AttackAbility,
             ["hands"] = Hands,
@@ -60,6 +65,7 @@ public sealed class Item
             ["quantity"] = Quantity,
             ["magic"] = Magic,
             ["equipped"] = Equipped,
+            ["heldIn"] = HeldIn,
             ["modifiers"] = modifiers,
         };
         if (Definition.Description.Length > 0)
@@ -93,6 +99,7 @@ public sealed class Item
         {
             Equipped = node.Bool("equipped", false),
             Value = node.Int("value", 0, 0),
+            HeldIn = node.Text("heldIn", "", 32),
         };
     }
 }

@@ -195,6 +195,8 @@ internal sealed class EffectRun
         string text = step.Amount switch
         {
             "weapon" => self == null ? "0" : WithBonus(self.DamageDice(_rules), self.Situational(_rules, "damage", AttackContext(step, who >= 0 ? _host.Sheet(who) : null))),
+            // the weapon's dice with nothing added: 5e's off-hand attack adds no ability to its damage
+            "weaponDice" => self?.Weapon is Weapon held && held.Damage.Length > 0 ? DiceText.Fill(held.Damage, name => self.Named(_rules, name)) : "1",
             "speed" => (self?.SpeedSquares(_rules) ?? 0).ToString(),
             // formulas in braces read the doer's sheet: "2d8+{mod.wis}"
             _ => DiceText.Fill(step.Amount, name => name == "margin" ? margin ?? 0 : self?.Named(_rules, name)),
@@ -369,18 +371,41 @@ internal sealed class EffectRun
             }
             break;
         case EffectKind.Roll:
-            foreach (int actor in who)
+        {
+            // an off-hand attack strikes with the off hand's weapon, its roll and its damage both;
+            // with nothing there it isn't made
+            CharacterSheet? striker = step.Hand == "off" ? _host.Sheet(_context.Self) : null;
+            if (step.Hand == "off" && striker?.OffHandWeapon == null)
             {
-                if (RollFor(step, actor))
+                break;
+            }
+            if (striker != null)
+            {
+                striker.OffHand = true;
+            }
+            try
+            {
+                foreach (int actor in who)
                 {
-                    Steps(step.Steps, new List<int> { actor }, false);
-                    if (step.How == "attack")
+                    if (RollFor(step, actor))
                     {
-                        Triggered(actor);
+                        Steps(step.Steps, new List<int> { actor }, false);
+                        if (step.How == "attack")
+                        {
+                            Triggered(actor);
+                        }
                     }
                 }
             }
+            finally
+            {
+                if (striker != null)
+                {
+                    striker.OffHand = false;
+                }
+            }
             break;
+        }
         case EffectKind.Repeat:
         {
             if (nobody)

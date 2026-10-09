@@ -1,0 +1,28 @@
+{
+  "id": "off-hand-attack",
+  "name": "Off-hand Attack",
+  "description": "With a weapon in each hand, a bonus action attack with the one in the off hand; its damage adds no ability modifier.",
+  "order": 12,
+  "cost": "bonus",
+  "general": true,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": "weapon"
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "hand": "off",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "weaponDice",
+          "when": "hit",
+          "minimum": 1
+        }
+      ]
+    }
+  ]
+}

@@ -75,6 +75,8 @@ public class EffectStep
     public string Against { get; init; } = "";
     /// <summary>An attack that needs the target this close (squares) when it is rolled; 0 = wherever it is.</summary>
     public int Reach { get; init; }
+    /// <summary>An attack made with the weapon held in the off hand ("off"); "" for the main hand.</summary>
+    public string Hand { get; init; } = "";
     public List<EffectStep> Steps { get; init; } = new();
     public List<EffectOption> Options { get; init; } = new();
 }
@@ -238,6 +240,7 @@ public class Effect
         bool casterDc = false;
         string against = "";
         int reach = 0;
+        string hand = "";
         var options = new List<EffectOption>();
         string[] own;
 
@@ -247,7 +250,7 @@ public class Effect
             own = new[] { "dice", "type", "crit", "minimum", "track" };
             // a track of the system's the damage goes to first (Fate Core's mental stress); left out, all of them in order
             id = node.Name("track", "");
-            amount = Amount(node, "dice", new[] { "weapon" });
+            amount = Amount(node, "dice", new[] { "weapon", "weaponDice" });
             type = node.Name("type", "untyped");
             minimum = node.Int("minimum", 0, 0, 100000);
             critDoubles = OneOf(node, "crit", "double", "double", "normal") == "double";
@@ -305,8 +308,9 @@ public class Effect
             remove = node.Bool("remove", false);
             break;
         case EffectKind.Roll:
-            own = new[] { "kind", "ability", "dc", "against", "steps", "reach" };
+            own = new[] { "kind", "ability", "dc", "against", "steps", "reach", "hand" };
             reach = node.Int("reach", 0, 0, 100);
+            hand = node.Has("hand") ? OneOf(node, "hand", null, "off") : "";
             how = OneOf(node, "kind", null, "attack", "check", "save");
             if (how == "attack")
             {
@@ -432,6 +436,7 @@ public class Effect
             CasterDc = casterDc,
             Against = against,
             Reach = reach,
+            Hand = hand,
             Steps = node.Get("steps") is ContentNode steps ? ReadSteps(steps, depth + 1) : new List<EffectStep>(),
             Options = options,
         };

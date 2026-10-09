@@ -479,8 +479,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     beside them as critical hits; Shield cast as a reaction (a reaction may name a spell; the
     slot is spent); versatile weapons by the hands they leave free (`hands.free` in weapon dice).
   - Doesn't fit yet (back to the steps):
-    two-weapon fighting (it needs a weapon held in the off hand: items have one slot, so a
-    second light weapon needs "equip to a chosen hand" first); Scorching Ray's extra ray per slot. Done 10/9: a condition's save may
+    Scorching Ray's extra ray per slot. Done 10/9: two-weapon fighting: a one-handed weapon
+    held in the off hand (`heldIn`) and the Off-hand Attack bonus action (`"hand": "off"`,
+    `weaponDice`). Done 10/9: a condition's save may
     be `"dc": "caster"`, kept from the effect that put it on (Hold Person's hold). Then the rest
     of the SRD: all classes and
     levels, the spell list, the bestiary.
