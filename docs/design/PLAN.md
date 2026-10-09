@@ -64,7 +64,7 @@ Status: not started, in progress, matches, differs (with why).
 | --- | --- | --- | --- | --- |
 | Game flow | `game/00-flow.png` | screen order | not started | Lobby between the menu and play is new |
 | Main menu | `game/01-main-menu.png` | `src/menus/MenuScreen.cs` | matches | 384 px band, spaced wordmark and tagline, amber Play, keys P/E/O/Alt F4 (pressable), version and sign-in at the foot, art card only without art; the docked chat column comes with the play screen's chat |
-| Lobby | `game/02-lobby.png` | new screen | not started | seats, ready, invite |
+| Lobby | `game/02-lobby.png` | `src/characters/CharacterScreen.cs` (DrawParty) | close, offline | seat cards (number, face, You, the hero, how they come, READY or CHOOSING), Leave lobby in red, Start adventure in amber. Waits for online play: other players' names, invite code and Copy, Not ready, Add a computer hero, the adventure's page on the right |
 | Character creation | `game/03-character-creation.png` | `src/characters/CharacterScreen.cs` | close | steps down the left with what each picked (the system's own steps; 5e now asks one thing per step: species, class, background, scores, skills and feat, name), Back: and Next: name their steps, Next in amber; the chat steps aside. Differs: picks are button grids, not the design's table with a page beside it; no Equipment or Appearance steps yet |
 | Portrait crop | `game/04-portrait-crop.png` | new screen | not started | one 3:4 crop |
 | Options | `game/05-options.png` | `src/menus/SettingsPanel.cs` | matches | bar with search and Close, groups left with counts, rows divided by 1 px lines, choices outlined in amber, Reset to defaults per group; the design's resolution, interface size and frame limit rows are not settings yet |

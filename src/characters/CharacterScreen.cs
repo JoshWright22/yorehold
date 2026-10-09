@@ -489,12 +489,8 @@ public partial class CharacterScreen : CanvasLayer
         Dim(_body, "Each player picks who they play. A seat set to make one goes into character creation as the adventure starts.");
         for (int i = 0; i < chapter.Party.Count; i++)
         {
-            LibraryEntry? seated = _seats[i];
-            string who = _makeAtStart.Contains(i) ? "makes a character when we start"
-                : seated != null ? $"{seated.Choices.Name}  (level {seated.Choices.Level})"
-                : $"{chapter.Party[i].Name}  (ready-made {ClassName(chapter.Party[i].ClassId)})";
             int index = i;
-            Toggle(_body, $"Seat {i + 1}, you: {who}", i == _seat, () => _seat = index);
+            _body.AddChild(SeatCard(chapter, i, () => _seat = index));
         }
         Dim(_body, $"Who takes seat {_seat + 1}?");
         if (_compendium.Classes.Count > 0)
@@ -545,8 +541,75 @@ public partial class CharacterScreen : CanvasLayer
             PartyMember member = chapter.Party[_seat];
             _sheet.ShowText(member.Name, $"Level {chapter.Level} {ClassName(member.ClassId)}\n\nReady-made for this adventure: its scores are rolled when the adventure starts.");
         }
-        Push(_buttons, "Close (Esc)", true, Close);
-        Push(_buttons, "Start (Enter)", true, Start);
+        // leaving is drawn in red, starting in amber, as the design's lobby foot has them
+        Button leave = Push(_buttons, "Leave lobby", true, Close);
+        leave.AddThemeStyleboxOverride("normal", Outline(Palette.Red));
+        leave.AddThemeStyleboxOverride("hover", Outline(Palette.Rose));
+        leave.AddThemeColorOverride("font_color", Palette.Red);
+        leave.AddThemeColorOverride("font_hover_color", Palette.Rose);
+        Button start = Push(_buttons, "Start adventure", true, Start);
+        start.ThemeTypeVariation = "EndTurnButton";
+        start.AddThemeFontSizeOverride("font_size", 16);
+    }
+
+    private static StyleBoxFlat Outline(Color line)
+    {
+        var box = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = line };
+        box.SetBorderWidthAll(1);
+        box.SetContentMarginAll(8);
+        return box;
+    }
+
+    // A seat as the design's lobby draws it: its number, the hero's face, who plays it and what
+    // they bring, and where it stands, the picked seat outlined in amber.
+    private Button SeatCard(Chapter chapter, int seat, Action pick)
+    {
+        LibraryEntry? seated = _seats[seat];
+        bool making = _makeAtStart.Contains(seat);
+        string hero = making ? "A new hero"
+            : seated != null ? $"{seated.Choices.Name} · {ClassName(seated.Choices.Levels[^1].ClassId)}, level {seated.Choices.Level}"
+            : $"{chapter.Party[seat].Name} · {ClassName(chapter.Party[seat].ClassId)}, level {chapter.Level}";
+        string how = making ? "Makes a character when we start" : seated != null ? "From your characters" : "Ready-made for this adventure";
+        var card = new Button { ToggleMode = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 84), ThemeTypeVariation = "PickButton" };
+        card.SetPressedNoSignal(seat == _seat);
+        card.Pressed += () =>
+        {
+            pick();
+            Changed();
+        };
+        var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        row.AddThemeConstantOverride("separation", 12);
+        card.AddChild(row);
+        row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        row.OffsetLeft = 12;
+        row.OffsetTop = 6;
+        row.OffsetRight = -12;
+        row.OffsetBottom = -6;
+        var number = new Label { Text = (seat + 1).ToString(), ThemeTypeVariation = "NumberLabel", VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore };
+        row.AddChild(number);
+        var face = new PortraitView { CustomMinimumSize = new Vector2(54, 72), MouseFilter = Control.MouseFilterEnum.Ignore };
+        string name = making ? "?" : seated?.Choices.Name ?? chapter.Party[seat].Name;
+        face.Show(name, Palette.Leather, false, null);
+        row.AddChild(face);
+        var lines = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Ignore, Alignment = BoxContainer.AlignmentMode.Center };
+        lines.AddThemeConstantOverride("separation", 0);
+        row.AddChild(lines);
+        var player = new Label { Text = "You", ThemeTypeVariation = "TitleLabel", MouseFilter = Control.MouseFilterEnum.Ignore };
+        player.AddThemeFontSizeOverride("font_size", 15);
+        player.AddThemeColorOverride("font_color", Palette.Bone);
+        lines.AddChild(player);
+        var heroLine = new Label { Text = hero, MouseFilter = Control.MouseFilterEnum.Ignore, ClipText = true };
+        heroLine.AddThemeFontSizeOverride("font_size", 13);
+        heroLine.AddThemeColorOverride("font_color", Palette.Bone);
+        lines.AddChild(heroLine);
+        var howLine = new Label { Text = how, ThemeTypeVariation = "DimLabel", MouseFilter = Control.MouseFilterEnum.Ignore };
+        howLine.AddThemeFontSizeOverride("font_size", 12);
+        lines.AddChild(howLine);
+        var state = new Label { Text = making ? "CHOOSING" : "READY", ThemeTypeVariation = "CapsLabel", VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore };
+        state.AddThemeFontSizeOverride("font_size", 10);
+        state.AddThemeColorOverride("font_color", making ? Palette.Ash : Palette.Blue);
+        row.AddChild(state);
+        return card;
     }
 
     private void Start()
