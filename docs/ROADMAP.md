@@ -354,13 +354,15 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     Done 10/8: `turnOrder`: one initiative order or side by side, which side first, rolled or
     by the modifier alone (Fate orders by Quick). Done 10/8: `picked`: whoever acted names who goes
     next among those yet to act (an ally by default, which is how the AI picks; a hero's player
-    clicks someone in the turn order). Left: the last to act picking who opens the next round.
+    clicks someone in the turn order). Done 10/9: the last to act in a round picks who opens the
+    next (anyone standing, themselves too); naming nobody, an ally of theirs opens it.
   - Effect steps and triggers name the system's tracks, defences and numbers, not built-in
     ones, so a system's own mechanic needs no new step kind. The kinds that stay fixed are the
     language's documented core.
     Done 10/8: a `resource` step reaches a track by its id, attacks name a defence with
-    `against`, and formulas read `field.<id>`, `stat.<name>` and the defences. Left: a damage
-    step aimed at one track; the documented core (with R2b's reference).
+    `against`, and formulas read `field.<id>`, `stat.<name>` and the defences. Done: a damage
+    step aimed at one track (`"track"`, CONTENT.md "tracks"); the documented core is
+    RULES_LANGUAGE.md with its schema.
 - [x] **R3. Checks in data.** A resolution table per system: degrees of success (5e: hit/miss and
   nat 20; PF2e: four degrees, ±10, nat 20/1 move a step), what a critical does (double dice or
   double total), and advantage from the target or the place as well as the attacker. Every

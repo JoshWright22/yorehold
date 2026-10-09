@@ -261,15 +261,23 @@ public sealed class Encounter
 
     // whether the one acting has said who goes next this turn
     private bool _nextPicked;
+    // who opens the next round, named by the last to act in this one
+    private Combatant? _opener;
 
-    /// <summary>With a picked order (Fate): someone yet to act this round may be named to go next.</summary>
+    // nobody standing is left to act after the current turn: the round ends with it
+    private bool LastThisRound => Enumerable.Range(_current + 1, Math.Max(0, _order.Count - _current - 1)).All(i => !_order[i].Standing);
+
+    /// <summary>
+    /// With a picked order (Fate): someone yet to act this round may be named to go next; the last
+    /// to act in a round names anyone standing, themselves too, to open the next one.
+    /// </summary>
     public bool CanPickNext(int index)
     {
         return _rules.TurnOrder.Picked && !_rules.SharedTurns && Started && !Finished && Round > 0
-            && index > _current && index < _order.Count && _order[index].Standing;
+            && index >= 0 && index < _order.Count && _order[index].Standing && (index > _current || LastThisRound);
     }
 
-    /// <summary>The one acting names who goes after them: they move up to just after this turn.</summary>
+    /// <summary>The one acting names who goes after them: they move up to just after this turn, or open the next round.</summary>
     public bool PickNext(int index)
     {
         if (!CanPickNext(index))
@@ -277,9 +285,15 @@ public sealed class Encounter
             return false;
         }
         Combatant next = _order[index];
+        _nextPicked = true;
+        if (LastThisRound)
+        {
+            _opener = next;
+            AddLog($"{_order[_current].Sheet.Name} picks {next.Sheet.Name} to open round {Round + 1}");
+            return true;
+        }
         _order.RemoveAt(index);
         _order.Insert(_current + 1, next);
-        _nextPicked = true;
         AddLog($"{_order[_current].Sheet.Name} hands the turn to {next.Sheet.Name}");
         return true;
     }
@@ -304,6 +318,13 @@ public sealed class Encounter
         {
             ConditionsEnded(_order[_current].Sheet, _order[_current].Sheet.ConditionEvent(_rules, "turnEnd"));
         }
+        // the last to act named nobody to open the next round: an ally of theirs opens it, as
+        // the AI would pick (themselves when they stand alone)
+        if (_rules.TurnOrder.Picked && !_nextPicked && Round > 0 && LastThisRound)
+        {
+            int team = _order[_current].Team;
+            _opener = _order.Where((c, i) => i != _current && c.Team == team && c.Standing).FirstOrDefault() ?? _order[_current];
+        }
         // nobody named: an ally yet to act goes next, so a side's turns run together
         if (_rules.TurnOrder.Picked && !_nextPicked && Round > 0)
         {
@@ -325,6 +346,13 @@ public sealed class Encounter
             if (_current >= _order.Count)
             {
                 _current = 0;
+                // the next round opens with whoever was picked for it, the rest in their order
+                if (_opener != null && _order.IndexOf(_opener) > 0)
+                {
+                    _order.Remove(_opener);
+                    _order.Insert(0, _opener);
+                }
+                _opener = null;
                 if (Round > 0)
                 {
                     EndRound();

@@ -422,9 +422,12 @@ public sealed partial class World
         return true;
     }
 
-    /// <summary>With a picked turn order (Fate): whether the hero acting may hand the next turn to this creature.</summary>
+    /// <summary>
+    /// With a picked turn order (Fate): whether the hero acting may hand the next turn to this
+    /// creature, or, as the last to act in the round, have it open the next (themselves too).
+    /// </summary>
     public bool CanPickNext(int creature) =>
-        Fighting && CurrentCreature is int now && now < HeroCount && creature != now && OrderIndex(creature) is int index && Encounter!.CanPickNext(index);
+        Fighting && CurrentCreature is int now && now < HeroCount && OrderIndex(creature) is int index && Encounter!.CanPickNext(index);
 
     /// <summary>The hero acting names who goes after them.</summary>
     public bool PickNext(int creature)

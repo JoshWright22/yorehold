@@ -80,6 +80,18 @@ public class EncounterTests
         Assert.Equal("3", fight.Current.Sheet.Name);
         fight.NextTurn();
         Assert.Equal("1", fight.Current.Sheet.Name);
+        // 1 is the last this round and names nobody: an ally of theirs, 3, opens round 2
+        fight.NextTurn();
+        Assert.True(fight.Round == 2 && fight.Current.Sheet.Name == "3");
+        fight.NextTurn();
+        fight.NextTurn();
+        fight.NextTurn();
+        // the last of round 2 may name anyone standing, themselves included, to open round 3
+        Assert.True(fight.CanPickNext(0));
+        int first = fight.Order.ToList().FindIndex(c => c.Sheet.Name == "0");
+        Assert.True(fight.PickNext(first));
+        fight.NextTurn();
+        Assert.True(fight.Round == 3 && fight.Current.Sheet.Name == "0");
     }
 
     private static CharacterSheet[] People(int count, int hp = 200)
