@@ -31,7 +31,7 @@
         { "key": "speed", "type": "integer", "min": 0, "help": "feet" },
         { "key": "darkvision", "type": "integer", "min": 0, "help": "feet" },
         { "key": "dcAbility", "type": "choice", "optionsFrom": "abilities", "label": "DC ability" },
-        { "key": "abilities", "type": "json", "help": "fixed scores: {\"dex\": 14}; the rest are rolled" },
+        { "key": "abilities", "type": "json", "optionsFrom": "abilities", "help": "fixed scores; a blank one is rolled" },
         { "key": "proficiencies", "type": "list", "options": ["weapons", "armor"], "optionsFrom": "skills" },
         { "key": "proficiencyRanks", "type": "json" },
         { "key": "deathSaves", "type": "flag" },

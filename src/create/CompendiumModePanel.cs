@@ -40,7 +40,7 @@ public partial class CompendiumModePanel : Control
         AddChild(_body);
         _body.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 
-        _list = Column(250, Palette.Night, 0, 1);
+        _list = Column(230, Palette.Night, 0, 1);
         var middle = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         var middlePanel = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         middlePanel.AddThemeStyleboxOverride("panel", Box(Palette.Night, 0, 0, 16));
@@ -49,7 +49,7 @@ public partial class CompendiumModePanel : Control
         _form = new ToolColumn { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         middle.AddChild(_form);
 
-        var right = new PanelContainer { CustomMinimumSize = new Vector2(320, 0) };
+        var right = new PanelContainer { CustomMinimumSize = new Vector2(260, 0) };
         StyleBoxFlat rightBox = Box(Palette.Ink, 1, 0, 16);
         // room on its right for the chat's tab, which stays at the screen's edge
         rightBox.ContentMarginRight = 44;
@@ -399,6 +399,11 @@ public partial class CompendiumModePanel : Control
             {
                 Description(editor, field, Value, At, box);
             }
+            else if (field.Type == FormField.Kind.Json && field.OptionsFrom.Length > 0 && lists.TryGetValue(field.OptionsFrom, out List<string>? named) && named.Count > 0
+                && Value()[field.Key] is null or JsonObject && (Value()[field.Key] as JsonObject)?.All(p => p.Value is JsonValue v && v.TryGetValue(out double _)) != false)
+            {
+                Scores(editor, field, named, Value, At, box);
+            }
             else
             {
                 Field(editor, field, lists, Value, At, box);
@@ -463,7 +468,7 @@ public partial class CompendiumModePanel : Control
     // A field's box in the grid: its name over it, its help under it.
     private static VBoxContainer Labelled(GridContainer grid, FormField field)
     {
-        var box = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(150, 0) };
+        var box = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(120, 0) };
         box.AddThemeConstantOverride("separation", 2);
         grid.AddChild(box);
         box.AddChild(Title(field));
@@ -560,6 +565,56 @@ public partial class CompendiumModePanel : Control
         {
             box.AddThemeFontOverride("font", GetThemeFont("font", "NumberLabel"));
             box.Alignment = HorizontalAlignment.Center;
+        }
+    }
+
+    // A number for each of a list's names (a creature's ability scores), as the design's boxes:
+    // the name, - and + either side of the number; blank is not set (rolled, for scores), + from
+    // blank starts at 10 and - from 1 clears it.
+    private void Scores(CompendiumEditor editor, FormField field, List<string> names, Func<JsonObject> Value, Func<int> At, VBoxContainer into)
+    {
+        var grid = new GridContainer { Columns = Math.Min(6, names.Count) };
+        grid.AddThemeConstantOverride("h_separation", 6);
+        grid.AddThemeConstantOverride("v_separation", 6);
+        into.AddChild(grid);
+        int? Score(string name) => Value()[field.Key] is JsonObject scores && scores[name] is JsonValue v && v.TryGetValue(out double n) ? (int)n : null;
+        void Set(string name, int? to)
+        {
+            var scores = Value()[field.Key] is JsonObject now ? (JsonObject)now.DeepClone() : new JsonObject();
+            if (to is int n)
+            {
+                scores[name] = n;
+            }
+            else
+            {
+                scores.Remove(name);
+            }
+            editor.EndTyping();
+            editor.SetValue(At(), field.Key, scores.Count == 0 ? null : scores);
+            editor.EndTyping();
+        }
+        foreach (string name in names)
+        {
+            string ability = name;
+            var cell = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            var cellBox = new StyleBoxFlat { BgColor = Palette.Ink, BorderColor = Palette.Iron };
+            cellBox.SetBorderWidthAll(1);
+            cellBox.SetContentMarginAll(3);
+            cell.AddThemeStyleboxOverride("panel", cellBox);
+            grid.AddChild(cell);
+            var rows = new VBoxContainer();
+            rows.AddThemeConstantOverride("separation", 2);
+            cell.AddChild(rows);
+            rows.AddChild(new Label { Text = ability.ToUpperInvariant(), ThemeTypeVariation = "CapsLabel", HorizontalAlignment = HorizontalAlignment.Center });
+            var line = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+            line.AddThemeConstantOverride("separation", 2);
+            rows.AddChild(line);
+            ToolColumn.Narrow(_form.Act("-", () => Set(ability, Score(ability) is int n && n > 1 ? n - 1 : null), () => Score(ability) != null, line), 18);
+            Label shown = _form.Live(() => Score(ability)?.ToString(CultureInfo.InvariantCulture) ?? "-", "NumberLabel", line);
+            shown.AutowrapMode = TextServer.AutowrapMode.Off;
+            shown.HorizontalAlignment = HorizontalAlignment.Center;
+            shown.CustomMinimumSize = new Vector2(18, 0);
+            ToolColumn.Narrow(_form.Act("+", () => Set(ability, Score(ability) is int n ? Math.Min(30, n + 1) : 10), null, line), 18);
         }
     }
 

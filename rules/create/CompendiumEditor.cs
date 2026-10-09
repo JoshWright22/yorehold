@@ -110,9 +110,13 @@ public sealed class CompendiumEditor
                 }
             }
         }
-        foreach (List<string> list in lists.Values)
+        foreach ((string name, List<string> list) in lists)
         {
-            list.Sort(StringComparer.Ordinal);
+            // the system's abilities stay in its own order (STR, DEX, CON...); ids are sorted
+            if (name != "abilities")
+            {
+                list.Sort(StringComparer.Ordinal);
+            }
         }
         return lists;
     }
