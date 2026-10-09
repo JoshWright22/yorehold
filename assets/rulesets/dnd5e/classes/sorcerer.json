@@ -23,7 +23,8 @@
       "ray-of-frost",
       "shocking-grasp",
       "chill-touch",
-      "poison-spray"
+      "poison-spray",
+      "acid-splash"
     ],
     "1": [
       "magic-missile",
@@ -31,7 +32,8 @@
       "shield",
       "thunderwave",
       "charm-person",
-      "false-life"
+      "false-life",
+      "ray-of-sickness"
     ],
     "2": [
       "scorching-ray",
@@ -40,7 +42,8 @@
       "misty-step",
       "web",
       "blur",
-      "invisibility"
+      "invisibility",
+      "blindness-deafness"
     ],
     "3": [
       "fireball",
@@ -48,7 +51,8 @@
       "counterspell",
       "haste",
       "slow",
-      "hypnotic-pattern"
+      "hypnotic-pattern",
+      "fear"
     ]
   },
   "levels": [

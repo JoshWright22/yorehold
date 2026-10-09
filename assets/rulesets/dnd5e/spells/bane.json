@@ -1,0 +1,29 @@
+{
+  "id": "bane",
+  "name": "Bane",
+  "description": "Up to three foes who fail a Charisma save take -2 on attack rolls and saves while you concentrate (1d4 in the book).",
+  "level": 1,
+  "hands": 1,
+  "concentration": true,
+  "target": {
+    "kind": "point",
+    "side": "enemy",
+    "range": 6
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "cha",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "baned",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

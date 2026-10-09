@@ -231,7 +231,7 @@
     "check": "ability + proficiency + stat.checks",
     "save": "ability + proficiency + stat.saves",
     "damageTaken": "immune ? 0 : floor(amount / (resist > 0 ? 2 : 1)) * (weak > 0 ? 2 : 1)",
-    "armorClass": "armor + (stat.armorDexCap > 0 ? min(ability, stat.armorDexCap - 1) : ability) + (worn.armor > 0 ? 0 : (stat.unarmoredCon > 0 ? mod.con : 0) + (stat.unarmoredWis > 0 && worn.offHand == 0 ? mod.wis : 0))"
+    "armorClass": "max(stat.acFloor > 0 ? stat.acFloor : -1000000, armor + (stat.armorDexCap > 0 ? min(ability, stat.armorDexCap - 1) : ability) + (worn.armor > 0 ? 0 : (stat.unarmoredCon > 0 ? mod.con : 0) + (stat.unarmoredWis > 0 && worn.offHand == 0 ? mod.wis : 0)))"
   },
   "featKinds": [
     { "id": "origin", "name": "Origin feat" },

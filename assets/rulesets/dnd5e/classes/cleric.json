@@ -71,13 +71,16 @@
       "inflict-wounds",
       "command",
       "bless",
-      "shield-of-faith"
+      "shield-of-faith",
+      "bane"
     ],
     "2": [
       "hold-person",
       "lesser-restoration",
       "aid",
-      "spiritual-weapon"
+      "spiritual-weapon",
+      "blindness-deafness",
+      "prayer-of-healing"
     ],
     "3": [
       "mass-healing-word",

@@ -1,0 +1,39 @@
+{
+  "id": "acid-arrow",
+  "name": "Acid Arrow",
+  "description": "A shimmering green arrow: 4d4 acid on a hit, half as much on a miss (the book adds 2d4 more at the end of the target's next turn).",
+  "level": 2,
+  "hands": 1,
+  "animation": "arrow",
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 18
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "4d4",
+          "type": "acid",
+          "when": "hit",
+          "scale": {
+            "by": "slot",
+            "from": 2,
+            "dice": "1d4"
+          }
+        },
+        {
+          "do": "damage",
+          "dice": "2d4",
+          "type": "acid",
+          "when": "miss"
+        }
+      ]
+    }
+  ]
+}

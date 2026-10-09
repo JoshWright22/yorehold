@@ -1,0 +1,39 @@
+{
+  "id": "ray-of-sickness",
+  "name": "Ray of Sickness",
+  "description": "A ray of green energy: 2d8 poison on a hit, and the target is poisoned until the end of your next turn (the book allows a Constitution save against the poison).",
+  "level": 1,
+  "hands": 1,
+  "animation": "bolt",
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "effects": [
+    {
+      "do": "roll",
+      "kind": "attack",
+      "ability": "caster",
+      "steps": [
+        {
+          "do": "damage",
+          "dice": "2d8",
+          "type": "poison",
+          "when": "hit",
+          "scale": {
+            "by": "slot",
+            "from": 1,
+            "dice": "1d8"
+          }
+        },
+        {
+          "do": "condition",
+          "id": "poisoned",
+          "duration": 1,
+          "when": "hit"
+        }
+      ]
+    }
+  ]
+}

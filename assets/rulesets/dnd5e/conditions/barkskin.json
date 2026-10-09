@@ -1,0 +1,12 @@
+{
+  "id": "barkskin",
+  "name": "Barkskin",
+  "description": "AC is at least 16, whatever armour is worn.",
+  "modifiers": [
+    {
+      "stat": "acFloor",
+      "op": "max",
+      "value": 16
+    }
+  ]
+}

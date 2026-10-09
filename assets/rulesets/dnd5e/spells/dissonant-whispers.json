@@ -1,0 +1,35 @@
+{
+  "id": "dissonant-whispers",
+  "name": "Dissonant Whispers",
+  "description": "A discordant melody only the target hears: 3d6 psychic and it flees from you, or half and it stays on a Wisdom save.",
+  "level": 1,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 12
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "3d6",
+      "type": "psychic",
+      "onSave": "half",
+      "scale": {
+        "by": "slot",
+        "from": 1,
+        "dice": "1d6"
+      }
+    },
+    {
+      "do": "move",
+      "how": "push",
+      "distance": 3,
+      "when": "saveFailed"
+    }
+  ]
+}

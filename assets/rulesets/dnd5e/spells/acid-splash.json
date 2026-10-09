@@ -1,0 +1,28 @@
+{
+  "id": "acid-splash",
+  "name": "Acid Splash",
+  "description": "A bubble of acid bursts over a point: 1d6 acid to everyone beside it, none on a Dexterity save. More dice at levels 5, 11 and 17.",
+  "level": 0,
+  "hands": 1,
+  "target": {
+    "kind": "point",
+    "side": "enemy",
+    "range": 12
+  },
+  "area": {
+    "shape": "burst",
+    "size": 1
+  },
+  "save": {
+    "ability": "dex",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "damage",
+      "dice": "{1 + (level >= 5) + (level >= 11) + (level >= 17)}d6",
+      "type": "acid",
+      "onSave": "none"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "fear",
+  "name": "Fear",
+  "description": "A 30-foot cone of terror: everyone in it who fails a Wisdom save is frightened while you concentrate.",
+  "level": 3,
+  "hands": 0,
+  "concentration": true,
+  "target": {
+    "kind": "point",
+    "side": "enemy",
+    "range": 6
+  },
+  "area": {
+    "shape": "cone",
+    "size": 6
+  },
+  "save": {
+    "ability": "wis",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "frightened",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

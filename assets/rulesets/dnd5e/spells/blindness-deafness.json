@@ -1,0 +1,24 @@
+{
+  "id": "blindness-deafness",
+  "name": "Blindness/Deafness",
+  "description": "A foe who fails a Constitution save is blinded for a minute; it saves again at the end of each of its turns.",
+  "level": 2,
+  "hands": 0,
+  "target": {
+    "kind": "creature",
+    "side": "enemy",
+    "range": 6
+  },
+  "save": {
+    "ability": "con",
+    "dc": "caster"
+  },
+  "effects": [
+    {
+      "do": "condition",
+      "id": "blinded",
+      "duration": 10,
+      "onSave": "none"
+    }
+  ]
+}

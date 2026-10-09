@@ -502,6 +502,9 @@ screens it touches, so the game shows whatever the system says, and is tried on 
     the barbarian starts without armour. Done 10/9: a class's `restores` per rest (the
     warlock's slots come back on a short rest). Doesn't fit yet: ammunition, Wild Shape,
     subclasses beyond a single path.
+  - Done 10/9: nine more spells (Bane, Ray of Sickness, Dissonant Whispers, Acid Splash, Acid
+    Arrow, Blindness/Deafness, Barkskin, Fear, Prayer of Healing) on the SRD's class lists; an
+    AC floor (`stat.acFloor`) in the AC formula for Barkskin. 59 spells.
   - Done 10/8: origins: nine species (traits as "species" feats: Breath Weapon, Draconic and
     Dwarven Resilience, Adrenaline Rush, Infernal Legacy), the four SRD backgrounds with their
     origin feats (Alert, Magic Initiate, Savage Attacker, Skilled), two fighting styles. Feats,

@@ -475,6 +475,24 @@ public class SystemPackageTests
     }
 
     [Fact]
+    public void BarkskinAndBaneChangeTheNumbers()
+    {
+        using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "druid");
+        World w = world.World;
+        Ruleset rules = w.Rules;
+        CharacterSheet druid = w.Creatures[1].Sheet;
+        int before = druid.ArmorClass(rules);
+        druid.AddCondition(rules, "barkskin");
+        Assert.Equal(Math.Max(16, before), druid.ArmorClass(rules));
+        CharacterSheet fighter = w.Creatures[0].Sheet;
+        int attack = fighter.AttackModifier(rules);
+        fighter.AddCondition(rules, "baned");
+        Assert.Equal(attack - 2, fighter.AttackModifier(rules));
+        Assert.Contains("barkskin", w.Chapter.Compendium.Class("druid")!.Spells[2]);
+        Assert.NotNull(w.FindAction("fear"));
+    }
+
+    [Fact]
     public void AWarlocksSlotsComeBackOnAShortRest()
     {
         using WorldFixture world = Yard("rulesets/dnd5e", "fighter", "warlock");

@@ -30,19 +30,23 @@
       "command",
       "cure-wounds",
       "faerie-fire",
-      "charm-person"
+      "charm-person",
+      "bane",
+      "dissonant-whispers"
     ],
     "2": [
       "hold-person",
       "shatter",
       "lesser-restoration",
       "invisibility",
-      "aid"
+      "aid",
+      "blindness-deafness"
     ],
     "3": [
       "mass-healing-word",
       "hypnotic-pattern",
-      "slow"
+      "slow",
+      "fear"
     ]
   },
   "levels": [

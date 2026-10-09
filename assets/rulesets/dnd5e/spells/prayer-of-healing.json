@@ -1,0 +1,27 @@
+{
+  "id": "prayer-of-healing",
+  "name": "Prayer of Healing",
+  "description": "Up to six allies near you each regain 2d8 + your spellcasting modifier (ten minutes to cast in the book).",
+  "level": 2,
+  "hands": 0,
+  "target": {
+    "kind": "point",
+    "side": "ally",
+    "range": 6
+  },
+  "area": {
+    "shape": "burst",
+    "size": 6
+  },
+  "effects": [
+    {
+      "do": "heal",
+      "dice": "2d8+{mod.caster}",
+      "scale": {
+        "by": "slot",
+        "from": 2,
+        "dice": "1d8"
+      }
+    }
+  ]
+}

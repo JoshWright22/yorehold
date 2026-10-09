@@ -63,7 +63,8 @@
       "ray-of-frost",
       "shocking-grasp",
       "chill-touch",
-      "toll-the-dead"
+      "toll-the-dead",
+      "acid-splash"
     ],
     "1": [
       "magic-missile",
@@ -71,7 +72,8 @@
       "burning-hands",
       "thunderwave",
       "charm-person",
-      "false-life"
+      "false-life",
+      "ray-of-sickness"
     ],
     "2": [
       "scorching-ray",
@@ -81,7 +83,9 @@
       "web",
       "blur",
       "invisibility",
-      "magic-weapon"
+      "magic-weapon",
+      "acid-arrow",
+      "blindness-deafness"
     ],
     "3": [
       "fireball",
@@ -90,7 +94,8 @@
       "haste",
       "slow",
       "hypnotic-pattern",
-      "bestow-curse"
+      "bestow-curse",
+      "fear"
     ]
   }
 }
