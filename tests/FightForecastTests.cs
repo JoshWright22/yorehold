@@ -42,4 +42,28 @@ public class FightForecastTests
         Assert.InRange(leaveOut, 1, 2);
         Assert.True(leaveOut == 2 || !fitted.Verdict().StartsWith("too hard"), fitted.Summary());
     }
+
+    [Fact]
+    public void AFightTooEasyIsGrownWithMoreOfItsLastFoe()
+    {
+        // three heroes against one goblin: more goblins beside it, in a copy of the chapter
+        using var scratch = new Scratch();
+        const string chapter = """
+            {"id":"lone","title":"Lone","map":"map.json","party":[{"name":"Ana","class":"fighter","at":[1,1]},{"name":"Bo","class":"fighter","at":[1,2]},{"name":"Cy","class":"fighter","at":[1,3]}],
+             "encounters":[{"id":"lone","creatures":[{"creature":"goblin","name":"Snik","at":[5,5]}]}]}
+            """;
+        scratch.Write("chapters/lone/chapter.json", chapter);
+        scratch.Write("chapters/lone/map.json", """
+            {"name":"Room","tiles":{"floor":{"art":"grass"}},"legend":{".":"floor"},"layers":[{"name":"ground","rows":["........","........","........","........","........","........","........","........"]}]}
+            """);
+        using var bench = new Scratch();
+        (int more, FightForecast grown, List<Cell> at) = FightSimulation.Grow(() => TestContent.ShippedWith(scratch), "chapters/lone", 0, 2, bench.Folder);
+        Assert.InRange(more, 1, 4);
+        Assert.Equal(more, at.Count);
+        Assert.Equal(more, at.Distinct().Count());
+        Assert.DoesNotContain(new Cell(5, 5), at);
+        Assert.Equal(2, grown.Fights);
+        // the chapter itself is as it was
+        Assert.Equal(chapter, File.ReadAllText(Path.Combine(scratch.Folder, "chapters", "lone", "chapter.json")));
+    }
 }

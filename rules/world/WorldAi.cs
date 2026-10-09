@@ -158,11 +158,27 @@ public sealed partial class World
         return groups[nearest];
     }
 
+    // Walkable, each cell asked once: a flood asks about the same squares many times, and each
+    // answer looks through every object on the map. Only for use while nothing moves.
+    private Func<Cell, bool> WalkableMemo()
+    {
+        var known = new Dictionary<Cell, bool>();
+        return cell =>
+        {
+            if (!known.TryGetValue(cell, out bool open))
+            {
+                known[cell] = open = Walkable(cell);
+            }
+            return open;
+        };
+    }
+
     // Walking distance from every cell to the nearest of cells, around walls (not creatures).
     private Dictionary<Cell, float> DistanceFrom(List<Cell> cells)
     {
         var distance = new Dictionary<Cell, float>();
         var queue = new HeapQueue<(float Cost, Cell Cell)>((a, b) => a.Cost > b.Cost);
+        Func<Cell, bool> walkable = WalkableMemo();
         foreach (Cell c in cells)
         {
             distance[c] = 0;
@@ -177,7 +193,7 @@ public sealed partial class World
             }
             foreach (Cell next in Grid.Neighbours(c))
             {
-                if (!Walkable(next) || (next.X != c.X && next.Y != c.Y && (!Walkable(new Cell(next.X, c.Y)) || !Walkable(new Cell(c.X, next.Y)))))
+                if (!walkable(next) || (next.X != c.X && next.Y != c.Y && (!walkable(new Cell(next.X, c.Y)) || !walkable(new Cell(c.X, next.Y)))))
                 {
                     continue;
                 }

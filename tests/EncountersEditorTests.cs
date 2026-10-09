@@ -92,6 +92,19 @@ public class EncountersEditorTests
     }
 
     [Fact]
+    public void SeveralCreaturesArePlacedAsOneChange()
+    {
+        var history = new History();
+        EncountersEditor editor = KeepEditor(history);
+        Assert.False(editor.AddCreatures(1, "goblin", new[] { new Cell(2, 4), new Cell(4, 4) }), "One square nobody can stand on refuses them all");
+        Assert.False(editor.AddCreatures(1, "goblin", new[] { new Cell(2, 4), new Cell(2, 4) }));
+        Assert.Single(editor.Groups[1].Creatures);
+        Assert.True(editor.AddCreatures(1, "goblin", new[] { new Cell(2, 4), new Cell(3, 4) }));
+        Assert.Equal(3, editor.Groups[1].Creatures.Count);
+        Assert.True(history.Count == 1 && history.Undo() && editor.Groups[1].Creatures.Count == 1, "Undo takes them all away");
+    }
+
+    [Fact]
     public void Creatures()
     {
         var history = new History();

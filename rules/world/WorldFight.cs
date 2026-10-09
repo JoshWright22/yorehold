@@ -990,7 +990,10 @@ public sealed partial class World
             return;
         }
         float budget = Encounter.Current.Budget.MovementLeft + extra + 0.01f;
-        bool Open(Cell c) => Walkable(c) && !Occupied(c, mover);
+        Func<Cell, bool> walkable = WalkableMemo();
+        // who stands where, once: nobody moves while the reach is worked out
+        var taken = new HashSet<Cell>(Enumerable.Range(0, Creatures.Count).Where(i => i != mover && Tokens.Tokens[i].Floor != DeadFloor).Select(CellOf));
+        bool Open(Cell c) => walkable(c) && !taken.Contains(c);
         var queue = new HeapQueue<(float Cost, Cell Cell)>((a, b) => a.Cost > b.Cost);
         _reach[_standing] = 0;
         queue.Push((0, _standing));

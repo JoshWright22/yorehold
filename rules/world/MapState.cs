@@ -108,9 +108,13 @@ public sealed class MapState
         RefreshWalls();
     }
 
+    /// <summary>Goes up each time the walls are made again, so what was worked out from them can tell.</summary>
+    public int WallsChanged { get; private set; }
+
     /// <summary>Call after a door opened or anything else changed what blocks sight.</summary>
     public void RefreshWalls()
     {
+        WallsChanged++;
         Walls.Clear();
         Walls.AddRange(_tileWalls);
         foreach (WorldObject o in _objects)

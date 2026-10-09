@@ -544,6 +544,18 @@ public sealed class EncountersEditor
         return _state.Groups[group].Creatures.Count - 1;
     }
 
+    /// <summary>Several of one creature at once, as one change Undo takes back; false (and nothing placed) if any square isn't free.</summary>
+    public bool AddCreatures(int group, string creature, IReadOnlyList<Cell> at)
+    {
+        if (!HasGroup(group) || !_catalog.Creatures.TryGetValue(creature, out Catalog.Creature? found) || at.Count == 0
+            || at.Distinct().Count() != at.Count || !at.All(Free))
+        {
+            return false;
+        }
+        Edit($"Place {at.Count} {found.Name}", () => _state.Groups[group].Creatures.AddRange(at.Select(cell => new Placement { Creature = creature, At = cell })));
+        return true;
+    }
+
     public bool MoveCreature(int group, int index, Cell at)
     {
         if (PlacementOf(group, index) is not Placement p || p.At == at || !Free(at))

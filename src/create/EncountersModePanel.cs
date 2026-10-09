@@ -45,6 +45,9 @@ public partial class EncountersModePanel : HBoxContainer
     // the same, taking foes out until the fight is no longer too hard
     private Task<(int LeaveOut, FightForecast Forecast)>? _fit;
     private string _fitOf = "";
+    // the other way: more of the last foe for a fight that is too easy
+    private Task<(int More, FightForecast Forecast, List<Cell> At)>? _grow;
+    private string _growOf = "";
     // every fight of the chapter fitted in turn, by fight id, and how far it has got
     private Task<List<(string Id, int LeaveOut, FightForecast Forecast)>>? _fitAll;
     private int _fitAllDone;
@@ -319,6 +322,19 @@ public partial class EncountersModePanel : HBoxContainer
                 _fit = null;
             }
         }, () => FitDone(Now().Id) is > 0);
+        _props.Act("Too easy: try more foes", () => StartGrow(group, Now().Id), () => Now().Creatures.Count > 0 && (_grow == null || _grow.IsCompleted));
+        _props.Live(() => GrowLine(Now().Id));
+        _props.Act(() => GrowDone(Now().Id) is { More: > 0 } grown ? $"Add {grown.More} more {Now().Creatures[^1].Creature}" : "Add them", () =>
+        {
+            if (GrowDone(Now().Id) is { More: > 0 } grown && editor.AddCreatures(group, Now().Creatures[^1].Creature, grown.At))
+            {
+                _grow = null;
+            }
+            else
+            {
+                _hint = "Those squares aren't free any more; try again.";
+            }
+        }, () => GrowDone(Now().Id) is { More: > 0 });
         _props.Gap();
 
         _props.Heading("Loot");
@@ -476,6 +492,47 @@ public partial class EncountersModePanel : HBoxContainer
 
     // How many foes the finished fit for this group leaves out; null while none is ready.
     private int? FitDone(string id) => _fit is { IsCompletedSuccessfully: true } && id == _fitOf ? _fit.Result.LeaveOut : null;
+
+    private void StartGrow(int group, string id)
+    {
+        if (!Saved)
+        {
+            _hint = "Save first: the fit plays the saved chapter.";
+            return;
+        }
+        if (_files() is null || Chapter.Length == 0)
+        {
+            return;
+        }
+        _hint = "";
+        string chapter = Chapter;
+        Func<ContentFiles?> files = _files;
+        string scratch = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "yorehold-grow");
+        _growOf = id;
+        _grow = Task.Run(() => FightSimulation.Grow(() => files()!, chapter, group, FitFights, scratch));
+    }
+
+    private (int More, FightForecast Forecast, List<Cell> At)? GrowDone(string id) =>
+        _grow is { IsCompletedSuccessfully: true } && id == _growOf ? _grow.Result : null;
+
+    private string GrowLine(string id)
+    {
+        if (_grow == null || id != _growOf)
+        {
+            return "";
+        }
+        if (!_grow.IsCompleted)
+        {
+            return "Playing it with more foes...";
+        }
+        if (_grow.IsFaulted)
+        {
+            return "Could not try it: " + (_grow.Exception?.InnerException?.Message ?? "unknown");
+        }
+        (int more, FightForecast result, _) = _grow.Result;
+        string with = more == 0 ? "Not too easy as it is" : $"With {more} more";
+        return result.Verdict() is { Length: > 0 } verdict ? $"{with}: {result.Summary()}\n{verdict}" : $"{with}: {result.Summary()}";
+    }
 
     private string FitLine(string id)
     {

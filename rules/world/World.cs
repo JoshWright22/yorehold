@@ -1230,6 +1230,10 @@ public sealed partial class World
     /// What the party sees now, which creatures show, and, between fights, whether a watching
     /// enemy notices anyone.
     /// </summary>
+    // what the fog was last worked out from, and how many frames ago
+    private int _fogKey;
+    private int _fogKeyAge;
+
     public void UpdateVisibility()
     {
         MapLighting lighting = Chapter.Map.Lighting;
@@ -1278,18 +1282,44 @@ public sealed partial class World
             };
         }
 
-        // Team 0 is everyone's view together; it decides when enemies are spotted. With shared fog
-        // off, each hero also keeps a view of their own (team 1 + index) for the screen.
-        List<Vision> all = eyes.Where(e => e != null).Select(e => e!.Value).ToList();
-        Fog.Update(0, 0, all, Map.Walls, lit);
-        RevealWalls(0);
-        if (!Options.SharedFog)
+        // The fog is worked out again only when something it reads has changed: where the heroes
+        // stand and how far they see, the lights, the sky and the walls. Most frames nothing has.
+        var seen = new HashCode();
+        foreach (Vision? eye in eyes)
         {
-            for (int i = 0; i < HeroCount; i++)
+            seen.Add(eye);
+        }
+        foreach (WorldLight light in carried.Concat(Map.Lights))
+        {
+            seen.Add(light);
+        }
+        seen.Add(rules);
+        seen.Add(sky.Differs);
+        seen.Add(sky.Level);
+        seen.Add(sky.Sight);
+        seen.Add(Map.WallsChanged);
+        seen.Add(Options.SharedFog);
+        // a new map or a fresh fog (travel, a load) is always worked out
+        seen.Add(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Map));
+        seen.Add(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Fog));
+        int key = seen.ToHashCode();
+        if (key != _fogKey || _fogKeyAge++ > 50)
+        {
+            _fogKey = key;
+            _fogKeyAge = 0;
+            // Team 0 is everyone's view together; it decides when enemies are spotted. With shared fog
+            // off, each hero also keeps a view of their own (team 1 + index) for the screen.
+            List<Vision> all = eyes.Where(e => e != null).Select(e => e!.Value).ToList();
+            Fog.Update(0, 0, all, Map.Walls, lit);
+            RevealWalls(0);
+            if (!Options.SharedFog)
             {
-                List<Vision> mine = eyes[i] is Vision own ? new List<Vision> { own } : new List<Vision>();
-                Fog.Update(i + 1, 0, mine, Map.Walls, lit);
-                RevealWalls(i + 1);
+                for (int i = 0; i < HeroCount; i++)
+                {
+                    List<Vision> mine = eyes[i] is Vision own ? new List<Vision> { own } : new List<Vision>();
+                    Fog.Update(i + 1, 0, mine, Map.Walls, lit);
+                    RevealWalls(i + 1);
+                }
             }
         }
         int view = ViewTeam();

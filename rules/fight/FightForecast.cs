@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Yorehold.Rules;
 
 /// <summary>What many played-out runs of one encounter came to.</summary>
@@ -128,6 +130,85 @@ public static class FightSimulation
                 return (leave, forecast);
             }
         }
+    }
+
+    /// <summary>
+    /// The other way from Fit: how many more of the group's last foe, each on a free square next
+    /// to the group, make a fight that is too easy no longer so, with the forecast that gives and
+    /// where they stand. Played from a scratch copy of the chapter's file laid over load's files;
+    /// the chapter itself is not changed. Stops at most more; 0 when it isn't too easy.
+    /// </summary>
+    public static (int More, FightForecast Forecast, List<Cell> At) Grow(Func<ContentFiles> load, string chapter, int group, int fights, string scratch, int most = 4)
+    {
+        string file = chapter + "/chapter.json";
+        Func<ulong, World> Loader(string over) => seed =>
+        {
+            ContentFiles files = load();
+            files.Add(over);
+            return World.Load(files, chapter, seed);
+        };
+        FightForecast now = Forecast(seed => World.Load(load(), chapter, seed), group, fights);
+        if (now.Fights == 0 || !now.Verdict().StartsWith("too easy", StringComparison.Ordinal)
+            || JsonNode.Parse(load().ReadText(file)) is not JsonObject text
+            || text["encounters"]?[group]?["creatures"] is not JsonArray placed || placed.LastOrDefault() is not JsonObject last)
+        {
+            return (0, now, new List<Cell>());
+        }
+        // the free squares nearest the group's last foe, as the world sees them
+        World w = World.Load(load(), chapter, 1);
+        int lastFoe = w.Creatures.FindLastIndex(c => c.Group == group && c.Team == 1);
+        List<Cell> free = lastFoe < 0 ? new List<Cell>() : FreeNear(w, w.CellOf(lastFoe), most);
+        var at = new List<Cell>();
+        FightForecast forecast = now;
+        for (int more = 1; more <= Math.Min(most, free.Count); more++)
+        {
+            var copy = new JsonObject();
+            foreach ((string key, JsonNode? value) in last)
+            {
+                // a copy is one more of the same creature, not a second of a named one
+                if (key is not "name" and not "at")
+                {
+                    copy[key] = value?.DeepClone();
+                }
+            }
+            copy["at"] = new JsonArray(free[more - 1].X, free[more - 1].Y);
+            placed.Add(copy);
+            at.Add(free[more - 1]);
+            string path = Path.Combine(scratch, file.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, text.ToJsonString());
+            forecast = Forecast(Loader(scratch), group, fights);
+            if (!forecast.Verdict().StartsWith("too easy", StringComparison.Ordinal))
+            {
+                return (more, forecast, at);
+            }
+        }
+        return (at.Count, forecast, at);
+    }
+
+    // Free squares nearest a cell, by straight steps, as far as walls allow.
+    private static List<Cell> FreeNear(World w, Cell from, int count)
+    {
+        var found = new List<Cell>();
+        var seen = new HashSet<Cell> { from };
+        var queue = new Queue<Cell>();
+        queue.Enqueue(from);
+        while (queue.Count > 0 && found.Count < count)
+        {
+            Cell at = queue.Dequeue();
+            if (at != from && !w.Occupied(at, -1))
+            {
+                found.Add(at);
+            }
+            foreach (Cell next in w.Grid.Neighbours(at))
+            {
+                if ((next.X == at.X || next.Y == at.Y) && w.Walkable(next) && seen.Add(next))
+                {
+                    queue.Enqueue(next);
+                }
+            }
+        }
+        return found;
     }
 
     // The group's foes, in the chapter's order.

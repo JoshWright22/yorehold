@@ -676,8 +676,12 @@ screens it touches, so the game shows whatever the system says, and is tried on 
   - Done 10/8: encounters fitted by the forecast: Create > Encounters > Fit to the party plays
     the fight in the background with the last foes standing aside, one more each try, until it
     is no longer too hard, and offers to take them out (`FightSimulation.Fit`); Fit every fight
-    does the chapter's fights in turn (an imported adventure's, after Build). Left: adding foes
-    to one that is too easy.
+    does the chapter's fights in turn (an imported adventure's, after Build). Done 10/9: "Too
+    easy: try more foes" plays it with one more of the group's last foe each try, beside it, in
+    a scratch copy of the chapter, until it is no longer too easy (at most 4), and offers to
+    place them as one undoable change (`FightSimulation.Grow`). Simulated fights run about
+    three times faster (the fog is only worked out again when something it reads moved; the
+    AI's floods ask each square once).
 - [ ] **R14. Sharing.** Upload and download every kind from R11 through the site and in the game,
   with licence, author, links and the no-AI-uploads declaration; credits built from what an
   adventure uses. The site runs the game's checks on each upload and refuses one that wouldn't
